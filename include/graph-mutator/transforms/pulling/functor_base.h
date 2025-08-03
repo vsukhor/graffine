@@ -275,7 +275,7 @@ shift_edges_to_target_chain(const Ps& pp)
                    "leadingInd = ", leadingInd, " and indN = ", indN,
                    " are not ends of connected chains");
 
-            gr.ct[pp.cmp->ind].shift_last_edge(f, t);
+            gr.ct[pp.cmp->ind].shift_end_edge(f, t);
             gr.update_books();
         }
     }

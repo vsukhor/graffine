@@ -243,8 +243,8 @@ struct DisconnectedUnit {
     /**
      * @brief shifts an edge from f.e end of f.w to t.e end of t.w
      */
-    void shift_last_edge(const EndSlot& f,
-                         const EndSlot& t);
+    void shift_end_edge(const EndSlot& f,
+                        const EndSlot& t);
 
     /**
      * @brief Initializes adjacency list of edges of this component.
@@ -897,8 +897,8 @@ make_indma() noexcept
 // shifts an edge from f.e end of f.w to t.e end of t.w
 template<typename Ch>
 void DisconnectedUnit<Ch>::
-shift_last_edge(const EndSlot& f,
-                const EndSlot& t)
+shift_end_edge(const EndSlot& f,
+               const EndSlot& t)
 {
     auto& g0 = cn[f.w].g;
     auto& g1 = cn[t.w].g;

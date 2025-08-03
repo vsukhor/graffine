@@ -48,7 +48,7 @@ struct Distance {
     using Edge = Component::Edge;
     using EdgeWeight = typename Edge::weight_t;
 
-    static constexpr auto zero = zero<EdgeWeight>;
+    static constexpr EdgeWeight zero {};
     static constexpr auto inf = Edge::maxWeight;
 
     /**

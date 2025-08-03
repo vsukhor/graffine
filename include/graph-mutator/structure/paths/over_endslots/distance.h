@@ -49,7 +49,7 @@ struct Distance {
     using EndSlot = Component::EndSlot;  ///< Type alias for end slot.
     using EdgeWeight = typename Edge::weight_t;
 
-    static constexpr auto zero = zero<EdgeWeight>;
+    static constexpr EdgeWeight zero {};
     static constexpr auto inf = Edge::maxWeight;
 
     static constexpr auto undefined_element = EndSlot {};
