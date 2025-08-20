@@ -24,9 +24,9 @@ limitations under the License.
 
 #include "common.h"
 #include "graph-mutator/definitions.h"
-#include "graph-mutator/structure/chain.h"
-#include "graph-mutator/structure/edge.h"
-#include "graph-mutator/structure/graph.h"
+#include "graph-mutator/structure/basic/chain.h"
+#include "graph-mutator/structure/basic/edge.h"
+#include "graph-mutator/structure/basic/graph.h"
 #include "graph-mutator/transforms/edge_deletion/deleting_host_chain.h"
 #include "graph-mutator/transforms/edge_deletion/preserving_host_chain.h"
 #include "graph-mutator/transforms/vertex_merger/from_11.h"
@@ -35,7 +35,7 @@ limitations under the License.
 
 namespace graph_mutator::tests::edge_deletion {
 
-using G = structure::Graph<structure::Chain<structure::Edge<maxDegree>>>;
+using G = structure::basic::Graph<structure::basic::Chain<structure::basic::Edge<maxDegree>>>;
 using Chain = G::Chain;
 using Edge = Chain::Edge;
 using Ends = Chain::Ends;

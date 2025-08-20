@@ -22,12 +22,12 @@ limitations under the License.
 #include <string>
 
 #include "common.h"
-#include "graph-mutator/structure/chain.h"
-#include "graph-mutator/structure/edge.h"
-#include "graph-mutator/structure/graph.h"
-#include "graph-mutator/structure/vertices/all.h"
-#include "graph-mutator/structure/vertices/collections.h"
-#include "graph-mutator/structure/vertices/vertex.h"
+#include "graph-mutator/structure/basic/chain.h"
+#include "graph-mutator/structure/basic/edge.h"
+#include "graph-mutator/structure/basic/graph.h"
+#include "graph-mutator/structure/basic/vertices/all.h"
+#include "graph-mutator/structure/basic/vertices/collections.h"
+#include "graph-mutator/structure/basic/vertices/vertex.h"
 #include "graph-mutator/transforms/vertex_merger/from_11.h"
 #include "graph-mutator/transforms/vertex_merger/from_12.h"
 #include "graph-mutator/transforms/vertex_merger/from_22.h"
@@ -35,10 +35,9 @@ limitations under the License.
 
 namespace graph_mutator::tests::vertices {
 
-using namespace graph_mutator::structure;
-using namespace graph_mutator::structure::vertices;
+using namespace graph_mutator::structure::basic::vertices;
 
-using G = structure::Graph<structure::Chain<structure::Edge<maxDegree>>>;
+using G = structure::basic::Graph<structure::basic::Chain<structure::basic::Edge<maxDegree>>>;
 using Chain = G::Chain;
 using Edge = Chain::Edge;
 using Ends = Chain::Ends;

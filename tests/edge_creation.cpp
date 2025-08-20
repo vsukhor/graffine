@@ -23,10 +23,10 @@ limitations under the License.
 #include <string>
 
 #include "common.h"
-#include "graph-mutator/structure/chain.h"
-#include "graph-mutator/structure/edge.h"
-#include "graph-mutator/structure/graph.h"
-#include "graph-mutator/structure/vertices/degrees.h"
+#include "graph-mutator/structure/basic/chain.h"
+#include "graph-mutator/structure/basic/edge.h"
+#include "graph-mutator/structure/basic/graph.h"
+#include "graph-mutator/structure/basic/vertices/degrees.h"
 #include "graph-mutator/transforms/edge_creation/in_new_chain.h"
 #include "graph-mutator/transforms/edge_creation/in_existing_chain.h"
 #include "graph-mutator/transforms/vertex_merger/from_11.h"
@@ -36,8 +36,9 @@ limitations under the License.
 namespace graph_mutator::tests::edge_creation {
 
 using namespace graph_mutator;
+using namespace graph_mutator::structure::basic;
 
-using G = structure::Graph<structure::Chain<structure::Edge<maxDegree>>>;
+using G = Graph<Chain<Edge<maxDegree>>>;
 using Chain = G::Chain;
 using Edge = Chain::Edge;
 using Ends = Chain::Ends;

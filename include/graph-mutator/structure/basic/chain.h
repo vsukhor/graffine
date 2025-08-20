@@ -27,15 +27,15 @@ limitations under the License.
  * @author Valerii Sukhorukov
  */
 
-#ifndef GRAPH_MUTATOR_STRUCTURE_CHAIN_H
-#define GRAPH_MUTATOR_STRUCTURE_CHAIN_H
+#ifndef GRAPH_MUTATOR_STRUCTURE_BASIC_CHAIN_H
+#define GRAPH_MUTATOR_STRUCTURE_BASIC_CHAIN_H
 
 #include <algorithm>
 #include <array>
 #include <string>
 #include <vector>
 
-#include "../definitions.h"
+#include "../../definitions.h"
 #include "edge.h"
 #include "ends.h"
 #include "neigs.h"
@@ -43,7 +43,7 @@ limitations under the License.
 #include "vertices/degrees.h"
 #include "vertices/vertex.h"
 
-namespace graph_mutator::structure {
+namespace graph_mutator::structure::basic {
 
 
 /**
@@ -60,18 +60,18 @@ template<typename E4>
 struct Chain {
 
     static_assert(E4::maxVertexDegree == maxDegree);
-    static_assert(std::is_base_of_v<structure::EdgeBase, E4>);
+    static_assert(std::is_base_of_v<basic::EdgeBase, E4>);
 
     using Id = ChId;
     using Edge = E4;
     using Edges = std::vector<Edge>;
     using EdgeEnds = E4::Ends;  ///< Edge ends.
-    using Ends = structure::Ends;
-    using Bulks = structure::Bulks;
+    using Ends = basic::Ends;
+    using Bulks = basic::Bulks;
     using EndId = Ends::Id;
     using EndSlot = _Slot<Id, Ends>;
     using BulkSlot = _Slot<Id, Bulks>;
-    using Neigs = structure::Neigs<EndSlot>;  ///< Slots connected to the chain ends.
+    using Neigs = basic::Neigs<EndSlot>;  ///< Slots connected to the chain ends.
     using thisT = Chain<Edge>;
 
     template<Degree D>
@@ -1352,6 +1352,6 @@ concept slot = std::is_same_v<T, ChainBase::EndSlot> ||
 
 
 
-}  // namespace graph_mutator::structure
+}  // namespace graph_mutator::structure::basic
 
-#endif  // GRAPH_MUTATOR_STRUCTURE_CHAIN_H
+#endif  // GRAPH_MUTATOR_STRUCTURE_BASIC_CHAIN_H

@@ -28,7 +28,7 @@ limitations under the License.
 #include <string>
 
 #include "common.h"
-#include "graph-mutator/structure/graph.h"
+#include "graph-mutator/structure/basic/graph.h"
 #include "graph-mutator/transforms/pulling/on_1.h"
 #include "graph-mutator/transforms/pulling/on_2.h"
 #include "graph-mutator/transforms/pulling/on_3.h"
@@ -43,7 +43,7 @@ limitations under the License.
 
 namespace graph_mutator::tests::pulling {
 
-using G = structure::Graph<structure::Chain<structure::Edge<maxDegree>>>;
+using G = structure::basic::Graph<structure::basic::Chain<structure::basic::Edge<maxDegree>>>;
 using Chain = G::Chain;
 using Edge = Chain::Edge;
 using Ends = Chain::Ends;

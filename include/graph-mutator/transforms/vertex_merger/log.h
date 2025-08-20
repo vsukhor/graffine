@@ -36,7 +36,7 @@ limitations under the License.
 #include <string>
 
 #include "../../definitions.h"
-#include "../../structure/chain.h"  // for slot
+#include "../../structure/basic/chain.h"  // for slot
 
 
 namespace graph_mutator::vertex_merger {
@@ -60,8 +60,8 @@ struct Log {
         std::string&& ssB={}
     );
 
-    template<structure::slot S1=EndSlot,
-             structure::slot S2=EndSlot>
+    template<structure::basic::slot S1=EndSlot,
+             structure::basic::slot S2=EndSlot>
     void before(
         const S1& s1,
         const S2& s2,
@@ -109,8 +109,8 @@ Log(
 
 
 template<typename G>
-template<structure::slot S1,
-         structure::slot S2>
+template<structure::basic::slot S1,
+         structure::basic::slot S2>
 void Log<G>::
 before(
     const S1& s1,

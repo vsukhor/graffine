@@ -24,9 +24,9 @@ limitations under the License.
 #include <string>
 
 #include "common.h"
-#include "graph-mutator/structure/chain.h"
-#include "graph-mutator/structure/edge.h"
-#include "graph-mutator/structure/graph.h"
+#include "graph-mutator/structure/basic/chain.h"
+#include "graph-mutator/structure/basic/edge.h"
+#include "graph-mutator/structure/basic/graph.h"
 #include "graph-mutator/transforms/vertex_merger/from_00.h"
 #include "graph-mutator/transforms/vertex_merger/from_10.h"
 #include "graph-mutator/transforms/vertex_merger/from_11.h"
@@ -42,7 +42,7 @@ limitations under the License.
 
 namespace graph_mutator::tests::vertex_split {
 
-using G = structure::Graph<structure::Chain<structure::Edge<maxDegree>>>;
+using G = structure::basic::Graph<structure::basic::Chain<structure::basic::Edge<maxDegree>>>;
 using Chain = G::Chain;
 using Edge = Chain::Edge;
 using Ends = Chain::Ends;

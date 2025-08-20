@@ -29,19 +29,19 @@ limitations under the License.
  * @author Valerii Sukhorukov
  */
 
-#ifndef GRAPH_MUTATOR_STRUCTURE_VERTICES_COLLECTIONS_H
-#define GRAPH_MUTATOR_STRUCTURE_VERTICES_COLLECTIONS_H
+#ifndef GRAPH_MUTATOR_STRUCTURE_BASIC_VERTICES_COLLECTIONS_H
+#define GRAPH_MUTATOR_STRUCTURE_BASIC_VERTICES_COLLECTIONS_H
 
 #include <algorithm>
 #include <array>
 #include <memory>
 #include <vector>
 
-#include "../../definitions.h"
+#include "../../../definitions.h"
 #include "degrees.h"
 #include "vertex.h"
 
-namespace graph_mutator::structure::vertices {
+namespace graph_mutator::structure::basic::vertices {
 
 /**
  * @brief Template for classes updating degree-specific vertex collections.
@@ -541,6 +541,6 @@ void print(const Collection<D, G>& ns,
 }
 
 
-}  // namespace graph_mutator::structure::vertices
+}  // namespace graph_mutator::structure::basic::vertices
 
-#endif  // GRAPH_MUTATOR_STRUCTURE_VERTICES_COLLECTIONS_H
+#endif  // GRAPH_MUTATOR_STRUCTURE_BASIC_VERTICES_COLLECTIONS_H

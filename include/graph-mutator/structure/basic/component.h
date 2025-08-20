@@ -24,8 +24,8 @@ limitations under the License.
  * @author Valerii Sukhorukov
  */
 
-#ifndef GRAPH_MUTATOR_STRUCTURE_COMPONENT_H
-#define GRAPH_MUTATOR_STRUCTURE_COMPONENT_H
+#ifndef GRAPH_MUTATOR_STRUCTURE_BASIC_COMPONENT_H
+#define GRAPH_MUTATOR_STRUCTURE_BASIC_COMPONENT_H
 
 #include <algorithm>  // remove, ranges::sort
 #include <array>
@@ -35,8 +35,8 @@ limitations under the License.
 #include <string>
 #include <vector>
 
-#include "../definitions.h"
-#include "../vector_container.h"
+#include "../../definitions.h"
+#include "../../vector_container.h"
 #include "chain.h"
 #include "chain_collection.h"
 #include "chain_indexes.h"
@@ -46,7 +46,7 @@ limitations under the License.
 #include "vertices/all.h"
 #include "vertices/vertex.h"
 
-namespace graph_mutator::structure {
+namespace graph_mutator::structure::basic {
 
 namespace components {
 
@@ -1359,6 +1359,6 @@ template<typename Ch>
 using Component = components::DisconnectedUnit<Ch>;
 
 
-}  // namespace graph_mutator::structure
+}  // namespace graph_mutator::structure::basic
 
-#endif  // GRAPH_MUTATOR_STRUCTURE_COMPONENT_H
+#endif  // GRAPH_MUTATOR_STRUCTURE_BASIC_COMPONENT_H

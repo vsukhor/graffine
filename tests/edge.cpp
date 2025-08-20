@@ -22,14 +22,14 @@ limitations under the License.
 
 #include "graph-mutator/definitions.h"
 
-#include "graph-mutator/structure/edge.h"
-#include "graph-mutator/structure/ends.h"
+#include "graph-mutator/structure/basic/edge.h"
+#include "graph-mutator/structure/basic/ends.h"
 
 
 namespace graph_mutator::tests::edge {
 
 
-using Edge = structure::Edge<maxDegree>;
+using Edge = structure::basic::Edge<maxDegree>;
 using Ends = Edge::Ends;
 
 TEST(EdgeTest, Constructor)

@@ -43,7 +43,7 @@ limitations under the License.
 #include "utils/msgr.h"
 #include "utils/random/with_boost.h"
 
-#include "structure/vertices/degrees.h"
+#include "structure/basic/vertices/degrees.h"
 
 namespace graph_mutator {
 inline namespace definitions {
@@ -55,7 +55,7 @@ inline constexpr auto zip = std::views::zip;
 using colorcodes = utils::Colorcodes;
 using szt = std::size_t;
 
-using namespace structure::vertices::degrees;
+using namespace structure::basic::vertices::degrees;
 
 template<typename T>
 concept numerically_limited = std::numeric_limits<T>::is_specialized;

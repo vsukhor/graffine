@@ -34,7 +34,7 @@ limitations under the License.
 
 #include "../../definitions.h"
 #include "../../string_ops.h"
-#include "../../structure/graph.h"
+#include "../../structure/basic/graph.h"
 #include "common.h"
 #include "core.h"
 #include "log.h"
@@ -51,7 +51,7 @@ namespace graph_mutator::vertex_merger {
 template<typename G>
 struct From<Deg1, Deg1, G> {
 
-    static_assert(std::is_base_of_v<structure::GraphBase, G>);
+    static_assert(std::is_base_of_v<structure::basic::GraphBase, G>);
 
     static constexpr auto I1 = Deg1;  ///< Degree of the 1st input vertex.
     static constexpr auto I2 = Deg1;  ///< Degree of the 2nd input vertex.

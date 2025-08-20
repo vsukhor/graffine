@@ -25,20 +25,20 @@ limitations under the License.
  * @author Valerii Sukhorukov
  */
 
-#ifndef GRAPH_MUTATOR_STRUCTURE_CHAIN_COLLECTION_H
-#define GRAPH_MUTATOR_STRUCTURE_CHAIN_COLLECTION_H
+#ifndef GRAPH_MUTATOR_STRUCTURE_BASIC_CHAIN_COLLECTION_H
+#define GRAPH_MUTATOR_STRUCTURE_BASIC_CHAIN_COLLECTION_H
 
 
 #include <string>
 
-#include "../definitions.h"
-#include "../vector_container.h"
+#include "../../definitions.h"
+#include "../../vector_container.h"
 #include "chain.h"
 #include "ends.h"
 #include "slot.h"
 
 
-namespace graph_mutator::structure {
+namespace graph_mutator::structure::basic {
 
 /**
  * @brief Implements class for managing collections of chains in the graph.
@@ -140,6 +140,6 @@ ensure(
 }
 
 
-}  // namespace graph_mutator::structure
+}  // namespace graph_mutator::structure::basic
 
-#endif  // GRAPH_MUTATOR_STRUCTURE_CHAIN_COLLECTION_H
+#endif  // GRAPH_MUTATOR_STRUCTURE_BASIC_CHAIN_COLLECTION_H

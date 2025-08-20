@@ -24,8 +24,8 @@ limitations under the License.
  * @author Valerii Sukhorukov
  */
 
-#ifndef GRAPH_MUTATOR_STRUCTURE_CHAIN_INDEXES_H
-#define GRAPH_MUTATOR_STRUCTURE_CHAIN_INDEXES_H
+#ifndef GRAPH_MUTATOR_STRUCTURE_BASIC_CHAIN_INDEXES_H
+#define GRAPH_MUTATOR_STRUCTURE_BASIC_CHAIN_INDEXES_H
 
 #include <algorithm>  // remove, ranges::sort
 #include <array>
@@ -33,11 +33,11 @@ limitations under the License.
 #include <string>
 #include <vector>
 
-#include "../definitions.h"
+#include "../../definitions.h"
 #include "chain.h"
 
 
-namespace graph_mutator::structure {
+namespace graph_mutator::structure::basic {
 
 
 /**
@@ -472,6 +472,6 @@ print(Args&&...args) const
 
 
 
-}  // namespace graph_mutator::structure
+}  // namespace graph_mutator::structure::basic
 
-#endif  // GRAPH_MUTATOR_STRUCTURE_CHAIN_INDEXES_H
+#endif  // GRAPH_MUTATOR_STRUCTURE_BASIC_CHAIN_INDEXES_H

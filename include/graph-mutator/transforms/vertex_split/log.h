@@ -37,7 +37,7 @@ limitations under the License.
 #include <vector>
 
 #include "../../definitions.h"
-#include "../../structure/graph.h"
+#include "../../structure/basic/graph.h"
 
 
 namespace graph_mutator::vertex_split {
@@ -59,7 +59,7 @@ struct Log {
         Graph& gr
     );
 
-    template<structure::slot S=EndSlot>
+    template<structure::basic::slot S=EndSlot>
     void before(
         const S& s,
         std::string&& tag={}
@@ -161,7 +161,7 @@ before(std::vector<EndSlot>&& ss)
 
 
 template<typename G>
-template<structure::slot S>
+template<structure::basic::slot S>
 void Log<G>::
 before(
     const S& s,

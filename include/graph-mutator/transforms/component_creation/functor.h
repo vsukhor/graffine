@@ -28,7 +28,7 @@ limitations under the License.
 #define GRAPH_MUTATOR_COMPONENT_CREATION_FUNCTOR_H
 
 #include "../../definitions.h"
-#include "../../structure/graph.h"
+#include "../../structure/basic/graph.h"
 
 
 namespace graph_mutator::component_creation {
@@ -41,7 +41,7 @@ namespace graph_mutator::component_creation {
 template<typename G>
 struct Functor {
 
-    static_assert(std::is_base_of_v<graph_mutator::structure::GraphBase, G>);
+    static_assert(std::is_base_of_v<structure::basic::GraphBase, G>);
 
     static constexpr const char* fullName {"component_creation"};
     static constexpr const char* shortName {"cmp_cr"};

@@ -28,8 +28,8 @@ limitations under the License.
  * @author Valerii Sukhorukov
  */
 
-#ifndef GRAPH_MUTATOR_STRUCTURE_VERTICES_VERTEX_H
-#define GRAPH_MUTATOR_STRUCTURE_VERTICES_VERTEX_H
+#ifndef GRAPH_MUTATOR_STRUCTURE_BASIC_VERTICES_VERTEX_H
+#define GRAPH_MUTATOR_STRUCTURE_BASIC_VERTICES_VERTEX_H
 
 #include <algorithm>
 #include <array>
@@ -37,11 +37,11 @@ limitations under the License.
 #include <ostream>
 #include <vector>
 
-#include "../../definitions.h"
+#include "../../../definitions.h"
 #include "degrees.h"
 
 
-namespace graph_mutator::structure::vertices {
+namespace graph_mutator::structure::basic::vertices {
 
 
 using Id = szt;
@@ -254,6 +254,6 @@ contains(const S& s) const noexcept -> bool
 }
 
 
-}  // namespace graph_mutator::structure::vertices
+}  // namespace graph_mutator::structure::basic::vertices
 
-#endif  // GRAPH_MUTATOR_STRUCTURE_VERTICES_VERTEX_H
+#endif  // GRAPH_MUTATOR_STRUCTURE_BASIC_VERTICES_VERTEX_H

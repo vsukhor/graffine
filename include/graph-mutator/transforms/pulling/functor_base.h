@@ -30,7 +30,7 @@ limitations under the License.
 #include <memory>  // unique_ptr
 
 #include "../../definitions.h"
-#include "../../structure/graph.h"
+#include "../../structure/basic/graph.h"
 #include "../edge_creation/in_existing_chain.h"
 #include "../edge_deletion/deleting_host_chain.h"
 #include "paths.h"
@@ -45,7 +45,7 @@ namespace graph_mutator::pulling {
 template<typename G>
 struct FunctorBase {
 
-    static_assert(std::is_base_of_v<graph_mutator::structure::GraphBase, G>);
+    static_assert(std::is_base_of_v<structure::basic::GraphBase, G>);
 
     using Graph = G;
     using Cmpt = Graph::Cmpt;

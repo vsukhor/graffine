@@ -1,5 +1,5 @@
-#ifndef GRAPH_MUTATOR_STRUCTURE_VERTICES_DEGREES_H
-#define GRAPH_MUTATOR_STRUCTURE_VERTICES_DEGREES_H
+#ifndef GRAPH_MUTATOR_STRUCTURE_BASIC_VERTICES_DEGREES_H
+#define GRAPH_MUTATOR_STRUCTURE_BASIC_VERTICES_DEGREES_H
 
 #include <array>
 #include <algorithm>  // for std::find
@@ -12,7 +12,7 @@
  * and categorizes degrees into bulk, leaf, junction, and end degrees.
  */
 namespace graph_mutator {
-namespace structure::vertices::degrees{
+namespace structure::basic::vertices::degrees{
 
 using Degree = unsigned int;
 
@@ -99,9 +99,9 @@ constexpr auto are_compatible_degrees =
     effective_degree<D1> + effective_degree<D2> <= maxDegree;
 
 
-}  // namespace structure::vertices::degrees
+}  // namespace structure::basic::vertices::degrees
 
 }  // namespace graph_mutator
 
 
-#endif  // GRAPH_MUTATOR_STRUCTURE_VERTICES_DEGREES_H
+#endif  // GRAPH_MUTATOR_STRUCTURE_BASIC_VERTICES_DEGREES_H

@@ -30,7 +30,7 @@ limitations under the License.
 #include <array>
 
 #include "../../definitions.h"
-#include "../../structure/graph.h"
+#include "../../structure/basic/graph.h"
 
 
 namespace graph_mutator::pulling {

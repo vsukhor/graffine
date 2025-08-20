@@ -28,8 +28,8 @@ limitations under the License.
  * @author Valerii Sukhorukov
  */
 
-#ifndef GRAPH_MUTATOR_STRUCTURE_VERTICES_ALL_H
-#define GRAPH_MUTATOR_STRUCTURE_VERTICES_ALL_H
+#ifndef GRAPH_MUTATOR_STRUCTURE_BASIC_VERTICES_ALL_H
+#define GRAPH_MUTATOR_STRUCTURE_BASIC_VERTICES_ALL_H
 
 #include <algorithm>
 #include <array>
@@ -39,13 +39,13 @@ limitations under the License.
 #include <tuple>
 #include <vector>
 
-#include "../../definitions.h"
+#include "../../../definitions.h"
 #include "collections.h"
 #include "degrees.h"
 #include "vertex.h"
 
 
-namespace graph_mutator::structure::vertices {
+namespace graph_mutator::structure::basic::vertices {
 
 /**
  * @brief The Collection of vertices classified by degree.
@@ -321,6 +321,6 @@ to_json(std::ofstream& ofs) const
 }
 
 
-}  // namespace graph_mutator::structure::vertices
+}  // namespace graph_mutator::structure::basic::vertices
 
-#endif  // GRAPH_MUTATOR_STRUCTURE_VERTICES_ALL_H
+#endif  // GRAPH_MUTATOR_STRUCTURE_BASIC_VERTICES_ALL_H

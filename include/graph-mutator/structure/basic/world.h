@@ -24,15 +24,15 @@ limitations under the License.
  * @author Valerii Sukhorukov
  */
 
-#ifndef GRAPH_MUTATOR_STRUCTURE_WORLD_H
-#define GRAPH_MUTATOR_STRUCTURE_WORLD_H
+#ifndef GRAPH_MUTATOR_STRUCTURE_BASIC_WORLD_H
+#define GRAPH_MUTATOR_STRUCTURE_BASIC_WORLD_H
 
 #include <ostream>
 #include <string>
 
-#include "../definitions.h"
+#include "../../definitions.h"
 
-namespace graph_mutator::structure {
+namespace graph_mutator::structure::basic {
 
 /**
  * @brief The Network class template.
@@ -130,6 +130,6 @@ to_json(std::ofstream& ofs) const
 }
 
 
-}  // namespace graph_mutator::structure
+}  // namespace graph_mutator::structure::basic
 
-#endif  // GRAPH_MUTATOR_STRUCTURE_WORLD_H
+#endif  // GRAPH_MUTATOR_STRUCTURE_BASIC_WORLD_H

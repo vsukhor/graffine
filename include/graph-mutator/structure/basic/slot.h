@@ -24,18 +24,18 @@ limitations under the License.
  * @author Valerii Sukhorukov
  */
 
-#ifndef GRAPH_MUTATOR_STRUCTURE_SLOT_H
-#define GRAPH_MUTATOR_STRUCTURE_SLOT_H
+#ifndef GRAPH_MUTATOR_STRUCTURE_BASIC_SLOT_H
+#define GRAPH_MUTATOR_STRUCTURE_BASIC_SLOT_H
 
 #include <array>
 #include <iostream>
 #include <string>
 
-#include "../definitions.h"
+#include "../../definitions.h"
 #include "ends.h"
 
 
-namespace graph_mutator::structure {
+namespace graph_mutator::structure::basic {
 
 /**
  * @brief Template for a slot representing a connection point in a chain.
@@ -154,6 +154,6 @@ using IndChEnd = _Slot<EgId, Ends>;
 using IndEgEnd = _Slot<EgId, Ends>;
 
 
-}  // namespace graph_mutator::structure
+}  // namespace graph_mutator::structure::basic
 
-#endif  // GRAPH_MUTATOR_STRUCTURE_SLOT_H
+#endif  // GRAPH_MUTATOR_STRUCTURE_BASIC_SLOT_H

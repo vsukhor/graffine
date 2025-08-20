@@ -24,8 +24,8 @@ limitations under the License.
  * @author Valerii Sukhorukov
  */
 
-#ifndef GRAPH_MUTATOR_STRUCTURE_PATHS_OVER_ENDSLOTS_DISTANCE_H
-#define GRAPH_MUTATOR_STRUCTURE_PATHS_OVER_ENDSLOTS_DISTANCE_H
+#ifndef GRAPH_MUTATOR_STRUCTURE_BASIC_PATHS_OVER_ENDSLOTS_DISTANCE_H
+#define GRAPH_MUTATOR_STRUCTURE_BASIC_PATHS_OVER_ENDSLOTS_DISTANCE_H
 
 #include <algorithm>  // remove, ranges::sort
 #include <array>
@@ -36,10 +36,10 @@ limitations under the License.
 #include <utility>  // pair
 #include <vector>
 
-#include "../../../definitions.h"
+#include "../../../../definitions.h"
 
 
-namespace graph_mutator::structure::paths::over_endslots {
+namespace graph_mutator::structure::basic::paths::over_endslots {
 
 
 template<typename Component>
@@ -92,6 +92,6 @@ struct Distance {
 };
 
 
-}  // namespace graph_mutator::structure::paths::over_endslots
+}  // namespace graph_mutator::structure::basic::paths::over_endslots
 
-#endif  // GRAPH_MUTATOR_STRUCTURE_PATHS_OVER_ENDSLOTS_DISTANCE_H
+#endif  // GRAPH_MUTATOR_STRUCTURE_BASIC_PATHS_OVER_ENDSLOTS_DISTANCE_H

@@ -35,7 +35,7 @@ limitations under the License.
 
 #include "../../definitions.h"
 #include "../../string_ops.h"
-#include "../../structure/graph.h"
+#include "../../structure/basic/graph.h"
 #include "log.h"
 
 

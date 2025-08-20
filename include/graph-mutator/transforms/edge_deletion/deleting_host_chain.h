@@ -29,7 +29,7 @@ limitations under the License.
 
 #include "../../definitions.h"
 #include "../../string_ops.h"
-#include "../../structure/graph.h"
+#include "../../structure/basic/graph.h"
 #include "../component_deletion/functor.h"
 #include "../vertex_split/to_1B.h"
 #include "../vertex_split/to_13.h"
@@ -57,7 +57,7 @@ struct DeletingHostChain {
 
     static_assert(is_junction_degree<D>);
 
-    static_assert(std::is_base_of_v<structure::GraphBase, G>);
+    static_assert(std::is_base_of_v<structure::basic::GraphBase, G>);
 
     using Graph = G;
     using Chain = Graph::Chain;

@@ -24,8 +24,8 @@ limitations under the License.
  * @author Valerii Sukhorukov
  */
 
-#ifndef GRAPH_MUTATOR_STRUCTURE_PATHS_OVER_ENDSLOTS_GENERIC_H
-#define GRAPH_MUTATOR_STRUCTURE_PATHS_OVER_ENDSLOTS_GENERIC_H
+#ifndef GRAPH_MUTATOR_STRUCTURE_BASIC_PATHS_OVER_ENDSLOTS_GENERIC_H
+#define GRAPH_MUTATOR_STRUCTURE_BASIC_PATHS_OVER_ENDSLOTS_GENERIC_H
 
 #include <algorithm>  // remove, ranges::sort
 #include <array>
@@ -35,13 +35,13 @@ limitations under the License.
 #include <utility>  // pair
 #include <vector>
 
-#include "../../../definitions.h"
+#include "../../../../definitions.h"
 #include "../../vertices/collections.h"
 #include "../../vertices/vertex.h"
 #include "distance.h"
 
 
-namespace graph_mutator::structure::paths::over_endslots {
+namespace graph_mutator::structure::basic::paths::over_endslots {
 
 template<typename Component>
 struct Generic {
@@ -379,6 +379,6 @@ print_path(const Path& path, Args... args) const noexcept
 }
 
 
-}  // namespace graph_mutator::structure::paths::over_endslots
+}  // namespace graph_mutator::structure::basic::paths::over_endslots
 
-#endif  // GRAPH_MUTATOR_STRUCTURE_PATHS_OVER_ENDSLOTS_GENERIC_H
+#endif  // GRAPH_MUTATOR_STRUCTURE_BASIC_PATHS_OVER_ENDSLOTS_GENERIC_H

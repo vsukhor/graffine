@@ -30,7 +30,7 @@ limitations under the License.
 
 #include "../../definitions.h"
 #include "../../string_ops.h"
-#include "../../structure/graph.h"
+#include "../../structure/basic/graph.h"
 #include "../vertex_split/to_1B.h"
 #include "../vertex_merger/from_10.h"
 #include "../vertex_merger/from_12.h"

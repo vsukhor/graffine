@@ -24,8 +24,8 @@ limitations under the License.
  * @author Valerii Sukhorukov
  */
 
-#ifndef GRAPH_MUTATOR_STRUCTURE_GRAPH_H
-#define GRAPH_MUTATOR_STRUCTURE_GRAPH_H
+#ifndef GRAPH_MUTATOR_STRUCTURE_BASIC_GRAPH_H
+#define GRAPH_MUTATOR_STRUCTURE_BASIC_GRAPH_H
 
 #include <algorithm>
 #include <array>
@@ -37,7 +37,7 @@ limitations under the License.
 #include <type_traits>
 #include <vector>
 
-#include "../definitions.h"
+#include "../../definitions.h"
 #include "paths/over_endslots/generic.h"
 #include "chain_collection.h"
 #include "chain_indexes.h"
@@ -47,7 +47,7 @@ limitations under the License.
 #include "vertices/vertex.h"
 
 
-namespace graph_mutator::structure {
+namespace graph_mutator::structure::basic {
 
 
 /**
@@ -60,7 +60,7 @@ namespace graph_mutator::structure {
 template<typename Ch>
 struct Graph {
 
-    static_assert(std::is_base_of_v<structure::ChainBase, Ch>);
+    static_assert(std::is_base_of_v<basic::ChainBase, Ch>);
 
     static constexpr bool useAgl {};
 
@@ -1299,6 +1299,6 @@ to_json(std::ofstream& ofs) const
 using GraphBase = Graph<ChainBase>;
 
 
-}  // namespace graph_mutator::structure
+}  // namespace graph_mutator::structure::basic
 
-#endif  // GRAPH_MUTATOR_STRUCTURE_GRAPH_H
+#endif  // GRAPH_MUTATOR_STRUCTURE_BASIC_GRAPH_H

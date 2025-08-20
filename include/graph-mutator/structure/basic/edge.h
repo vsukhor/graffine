@@ -24,19 +24,19 @@ limitations under the License.
  * @author Valerii Sukhorukov
  */
 
-#ifndef GRAPH_MUTATOR_STRUCTURE_EDGE_H
-#define GRAPH_MUTATOR_STRUCTURE_EDGE_H
+#ifndef GRAPH_MUTATOR_STRUCTURE_BASIC_EDGE_H
+#define GRAPH_MUTATOR_STRUCTURE_BASIC_EDGE_H
 
 #include <array>
 #include <fstream>
 #include <ostream>
 
-#include "../definitions.h"
+#include "../../definitions.h"
 #include "ends.h"
 #include "vertices/degrees.h"
 
 
-namespace graph_mutator::structure {
+namespace graph_mutator::structure::basic {
 
 template<typename> class Chain;
 
@@ -55,7 +55,7 @@ struct Edge {
     static constexpr auto maxVertexDegree = maxDegree;
 
     using Id = EgId;
-    using Ends = structure::Ends;  ///< Edge ends.
+    using Ends = basic::Ends;  ///< Edge ends.
     using EndId = Ends::Id;
     using weight_t = real;    ///< Type alias for edge weight.
 
@@ -392,6 +392,6 @@ check(const Id nInd,
 
 using EdgeBase = Edge<maxDegree>;
 
-}  // namespace graph_mutator::structure
+}  // namespace graph_mutator::structure::basic
 
-#endif  // GRAPH_MUTATOR_STRUCTURE_EDGE_H
+#endif  // GRAPH_MUTATOR_STRUCTURE_BASIC_EDGE_H

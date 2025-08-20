@@ -31,10 +31,10 @@ limitations under the License.
 #include <vector>
 
 #include "../../definitions.h"
-#include "../../structure/component.h"
-#include "../../structure/slot.h"  // for IndEgInd
-#include "../../structure/paths/over_edges/generic.h"
-#include "../../structure/paths/over_endslots/generic.h"
+#include "../../structure/basic/component.h"
+#include "../../structure/basic/slot.h"  // for IndEgInd
+#include "../../structure/basic/paths/over_edges/generic.h"
+#include "../../structure/basic/paths/over_endslots/generic.h"
 #include "common.h"
 
 
@@ -43,16 +43,16 @@ namespace graph_mutator::pulling {
 
 template<typename C>
 struct Paths
-    : public structure::paths::over_edges::Generic<C> {
+    : public structure::basic::paths::over_edges::Generic<C> {
 
     using Component = C;
     using Chain = Component::Chain;
     using EndSlot = Chain::EndSlot;
     using Ends = Chain::Ends;
     using Edge =  Component::Edge;
-    using Base = structure::paths::over_edges::Generic<Component>;
+    using Base = structure::basic::paths::over_edges::Generic<Component>;
     using Path = Base::Path;
-    using PathCh = structure::paths::over_endslots::Generic<Component>::Path;
+    using PathCh = structure::basic::paths::over_endslots::Generic<Component>::Path;
 //    using Skeleton = paths::Container<Driver>;
     using Source = EndSlot;
 
@@ -402,7 +402,7 @@ template<typename C>
 void Paths<C>::
 set_driver_end(const Ends::Id e)
 {
-    d = structure::IndEgEnd{pth[0], e};
+    d = structure::basic::IndEgEnd{pth[0], e};
 }
 
 

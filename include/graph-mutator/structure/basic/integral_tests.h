@@ -24,13 +24,13 @@ limitations under the License.
  * @author Valerii Sukhorukov.
  */
 
-#ifndef GRAPH_MUTATOR_STRUCTURE_INTEGRAL_TESTS_H
-#define GRAPH_MUTATOR_STRUCTURE_INTEGRAL_TESTS_H
+#ifndef GRAPH_MUTATOR_STRUCTURE_BASIC_INTEGRAL_TESTS_H
+#define GRAPH_MUTATOR_STRUCTURE_BASIC_INTEGRAL_TESTS_H
 
-#include "../definitions.h"
+#include "../../definitions.h"
 
 
-namespace graph_mutator::structure {
+namespace graph_mutator::structure::basic {
 
 /**
  * @brief Implements integral tests of the graph internal structure and elements.
@@ -579,6 +579,6 @@ chain_g(const itT it) const
 }
 
 
-}  // namespace graph_mutator::structure
+}  // namespace graph_mutator::structure::basic
 
-#endif  // GRAPH_MUTATOR_STRUCTURE_INTEGRAL_TESTS_H
+#endif  // GRAPH_MUTATOR_STRUCTURE_BASIC_INTEGRAL_TESTS_H

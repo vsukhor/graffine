@@ -33,7 +33,7 @@ limitations under the License.
 
 #include "../../definitions.h"
 #include "../../string_ops.h"
-#include "../../structure/graph.h"
+#include "../../structure/basic/graph.h"
 #include "common.h"
 #include "log.h"
 
@@ -50,7 +50,7 @@ namespace graph_mutator::vertex_split {
 template<typename G>
 struct To<Deg1, Deg3, G> {
 
-    static_assert(std::is_base_of_v<graph_mutator::structure::GraphBase, G>);
+    static_assert(std::is_base_of_v<structure::basic::GraphBase, G>);
     static_assert(are_compatible_degrees<Deg1, Deg3>);
 
     static constexpr auto J1 = Deg1;  ///< Degree of the 1st output vertex.

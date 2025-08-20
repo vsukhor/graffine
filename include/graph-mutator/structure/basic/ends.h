@@ -24,14 +24,14 @@ limitations under the License.
  * @author Valerii Sukhorukov
  */
 
-#ifndef GRAPH_MUTATOR_STRUCTURE_ENDS_H
-#define GRAPH_MUTATOR_STRUCTURE_ENDS_H
+#ifndef GRAPH_MUTATOR_STRUCTURE_BASIC_ENDS_H
+#define GRAPH_MUTATOR_STRUCTURE_BASIC_ENDS_H
 
 
-#include "../definitions.h"
+#include "../../definitions.h"
 
 
-namespace graph_mutator::structure {
+namespace graph_mutator::structure::basic {
 
 /**
  * @brief Represents the ends of an edge or those of a chain.
@@ -113,6 +113,6 @@ template<Ends::Id E>
 concept End = E == Ends::A || E == Ends::B;
 
 
-}  // namespace graph_mutator::structure
+}  // namespace graph_mutator::structure::basic
 
-#endif  // GRAPH_MUTATOR_STRUCTURE_ENDS_H
+#endif  // GRAPH_MUTATOR_STRUCTURE_BASIC_ENDS_H

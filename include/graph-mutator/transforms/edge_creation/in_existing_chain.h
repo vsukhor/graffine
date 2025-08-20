@@ -31,7 +31,7 @@ limitations under the License.
 
 #include "../../definitions.h"
 #include "../../string_ops.h"
-#include "../../structure/graph.h"
+#include "../../structure/basic/graph.h"
 
 namespace graph_mutator::edge_creation {
 
@@ -49,7 +49,7 @@ template<Degree D,
          typename G>
 struct InExistingChain {
 
-    static_assert(std::is_base_of_v<graph_mutator::structure::GraphBase, G>);
+    static_assert(std::is_base_of_v<structure::basic::GraphBase, G>);
     static_assert (is_implemented_degree<D>);
 
     static constexpr auto isNewChain = false;
@@ -83,7 +83,7 @@ struct InExistingChain {
      * @brief Function call operator executing the transformation.
      * @param s Slot inside the chain where the new edge is placed.
      */
-    template<typename S> requires structure::slot<S>
+    template<typename S> requires structure::basic::slot<S>
     auto operator()(const S& s) noexcept -> Res;
 
 protected:
@@ -104,7 +104,7 @@ InExistingChain(Graph& gr)
 
 template<Degree D,
          typename G>
-template<typename S> requires structure::slot<S>
+template<typename S> requires structure::basic::slot<S>
 auto InExistingChain<D, G>::
 operator()(const S& s) noexcept -> Res
 {

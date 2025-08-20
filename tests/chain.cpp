@@ -22,8 +22,8 @@ limitations under the License.
 
 #include "common.h"
 
-#include "graph-mutator/structure/chain.h"
-#include "graph-mutator/structure/edge.h"
+#include "graph-mutator/structure/basic/chain.h"
+#include "graph-mutator/structure/basic/edge.h"
 
 
 namespace graph_mutator::tests::chain {
@@ -33,9 +33,9 @@ class ChainTest
 
 protected:
 
-    using Edge = structure::Edge<maxDegree>;
+    using Edge = structure::basic::Edge<maxDegree>;
     using Ends = Edge::Ends;
-    using Chain = structure::Chain<Edge>;
+    using Chain = structure::basic::Chain<Edge>;
     using BulkSlot = Chain::BulkSlot;
     using EndSlot = Chain::EndSlot;
     using Neigs = Chain::Neigs;

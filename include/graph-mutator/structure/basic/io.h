@@ -24,18 +24,18 @@ limitations under the License.
  * @author Valerii Sukhorukov
  */
 
-#ifndef GRAPH_MUTATOR_STRUCTURE_IO_H
-#define GRAPH_MUTATOR_STRUCTURE_IO_H
+#ifndef GRAPH_MUTATOR_STRUCTURE_BASIC_IO_H
+#define GRAPH_MUTATOR_STRUCTURE_BASIC_IO_H
 
 #include <filesystem>
 #include <ostream>
 #include <string>
 
-#include "../definitions.h"
+#include "../../definitions.h"
 #include "ends.h"
 #include "graph.h"
 
-namespace graph_mutator::structure {
+namespace graph_mutator::structure::basic {
 
 /**
  * @brief Implements class template handling input-output operations.
@@ -169,6 +169,6 @@ to_json() const
     world.to_json(ofs);
 }
 
-}  // namespace graph_mutator::structure
+}  // namespace graph_mutator::structure::basic
 
-#endif  // GRAPH_MUTATOR_STRUCTURE_IO_H
+#endif  // GRAPH_MUTATOR_STRUCTURE_BASIC_IO_H

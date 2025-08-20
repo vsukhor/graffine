@@ -29,7 +29,7 @@ limitations under the License.
 
 #include "../../definitions.h"
 #include "../../string_ops.h"
-#include "../../structure/graph.h"
+#include "../../structure/basic/graph.h"
 
 
 /**
@@ -52,7 +52,7 @@ template<Degree D,
          typename G>
 struct PreservingHostChain {
 
-    static_assert(std::is_base_of_v<graph_mutator::structure::GraphBase, G>);
+    static_assert(std::is_base_of_v<structure::basic::GraphBase, G>);
     static_assert(is_implemented_degree<D>);
 
     using Graph = G;

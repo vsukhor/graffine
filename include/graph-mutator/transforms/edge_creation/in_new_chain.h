@@ -29,7 +29,7 @@ limitations under the License.
 
 #include "../../definitions.h"
 #include "../../string_ops.h"
-#include "../../structure/graph.h"
+#include "../../structure/basic/graph.h"
 #include "../component_creation/functor.h"
 #include "../vertex_merger/from_10.h"
 #include "../vertex_merger/from_11.h"
@@ -53,7 +53,7 @@ template<Degree D,
          typename G>
 struct InNewChain {
 
-    static_assert(std::is_base_of_v<graph_mutator::structure::GraphBase, G>);
+    static_assert(std::is_base_of_v<structure::basic::GraphBase, G>);
     static_assert (is_bulk_degree<D> || D == Deg3);
 
     static constexpr auto isNewChain = true;
@@ -212,7 +212,7 @@ chain_ind(const S s) const noexcept -> ChId
     if constexpr (std::is_same_v<S, ChId>)
         return s;
 
-    else if constexpr (structure::slot<S>)
+    else if constexpr (structure::basic::slot<S>)
 
         return s.w;
 

@@ -24,9 +24,9 @@ limitations under the License.
 #include <string>
 
 #include "common.h"
-#include "graph-mutator/structure/chain.h"
-#include "graph-mutator/structure/edge.h"
-#include "graph-mutator/structure/graph.h"
+#include "graph-mutator/structure/basic/chain.h"
+#include "graph-mutator/structure/basic/edge.h"
+#include "graph-mutator/structure/basic/graph.h"
 #include "graph-mutator/transforms/vertex_merger/core.h"
 
 
@@ -37,7 +37,7 @@ class VertexMergerCoreTest
 
 protected:
 
-    using Gr = structure::Graph<structure::Chain<structure::Edge<maxDegree>>>;
+    using Gr = structure::basic::Graph<structure::basic::Chain<structure::basic::Edge<maxDegree>>>;
     using Chain = Gr::Chain;
     using Edge = Chain::Edge;
     using Ends = Chain::Ends;  ///< Chain ends.

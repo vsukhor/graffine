@@ -24,20 +24,20 @@ limitations under the License.
  * @author Valerii Sukhorukov
  */
 
-#ifndef GRAPH_MUTATOR_STRUCTURE_NEIGS_H
-#define GRAPH_MUTATOR_STRUCTURE_NEIGS_H
+#ifndef GRAPH_MUTATOR_STRUCTURE_BASIC_NEIGS_H
+#define GRAPH_MUTATOR_STRUCTURE_BASIC_NEIGS_H
 
 #include <array>
 #include <iostream>
 #include <vector>
 
-#include "../definitions.h"
+#include "../../definitions.h"
 #include "ends.h"
 #include "slot.h"
 #include "vertices/vertex.h"
 
 
-namespace graph_mutator::structure {
+namespace graph_mutator::structure::basic {
 
 
 /**
@@ -259,6 +259,6 @@ private:
 
 };
 
-}  // namespace graph_mutator::structure
+}  // namespace graph_mutator::structure::basic
 
-#endif  // GRAPH_MUTATOR_STRUCTURE_NEIGS_H
+#endif  // GRAPH_MUTATOR_STRUCTURE_BASIC_NEIGS_H
