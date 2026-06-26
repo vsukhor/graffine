@@ -43,7 +43,7 @@ jobs:
         echo "CXX: ${{matrix.config.cxx}}"
 
         mkdir -p ${{github.workspace}}/build
-        mkdir -p ${{github.workspace}}/build/tests
+        mkdir -p ${{github.workspace}}/build/tests/bin
         echo =============== Update gcc ======================================
         echo gcc version before:
         gcc --version
