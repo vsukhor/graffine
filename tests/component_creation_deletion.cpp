@@ -1,6 +1,6 @@
 /* =============================================================================
 
-Copyright (c) 2021-2025 Valerii Sukhorukov <vsukhorukov@yahoo.com>
+Copyright (c) 2021-2026 Valerii Sukhorukov <vsukhorukov@yahoo.com>
 All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,67 +18,54 @@ limitations under the License.
 ================================================================================
 */
 
+#include "common.h"
+#include "graffine/definitions.h"
+#include "graffine/structure/elements/component.h"
+#include "graffine/structure/elements/graph.h"
+#include "graffine/transforms/component_creation/functor.h"
+#include "graffine/transforms/component_deletion/functor.h"
+#include "sample_graph.h"
+
 #include <array>
 #include <iostream>
-#include <string>
-
-#include "common.h"
-#include "graph-mutator/definitions.h"
-#include "graph-mutator/structure/basic/graph.h"
-#include "graph-mutator/transforms/component_creation/functor.h"
-#include "graph-mutator/transforms/component_deletion/functor.h"
-#include "graph-mutator/transforms/vertex_merger/from_11.h"
-#include "graph-mutator/transforms/vertex_merger/from_12.h"
-#include "graph-mutator/transforms/vertex_merger/from_22.h"
 
 
-namespace graph_mutator::tests::component_creation_deletion {
+namespace graffine::tests::component_creation_deletion {
 
-using namespace structure::basic;
-
-using G = Graph<Chain<Edge<maxDegree>>>;
-using Chain = G::Chain;
-using Edge = Chain::Edge;
-using Ends = Chain::Ends;
-using ESlot = Chain::EndSlot;
-using BSlot = Chain::BulkSlot;
-constexpr auto undefined = graph_mutator::undefined<szt>;
-
-template<Degree D1,
-         Degree D2,
-         typename G> requires (is_implemented_degree<D1> &&
-                               is_implemented_degree<D2>)
-struct VertexMerger
-    : public graph_mutator::vertex_merger::From<D1, D2, G> {
-
-    explicit VertexMerger(G& graph)
-        : vertex_merger::From<D1, D2, G> {graph}
-    {}
-};
-
+namespace els = structure;
+namespace trs = transforms;
+using G = els::Graph<
+          els::Component<
+          els::Chain<
+          els::Edge<
+          els::Vertex>>>>;
+using End = G::Chain::End;
+constexpr auto eA = End::A;
+constexpr auto eB = End::B;
 
 /// Subclass to make protected members accessible for testing:
 template<typename G>
 struct CreateComponent
-    : public component_creation::Functor<G> {
+    : public trs::component_creation::Functor<G> {
 
     explicit CreateComponent(G& graph)
-        : component_creation::Functor<G> {graph}
+        : trs::component_creation::Functor<G> {graph}
     {}
 };
 
 template<typename G>
 struct DeleteComponent
-    : public component_deletion::Functor<G> {
+    : public trs::component_deletion::Functor<G> {
 
     explicit DeleteComponent(G& graph)
-        : component_deletion::Functor<G> {graph}
+        : trs::component_deletion::Functor<G> {graph}
     {}
 };
 
 
 using CreateComponentTest = Test;
 using DeleteComponentTest = Test;
+
 
 // =============================================================================
 
@@ -91,159 +78,86 @@ TEST_F(CreateComponentTest, Test1)
     if constexpr (verboseT)
         print_description("creation of single-edge and multi-edge components");
 
-    constexpr std::array<EgId, 3> len {3, 1, 5};
+    constexpr std::array<size_t, 3> len {3, 1, 5};
 
-    constexpr std::array<ChId, len.size()> w {0, 1, 2};
-
-    constexpr auto eA = Ends::A;
-    constexpr auto eB = Ends::B;
+    constexpr std::array<ChIdG, len.size()> w {0, 1, 2};
 
     G gr;
 
     CreateComponent<G> create_comp {gr};  // component creating functor
 
-    for (szt i {}, s {}; i<len.size(); ++i) {
+    for (std::size_t i {}, s {}; i<len.size(); ++i) {
 
         const auto c = create_comp(len[i]);
 
         s += len[i];
 
-        ASSERT_EQ(gr.edgenum, s);
-        ASSERT_EQ(gr.chain_num(), i + 1);
-        ASSERT_EQ(gr.cmpt_num(), i + 1);
+        ASSERT_EQ(gr.num_edges(), s);
+        ASSERT_EQ(gr.num_chains(), i + 1);
+        ASSERT_EQ(gr.num_compts(), i + 1);
 
-        for (szt j {}, t{}; j<=i; ++j) {
-            ASSERT_EQ(gr.cn[w[j]].idw, w[j]);
-            ASSERT_EQ(gr.cn[w[j]].c, w[j]);
-            ASSERT_EQ(gr.cn[w[j]].length(), len[j]);
-            ASSERT_EQ(gr.cn[w[j]].g[0].ind, t);
-            ASSERT_EQ(gr.cn[w[j]].g.back().ind, t + len[j] - 1);
-            ASSERT_EQ(gr.cn[w[j]].ngs[eA].num(), 0);
-            ASSERT_EQ(gr.cn[w[j]].ngs[eB].num(), 0);
+        for (std::size_t j {}, t{}; j<=i; ++j) {
+            const auto& m = gr.chain(w[j]);
+            ASSERT_EQ(m.idw, w[j]);
+            ASSERT_EQ(m.c, w[j]());
+            ASSERT_EQ(m.length(), len[j]);
+            ASSERT_EQ(m.g[0].ind, t);
+            ASSERT_EQ(m.g.back().ind, t + len[j] - 1);
+            ASSERT_EQ(m.ngs[eA].num(), 0);
+            ASSERT_EQ(m.ngs[eB].num(), 0);
             t += len[j];
         }
 
-        ASSERT_EQ(gr.template num_vertices<1>(), 2*gr.chain_num());
-        ASSERT_EQ(gr.template num_vertices<2>(), s - gr.chain_num());
-        ASSERT_EQ(gr.template num_vertices<3>(), 0);
-        ASSERT_EQ(gr.template num_vertices<4>(), 0);
-        ASSERT_EQ(gr.glm.size(), gr.edgenum);
-        ASSERT_EQ(gr.gla.size(), gr.edgenum);
-        ASSERT_EQ(gr.chis.cn11.size(), gr.cmpt_num());
-        ASSERT_EQ(gr.chis.cn22.size(), 0);
-        ASSERT_EQ(gr.chis.cn13.size(), 0);
-        ASSERT_EQ(gr.chis.cn33.size(), 0);
-        ASSERT_EQ(gr.chis.cn14.size(), 0);
-        ASSERT_EQ(gr.chis.cn34.size(), 0);
-        ASSERT_EQ(gr.chis.cn44.size(), 0);
+        ASSERT_EQ(gr.num_vertices(Deg1), 2*gr.num_chains());
+        ASSERT_EQ(gr.num_vertices(Deg2), s - gr.num_chains());
+        ASSERT_EQ(gr.num_vertices(Deg3), 0);
+        ASSERT_EQ(gr.num_vertices(Deg4), 0);
+        ASSERT_EQ(gr.get_egl().size(), gr.num_edges());
         ASSERT_EQ(c[0], i);
 
-        for (CmpId i {}; i<gr.ct.size(); ++i) {
-            const auto& c = gr.ct[i];
+        for (CmpId i {}; i<gr.num_compts(); ++i) {
+            const auto& c = gr.compt(i);
             ASSERT_EQ(c.ind, i);
             ASSERT_EQ(c.num_chains(), 1);
-            ASSERT_EQ(c.num_edges(), gr.cn[i].length());
-            ASSERT_EQ(c.ww[0], i);
-            const auto& m = gr.cn[c.ww[0]];
+            ASSERT_EQ(c.num_edges(), gr.chain(ChIdG{i()}).length());
+            c.template check<profuse>();
+            ASSERT_EQ(c.ww[0], i());
+            const auto& m = gr.chain(c.ww[0]);
             ASSERT_EQ(m.c, c.ind);
             ASSERT_EQ(m.idc, 0);
-            for (EgId j {}; j<m.length(); ++j)
+            for (std::size_t j {}; j<m.length(); ++j)
                 ASSERT_EQ(m.g[j].c, c.ind);
-            ASSERT_EQ(c.gl.size(), c.num_edges());
-            for (EgId j {}; j<m.length(); ++j)
-                ASSERT_EQ(c.gl[j].w, m.g[j].w);
-            ASSERT_EQ(c.chis.cn11, c.ww[0]);
-            ASSERT_EQ(c.chis.cn22, graph_mutator::undefined<ChId>);
-            ASSERT_EQ(c.chis.cn33.size(), 0);
-            ASSERT_EQ(c.chis.cn44.size(), 0);
-            ASSERT_EQ(c.chis.cn13.size(), 0);
-            ASSERT_EQ(c.chis.cn14.size(), 0);
-            ASSERT_EQ(c.chis.cn34.size(), 0);
+            ASSERT_EQ(c.chis.cn_11()[0], c.ww[0]);
+            ASSERT_EQ(c.chis.num({2, 2}), 0);
+            ASSERT_EQ(c.chis.num({3, 3}), 0);
+            ASSERT_EQ(c.chis.num({4, 4}), 0);
+            ASSERT_EQ(c.chis.num({1, 3}), 0);
+            ASSERT_EQ(c.chis.num({1, 4}), 0);
+            ASSERT_EQ(c.chis.num({3, 4}), 0);
+            c.template check<profuse>();
         }
     }
 }
 
-/// Deletion of components having various topologies and sizes.
+/// Deletion of graph connected components having various topologies and sizes.
 TEST_F(DeleteComponentTest, Test1)
 {
     ++testCount;
 
     if constexpr (verboseT)
         print_description(
-            "deletion of components having various topologies and sizes"
+            "Deletion of graph connected components having various topologies ",
+            "and sizes"
         );
-    //                             w =  0  1  2  3  4  5  6  7  8  9 10 11 12 13
-    constexpr std::array<EgId, 14> len {3, 1, 3, 5, 3, 5, 7, 6, 5, 4, 2, 2, 2, 4};
+        //                             w =  0  1  2  3  4  5  6  7  8  9 10 11 12 13
+//    constexpr std::array<size_t, 14> len {3, 1, 3, 5, 3, 5, 7, 6, 5, 4, 2, 2, 2, 4};
+//    const std::array w = id_sequence<ChIdG, len.size()>();
 
-    std::array<ChId, len.size()> w;
-    std::iota(w.begin(), w.end(), 0);
+    // Create initial graph (24 chains over 11 connected components).
+    auto gr = create_sample_graph<G>();
 
-    constexpr auto eA = Ends::A;
-    constexpr auto eB = Ends::B;
-
-    G gr;
-
-    for (ChId ind {}; const auto o : len)
-        gr.add_single_chain_component(o, ind++);
-
-    // single-chain components:
-
-    // c0 : w[0] : length 3
-    // c1 : w[1] : length 1
-
-    VertexMerger<1, 2, G> merge12 {gr};
-
-    // components, each containing three linear chains, over a 3-way junction:
-
-    // c2 : w[2], w[3], w[14] : length (3, 5) -> (3, 2, 3)
-    merge12(ESlot{w[2], eB},
-            BSlot{w[3], 2});     // adds w[14]
-
-    // c4 : w[4], w[5], w[15] : length (3, 5) -> (3, 1, 4)
-    merge12(ESlot{w[4], eA},
-            BSlot{w[5], 1});     // adds w[15]
-
-   // components, each containing a linear chain and a cycle, over a 3-way junction:
-
-    // c6 : w[6], w[16] : length (7) -> (2, 5)
-    merge12(ESlot{w[6], eA},
-            BSlot{w[6], 2});     // adds w[16]
-
-    // c7 : w[7], w[17] : length (6) -> (1, 5)
-    merge12(ESlot{w[7], eB},
-            BSlot{w[7], 1});     // adds w[17]
-
-    VertexMerger<2, 2, G> merge22 {gr};
-
-   // components, each containing two linear chains and a cycle, over a 4-way junction:
-
-    // c8 : w[8], w[18], w[19] : length (5) -> (2, 1, 2)
-    merge22(BSlot{w[8], 2},
-            BSlot{w[8], 4});     // adds w[18], w[19]
-
-    //  c9 : w[9], w[20], w[21] : length (4) -> (1, 1, 2)
-    merge22(BSlot{w[9], 1},
-            BSlot{w[9], 3});     // adds w[20], w[21]
-
-   // component, containing four linear chains, over a 4-way junction:
-
-    // c10 : w[10], w[11], w[22], w[23] : length (2, 2) -> (1, 1, 1, 1)
-    merge22(BSlot{w[10], 1},
-            BSlot{w[11], 1});     // adds w[22], w[23]
-
-   // components, containing disconnected cycle chains:
-
-    VertexMerger<1, 1, G> merge11 {gr};
-
-    // c5 : w[12] : length (2) -> (2)
-    merge11(ESlot{w[12], eA},
-            ESlot{w[12], eB});
-
-    // c3: w[13] : length (4) -> (4)
-    merge11(ESlot{w[13], eA},
-            ESlot{w[13], eB});
-
-    gr.print_components("        ");
+    if constexpr (profuse)
+        gr.print_components(tagBefore);
     /* Prints:
         0 0 (len 3) ** 0 >>> ( 0 1 2 )
 
@@ -295,8 +209,10 @@ TEST_F(DeleteComponentTest, Test1)
     del(2);   // c2
     del(0);   // c0
     del(0);   // c8
-    gr.print_components("        ");
+
+    if constexpr (profuse)
+        gr.print_components(tagAfter);
 }
 
 
-}  // namespace graph_mutator::tests::component_creation_deletion
+}  // namespace graffine::tests::component_creation_deletion

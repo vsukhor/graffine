@@ -1,6 +1,8 @@
 /* =============================================================================
 
-Copyright (c) 2021-2025 Valerii Sukhorukov <vsukhorukov@yahoo.com>
+This file is part of graffine, a lightweight graph transformation library.
+
+Copyright (c) 2021-2026 Valerii Sukhorukov <vsukhorukov@yahoo.com>
 All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,82 +20,94 @@ limitations under the License.
 ================================================================================
 */
 
+#include "common.h"
+#include "graffine/structure/elements/chain.h"
+#include "graffine/structure/elements/component.h"
+#include "graffine/structure/elements/edge.h"
+#include "graffine/structure/elements/graph.h"
+#include "graffine/structure/vertices/collection.h"
+#include "graffine/structure/elements/vertex.h"
+#include "graffine/transforms/vertex_merger/from_11.h"
+#include "graffine/transforms/vertex_merger/from_12.h"
+#include "graffine/transforms/vertex_merger/from_22.h"
+
 #include <array>
 #include <string>
 
-#include "common.h"
-#include "graph-mutator/structure/basic/chain.h"
-#include "graph-mutator/structure/basic/edge.h"
-#include "graph-mutator/structure/basic/graph.h"
-#include "graph-mutator/structure/basic/vertices/all.h"
-#include "graph-mutator/structure/basic/vertices/collections.h"
-#include "graph-mutator/structure/basic/vertices/vertex.h"
-#include "graph-mutator/transforms/vertex_merger/from_11.h"
-#include "graph-mutator/transforms/vertex_merger/from_12.h"
-#include "graph-mutator/transforms/vertex_merger/from_22.h"
+namespace graffine::tests::vertices {
 
+using namespace graffine::structure::vertices;
 
-namespace graph_mutator::tests::vertices {
+namespace elements = structure;
 
-using namespace graph_mutator::structure::basic::vertices;
-
-using G = structure::basic::Graph<structure::basic::Chain<structure::basic::Edge<maxDegree>>>;
+using G = elements::Graph<
+          elements::Component<
+          elements::Chain<
+          elements::Edge<elements::Vertex>>>>;
 using Chain = G::Chain;
 using Edge = Chain::Edge;
-using Ends = Chain::Ends;
+using End = Chain::End;
 using ESlot = Chain::EndSlot;
 using BSlot = Chain::BulkSlot;
-
+using ChSlot = Vertex::ChSlot;
 
 /// Subclass to make protected members accessible for testing:
-template<unsigned D1,
-         unsigned D2,
+template<Degree D1,
+         Degree D2,
          typename G>
 struct VertexMerger
-    : public graph_mutator::vertex_merger::From<D1, D2, G> {
+    : public graffine::transforms::vertex_merger::From<D1, D2, G> {
 
     explicit VertexMerger(G& graph)
-        : graph_mutator::vertex_merger::From<D1, D2, G> {graph}
+        : graffine::transforms::vertex_merger::From<D1, D2, G> {graph}
     {}
 };
 
 
-using VerticesTest = Test;
+using Vertices = Test;
 
 // =============================================================================
 
 
-/// Tests boundary vertices of disconnected cycle chains
-TEST_F(VerticesTest, Degree0)
+/// Tests boundary vertices of unconnected cycle chains.
+TEST_F(Vertices, TypeC)
 {
     ++testCount;
 
     if constexpr (verboseT)
-        print_description("Tests boundary vertices of disconnected cycle chains");
+        print_description(
+            "Tests boundary vertices of unconnected cycle chains"
+        );
 
     constexpr std::array<EgId, 2> len {3, 3};
 
     constexpr ChId w0 {};
     constexpr ChId w1 {1};
 
-    constexpr auto eA = Ends::A;
-    constexpr auto eB = Ends::B;
+    constexpr auto eA = End::A;
+    constexpr auto eB = End::B;
 
     G gr;
 
     for (const auto o : len)
         gr.add_single_chain_component(o);
 
-    // create two disconnected cycle chains:
+    // create two unconnected cycle chains:
     VertexMerger<1, 1, G> merge {gr};
     merge(ESlot{w0, eA}, ESlot{w0, eB});
     merge(ESlot{w1, eA}, ESlot{w1, eB});
 
-    using V = Vertex<0, ESlot>;
+    using V = Vertex;
 
-    V v0 {0, {ESlot{w0, eA}, ESlot{w0, eB}}};
-    V v1 {1, {ESlot{w0, eB}, ESlot{w0, eA}}};
-    V v2 {2, {ESlot{w1, eB}, ESlot{w1, eA}}};
+    V v0 {Type::CYCLE_BOUNDARY, 0, CmpId::undefined, {{w0, eA}, {w0, eB}}, {}};
+    V v1 {Type::CYCLE_BOUNDARY, 1, CmpId::undefined, {{w0, eB}, {w0, eA}}};
+    V v2 {Type::CYCLE_BOUNDARY, 2, CmpId::undefined, {{w1, eB}, {w1, eA}}};
+
+    if constexpr (profuse) {
+        v0.print();
+        v1.print();
+        v2.print();
+    }
 
     ASSERT_TRUE(v0 == v1);
     ASSERT_TRUE(v1 == v1);
@@ -102,32 +116,34 @@ TEST_F(VerticesTest, Degree0)
 }
 
 
-/// Tests boundary vertices of disconnected linear chains
-TEST_F(VerticesTest, Degree1)
+/// Tests boundary vertices of unconnected linear chains.
+TEST_F(Vertices, TypeL)
 {
     ++testCount;
 
     if constexpr (verboseT)
-        print_description("Tests boundary vertices of disconnected linear chains");
+        print_description(
+            "Tests boundary vertices of unconnected linear chains"
+        );
 
     constexpr std::array<EgId, 2> len {3, 3};
 
     constexpr ChId w0 {};
     constexpr ChId w1 {1};
 
-    constexpr auto eA = Ends::A;
-    constexpr auto eB = Ends::B;
+    constexpr auto eA = End::A;
+    constexpr auto eB = End::B;
 
     G gr;
 
     for (const auto o : len)
         gr.add_single_chain_component(o);
 
-    using V = Vertex<1, ESlot>;
+    using V = Vertex;
 
-    V v0 {0, {ESlot{w0, eA}}};
-    V v1 {1, {ESlot{w0, eB}}};
-    V v2 {2, {ESlot{w1, eB}}};
+    V v0 {Type::LEAF, 0, {{w0, eA}}};
+    V v1 {Type::LEAF, 1, {{w0, eB}}};
+    V v2 {Type::LEAF, 2, {{w1, eB}}};
 
     ASSERT_TRUE(v0 == v0);
     ASSERT_TRUE(v0 != v1);
@@ -137,8 +153,8 @@ TEST_F(VerticesTest, Degree1)
 }
 
 
-/// Tests internal chain vertices
-TEST_F(VerticesTest, Degree2)
+/// Tests internal chain vertices.
+TEST_F(Vertices, TypeB)
 {
     ++testCount;
 
@@ -155,12 +171,12 @@ TEST_F(VerticesTest, Degree2)
     for (const auto o : len)
         gr.add_single_chain_component(o);
 
-    using V = Vertex<2, BSlot>;
+    using V = Vertex;
 
-    V v0 {0, {BSlot{w0, 0}, BSlot{w0, 1}}};
-    V v1 {1, {BSlot{w0, 1}, BSlot{w0, 0}}};
-    V v2 {2, {BSlot{w0, 1}, BSlot{w0, 2}}};
-    V v3 {3, {BSlot{w1, 0}, BSlot{w1, 1}}};
+    V v0 {Type::BULK, 0, {{w0, 0}, {w0, 1}}};
+    V v1 {Type::BULK, 1, {{w0, 1}, {w0, 0}}};
+    V v2 {Type::BULK, 2, {{w0, 1}, {w0, 2}}};
+    V v3 {Type::BULK, 3, {{w1, 0}, {w1, 1}}};
 
     ASSERT_TRUE(v0 == v1);
     ASSERT_TRUE(v1 == v1);
@@ -171,17 +187,17 @@ TEST_F(VerticesTest, Degree2)
 }
 
 
-/// Tests degree 3 vertex class.
-TEST_F(VerticesTest, Degree3)
+/// Tests three-way junction vertices.
+TEST_F(Vertices, TypeY)
 {
     ++testCount;
 
     if constexpr (verboseT)
-        print_description("Tests degree 3 vertex class");
+        print_description("Tests three-way junction vertices");
 
     constexpr std::array<EgId, 4> len {2, 3, 2, 3};
 
-    constexpr ChId w0 {};
+    constexpr ChId w0 {0};
     constexpr ChId w1 {1};
     constexpr ChId w2 {2};
     constexpr ChId w3 {3};
@@ -191,29 +207,29 @@ TEST_F(VerticesTest, Degree3)
     constexpr EgId a1 {2};
     constexpr EgId a2 {1};
 
-    constexpr auto eA = Ends::A;
-    constexpr auto eB = Ends::B;
+    constexpr auto eA = End::A;
+    constexpr auto eB = End::B;
 
     G gr;
 
     for (const auto o : len)
         gr.add_single_chain_component(o);
 
-    // create two disconnected cycle chains:
+    // create two unconnected cycle chains:
     VertexMerger<1, 2, G> merge {gr};
     merge(ESlot{w0, eB}, BSlot{w1, a1});  // produces w4
     merge(ESlot{w2, eA}, BSlot{w3, a2});  // produces w5
 
-    using V = Vertex<3, ESlot>;
+    using V = Vertex;
 
-    V v0 {0, {ESlot{w0, eB}, ESlot{w1, eB}, ESlot{w4, eA}}};
-    V v1 {1, {ESlot{w1, eB}, ESlot{w0, eB}, ESlot{w4, eA}}};
-    V v2 {2, {ESlot{w1, eB}, ESlot{w4, eA}, ESlot{w0, eB}}};
-    V v3 {3, {ESlot{w0, eB}, ESlot{w4, eA}, ESlot{w1, eB}}};
-    V u0 {4, {ESlot{w2, eB}, ESlot{w3, eB}, ESlot{w5, eA}}};
-    V u1 {5, {ESlot{w3, eB}, ESlot{w2, eB}, ESlot{w5, eA}}};
-    V u2 {6, {ESlot{w3, eB}, ESlot{w5, eA}, ESlot{w2, eB}}};
-    V u3 {7, {ESlot{w2, eB}, ESlot{w5, eA}, ESlot{w3, eB}}};
+    V v0 {Type::JUNCTION3, 0, {{w0, eB}, {w1, eB}, {w4, eA}}};
+    V v1 {Type::JUNCTION3, 1, {{w1, eB}, {w0, eB}, {w4, eA}}};
+    V v2 {Type::JUNCTION3, 2, {{w1, eB}, {w4, eA}, {w0, eB}}};
+    V v3 {Type::JUNCTION3, 3, {{w0, eB}, {w4, eA}, {w1, eB}}};
+    V u0 {Type::JUNCTION3, 4, {{w2, eB}, {w3, eB}, {w5, eA}}};
+    V u1 {Type::JUNCTION3, 5, {{w3, eB}, {w2, eB}, {w5, eA}}};
+    V u2 {Type::JUNCTION3, 6, {{w3, eB}, {w5, eA}, {w2, eB}}};
+    V u3 {Type::JUNCTION3, 7, {{w2, eB}, {w5, eA}, {w3, eB}}};
 
     ASSERT_TRUE(v0 == v1);
     ASSERT_TRUE(v1 == v1);
@@ -238,7 +254,7 @@ TEST_F(VerticesTest, Degree3)
 
 
 /// Tests degree-specific vertex collections.
-TEST_F(VerticesTest, CollectionsDeg)
+TEST_F(Vertices, CollectionsDeg)
 {
     ++testCount;
 
@@ -247,7 +263,7 @@ TEST_F(VerticesTest, CollectionsDeg)
 
     constexpr std::array<EgId, 6> len {2, 4, 6, 3, 3, 3};
 
-    constexpr ChId w0 {};
+    constexpr ChId w0 {0};
     constexpr ChId w1 {1};
     constexpr ChId w2 {2};
     constexpr ChId w3 {3};
@@ -258,8 +274,8 @@ TEST_F(VerticesTest, CollectionsDeg)
     constexpr EgId a2 {2};
     constexpr EgId a3 {4};
 
-    constexpr auto eA = Ends::A;
-    constexpr auto eB = Ends::B;
+    constexpr auto eA = End::A;
+    constexpr auto eB = End::B;
 
     G gr;
 
@@ -276,7 +292,7 @@ TEST_F(VerticesTest, CollectionsDeg)
     merge_12(ESlot{w3, eB}, BSlot{w4, a1});  // produces 10
 
     VertexMerger<1, 1, G> merge_11 {gr};
-    merge_11(ESlot{w5, eA}, ESlot{w5, eB});  // produces a disconnected cycle
+    merge_11(ESlot{w5, eA}, ESlot{w5, eB});  // produces an unconnected cycle
 
     gr.print_chains("");
 
@@ -294,85 +310,81 @@ TEST_F(VerticesTest, CollectionsDeg)
     10 (len 2) { 3 B }{ 4 B }** 3 >> ( 16 17 )
     */
 
-    Collection<0, G> q0 {gr};
-    Collection<1, G> q1 {gr};
-    Collection<2, G> q2 {gr};
-    Collection<3, G> q3 {gr};
-    Collection<4, G> q4 {gr};
+    //Collection<G> qc {&gr};
+//    Collection<G> q1 {&gr};
+//    Collection<G> q2 {&gr};
+//    Collection<G> q3 {&gr};
+//    Collection<4, G> q4 {&gr};
 
-    Id ind {};
-    q0.populate(ind);
-    q1.populate(ind);
-    q2.populate(ind);
-    q3.populate(ind);
-    q4.populate(ind);
+//    auto& all = gr.verticesAll;
 
-    print<0>(q0, "q0 ");
+//    all.populate();
+    gr.print_vertices_deg(0, "q0 ");
     /* prints:
-    q0  Vertex d  0   ind:  0  ars:  {  5 A  } {  5 B  }
+    q0  Vertex d  0   ind:  0  chSs:  {  5 A  } {  5 B  }
     */
 
-    ASSERT_EQ(q0.num(), 1);
+//    ASSERT_EQ(gr.num_vertices<0>(), 1);
 
-    print<1>(q1, "q1 ");
+    gr.print_vertices_deg(1, "q1 ");
     /* prints:
-    q1  Vertex d  1   ind:  1  ars:  {  3 A  }
-    q1  Vertex d  1   ind:  2  ars:  {  4 A  }
-    q1  Vertex d  1   ind:  3  ars:  {  10 B  }
-    q1  Vertex d  1   ind:  4  ars:  {  0 A  }
-    q1  Vertex d  1   ind:  5  ars:  {  1 A  }
-    q1  Vertex d  1   ind:  6  ars:  {  2 A  }
-    q1  Vertex d  1   ind:  7  ars:  {  6 B  }
-    q1  Vertex d  1   ind:  8  ars:  {  7 B  }
-    q1  Vertex d  1   ind:  9  ars:  {  8 B  }
+    q1  Vertex d  1   ind:  1  chSs:  {  3 A  }
+    q1  Vertex d  1   ind:  2  chSs:  {  4 A  }
+    q1  Vertex d  1   ind:  3  chSs:  {  10 B  }
+    q1  Vertex d  1   ind:  4  chSs:  {  0 A  }
+    q1  Vertex d  1   ind:  5  chSs:  {  1 A  }
+    q1  Vertex d  1   ind:  6  chSs:  {  2 A  }
+    q1  Vertex d  1   ind:  7  chSs:  {  6 B  }
+    q1  Vertex d  1   ind:  8  chSs:  {  7 B  }
+    q1  Vertex d  1   ind:  9  chSs:  {  8 B  }
     */
 
-    ASSERT_EQ(q1.num(), 9);
+    ASSERT_EQ(gr.num_vertices<1>(), 9);
 
-    print<2>(q2, "q2 ");
+    gr.print_vertices_deg(2, "q1 ");
     /* prints:
-    q2  Vertex d  2   ind:  10  ars:  {  1 0  } {  1 1  }
-    q2  Vertex d  2   ind:  11  ars:  {  2 0  } {  2 1  }
-    q2  Vertex d  2   ind:  12  ars:  {  3 0  } {  3 1  }
-    q2  Vertex d  2   ind:  13  ars:  {  3 1  } {  3 2  }
-    q2  Vertex d  2   ind:  14  ars:  {  5 0  } {  5 1  }
-    q2  Vertex d  2   ind:  15  ars:  {  5 1  } {  5 2  }
-    q2  Vertex d  2   ind:  16  ars:  {  7 0  } {  7 1  }
-    q2  Vertex d  2   ind:  17  ars:  {  8 0  } {  8 1  }
-    q2  Vertex d  2   ind:  18  ars:  {  9 0  } {  9 1  }
-    q2  Vertex d  2   ind:  19  ars:  {  10 0  } {  10 1  }
+    q2  Vertex d  2   ind:  10  chSs:  {  1 0  } {  1 1  }
+    q2  Vertex d  2   ind:  11  chSs:  {  2 0  } {  2 1  }
+    q2  Vertex d  2   ind:  12  chSs:  {  3 0  } {  3 1  }
+    q2  Vertex d  2   ind:  13  chSs:  {  3 1  } {  3 2  }
+    q2  Vertex d  2   ind:  14  chSs:  {  5 0  } {  5 1  }
+    q2  Vertex d  2   ind:  15  chSs:  {  5 1  } {  5 2  }
+    q2  Vertex d  2   ind:  16  chSs:  {  7 0  } {  7 1  }
+    q2  Vertex d  2   ind:  17  chSs:  {  8 0  } {  8 1  }
+    q2  Vertex d  2   ind:  18  chSs:  {  9 0  } {  9 1  }
+    q2  Vertex d  2   ind:  19  chSs:  {  10 0  } {  10 1  }
     */
 
-    ASSERT_EQ(q2.num(), 10);
+    ASSERT_EQ(gr.num_vertices<2>(), 10);
 
-    print<3>(q3, "q3 ");
+//    all.template print_degree<3>("q3 ");
+    gr.print_vertices_deg(3, "q3 ");
     /* prints:
-    q3  Vertex d  3   ind:  20  ars:  {  3 B  } {  4 B  } {  10 A  }
+    q3  Vegr.allVerticesrtex d  3   ind:  20  chSs:  {  3 B  } {  4 B  } {  10 A  }
     */
 
-    ASSERT_EQ(q3.num(), 1);
+    ASSERT_EQ(gr.num_vertices<3>(), 1);
 
-    print<4>(q4, "q4 ");
+//    all.template print_degree<4>("q4 ");
+    gr.print_vertices_deg(4, "q4 ");
     /* prints:
-    q4  Vertex d  4   ind:  21  ars:  {  9 A  } {  2 B  } {  9 B  } {  8 A  }
-    q4  Vertex d  4   ind:  22  ars:  {  0 B  } {  1 B  } {  6 A  } {  7 A  }
+    q4  Vertex d  4   ind:  21  chSs:  {  9 A  } {  2 B  } {  9 B  } {  8 A  }
+    q4  Vertex d  4   ind:  22  chSs:  {  0 B  } {  1 B  } {  6 A  } {  7 A  }
     */
 
-    ASSERT_EQ(q4.num(), 2);
+    ASSERT_EQ(gr.num_vertices<4>(), 2);
 
-    const auto q4_c2 = for_compartment<4>(2, q4);
-
-    print<4>(q4_c2, "q4_c2 ");
+    gr.compts(2).vertices.print_degree(4, "q4_c2 ");
     /* prints:
-    q4_c2  Vertex d  4   ind:  21  ars:  {  9 A  } {  2 B  } {  9 B  } {  8 A  }
+    q4_c2  Vertex d  4   ind:  21  chSs:  {  9 A  } {  2 B  } {  9 B  } {  8 A  }
     */
 
-    ASSERT_EQ(q4_c2.num(), 1);
+    ASSERT_EQ(gr.compts(2).vertices.num(4), 1);
 }
 
 
 /// Tests collection of all vertices.
-TEST_F(VerticesTest, CollectionAll)
+TEST_F(Vertices, CollectionAll)
 {
     ++testCount;
 
@@ -392,8 +404,8 @@ TEST_F(VerticesTest, CollectionAll)
     constexpr EgId a2 {2};
     constexpr EgId a3 {4};
 
-    constexpr auto eA = Ends::A;
-    constexpr auto eB = Ends::B;
+    constexpr auto eA = End::A;
+    constexpr auto eB = End::B;
 
     G gr;
 
@@ -410,7 +422,7 @@ TEST_F(VerticesTest, CollectionAll)
     merge_12(ESlot{w3, eB}, BSlot{w4, a1});  // produces 10
 
     VertexMerger<1, 1, G> merge_11 {gr};
-    merge_11(ESlot{w5, eA}, ESlot{w5, eB});  // produces a disconnected cycle
+    merge_11(ESlot{w5, eA}, ESlot{w5, eB});  // produces an unconnected cycle
 
     gr.print_chains("");
 
@@ -428,53 +440,52 @@ TEST_F(VerticesTest, CollectionAll)
     10 (len 2) { 3 B }{ 4 B }** 3 >> ( 16 17 )
     */
 
-    All<G> all {gr};
+//    auto& all = gr.verticesAll;
 
-    all.create();
+//    all.populate();
 
-    all.print("all ");
+    gr.print_vertices("all ");
     /* prints:
-    Vertex d  0   ind:  0  ars:  {  5 A  } {  5 B  }
-    Vertex d  1   ind:  1  ars:  {  3 A  }
-    Vertex d  1   ind:  2  ars:  {  4 A  }
-    Vertex d  1   ind:  3  ars:  {  10 B  }
-    Vertex d  1   ind:  4  ars:  {  0 A  }
-    Vertex d  1   ind:  5  ars:  {  1 A  }
-    Vertex d  1   ind:  6  ars:  {  2 A  }
-    Vertex d  1   ind:  7  ars:  {  6 B  }
-    Vertex d  1   ind:  8  ars:  {  7 B  }
-    Vertex d  1   ind:  9  ars:  {  8 B  }
-    Vertex d  2   ind:  10  ars:  {  1 0  } {  1 1  }
-    Vertex d  2   ind:  11  ars:  {  2 0  } {  2 1  }
-    Vertex d  2   ind:  12  ars:  {  3 0  } {  3 1  }
-    Vertex d  2   ind:  13  ars:  {  3 1  } {  3 2  }
-    Vertex d  2   ind:  14  ars:  {  5 0  } {  5 1  }
-    Vertex d  2   ind:  15  ars:  {  5 1  } {  5 2  }
-    Vertex d  2   ind:  16  ars:  {  7 0  } {  7 1  }
-    Vertex d  2   ind:  17  ars:  {  8 0  } {  8 1  }
-    Vertex d  2   ind:  18  ars:  {  9 0  } {  9 1  }
-    Vertex d  2   ind:  19  ars:  {  10 0  } {  10 1  }
-    Vertex d  3   ind:  20  ars:  {  3 B  } {  4 B  } {  10 A  }
-    Vertex d  4   ind:  21  ars:  {  9 A  } {  2 B  } {  9 B  } {  8 A  }
-    Vertex d  4   ind:  22  ars:  {  0 B  } {  1 B  } {  6 A  } {  7 A  }
+    Vertex d  0   ind:  0  chSs:  {  5 A  } {  5 B  }
+    Vertex d  1   ind:  1  chSs:  {  3 A  }
+    Vertex d  1   ind:  2  chSs:  {  4 A  }
+    Vertex d  1   ind:  3  chSs:  {  10 B  }
+    Vertex d  1   ind:  4  chSs:  {  0 A  }
+    Vertex d  1   ind:  5  chSs:  {  1 A  }
+    Vertex d  1   ind:  6  chSs:  {  2 A  }
+    Vertex d  1   ind:  7  chSs:  {  6 B  }
+    Vertex d  1   ind:  8  chSs:  {  7 B  }
+    Vertex d  1   ind:  9  chSs:  {  8 B  }
+    Vertex d  2   ind:  10  chSs:  {  1 0  } {  1 1  }
+    Vertex d  2   ind:  11  chSs:  {  2 0  } {  2 1  }
+    Vertex d  2   ind:  12  chSs:  {  3 0  } {  3 1  }
+    Vertex d  2   ind:  13  chSs:  {  3 1  } {  3 2  }
+    Vertex d  2   ind:  14  chSs:  {  5 0  } {  5 1  }
+    Vertex d  2   ind:  15  chSs:  {  5 1  } {  5 2  }
+    Vertex d  2   ind:  16  chSs:  {  7 0  } {  7 1  }
+    Vertex d  2   ind:  17  chSs:  {  8 0  } {  8 1  }
+    Vertex d  2   ind:  18  chSs:  {  9 0  } {  9 1  }
+    Vertex d  2   ind:  19  chSs:  {  10 0  } {  10 1  }
+    Vertex d  3   ind:  20  chSs:  {  3 B  } {  4 B  } {  10 A  }
+    Vertex d  4   ind:  21  chSs:  {  9 A  } {  2 B  } {  9 B  } {  8 A  }
+    Vertex d  4   ind:  22  chSs:  {  0 B  } {  1 B  } {  6 A  } {  7 A  }
     */
 
-    ASSERT_EQ(all.num(), 23);
-    ASSERT_EQ(all.template num<0>(), 1);
-    ASSERT_EQ(all.template num<1>(), 9);
-    ASSERT_EQ(all.template num<2>(), 10);
-    ASSERT_EQ(all.template num<3>(), 1);
-    ASSERT_EQ(all.template num<4>(), 2);
+    ASSERT_EQ(gr.num_vertices(), 23);
+    ASSERT_EQ(gr.num_vertices<1>(), 9);
+    ASSERT_EQ(gr.num_vertices<2>(), 11);
+    ASSERT_EQ(gr.num_vertices<3>(), 1);
+    ASSERT_EQ(gr.num_vertices<4>(), 2);
 
-    const auto all_c3_d3 = all.template for_compartment<3>(3);
+    const auto& all_c3 = gr.ct[3].vertices;
 
-    print<3>(all_c3_d3, "all_c3_d3 ");
+    all_c3.print_degree(3, "all_c3_d3");
     /* prints:
-    all_c3_d3  Vertex d  3   ind:  20  ars:  {  3 B  } {  4 B  } {  10 A  }
+    all_c3_d3  Vertex d  3   ind:  20  chSs:  {  3 B  } {  4 B  } {  10 A  }
     */
 
-    ASSERT_EQ(all_c3_d3.num(), 1);
+    ASSERT_EQ(all_c3.num(3), 1);
 }
 
 
-}  // namespace graph_mutator::tests::vertices
+}  // namespace graffine::tests::vertices

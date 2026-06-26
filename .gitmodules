@@ -1,3 +1,0 @@
-[submodule "external/utils"]
-	path = external/utils
-	url = git@github.com:vsukhor/utils.git

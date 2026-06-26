@@ -1,18 +1,23 @@
 cmake_minimum_required(VERSION 3.28)
 
-project(graph_mutator
-    VERSION 0.31.0
-    DESCRIPTION "Graph Elementary Transformations"
+project(graffine
+    VERSION 1.84.0
+    DESCRIPTION "Elementary Transformations on Graphs"
     LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-add_compile_options(-ggdb3 -Wall) #(-O3 -msse4 -Wall)
+add_compile_options("-std=c++23" "-Wall" "-Wextra" "-fexceptions")
+if(CMAKE_BUILD_TYPE==Debug)
+    add_compile_options("-O0;-g3;-ggdb")
+elseif(CMAKE_BUILD_TYPE==Release)
+    add_compile_options("-O3; -march=native")
+endif()
 
 if(POLICY CMP0135)
-        cmake_policy(SET CMP0135 NEW)
-        set(CMAKE_POLICY_DEFAULT_CMP0135 NEW)
+    cmake_policy(SET CMP0135 NEW)
+    set(CMAKE_POLICY_DEFAULT_CMP0135 NEW)
 endif()
+
+message("CXX Compiler: " ${CMAKE_CXX_COMPILER_ID} " " ${CMAKE_CXX_COMPILER_VERSION})
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 
@@ -20,24 +25,30 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     set(CMAKE_CXX_EXTENSIONS OFF)
     set(CMAKE_VERBOSE_MAKEFILE OFF)
 
+    # Add the cmake folder so the FindSphinx module is found
+    set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+
     # Let's nicely support folders in IDE's
     set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-   option(BUILD_DOC "Build documentation" ON)
-    if(BUILD_DOC)
-#        add_subdirectory(docs)
+    option(BUILD_DOCS "Build documentation" OFF)
+    if(BUILD_DOCS)
+        add_subdirectory(docs)
     endif()
+
 endif()
 
-# The source code is here
-include_directories(graph_mutator_lib PUBLIC
-                    include
-                    external/utils)
-
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+
     option(BUILD_TESTS "Build test files" ON)
     if(BUILD_TESTS)
         enable_testing()
         add_subdirectory(tests)
     endif()
+
+    option(BUILD_EXAMPLES "Build examples illustrating basic library usage" ON)
+    if(BUILD_EXAMPLES)
+        add_subdirectory(examples)
+    endif()
+
 endif()

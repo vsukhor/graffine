@@ -1,6 +1,6 @@
 /* =============================================================================
 
-Copyright (c) 2021-2025 Valerii Sukhorukov <vsukhorukov@yahoo.com>
+Copyright (c) 2021-2026 Valerii Sukhorukov <vsukhorukov@yahoo.com>
 All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,9 +26,10 @@ limitations under the License.
 #include "pulling.h"
 
 
-namespace graph_mutator::tests::pulling::d1 {
+namespace graffine::tests::pulling::d1 {
 
 using Pull_1 = Test;
+using PullForw = Pulling<1, Orientation::Forwards, G>;
 
 // =============================================================================
 // ===== Single Chain ==========================================================
@@ -36,8 +37,9 @@ using Pull_1 = Test;
 
 
 /// Tests pulling degree 1 of a compartment consisting of a single linear chain.
-/// The chain is driven at its end A. This is a trivial case of a standalone
-/// chain where no change is induced.
+/// The chain is driven at its end A.
+/// This is a trivial case of a standalone chain where no topological change
+/// is induced.
 TEST_F(Pull_1, SingleLinChain_DrA)
 {
     ++testCount;
@@ -45,62 +47,78 @@ TEST_F(Pull_1, SingleLinChain_DrA)
     if constexpr (verboseT)
         print_description(
             "Tests pulling degree 1 of a compartment consisting of a single ",
-            "linear chain.\nThe chain is driven at its end A. \nThis is a ",
-            "trivial case of a standalone chain where no change is induced."
+            "linear chain\n",
+            "The chain is driven at its end A\n",
+            "This is a trivial case of a standalone chain where no topological ",
+            "transformation is induced"
         );
 
     // Create initial graph.
 
-    constexpr EgId len {5};
-    constexpr ChId w {0};
+    constexpr std::size_t len {5};
+    constexpr ChIdG w {0};
 
     G gr;
     gr.add_single_chain_component(len);
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
 
-    const Driver drv {&gr.cn[w].tail(), eA};
+    const Driver drv {&gr.chain(w).tail(), eA};
     constexpr Source src {w, eB};
-    Path pp {&gr.ct[gr.cn[w].c], drv, src};
+    Path pp {&gr.compt(w), drv, src};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto num_edges = gr.compt(ic).num_edges();
+    const auto num_chains = gr.compt(ic).num_chains();
+    const auto num_vertices = gr.compt(ic).num_vertices();
+    const auto cnw = gr.chain(w); // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 1);
+    ASSERT_EQ(pp.driver_chid(), w);
+    ASSERT_EQ(pp.driver_chain_end(), eA);
+    ASSERT_EQ(pp.source_chid(), w);
+    ASSERT_EQ(pp.source_end(), eB);
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
     constexpr int n {2};
     pu1f(pp, n);
 
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    ASSERT_EQ(gr.cn[w], gr0.cn[w]);
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains());
-    ASSERT_EQ(gr.ct[ic].num_vertices(), gr0.ct[ic].num_vertices());
-    ASSERT_EQ(gr.cn[w].length(), len);
-    for(EgId i {}; const auto& h : gr.ct[ic].gl) {
-        ASSERT_EQ(gr.cn[h.w].g[h.a].w, h.w);
-        ASSERT_EQ(gr.cn[h.w].g[h.a].indw, h.a);
-        ASSERT_EQ(gr.cn[h.w].g[h.a].ind, h.i);
-        ASSERT_EQ(gr.cn[h.w].g[h.a].c, ic);
-        ASSERT_EQ(gr.cn[h.w].g[h.a].indc, i++);
-    }
-    ASSERT_EQ(gr.cn[w].ngs[eA].num(), 0);
-    ASSERT_EQ(gr.cn[w].ngs[eB].num(), 0);
+    const auto& m = gr.chain(w);
+    ASSERT_EQ(m, cnw);
+    ASSERT_EQ(m.length(), len);
+    ASSERT_EQ(m.ngs[eA].num(), 0);
+    ASSERT_EQ(m.ngs[eB].num(), 0);
 
-}  //  end SingleLinChain_DrA
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains);
+    ASSERT_EQ(c.num_vertices(), num_vertices);
+    ASSERT_FALSE(c.template check<profuse>());
+
+}  // SingleLinChain_DrAEgId len
 
 
 /// Tests pulling degree 1 of a compartment consisting of a single linear chain.
 /// The path is driven at the chain end B.
-/// This is a trivial case of a standalone chain where no change is induced.
+/// This is a trivial case of a standalone chain where no topological change
+/// is induced.
 TEST_F(Pull_1, SingleLinChain_DrB)
 {
     ++testCount;
@@ -108,57 +126,73 @@ TEST_F(Pull_1, SingleLinChain_DrB)
     if constexpr (verboseT)
         print_description(
             "Tests pulling degree 1 of a compartment consisting of a single ",
-            "linear chain. \nThe path is driven at chain end B. \nThis is ",
-            "a trivial case of a standalone chain where no change is induced."
+            "linear chain\n",
+            "The path is driven at chain end B\n",
+            "This is a trivial case of a standalone chain where no topological ",
+            "transformation is induced"
         );
 
     // Create initial graph.
 
-    constexpr EgId len {5};
-    constexpr ChId w {0};
+    constexpr std::size_t len {5};
+    constexpr ChIdG w {0};
 
     G gr;
     gr.add_single_chain_component(len);
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
 
-    const Driver drv {&gr.cn[w].head(), eB};
+    const Driver drv {&gr.chain(w).head(), eB};
     constexpr Source src {w, eA};
-    Path pp {&gr.ct[gr.cn[w].c], drv, src};
+    Path pp {&gr.compt(w), drv, src};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto num_vertices = c0.num_vertices();
+    const auto cnw = gr.chain(w); // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 1);
+    ASSERT_EQ(pp.driver_chid(), w);
+    ASSERT_EQ(pp.driver_chain_end(), eB);
+    ASSERT_EQ(pp.source_chid(), w);
+    ASSERT_EQ(pp.source_end(), eA);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
     constexpr int n {2};
     pu1f(pp, n);
 
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    ASSERT_EQ(gr.cn[w], gr0.cn[w]);
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains());
-    ASSERT_EQ(gr.ct[ic].num_vertices(), gr0.ct[ic].num_vertices());
-    ASSERT_EQ(gr.cn[w].length(), len);
-    for(EgId i {}; const auto& h : gr.ct[ic].gl) {
-        ASSERT_EQ(gr.cn[h.w].g[h.a].w, h.w);
-        ASSERT_EQ(gr.cn[h.w].g[h.a].indw, h.a);
-        ASSERT_EQ(gr.cn[h.w].g[h.a].ind, h.i);
-        ASSERT_EQ(gr.cn[h.w].g[h.a].c, ic);
-        ASSERT_EQ(gr.cn[h.w].g[h.a].indc, i++);
-    }
-    ASSERT_EQ(gr.cn[w].ngs[eA].num(), 0);
-    ASSERT_EQ(gr.cn[w].ngs[eB].num(), 0);
+    const auto& m = gr.chain(w);
+    ASSERT_EQ(m, cnw);
+    ASSERT_EQ(m.ngs[eA].num(), 0);
+    ASSERT_EQ(m.ngs[eB].num(), 0);
 
-}  //  end SingleLinChain_DrB
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains);
+    ASSERT_EQ(c.num_vertices(), num_vertices);
+    ASSERT_FALSE(c.template check<profuse>());
+
+}  // SingleLinChain_DrB
 
 
 // =============================================================================
@@ -174,28 +208,26 @@ TEST_F(Pull_1, J3_DrA_SrLiA_Srv)
 
     if constexpr (verboseT)
         print_description(
-            "Tests degree 1 pulling over a path traversing a 3-way junction.\n",
-            "The path is driven at end A.\n",
-            "The source chain is linear, its free end B survives."
+            "Tests degree 1 pulling over a path traversing a 3-way junction\n",
+            "The path is driven at end A\n",
+            "The source chain is linear, its free end A survives"
         );
 
     // Create initial graph.
 
-    constexpr std::array<EgId, 2> len {5, 3};
-    const auto [w0, w1, w2] = create_array<ChId, 3>();
+    constexpr std::array<size_t, 2> len {5, 3};
+    const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
-    for (const auto u: len)
+    for (const auto u : len)
         gr.add_single_chain_component(u);
 
     VertexMerger<1, 2, G> merge12 {gr};
     // w0, w2 : length (5) -> (2, 3)
     merge12(ESlot{w1, eB},
-            BSlot{w0, 2});     // splits w0 to create w2
+            BSlot{w0, 2});  // splits w0 to create w2
 
-    const auto gr0 = gr;  // copy the graph to save its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
@@ -205,82 +237,81 @@ TEST_F(Pull_1, J3_DrA_SrLiA_Srv)
     const auto wS = w1;
     constexpr auto eS = eA;
     const auto v1 = w2;
+    constexpr int n {2};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src};
+    Path pp {&gr.compt(src.w), drv, src};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto num_vertices = c0.num_vertices();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnv1 = gr.chain(v1);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 3);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eA);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_3way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eA);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_3way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwS.length() > n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
 
-    constexpr int n {2};
-    pu1f(pp, n);  // Pull two steps to leave source edge in the original chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains());
-    ASSERT_EQ(gr.ct[ic].num_vertices(), gr0.ct[ic].num_vertices());
-    ASSERT_EQ(gr.ct[ic].ww, gr0.ct[ic].ww);
-    ASSERT_EQ(gr.ct[ic].chis, gr0.ct[ic].chis);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wS].length(), gr0.cn[wS].length() - n);
-    ASSERT_EQ(gr.cn[v1].length(), gr0.cn[v1].length());
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wS].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wS].g[0].ind, gr0.cn[wS].g[0].ind);
-    for (EgId i {}; const auto& g: gr.cn[wD].g) {
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains);
+    ASSERT_EQ(c.num_vertices(), num_vertices);
+    ASSERT_EQ(c.ww, ww);
+    ASSERT_EQ(c.chis, chis);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& mD = gr.chain(wD);
+    const auto& mS = gr.chain(wS);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mS.length(), cnwS.length() - n);
+    ASSERT_EQ(gr.chain(v1).length(), cnv1.length());
+    ASSERT_EQ(mD.g[0].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwS.g[2].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mS.g[0].ind, cnwS.g[0].ind);
+    for (EgIdA i {}; const auto& g: mD.g) {
         ASSERT_EQ(g.indw, i++);
         ASSERT_EQ(g.w, wD);
         ASSERT_EQ(g.c, ic);
     }
-    ASSERT_EQ(gr.cn[wS].g[0].indw, 0);
-    ASSERT_EQ(gr.cn[wS].g[0].w, wS);
-    ASSERT_EQ(gr.cn[wS].g[0].c, ic);
+    ASSERT_EQ(mS.g[0].indw, 0);
+    ASSERT_EQ(mS.g[0].w, wS);
+    ASSERT_EQ(mS.g[0].c, ic);
 
-}  //  end J3_DrA_SrLiA_Srv
+}  // J3_DrA_SrLiA_Srv
 
-/*  J3_DrA_SrLiA_Srv
-
-TEST_BEFORE 1  ** {0 B} {2 A}  0 [0]  len 3 > > > ( 5 6 7 )
-            [0] > ind 5 indc 0 w 1 c 0
-            [1] > ind 6 indc 1 w 1 c 0
-            [2] > ind 7 indc 2 w 1 c 0
-TEST_BEFORE 0  ** {1 B} {2 A}  0 [1]  len 2 > > ( 0 1 )
-            [0] > ind 0 indc 3 w 0 c 0
-            [1] > ind 1 indc 4 w 0 c 0
-TEST_BEFORE 2 {1 B} {0 B}  **  0 [2]  len 3 > > > ( 2 3 4 )
-            [0] > ind 2 indc 5 w 2 c 0
-            [1] > ind 3 indc 6 w 2 c 0
-            [2] > ind 4 indc 7 w 2 c 0
-
-Pulling from Vertex Deg 1+ :: 2 steps over path:
-
-driver (egEnd A) 0:   [0] > ind 0 indc 3 w 0 c 0
-                 1:   [1] > ind 1 indc 4 w 0 c 0
-                 2:   [2] > ind 7 indc 2 w 1 c 0
-                 3:   [1] > ind 6 indc 1 w 1 c 0
-source (end A)   4:   [0] > ind 5 indc 0 w 1 c 0
-
-TEST_AFTER 1  ** {0 B} {2 A}  0 [0]  len 1 > ( 5 )
-           [0] > ind 5 indc 0 w 1 c 0
-TEST_AFTER 0  ** {1 B} {2 A}  0 [1]  len 4 > > > > ( 0 1 7 6 )
-           [0] > ind 0 indc 3 w 0 c 0
-           [1] > ind 1 indc 4 w 0 c 0
-           [2] > ind 7 indc 2 w 0 c 0
-           [3] > ind 6 indc 1 w 0 c 0
-TEST_AFTER 2 {1 B} {0 B}  **  0 [2]  len 3 > > > ( 2 3 4 )
-           [0] > ind 2 indc 5 w 2 c 0
-           [1] > ind 3 indc 6 w 2 c 0
-           [2] > ind 4 indc 7 w 2 c 0
-*/
 
 /// Tests degree 1 pulling over a path traversing a 3-way junction.
 /// The path is driven at its end A.
@@ -291,28 +322,26 @@ TEST_F(Pull_1, J3_DrA_SrLiB_Srv)
 
     if constexpr (verboseT)
         print_description(
-            "Tests degree 1 pulling over a path traversing a 3-way junction.\n",
-            "The path is driven at end A.\n",
-            "The source chain is linear, its free end B survives."
+            "Tests degree 1 pulling over a path traversing a 3-way junction\n",
+            "The path is driven at end A\n",
+            "The source chain is linear, its free end B survives"
         );
 
     // Create initial graph.
 
-    constexpr std::array<EgId, 2> len {5, 1};
-    const auto [w0, w1, w2] = create_array<ChId, 3>();
+    constexpr std::array<size_t, 2> len {5, 1};
+    const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
-    for (const auto u: len)
+    for (const auto u : len)
         gr.add_single_chain_component(u);
 
     VertexMerger<1, 2, G> merge12 {gr};
     // w0, w2 : length (5) -> (2, 3)
     merge12(ESlot{w1, eA},
-            BSlot{w0, 2});     // splits w0 to create w2
+            BSlot{w0, 2});  // splits w0 to create w2
 
-    const auto gr0 = gr;  // copy the graph to save its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
@@ -322,76 +351,81 @@ TEST_F(Pull_1, J3_DrA_SrLiB_Srv)
     const auto wS = w2;
     constexpr auto eS = eB;
     const auto v1 = w1;
+    constexpr int n {2};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src};
+    Path pp {&gr.compt(src.w), drv, src};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto num_vertices = c0.num_vertices();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnv1 = gr.chain(v1);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 3);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eA);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_3way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eB);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_3way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwS.length() > n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
 
-    constexpr int n {2};
-    pu1f(pp, n);  // Pull two steps to leave source edge in the original chain.
+    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
 
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains());
-    ASSERT_EQ(gr.ct[ic].num_vertices(), gr0.ct[ic].num_vertices());
-    ASSERT_EQ(gr.ct[ic].ww, gr0.ct[ic].ww);
-    ASSERT_EQ(gr.ct[ic].chis, gr0.ct[ic].chis);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wS].length(), gr0.cn[wS].length() - n);
-    ASSERT_EQ(gr.cn[v1].length(), gr0.cn[v1].length());
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wS].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wS].g[0].ind, gr0.cn[wS].g[2].ind);
-    for (EgId i {}; const auto& eg: gr.cn[wD].g) {
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains);
+    ASSERT_EQ(c.num_vertices(), num_vertices);
+    ASSERT_EQ(c.ww, ww);
+    ASSERT_EQ(c.chis, chis);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& mD = gr.chain(wD);
+    const auto& mS = gr.chain(wS);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mS.length(), cnwS.length() - n);
+    ASSERT_EQ(gr.chain(v1).length(), cnv1.length());
+    ASSERT_EQ(mD.g[0].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwS.g[0].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mS.g[0].ind, cnwS.g[2].ind);
+    for (EgIdA i {}; const auto& eg: mD.g) {
         ASSERT_EQ(eg.indw, i++);
         ASSERT_EQ(eg.w, wD);
         ASSERT_EQ(eg.c, ic);
     }
-    ASSERT_EQ(gr.cn[wS].g[0].indw, 0);
-    ASSERT_EQ(gr.cn[wS].g[0].w, wS);
-    ASSERT_EQ(gr.cn[wS].g[0].c, ic);
+    ASSERT_EQ(mS.g[0].indw, 0);
+    ASSERT_EQ(mS.g[0].w, wS);
+    ASSERT_EQ(mS.g[0].c, ic);
 
-}  //  end J3_DrA_SrLiB_Srv
-
-/*  J3_DrA_SrLiB_Srv
-
-TEST_BEFORE 1 {0 B} {2 A}  **  0 [0]  len 1 > ( 5 )
-            [0] > ind 5 indc 0 w 1 c 0
-TEST_BEFORE 0  ** {1 A} {2 A}  0 [1]  len 2 > > ( 0 1 )
-            [0] > ind 0 indc 1 w 0 c 0
-            [1] > ind 1 indc 2 w 0 c 0
-TEST_BEFORE 2 {1 A} {0 B}  **  0 [2]  len 3 > > > ( 2 3 4 )
-            [0] > ind 2 indc 3 w 2 c 0
-            [1] > ind 3 indc 4 w 2 c 0
-            [2] > ind 4 indc 5 w 2 c 0
-
-driver (egEnd A) 0:   [0] > ind 0 indc 1 w 0 c 0
-                 1:   [1] > ind 1 indc 2 w 0 c 0
-                 2:   [0] > ind 2 indc 3 w 2 c 0
-                 3:   [1] > ind 3 indc 4 w 2 c 0
-source (end B)   4:   [2] > ind 4 indc 5 w 2 c 0
-
-TEST_AFTER 1 {0 B} {2 A}  **  0 [0]  len 1 > ( 5 )
-           [0] > ind 5 indc 0 w 1 c 0
-TEST_AFTER 0  ** {1 A} {2 A}  0 [1]  len 4 > > > > ( 0 1 2 3 )
-           [0] > ind 0 indc 1 w 0 c 0
-           [1] > ind 1 indc 2 w 0 c 0
-           [2] > ind 2 indc 3 w 0 c 0
-           [3] > ind 3 indc 4 w 0 c 0
-TEST_AFTER 2 {1 A} {0 B}  **  0 [2]  len 1 > ( 4 )
-           [0] > ind 4 indc 5 w 2 c 0
-*/
+}  // J3_DrA_SrLiB_Srv
 
 
 /// Tests degree 1 pulling over a path traversing a 3-way junction.
@@ -403,18 +437,18 @@ TEST_F(Pull_1, J3_DrB_SrLiA_Srv)
 
     if constexpr (verboseT)
         print_description(
-            "Tests degree 1 pulling over a path traversing a 3-way junction.\n",
-            "The path driver is at chain end B.\n",
-            "The source chain is linear, its free end A survives."
+            "Tests degree 1 pulling over a path traversing a 3-way junction\n",
+            "The path driver is at chain end B\n",
+            "The source chain is linear, its free end A survives"
         );
 
     // Create initial graph.
 
-    constexpr std::array<EgId, 2> len {5, 1};
-    const auto [w0, w1, w2] = create_array<ChId, 3>();
+    constexpr std::array<size_t, 2> len {5, 1};
+    const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
-    for (const auto u: len)
+    for (const auto u : len)
         gr.add_single_chain_component(u);
 
     VertexMerger<1, 2, G> merge12 {gr};
@@ -422,9 +456,7 @@ TEST_F(Pull_1, J3_DrB_SrLiA_Srv)
     merge12(ESlot{w1, eA},
             BSlot{w0, 3});     // creates w2
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
@@ -434,76 +466,79 @@ TEST_F(Pull_1, J3_DrB_SrLiA_Srv)
     const auto wS = w0;
     constexpr auto eS = eA;
     const auto v1 = w2;
+    constexpr int n {2};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src};
+    Path pp {&gr.compt(src.w), drv, src};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto num_vertices = c0.num_vertices();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnv1 = gr.chain(v1);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 3);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eB);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_3way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eA);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_3way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwS.length() > n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
 
-    constexpr int n {2};
-    pu1f(pp, n);  // Pull two steps to leave source edge in the original chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains());
-    ASSERT_EQ(gr.ct[ic].num_vertices(), gr0.ct[ic].num_vertices());
-    ASSERT_EQ(gr.ct[ic].ww, gr0.ct[ic].ww);
-    ASSERT_EQ(gr.ct[ic].chis, gr0.ct[ic].chis);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wS].length(), gr0.cn[wS].length() - n);
-    ASSERT_EQ(gr.cn[v1].length(), gr0.cn[v1].length());
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wS].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wS].g[0].ind, gr0.cn[wS].g[0].ind);
-    for (EgId i {}; const auto& eg: gr.cn[wD].g) {
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains);
+    ASSERT_EQ(c.num_vertices(), num_vertices);
+    ASSERT_EQ(c.ww, ww);
+    ASSERT_EQ(c.chis, chis);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& mD = gr.chain(wD);
+    const auto& mS = gr.chain(wS);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mS.length(), cnwS.length() - n);
+    ASSERT_EQ(gr.chain(v1).length(), cnv1.length());
+    ASSERT_EQ(mD.g[2].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwS.g[2].ind);
+    ASSERT_EQ(mD.g[0].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mS.g[0].ind, cnwS.g[0].ind);
+    for (EgIdA i {}; const auto& eg: mD.g) {
         ASSERT_EQ(eg.indw, i++);
         ASSERT_EQ(eg.w, wD);
         ASSERT_EQ(eg.c, ic);
     }
-    ASSERT_EQ(gr.cn[wS].g[0].indw, 0);
-    ASSERT_EQ(gr.cn[wS].g[0].w, wS);
-    ASSERT_EQ(gr.cn[wS].g[0].c, ic);
+    ASSERT_EQ(mS.g[0].indw, 0);
+    ASSERT_EQ(mS.g[0].w, wS);
+    ASSERT_EQ(mS.g[0].c, ic);
 
-}  //  end J3_DrB_SrLiA_Srv
-
-/*  J3_DrB_SrLiA_Srv
-
-TEST_BEFORE 1 {0 B} {2 A}  **  0 [0]  len 1 > ( 5 )
-            [0] > ind 5 indc 0 w 1 c 0
-TEST_BEFORE 0  ** {1 A} {2 A}  0 [1]  len 3 > > > ( 0 1 2 )
-            [0] > ind 0 indc 1 w 0 c 0
-            [1] > ind 1 indc 2 w 0 c 0
-            [2] > ind 2 indc 3 w 0 c 0
-TEST_BEFORE 2 {1 A} {0 B}  **  0 [2]  len 2 > > ( 3 4 )
-            [0] > ind 3 indc 4 w 2 c 0
-            [1] > ind 4 indc 5 w 2 c 0
-
-Pulling from Vertex Deg 1+ :: 2 steps over path:
-
-driver (egEnd B) 0:   [0] > ind 5 indc 0 w 1 c 0
-                 1:   [2] > ind 2 indc 3 w 0 c 0
-                 2:   [1] > ind 1 indc 2 w 0 c 0
-source (end A)   3:   [0] > ind 0 indc 1 w 0 c 0
-
-TEST_AFTER 1 {0 B} {2 A}  **  0 [0]  len 3 > > > ( 1 2 5 )
-           [0] > ind 1 indc 2 w 1 c 0
-           [1] > ind 2 indc 3 w 1 c 0
-           [2] > ind 5 indc 0 w 1 c 0
-TEST_AFTER 0  ** {1 A} {2 A}  0 [1]  len 1 > ( 0 )
-           [0] > ind 0 indc 1 w 0 c 0
-TEST_AFTER 2 {1 A} {0 B}  **  0 [2]  len 2 > > ( 3 4 )
-           [0] > ind 3 indc 4 w 2 c 0
-           [1] > ind 4 indc 5 w 2 c 0
-*/
+}  // J3_DrB_SrLiA_Srv
 
 
 /// Tests degree 1 pulling over a path traversing a 3-way junction.
@@ -515,18 +550,18 @@ TEST_F(Pull_1, J3_DrB_SrLiB_Srv)
 
     if constexpr (verboseT)
         print_description(
-            "Tests degree 1 pulling over a path traversing a 3-way junction.\n",
-            "The path driver is at chain end B.\n",
-            "The source chain is linear, its free end B survives."
+            "Tests degree 1 pulling over a path traversing a 3-way junction\n",
+            "The path driver is at chain end B\n",
+            "The source chain is linear, its free end B survives"
         );
 
     // Create initial graph.
 
-    constexpr std::array<EgId, 2> len {5, 1};
-    const auto [w0, w1, w2] = create_array<ChId, 3>();
+    constexpr std::array<size_t, 2> len {5, 1};
+    const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
-    for (const auto u: len)
+    for (const auto u : len)
         gr.add_single_chain_component(u);
 
     VertexMerger<1, 2, G> merge12 {gr};
@@ -534,9 +569,7 @@ TEST_F(Pull_1, J3_DrB_SrLiB_Srv)
     merge12(ESlot{w1, eA},
             BSlot{w0, 2});     // creates w2
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
@@ -546,73 +579,80 @@ TEST_F(Pull_1, J3_DrB_SrLiB_Srv)
     const auto wS = w2;
     constexpr auto eS = eB;
     const auto v1 = w0;
+    constexpr int n {2};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src};
+    Path pp {&gr.compt(src.w), drv, src};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto num_vertices = c0.num_vertices();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnv1 = gr.chain(v1);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 3);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eB);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_3way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eB);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_3way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwS.length() > n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
 
-    constexpr int n {2};
-    pu1f(pp, n);  // Pull two steps to leave source edge in the original chain.
+    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
 
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains());
-    ASSERT_EQ(gr.ct[ic].num_vertices(), gr0.ct[ic].num_vertices());
-    ASSERT_EQ(gr.ct[ic].ww, gr0.ct[ic].ww);
-    ASSERT_EQ(gr.ct[ic].chis, gr0.ct[ic].chis);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wS].length(), gr0.cn[wS].length() - n);
-    ASSERT_EQ(gr.cn[v1].length(), gr0.cn[v1].length());
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wS].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[0].indc, gr0.cn[wS].g[1].indc);
-    ASSERT_EQ(gr.cn[wD].g[1].indc, gr0.cn[wS].g[0].indc);
-    for (EgId i {}; const auto& eg: gr.cn[wD].g) {
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains);
+    ASSERT_EQ(c.num_vertices(), num_vertices);
+    ASSERT_EQ(c.ww, ww);
+    ASSERT_EQ(c.chis, chis);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& mD = gr.chain(wD);
+    const auto& mS = gr.chain(wS);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mS.length(), cnwS.length() - n);
+    ASSERT_EQ(gr.chain(v1).length(), cnv1.length());
+    ASSERT_EQ(mD.g[0].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwS.g[0].ind);
+    ASSERT_EQ(mD.g[0].indc, cnwS.g[1].indc);
+    ASSERT_EQ(mD.g[1].indc, cnwS.g[0].indc);
+    for (EgIdA i {}; const auto& eg: mD.g) {
         ASSERT_EQ(eg.indw, i++);
         ASSERT_EQ(eg.w, wD);
         ASSERT_EQ(eg.c, ic);
     }
-    ASSERT_EQ(gr.cn[wS].g[0].indw, 0);
-    ASSERT_EQ(gr.cn[wS].g[0].w, wS);
-    ASSERT_EQ(gr.cn[wS].g[0].c, ic);
+    ASSERT_EQ(mS.g[0].indw, 0);
+    ASSERT_EQ(mS.g[0].w, wS);
+    ASSERT_EQ(mS.g[0].c, ic);
 
-}  //  end J3_DrB_SrLiB_Srv
-
-/*
-TEST_BEFORE 1 {0 B} {2 A}  **  0 [0]  len 1 > ( 5 )
-            [0] > ind 5 indc 0 w 1 c 0
-TEST_BEFORE 0  ** {1 A} {2 A}  0 [1]  len 2 > > ( 0 1 )
-            [0] > ind 0 indc 1 w 0 c 0
-            [1] > ind 1 indc 2 w 0 c 0
-TEST_BEFORE 2 {1 A} {0 B}  **  0 [2]  len 3 > > > ( 2 3 4 )
-            [0] > ind 2 indc 3 w 2 c 0
-            [1] > ind 3 indc 4 w 2 c 0
-            [2] > ind 4 indc 5 w 2 c 0
-
-driver (egEnd B) 0:   [0] > ind 5 indc 0 w 1 c 0
-                 1:   [0] > ind 2 indc 3 w 2 c 0
-                 2:   [1] > ind 3 indc 4 w 2 c 0
-source (end B)   3:   [2] > ind 4 indc 5 w 2 c 0
-
-TEST_AFTER 1 {0 B} {2 A}  **  0 [0]  len 3 > > > ( 3 2 5 )
-           [0] > ind 3 indc 4 w 1 c 0
-           [1] > ind 2 indc 3 w 1 c 0
-           [2] > ind 5 indc 0 w 1 c 0
-TEST_AFTER 0  ** {1 A} {2 A}  0 [1]  len 2 > > ( 0 1 )
-           [0] > ind 0 indc 1 w 0 c 0
-           [1] > ind 1 indc 2 w 0 c 0
-TEST_AFTER 2 {1 A} {0 B}  **  0 [2]  len 1 > ( 4 )
-           [0] > ind 4 indc 5 w 2 c 0
-*/
+}  // J3_DrB_SrLiB_Srv
 
 
 /// Tests degree 1 pulling over a path traversing a 3-way junction,
@@ -624,19 +664,19 @@ TEST_F(Pull_1, J3_DrA_SrLiA_Rmv)
 
     if constexpr (verboseT)
         print_description(
-            "Tests degree 1 pulling over a path traversing a 3-way junction. ",
-            "The path is driven at a chain end A.\n",
-            "The source chain is linear with free end A. ",
-            "Source chain is engulfed completely."
+            "Tests degree 1 pulling over a path traversing a 3-way junction\n",
+            "The path is driven at a chain end A\n",
+            "The source chain is linear with free end A\n",
+            "Source chain is engulfed completely"
         );
 
     // Create initial graph.
 
-    constexpr std::array<EgId, 2> len {3, 2};
-    const auto [w0, w1, w2] = create_array<ChId, 3>();
+    constexpr std::array<size_t, 2> len {3, 2};
+    const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
-    for (const auto u: len)
+    for (const auto u : len)
         gr.add_single_chain_component(u);
 
     VertexMerger<1, 2, G> merge12 {gr};
@@ -644,9 +684,7 @@ TEST_F(Pull_1, J3_DrA_SrLiA_Rmv)
     merge12(ESlot{w1, eB},
             BSlot{w0, 2});     // creates w2
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
@@ -655,33 +693,65 @@ TEST_F(Pull_1, J3_DrA_SrLiA_Rmv)
     constexpr auto eD = eA;
     const auto wS = w0;
     constexpr auto eS = eA;
+    constexpr int n {2};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src};
+    Path pp {&gr.compt(src.w), drv, src};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto num_vertices = c0.num_vertices();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 3);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eA);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_3way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eA);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_3way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwS.length() == n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull two steps to consume the source chain
 
-    constexpr int n {2};
-    pu1f(pp, n);  // Pull two steps to consume the source chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct.size(), 1);
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), 1);
-    ASSERT_EQ(gr.cn[w0].length(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.cn[w0].idw, 0);
-    ASSERT_EQ(gr.cn[w0].idc, 0);
-    ASSERT_EQ(gr.cn[w0].c, 0);
-    constexpr std::array<EgId, 5> inds {3, 4, 1, 0, 2};
-    for (EgId i {}; const auto& eg: gr.cn[w0].g) {
+    const auto& c = gr.compt(CmpId{});
+    ASSERT_EQ(gr.num_compts(), 1);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains - 2);
+    ASSERT_EQ(c.num_vertices(), num_vertices);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& m0 = gr.chain(w0);
+    ASSERT_EQ(m0.length(), num_edges);
+    ASSERT_EQ(m0.idw, 0);
+    ASSERT_EQ(m0.idc, 0);
+    ASSERT_EQ(m0.c, 0);
+    constexpr std::array<size_t, 5> inds {3, 4, 1, 0, 2};
+    for (std::size_t i {}; const auto& eg: m0.g) {
         ASSERT_EQ(eg.ind, inds[i]);
         ASSERT_EQ(eg.indc, i);
         ASSERT_EQ(eg.indw, i);
@@ -690,30 +760,7 @@ TEST_F(Pull_1, J3_DrA_SrLiA_Rmv)
         ++i;
     }
 
-}  //  end J3_DrA_SrLiA_Rmv
-
-/*
-TEST_BEFORE 1  ** {0 B} {2 A}  0 [0]  len 2 > > ( 3 4 )
-            [0] > ind 3 indc 0 w 1 c 0
-            [1] > ind 4 indc 1 w 1 c 0
-TEST_BEFORE 0  ** {1 B} {2 A}  0 [1]  len 2 > > ( 0 1 )
-            [0] > ind 0 indc 2 w 0 c 0
-            [1] > ind 1 indc 3 w 0 c 0
-TEST_BEFORE 2 {1 B} {0 B}  **  0 [2]  len 1 > ( 2 )
-            [0] > ind 2 indc 4 w 2 c 0
-
-driver (egEnd A) 0:   [0] > ind 3 indc 0 w 1 c 0
-                 1:   [1] > ind 4 indc 1 w 1 c 0
-                 2:   [1] > ind 1 indc 3 w 0 c 0
-source (end A)   3:   [0] > ind 0 indc 2 w 0 c 0
-
-TEST_AFTER 0  **  0 [0]  len 5 > > > > > ( 3 4 1 0 2 )
-           [0] > ind 3 indc 0 w 0 c 0
-           [1] > ind 4 indc 1 w 0 c 0
-           [2] > ind 1 indc 2 w 0 c 0
-           [3] > ind 0 indc 3 w 0 c 0
-           [4] > ind 2 indc 4 w 0 c 0
-*/
+}  // J3_DrA_SrLiA_Rmv
 
 
 /// Tests degree 1 pulling over a path traversing a 3-way junction.
@@ -725,19 +772,19 @@ TEST_F(Pull_1, J3_DrA_SrLiB_Rmv)
 
     if constexpr (verboseT)
         print_description(
-            "Tests degree 1 pulling over a path traversing a 3-way junction.\n",
-            "The path is driven at a chain end A.\n",
-            "The source chain is linear with free end B. ",
-            "It is engulfed completely."
+            "Tests degree 1 pulling over a path traversing a 3-way junction\n",
+            "The path is driven at a chain end A\n",
+            "The source chain is linear with free end B\n",
+            "The source is engulfed completely."
         );
 
     // Create initial graph.
 
-    constexpr std::array<EgId, 2> len {5, 1};
-    const auto [w0, w1, w2] = create_array<ChId, 3>();
+    constexpr std::array<size_t, 2> len {5, 1};
+    const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
-    for (const auto u: len)
+    for (const auto u : len)
         gr.add_single_chain_component(u);
 
     VertexMerger<1, 2, G> merge12 {gr};
@@ -745,9 +792,7 @@ TEST_F(Pull_1, J3_DrA_SrLiB_Rmv)
     merge12(ESlot{w1, eA},
             BSlot{w0, 2});     // creates w2
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
@@ -756,33 +801,63 @@ TEST_F(Pull_1, J3_DrA_SrLiB_Rmv)
     constexpr auto eD = eA;
     const auto wS = w2;
     constexpr auto eS = eB;
+    constexpr int n {3};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src};
+    Path pp {&gr.compt(src.w), drv, src};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 3);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eA);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_3way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eB);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_3way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwS.length() == n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull three steps to consume the source chain
 
-    constexpr int n {3};
-    pu1f(pp, n);  // Pull three steps to consume the source chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct.size(), 1);
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), 1);
-    ASSERT_EQ(gr.cn[w0].length(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.cn[w0].idw, 0);
-    ASSERT_EQ(gr.cn[w0].idc, 0);
-    ASSERT_EQ(gr.cn[w0].c, 0);
-    constexpr std::array<EgId, 6> inds {0, 1, 2, 3, 4, 5};
-    for (EgId i {}; const auto& eg: gr.cn[w0].g) {
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(gr.num_compts(), 1);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), 1);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& m0 = gr.chain(w0);
+    ASSERT_EQ(m0.length(), c.num_edges());
+    ASSERT_EQ(m0.idw, 0);
+    ASSERT_EQ(m0.idc, 0);
+    ASSERT_EQ(m0.c, 0);
+    constexpr std::array<size_t, 6> inds {0, 1, 2, 3, 4, 5};
+    for (std::size_t i {}; const auto& eg: m0.g) {
         ASSERT_EQ(eg.ind, inds[i]);
         ASSERT_EQ(eg.indc, i);
         ASSERT_EQ(eg.indw, i);
@@ -792,32 +867,6 @@ TEST_F(Pull_1, J3_DrA_SrLiB_Rmv)
     }
 
 }  // end J3_DrA_SrLiB_Rmv
-
-/*
-TEST_BEFORE 1 {0 B} {2 A}  **  0 [0]  len 1 > ( 5 )
-            [0] > ind 5 indc 0 w 1 c 0
-TEST_BEFORE 0  ** {1 A} {2 A}  0 [1]  len 2 > > ( 0 1 )
-            [0] > ind 0 indc 1 w 0 c 0
-            [1] > ind 1 indc 2 w 0 c 0
-TEST_BEFORE 2 {1 A} {0 B}  **  0 [2]  len 3 > > > ( 2 3 4 )
-            [0] > ind 2 indc 3 w 2 c 0
-            [1] > ind 3 indc 4 w 2 c 0
-            [2] > ind 4 indc 5 w 2 c 0
-
-driver (egEnd A) 0:   [0] > ind 0 indc 1 w 0 c 0
-                 1:   [1] > ind 1 indc 2 w 0 c 0
-                 2:   [0] > ind 2 indc 3 w 2 c 0
-                 3:   [1] > ind 3 indc 4 w 2 c 0
-source (end B)   4:   [2] > ind 4 indc 5 w 2 c 0
-
-TEST_AFTER 0  **  0 [0]  len 6 > > > > > > ( 0 1 2 3 4 5 )
-           [0] > ind 0 indc 0 w 0 c 0
-           [1] > ind 1 indc 1 w 0 c 0
-           [2] > ind 2 indc 2 w 0 c 0
-           [3] > ind 3 indc 3 w 0 c 0
-           [4] > ind 4 indc 4 w 0 c 0
-           [5] > ind 5 indc 5 w 0 c 0
-*/
 
 
 /// Tests degree 1 pulling over a path traversing a 3-way junction.
@@ -829,19 +878,19 @@ TEST_F(Pull_1, J3_DrB_SrLiB_Rmv)
 
     if constexpr (verboseT)
         print_description(
-            "Tests degree 1 pulling over a path traversing a 3-way junction.\n",
-            "The path is driven at a chain end B.\n",
-            "The source chain is linear with free end B. ",
-            "It is engulfed completely."
+            "Tests degree 1 pulling over a path traversing a 3-way junction\n",
+            "The path is driven at a chain end B\n",
+            "The source chain is linear with free end B\n",
+            "The source is engulfed completely"
         );
 
     // Create initial graph.
 
-    constexpr std::array<EgId, 2> len {5, 1};
-    const auto [w0, w1, w2] = create_array<ChId, 3>();
+    constexpr std::array<size_t, 2> len {5, 1};
+    const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
-    for (const auto u: len)
+    for (const auto u : len)
         gr.add_single_chain_component(u);
 
     VertexMerger<1, 2, G> merge12 {gr};
@@ -849,9 +898,7 @@ TEST_F(Pull_1, J3_DrB_SrLiB_Rmv)
     merge12(ESlot{w1, eA},
             BSlot{w0, 2});     // creates w2
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
@@ -860,33 +907,63 @@ TEST_F(Pull_1, J3_DrB_SrLiB_Rmv)
     constexpr auto eD = eB;
     const auto wS = w2;
     constexpr auto eS = eB;
+    constexpr int n {3};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src};
+    Path pp {&gr.compt(src.w), drv, src};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 3);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eB);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_3way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eB);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_3way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwS.length() == n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull three steps to consume the source chain
 
-    constexpr int n {3};
-    pu1f(pp, n);  // Pull three steps to consume the source chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct.size(), 1);
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), 1);
-    ASSERT_EQ(gr.cn[w0].length(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.cn[w0].idw, 0);
-    ASSERT_EQ(gr.cn[w0].idc, 0);
-    ASSERT_EQ(gr.cn[w0].c, 0);
-    constexpr std::array<EgId, 6> inds {0, 1, 4, 3, 2, 5};
-    for (EgId i {}; const auto& eg: gr.cn[w0].g) {
+    ASSERT_EQ(gr.num_compts(), 1);
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains - 2);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& m0 = gr.chain(w0);
+    ASSERT_EQ(m0.length(), num_edges);
+    ASSERT_EQ(m0.idw, 0);
+    ASSERT_EQ(m0.idc, 0);
+    ASSERT_EQ(m0.c, 0);
+    constexpr std::array<size_t, 6> inds {0, 1, 4, 3, 2, 5};
+    for (std::size_t i {}; const auto& eg: m0.g) {
         ASSERT_EQ(eg.ind, inds[i]);
         ASSERT_EQ(eg.indc, i);
         ASSERT_EQ(eg.indw, i);
@@ -895,32 +972,7 @@ TEST_F(Pull_1, J3_DrB_SrLiB_Rmv)
         ++i;
     }
 
-}  //  end J3_DrB_SrLiB_Rmv
-
-/*
-TEST_BEFORE 1 {0 B} {2 A}  **  0 [0]  len 1 > ( 5 )
-            [0] > ind 5 indc 0 w 1 c 0
-TEST_BEFORE 0  ** {1 A} {2 A}  0 [1]  len 2 > > ( 0 1 )
-            [0] > ind 0 indc 1 w 0 c 0
-            [1] > ind 1 indc 2 w 0 c 0
-TEST_BEFORE 2 {1 A} {0 B}  **  0 [2]  len 3 > > > ( 2 3 4 )
-            [0] > ind 2 indc 3 w 2 c 0
-            [1] > ind 3 indc 4 w 2 c 0
-            [2] > ind 4 indc 5 w 2 c 0
-
-driver (egEnd B) 0:   [0] > ind 5 indc 0 w 1 c 0
-                 1:   [0] > ind 2 indc 3 w 2 c 0
-                 2:   [1] > ind 3 indc 4 w 2 c 0
-source (end B)   3:   [2] > ind 4 indc 5 w 2 c 0
-
-TEST_AFTER 0  **  0 [0]  len 6 > > > > > > ( 0 1 4 3 2 5 )
-           [0] > ind 0 indc 0 w 0 c 0
-           [1] > ind 1 indc 1 w 0 c 0
-           [2] > ind 4 indc 2 w 0 c 0
-           [3] > ind 3 indc 3 w 0 c 0
-           [4] > ind 2 indc 4 w 0 c 0
-           [5] > ind 5 indc 5 w 0 c 0
-*/
+}  // J3_DrB_SrLiB_Rmv
 
 
 /// Tests degree 1 pulling over a path traversing a 3-way junction,
@@ -932,19 +984,19 @@ TEST_F(Pull_1, J3_DrB_SrLiA_Rmv)
 
     if constexpr (verboseT)
         print_description(
-            "Tests degree 1 pulling over a path traversing a 3-way junction.\n",
-            "The path is driven at a chain end B.\n",
-            "The source chain is linear with free end A. ",
-            "It is engulfed completely."
+            "Tests degree 1 pulling over a path traversing a 3-way junction\n",
+            "The path is driven at a chain end B\n",
+            "The source chain is linear with free end A\n",
+            "The source is engulfed completely"
         );
 
     // Create initial graph.
 
-    constexpr std::array<EgId, 2> len {3, 2};
-    const auto [w0, w1, w2] = create_array<ChId, 3>();
+    constexpr std::array<size_t, 2> len {3, 2};
+    const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
-    for (const auto u: len)
+    for (const auto u : len)
         gr.add_single_chain_component(u);
 
     VertexMerger<1, 2, G> merge12 {gr};
@@ -952,9 +1004,7 @@ TEST_F(Pull_1, J3_DrB_SrLiA_Rmv)
     merge12(ESlot{w1, eA},
             BSlot{w0, 2});     // creates w2
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
@@ -963,33 +1013,63 @@ TEST_F(Pull_1, J3_DrB_SrLiA_Rmv)
     constexpr auto eD = eB;
     const auto wS = w0;
     constexpr auto eS = eA;
+    constexpr int n {2};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src};
+    Path pp {&gr.compt(src.w), drv, src};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 3);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eB);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_3way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eA);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_3way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwS.length() == n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull two steps to consume the source chain
 
-    constexpr int n {2};
-    pu1f(pp, n);  // Pull two steps to consume the source chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct.size(), 1);
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), 1);
-    ASSERT_EQ(gr.cn[w0].length(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.cn[w0].idw, 0);
-    ASSERT_EQ(gr.cn[w0].idc, 0);
-    ASSERT_EQ(gr.cn[w0].c, 0);
-    constexpr std::array<EgId, 5> inds {4, 3, 0, 1, 2};
-    for (EgId i {}; const auto& eg: gr.cn[w0].g) {
+    ASSERT_EQ(gr.num_compts(), 1);
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains - 2);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& m0 = gr.chain(w0);
+    ASSERT_EQ(m0.length(), num_edges);
+    ASSERT_EQ(m0.idw, 0);
+    ASSERT_EQ(m0.idc, 0);
+    ASSERT_EQ(m0.c, 0);
+    constexpr std::array<size_t, 5> inds {4, 3, 0, 1, 2};
+    for (std::size_t i {}; const auto& eg: m0.g) {
         ASSERT_EQ(eg.ind, inds[i]);
         ASSERT_EQ(eg.indc, i);
         ASSERT_EQ(eg.indw, i);
@@ -998,29 +1078,7 @@ TEST_F(Pull_1, J3_DrB_SrLiA_Rmv)
         ++i;
     }
 
-}  //  end J3_DrB_SrLiA_Rmv
-
-/*
-TEST_BEFORE 1 {0 B} {2 A}  **  0 [0]  len 2 > > ( 3 4 )
-            [0] > ind 3 indc 0 w 1 c 0
-            [1] > ind 4 indc 1 w 1 c 0
-TEST_BEFORE 0  ** {1 A} {2 A}  0 [1]  len 2 > > ( 0 1 )
-            [0] > ind 0 indc 2 w 0 c 0
-            [1] > ind 1 indc 3 w 0 c 0
-TEST_BEFORE 2 {1 A} {0 B}  **  0 [2]  len 1 > ( 2 )
-            [0] > ind 2 indc 4 w 2 c 0
-
-driver (egEnd B) 0:   [0] > ind 2 indc 4 w 2 c 0
-                 1:   [1] > ind 1 indc 3 w 0 c 0
-source (end A)   2:   [0] > ind 0 indc 2 w 0 c 0
-
-TEST_AFTER 0  **  0 [0]  len 5 < < > > > ( 4 3 0 1 2 )
-           [0] < ind 4 indc 0 w 0 c 0
-           [1] < ind 3 indc 1 w 0 c 0
-           [2] > ind 0 indc 2 w 0 c 0
-           [3] > ind 1 indc 3 w 0 c 0
-           [4] > ind 2 indc 4 w 0 c 0
-*/
+}  // J3_DrB_SrLiA_Rmv
 
 
 // =============================================================================
@@ -1037,127 +1095,113 @@ TEST_F(Pull_1, J3_DrA_SrCyA_Srv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling through a 3-way junction joining a ",
-            "linear and a cycle chains. ",
-            "Driver edge is at the free end A of the linear chain while the ",
-            "source is at the end A of the cycle chain. ",
-            "Preserves the component topology."
+            "linear and a cycle chains\n",
+            "Driver edge is at the free end A of the linear chain\n",
+            "The source is at the end A of the cycle chain\n",
+            "Preserves the component topology"
         );
 
     // Create initial graph.
 
-    constexpr EgId len {6};
-    const auto [w0, w1] = create_array<ChId, 2>();
+    constexpr std::size_t len {6};
+    const auto [w0, w1] = id_sequence<ChIdG, 2>();
 
     G gr;
     gr.add_single_chain_component(len);
 
     VertexMerger<1, 2, G> merge12 {gr};
-    // w0 : length (5) -> (2, 3)
-    // create a linear chain w1 connected at end A to a cycle chain w0
+    // w0 : length (6) -> (2, 4)
+    // create a linear chain w1 connected at end B to a cycle chain w0
     merge12(ESlot{w0, eB},
             BSlot{w0, 2});
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
 
     constexpr auto eD = eA;
-    const auto wD = w0;
+    const auto wD = w1;
     constexpr auto eS = eA;
-    const auto wS = w1;
+    const auto wS = w0;
+    constexpr int n {2};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
     const std::vector<Driver> internals {
-        Driver {&gr.cn[wD].end_edge(Ends::opp(eD)), Ends::opp(eD)},
-        Driver {&gr.cn[wS].end_edge(Ends::opp(eS)), Ends::opp(eS)}
+        Driver {&gr.chain(wD).end_edge(End::opp(eD)), End::opp(eD)},
+        Driver {&gr.chain(wS).end_edge(End::opp(eS)), End::opp(eS)}
     };
-    Path pp {&gr.ct[gr.cn[wS].c],
+    Path pp {&gr.compt(wS),
              drv,
              src,
              internals};
 
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 2);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eA);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_3way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eA);
+    ASSERT_TRUE(cnwS.is_connected_cycle());
+    ASSERT_TRUE(cnwS.length() >= n + minCycleLength);
+    ASSERT_FALSE(c0.template check<profuse>());
+
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull two steps to get min length of the source cycle chain
 
-    constexpr int n {2};
-    pu1f(pp, n);  // Pull two steps to get min length of the source cycle chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains());
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wS].length(), gr0.cn[wS].length() - n);
-    for(EgId i {}; const auto& h : gr.ct[ic].gl) {
-        const auto& eg = gr.cn[h.w].g[h.a];
-        ASSERT_EQ(eg.w, h.w);
-        ASSERT_EQ(eg.indw, h.a);
-        ASSERT_EQ(eg.ind, h.i);
-        ASSERT_EQ(eg.c, ic);
-        ASSERT_EQ(eg.indc, i++);
-    }
-    ASSERT_TRUE(gr.cn[wS].is_connected_cycle());
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wS].g[3].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wS].g[2].ind);
-    ASSERT_EQ(gr.cn[wS].g[0].ind, gr0.cn[wS].g[0].ind);
-    ASSERT_EQ(gr.cn[wS].g[1].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wS].ngs[eA].num(), 2);
-    ASSERT_EQ(gr.cn[wS].ngs[eB].num(), 2);
-    ASSERT_EQ(gr.cn[wS].ngs[eA][0].w, wD);
-    ASSERT_EQ(gr.cn[wS].ngs[eA][0].e, eB);
-    ASSERT_EQ(gr.cn[wS].ngs[eA][1].w, wS);
-    ASSERT_EQ(gr.cn[wS].ngs[eA][1].e, eB);
-    ASSERT_EQ(gr.cn[wS].ngs[eB][0].w, wD);
-    ASSERT_EQ(gr.cn[wS].ngs[eB][0].e, eB);
-    ASSERT_EQ(gr.cn[wS].ngs[eB][1].w, wS);
-    ASSERT_EQ(gr.cn[wS].ngs[eB][1].e, eA);
-    ASSERT_EQ(gr.cn[wD].ngs[eA].num(), 0);
-    ASSERT_EQ(gr.cn[wD].ngs[eB].num(), 2);
-    ASSERT_EQ(gr.cn[wD].ngs[eB][0].w, wS);
-    ASSERT_EQ(gr.cn[wD].ngs[eB][0].e, eA);
-    ASSERT_EQ(gr.cn[wD].ngs[eB][1].w, wS);
-    ASSERT_EQ(gr.cn[wD].ngs[eB][1].e, eB);
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& mD = gr.chain(wD);
+    const auto& mS = gr.chain(wS);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mS.length(), cnwS.length() - n);
+    ASSERT_TRUE(mS.is_connected_cycle());
+    ASSERT_EQ(mD.g[0].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwS.g[3].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwS.g[2].ind);
+    ASSERT_EQ(mS.g[0].ind, cnwS.g[0].ind);
+    ASSERT_EQ(mS.g[1].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mS.ngs[eA].num(), 2);
+    ASSERT_TRUE(mS.ngs[eA].contains(ESlot{wD, eB}));
+    ASSERT_TRUE(mS.ngs[eA].contains(ESlot{wS, eB}));
+    ASSERT_EQ(mS.ngs[eB].num(), 2);
+    ASSERT_TRUE(mS.ngs[eB].contains(ESlot{wD, eB}));
+    ASSERT_TRUE(mS.ngs[eB].contains(ESlot{wS, eA}));
+    ASSERT_EQ(mD.ngs[eA].num(), 0);
+    ASSERT_EQ(mD.ngs[eB].num(), 2);
+    ASSERT_TRUE(mD.ngs[eB].contains(ESlot{wS, eA}));
+    ASSERT_TRUE(mD.ngs[eB].contains(ESlot{wS, eB}));
 
 }  //  J3_DrA_SrCyA_Srv
-
-/*
-TEST_BEFORE 0  ** {1 A} {1 B}  0 [0]  len 2 > > ( 0 1 )
-            [0] > ind 0 indc 0 w 0 c 0
-            [1] > ind 1 indc 1 w 0 c 0
-TEST_BEFORE 1 {0 B} {1 B}  ** {0 B} {1 A}  0 [1]  len 4 > > > > ( 2 3 4 5 )
-            [0] > ind 2 indc 2 w 1 c 0
-            [1] > ind 3 indc 3 w 1 c 0
-            [2] > ind 4 indc 4 w 1 c 0
-            [3] > ind 5 indc 5 w 1 c 0
-
-Pulling from Vertex Deg 1+ :: 2 steps over path:
-driver (egEnd A) 0:   [0] > ind 0 indc 0 w 0 c 0
-                 1:   [1] > ind 1 indc 1 w 0 c 0
-                 2:   [3] > ind 5 indc 5 w 1 c 0
-                 3:   [2] > ind 4 indc 4 w 1 c 0
-                 4:   [1] > ind 3 indc 3 w 1 c 0
-source (end A)   5:   [0] > ind 2 indc 2 w 1 c 0
-
-TEST_AFTER 0  ** {1 A} {1 B}  0 [0]  len 4 > > > > ( 0 1 5 4 )
-           [0] > ind 0 indc 0 w 0 c 0
-           [1] > ind 1 indc 1 w 0 c 0
-           [2] > ind 5 indc 5 w 0 c 0
-           [3] > ind 4 indc 4 w 0 c 0
-TEST_AFTER 1 {0 B} {1 B}  ** {0 B} {1 A}  0 [1]  len 2 > > ( 2 3 )
-           [0] > ind 2 indc 2 w 1 c 0
-           [1] > ind 3 indc 3 w 1 c 0
-*/
 
 
 /// Tests degree 1 pulling through a 3-way junction joining a linear and a
@@ -1170,16 +1214,16 @@ TEST_F(Pull_1, J3_DrA_SrCyB_Srv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling through a 3-way junction joining a ",
-            "linear and a cycle chains. ",
-            "Driver edge is at the free end A of the linear chain while the ",
-            "source is at the end B of the cycle chain. ",
-            "Preserves the component topology."
+            "linear and a cycle chains\n",
+            "Driver edge is at the free end A of the linear chain\n",
+            "The source is at the end B of the cycle chain\n",
+            "Preserves the component topology"
         );
 
     // Create initial graph.
 
-    constexpr EgId len {6};
-    const auto [w0, w1] = create_array<ChId, 2>();
+    constexpr std::size_t len {6};
+    const auto [w0, w1] = id_sequence<ChIdG, 2>();
 
     G gr;
     gr.add_single_chain_component(len);
@@ -1190,107 +1234,94 @@ TEST_F(Pull_1, J3_DrA_SrCyB_Srv)
     merge12(ESlot{w0, eB},
             BSlot{w0, 2});
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
 
     constexpr auto eD = eA;
-    const auto wD = w0;
+    const auto wD = w1;
     constexpr auto eS = eB;
-    const auto wS = w1;
+    const auto wS = w0;
+    constexpr int n {2};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
     const std::vector<Driver> internals {
-        Driver {&gr.cn[wD].end_edge(Ends::opp(eD)), Ends::opp(eD)},
-        Driver {&gr.cn[wS].end_edge(Ends::opp(eS)), Ends::opp(eS)}
+        Driver {&gr.chain(wD).end_edge(End::opp(eD)), End::opp(eD)},
+        Driver {&gr.chain(wS).end_edge(End::opp(eS)), End::opp(eS)}
     };
-    Path pp {&gr.ct[gr.cn[wS].c],
+    Path pp {&gr.compt(wS),
              drv,
              src,
              internals};
 
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 2);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eA);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_3way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eB);
+    ASSERT_TRUE(cnwS.is_connected_cycle());
+    ASSERT_TRUE(cnwS.length() >= n + minCycleLength);
+    ASSERT_FALSE(c0.template check<profuse>());
+
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull two steps to get min length of the source cycle chain
 
-    constexpr int n {2};
-    pu1f(pp, n);  // Pull two steps to get min length of the source cycle chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains());
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wS].length(), gr0.cn[wS].length() - n);
-     for(EgId i {}; const auto& h : gr.ct[ic].gl) {
-        const auto& eg = gr.cn[h.w].g[h.a];
-        ASSERT_EQ(eg.w, h.w);
-        ASSERT_EQ(eg.indw, h.a);
-        ASSERT_EQ(eg.ind, h.i);
-        ASSERT_EQ(eg.c, ic);
-        ASSERT_EQ(eg.indc, i++);
-    }
-    ASSERT_TRUE(gr.cn[wS].is_connected_cycle());
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wS].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wS].g[0].ind, gr0.cn[wS].g[2].ind);
-    ASSERT_EQ(gr.cn[wS].g[1].ind, gr0.cn[wS].g[3].ind);
-    ASSERT_EQ(gr.cn[wS].ngs[eA].num(), 2);
-    ASSERT_EQ(gr.cn[wS].ngs[eB].num(), 2);
-    ASSERT_EQ(gr.cn[wS].ngs[eA][0].w, wD);
-    ASSERT_EQ(gr.cn[wS].ngs[eA][0].e, eB);
-    ASSERT_EQ(gr.cn[wS].ngs[eA][1].w, wS);
-    ASSERT_EQ(gr.cn[wS].ngs[eA][1].e, eB);
-    ASSERT_EQ(gr.cn[wS].ngs[eB][0].w, wD);
-    ASSERT_EQ(gr.cn[wS].ngs[eB][0].e, eB);
-    ASSERT_EQ(gr.cn[wS].ngs[eB][1].w, wS);
-    ASSERT_EQ(gr.cn[wS].ngs[eB][1].e, eA);
-    ASSERT_EQ(gr.cn[wD].ngs[eA].num(), 0);
-    ASSERT_EQ(gr.cn[wD].ngs[eB].num(), 2);
-    ASSERT_EQ(gr.cn[wD].ngs[eB][0].w, wS);
-    ASSERT_EQ(gr.cn[wD].ngs[eB][0].e, eA);
-    ASSERT_EQ(gr.cn[wD].ngs[eB][1].w, wS);
-    ASSERT_EQ(gr.cn[wD].ngs[eB][1].e, eB);
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& mD = gr.chain(wD);
+    const auto& mS = gr.chain(wS);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mS.length(), cnwS.length() - n);
+    ASSERT_TRUE(mS.is_connected_cycle());
+    ASSERT_EQ(mD.g[0].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwS.g[0].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mS.g[0].ind, cnwS.g[2].ind);
+    ASSERT_EQ(mS.g[1].ind, cnwS.g[3].ind);
+    ASSERT_EQ(mS.ngs[eA].num(), 2);
+    ASSERT_TRUE(mS.ngs[eA].contains(ESlot{wD, eB}));
+    ASSERT_TRUE(mS.ngs[eA].contains(ESlot{wS, eB}));
+    ASSERT_EQ(mS.ngs[eB].num(), 2);
+    ASSERT_TRUE(mS.ngs[eB].contains(ESlot{wD, eB}));
+    ASSERT_TRUE(mS.ngs[eB].contains(ESlot{wS, eA}));
+    ASSERT_EQ(mD.ngs[eA].num(), 0);
+    ASSERT_EQ(mD.ngs[eB].num(), 2);
+    ASSERT_TRUE(mD.ngs[eB].contains(ESlot{wS, eA}));
+    ASSERT_TRUE(mD.ngs[eB].contains(ESlot{wS, eB}));
 
 }  //  J3_DrA_SrCyB_Srv
 
-/*
-TEST_BEFORE 0  ** {1 A} {1 B}  0 [0]  len 2 > > ( 0 1 )
-            [0] > ind 0 indc 0 w 0 c 0
-            [1] > ind 1 indc 1 w 0 c 0
-TEST_BEFORE 1 {0 B} {1 B}  ** {0 B} {1 A}  0 [1]  len 4 > > > > ( 2 3 4 5 )
-            [0] > ind 2 indc 2 w 1 c 0
-            [1] > ind 3 indc 3 w 1 c 0
-            [2] > ind 4 indc 4 w 1 c 0
-            [3] > ind 5 indc 5 w 1 c 0
-
-Pulling from Vertex Deg 1+ :: 2 steps over path:
-driver (egEnd A) 0:   [0] > ind 0 indc 0 w 0 c 0
-                 1:   [1] > ind 1 indc 1 w 0 c 0
-                 2:   [0] > ind 2 indc 2 w 1 c 0
-                 3:   [1] > ind 3 indc 3 w 1 c 0
-                 4:   [2] > ind 4 indc 4 w 1 c 0
-source (end B)   5:   [3] > ind 5 indc 5 w 1 c 0
-
-TEST_AFTER 0  ** {1 A} {1 B}  0 [0]  len 4 > > > > ( 0 1 2 3 )
-           [0] > ind 0 indc 0 w 0 c 0
-           [1] > ind 1 indc 1 w 0 c 0
-           [2] > ind 2 indc 2 w 0 c 0
-           [3] > ind 3 indc 3 w 0 c 0
-TEST_AFTER 1 {0 B} {1 B}  ** {0 B} {1 A}  0 [1]  len 2 > > ( 4 5 )
-           [0] > ind 4 indc 4 w 1 c 0
-           [1] > ind 5 indc 5 w 1 c 0
-*/
 
 /// Tests degree 1 pulling through a 3-way junction joining a linear and a
 /// cycle chains. Driver edge is at the free end B of the linear chain while
@@ -1302,16 +1333,16 @@ TEST_F(Pull_1, J3_DrB_SrCyA_Srv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling through a 3-way junction joining a ",
-            "linear and a cycle chains. ",
-            "Driver edge is at the free end B of the linear chain while the ",
-            "source is at the end A of the cycle chain. ",
-            "Preserves the component topology."
+            "linear and a cycle chains\n",
+            "Driver edge is at the free end B of the linear chain\n",
+            "The source is at the end A of the cycle chain\n",
+            "Preserves the component topology"
         );
 
     // Create initial graph.
 
-    constexpr EgId len {6};
-    const auto [w0, w1] = create_array<ChId, 2>();
+    constexpr std::size_t len {6};
+    const auto [w0, w1] = id_sequence<ChIdG, 2>();
 
     G gr;
     gr.add_single_chain_component(len);
@@ -1322,108 +1353,93 @@ TEST_F(Pull_1, J3_DrB_SrCyA_Srv)
     merge12(ESlot{w0, eA},
             BSlot{w0, 4});
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
 
     constexpr auto eD = eB;
     const auto wD = w1;
-    constexpr auto eS = eB;
+    constexpr auto eS = eA;
     const auto wS = w0;
+    constexpr int n {2};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
     const std::vector<Driver> internals {
-        Driver {&gr.cn[wD].end_edge(Ends::opp(eD)), Ends::opp(eD)},
-        Driver {&gr.cn[wS].end_edge(Ends::opp(eS)), Ends::opp(eS)}
+        Driver {&gr.chain(wD).end_edge(End::opp(eD)), End::opp(eD)},
+        Driver {&gr.chain(wS).end_edge(End::opp(eS)), End::opp(eS)}
     };
-    Path pp {&gr.ct[gr.cn[wS].c],
+    Path pp {&gr.compt(wS),
              drv,
              src,
              internals};
 
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 2);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eB);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_3way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eA);
+    ASSERT_TRUE(cnwS.is_connected_cycle());
+    ASSERT_TRUE(cnwS.length() >= n + minCycleLength);
+    ASSERT_FALSE(c0.template check<profuse>());
+
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull two steps to get min length of the source cycle chain
 
-    constexpr int n {2};
-    pu1f(pp, n);  // Pull two steps to get min length of the source cycle chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains());
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wS].length(), gr0.cn[wS].length() - n);
-     for(EgId i {}; const auto& h : gr.ct[ic].gl) {
-        const auto& eg = gr.cn[h.w].g[h.a];
-        ASSERT_EQ(eg.w, h.w);
-        ASSERT_EQ(eg.indw, h.a);
-        ASSERT_EQ(eg.ind, h.i);
-        ASSERT_EQ(eg.c, ic);
-        ASSERT_EQ(eg.indc, i++);
-    }
-    ASSERT_TRUE(gr.cn[wS].is_connected_cycle());
-    ASSERT_EQ(gr.cn[wS].g[0].ind, gr0.cn[wS].g[2].ind);
-    ASSERT_EQ(gr.cn[wS].g[1].ind, gr0.cn[wS].g[3].ind);
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wS].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wS].ngs[eA].num(), 2);
-    ASSERT_EQ(gr.cn[wS].ngs[eB].num(), 2);
-    ASSERT_EQ(gr.cn[wS].ngs[eA][0].w, wS);
-    ASSERT_EQ(gr.cn[wS].ngs[eA][0].e, eB);
-    ASSERT_EQ(gr.cn[wS].ngs[eA][1].w, w1);
-    ASSERT_EQ(gr.cn[wS].ngs[eA][1].e, eA);
-    ASSERT_EQ(gr.cn[wS].ngs[eB][0].w, w0);
-    ASSERT_EQ(gr.cn[wS].ngs[eB][0].e, eA);
-    ASSERT_EQ(gr.cn[wS].ngs[eB][1].w, w1);
-    ASSERT_EQ(gr.cn[wS].ngs[eB][1].e, eA);
-    ASSERT_EQ(gr.cn[wD].ngs[eA].num(), 2);
-    ASSERT_EQ(gr.cn[wD].ngs[eB].num(), 0);
-    ASSERT_EQ(gr.cn[wD].ngs[eA][0].w, wS);
-    ASSERT_EQ(gr.cn[wD].ngs[eA][0].e, eA);
-    ASSERT_EQ(gr.cn[wD].ngs[eA][1].w, wS);
-    ASSERT_EQ(gr.cn[wD].ngs[eA][1].e, eB);
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& mD = gr.chain(wD);
+    const auto& mS = gr.chain(wS);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mS.length(), cnwS.length() - n);
+    ASSERT_TRUE(mS.is_connected_cycle());
+    ASSERT_EQ(mS.g[0].ind, cnwS.g[0].ind);
+    ASSERT_EQ(mS.g[1].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mD.g[0].ind, cnwS.g[2].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwS.g[3].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mS.ngs[eA].num(), 2);
+    ASSERT_TRUE(mS.ngs[eA].contains(ESlot{wS, eB}));
+    ASSERT_TRUE(mS.ngs[eA].contains(ESlot{w1, eA}));
+    ASSERT_EQ(mS.ngs[eB].num(), 2);
+    ASSERT_TRUE(mS.ngs[eB].contains(ESlot{w0, eA}));
+    ASSERT_TRUE(mS.ngs[eB].contains(ESlot{w1, eA}));
+    ASSERT_EQ(mD.ngs[eA].num(), 2);
+    ASSERT_TRUE(mD.ngs[eA].contains(ESlot{wS, eA}));
+    ASSERT_TRUE(mD.ngs[eA].contains(ESlot{wS, eB}));
+    ASSERT_EQ(mD.ngs[eB].num(), 0);
 
 }  //  J3_DrB_SrCyA_Srv
-
-/*
-TEST_BEFORE 0 {0 B} {1 A}  ** {0 A} {1 A}  0 [0]  len 4 > > > > ( 0 1 2 3 )
-            [0] > ind 0 indc 0 w 0 c 0
-            [1] > ind 1 indc 1 w 0 c 0
-            [2] > ind 2 indc 2 w 0 c 0
-            [3] > ind 3 indc 3 w 0 c 0
-TEST_BEFORE 1 {0 A} {0 B}  **  0 [1]  len 2 > > ( 4 5 )
-            [0] > ind 4 indc 4 w 1 c 0
-            [1] > ind 5 indc 5 w 1 c 0
-
-Pulling from Vertex Deg 1+ :: 2 steps over path:
-
-driver (egEnd B) 0:   [1] > ind 5 indc 5 w 1 c 0
-                 1:   [0] > ind 4 indc 4 w 1 c 0
-                 2:   [0] > ind 0 indc 0 w 0 c 0
-                 3:   [1] > ind 1 indc 1 w 0 c 0
-                 4:   [2] > ind 2 indc 2 w 0 c 0
-source (end B)   5:   [3] > ind 3 indc 3 w 0 c 0
-
-TEST_AFTER 0 {0 B} {1 A}  ** {0 A} {1 A}  0 [0]  len 2 > > ( 2 3 )
-           [0] > ind 2 indc 2 w 0 c 0
-           [1] > ind 3 indc 3 w 0 c 0
-TEST_AFTER 1 {0 A} {0 B}  **  0 [1]  len 4 > > > > ( 1 0 4 5 )
-           [0] > ind 1 indc 1 w 1 c 0
-           [1] > ind 0 indc 0 w 1 c 0
-           [2] > ind 4 indc 4 w 1 c 0
-           [3] > ind 5 indc 5 w 1 c 0
-*/
 
 
 /// Tests degree 1 pulling through a 3-way junction joining a linear and a cycle
@@ -1436,16 +1452,16 @@ TEST_F(Pull_1, J3_DrB_SrCyB_Srv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling through a 3-way junction joining a linear",
-            "and a cycle chains. ",
-            "Driver edge is at the free end B of the linear chain while the ",
-            "source is at the end B of the cycle chain. ",
-            "Preserves the component topology."
+            "and a cycle chains\n",
+            "Driver edge is at the free end B of the linear chain\n",
+            "The source is at the end B of the cycle chain\n",
+            "Preserves the component topology"
         );
 
     // Create initial graph.
 
-    constexpr EgId len {6};
-    const auto [w0, w1] = create_array<ChId, 2>();
+    constexpr std::size_t len {6};
+    const auto [w0, w1] = id_sequence<ChIdG, 2>();
 
     G gr;
     gr.add_single_chain_component(len);
@@ -1456,108 +1472,93 @@ TEST_F(Pull_1, J3_DrB_SrCyB_Srv)
     merge12(ESlot{w0, eA},
             BSlot{w0, 4});
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
 
     constexpr auto eD = eB;
     const auto wD = w1;
-    constexpr auto eS = eA;
+    constexpr auto eS = eB;
     const auto wS = w0;
+    constexpr int n {2};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
     const std::vector<Driver> internals {
-        Driver {&gr.cn[wD].end_edge(Ends::opp(eD)), Ends::opp(eD)},
-        Driver {&gr.cn[wS].end_edge(Ends::opp(eS)), Ends::opp(eS)}
+        Driver {&gr.chain(wD).end_edge(End::opp(eD)), End::opp(eD)},
+        Driver {&gr.chain(wS).end_edge(End::opp(eS)), End::opp(eS)}
     };
-    Path pp {&gr.ct[gr.cn[wS].c],
+    Path pp {&gr.compt(wS),
              drv,
              src,
              internals};
 
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 2);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eB);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_3way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eB);
+    ASSERT_TRUE(cnwS.is_connected_cycle());
+    ASSERT_TRUE(cnwS.length() >= n + minCycleLength);
+    ASSERT_FALSE(c0.template check<profuse>());
+
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull two steps to get min length of the source cycle chain
 
-    constexpr int n {2};
-    pu1f(pp, n);  // Pull two steps to get min length of the source cycle chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains());
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wS].length(), gr0.cn[wS].length() - n);
-     for(EgId i {}; const auto& h : gr.ct[ic].gl) {
-        const auto& eg = gr.cn[h.w].g[h.a];
-        ASSERT_EQ(eg.w, h.w);
-        ASSERT_EQ(eg.indw, h.a);
-        ASSERT_EQ(eg.ind, h.i);
-        ASSERT_EQ(eg.c, ic);
-        ASSERT_EQ(eg.indc, i++);
-    }
-    ASSERT_TRUE(gr.cn[wS].is_connected_cycle());
-    ASSERT_EQ(gr.cn[wS].g[0].ind, gr0.cn[wS].g[0].ind);
-    ASSERT_EQ(gr.cn[wS].g[1].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wS].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wS].g[3].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wS].ngs[eA].num(), 2);
-    ASSERT_EQ(gr.cn[wS].ngs[eB].num(), 2);
-    ASSERT_EQ(gr.cn[wS].ngs[eA][0].w, wS);
-    ASSERT_EQ(gr.cn[wS].ngs[eA][0].e, eB);
-    ASSERT_EQ(gr.cn[wS].ngs[eA][1].w, wD);
-    ASSERT_EQ(gr.cn[wS].ngs[eA][1].e, eA);
-    ASSERT_EQ(gr.cn[wS].ngs[eB][0].w, wS);
-    ASSERT_EQ(gr.cn[wS].ngs[eB][0].e, eA);
-    ASSERT_EQ(gr.cn[wS].ngs[eB][1].w, wD);
-    ASSERT_EQ(gr.cn[wS].ngs[eB][1].e, eA);
-    ASSERT_EQ(gr.cn[wD].ngs[eA].num(), 2);
-    ASSERT_EQ(gr.cn[wD].ngs[eB].num(), 0);
-    ASSERT_EQ(gr.cn[wD].ngs[eA][0].w, wS);
-    ASSERT_EQ(gr.cn[wD].ngs[eA][0].e, eA);
-    ASSERT_EQ(gr.cn[wD].ngs[eA][1].w, wS);
-    ASSERT_EQ(gr.cn[wD].ngs[eA][1].e, eB);
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains);
+    ASSERT_FALSE(c.template check<profuse>());
 
-}  //  end J3_DrB_SrCyB_Srv
+    const auto& mD = gr.chain(wD);
+    const auto& mS = gr.chain(wS);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mS.length(), cnwS.length() - n);
+    ASSERT_TRUE(mS.is_connected_cycle());
+    ASSERT_EQ(mS.g[0].ind, cnwS.g[2].ind);
+    ASSERT_EQ(mS.g[1].ind, cnwS.g[3].ind);
+    ASSERT_EQ(mD.g[0].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwS.g[0].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mS.ngs[eA].num(), 2);
+    ASSERT_TRUE(mS.ngs[eA].contains(ESlot{wS, eB}));
+    ASSERT_TRUE(mS.ngs[eA].contains(ESlot{wD, eA}));
+    ASSERT_EQ(mS.ngs[eB].num(), 2);
+    ASSERT_TRUE(mS.ngs[eB].contains(ESlot{wS, eA}));
+    ASSERT_TRUE(mS.ngs[eB].contains(ESlot{wD, eA}));
+    ASSERT_EQ(mD.ngs[eA].num(), 2);
+    ASSERT_TRUE(mD.ngs[eA].contains(ESlot{wS, eA}));
+    ASSERT_TRUE(mD.ngs[eA].contains(ESlot{wS, eB}));
+    ASSERT_EQ(mD.ngs[eB].num(), 0);
 
-/*
-TEST_BEFORE 0 {0 B} {1 A}  ** {0 A} {1 A}  0 [0]  len 4 > > > > ( 0 1 2 3 )
-            [0] > ind 0 indc 0 w 0 c 0
-            [1] > ind 1 indc 1 w 0 c 0
-            [2] > ind 2 indc 2 w 0 c 0
-            [3] > ind 3 indc 3 w 0 c 0
-TEST_BEFORE 1 {0 A} {0 B}  **  0 [1]  len 2 > > ( 4 5 )
-            [0] > ind 4 indc 4 w 1 c 0
-            [1] > ind 5 indc 5 w 1 c 0
-
-Pulling from Vertex Deg 1+ :: 2 steps over path:
-
-driver (egEnd B) 0:   [1] > ind 5 indc 5 w 1 c 0
-                 1:   [0] > ind 4 indc 4 w 1 c 0
-                 2:   [3] > ind 3 indc 3 w 0 c 0
-                 3:   [2] > ind 2 indc 2 w 0 c 0
-                 4:   [1] > ind 1 indc 1 w 0 c 0
-source (end A)   5:   [0] > ind 0 indc 0 w 0 c 0
-
-TEST_AFTER 0 {0 B} {1 A}  ** {0 A} {1 A}  0 [0]  len 2 > > ( 0 1 )
-           [0] > ind 0 indc 0 w 0 c 0
-           [1] > ind 1 indc 1 w 0 c 0
-TEST_AFTER 1 {0 A} {0 B}  **  0 [1]  len 4 > > > > ( 2 3 4 5 )
-           [0] > ind 2 indc 2 w 1 c 0
-           [1] > ind 3 indc 3 w 1 c 0
-           [2] > ind 4 indc 4 w 1 c 0
-           [3] > ind 5 indc 5 w 1 c 0
-*/
+}  // J3_DrB_SrCyB_Srv
 
 
 // =============================================================================
@@ -1565,7 +1566,7 @@ TEST_AFTER 1 {0 A} {0 B}  **  0 [1]  len 4 > > > > ( 2 3 4 5 )
 // =============================================================================
 
 /// Tests degree 1 pulling over a path traversing a 4-way junction
-/// connecting four linear chains. Driving edge is at the end A,
+/// connecting four linear chains. Driving edge is at the chain end A,
 /// source edge is at tne end A of a linear chain.
 /// The source chain survives.
 TEST_F(Pull_1, J4_LinLin_DrA_SrLiA_Srv)
@@ -1575,18 +1576,19 @@ TEST_F(Pull_1, J4_LinLin_DrA_SrLiA_Srv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 4-way junction ",
-            "connecting four linear chains. Driving edge is at the end A, ",
-            "source edge is at tne end A of a linear chain. ",
-            "The source chain survives."
+            "connecting four linear chains\n",
+            "Driving edge is at the chain end A\n",
+            "Source edge is at tne end A of a linear chain\n",
+            "The source chain survives"
         );
 
     // Create initial graph.
 
-    constexpr std::array<EgId, 2> len {6, 6};
-    const auto [w0, w1, w2, w3] = create_array<ChId, 4>();
+    constexpr std::array<size_t, 2> len {6, 6};
+    const auto [w0, w1, w2, w3] = id_sequence<ChIdG, 4>();
 
     G gr;
-    for (const auto u: len)
+    for (const auto u : len)
         gr.add_single_chain_component(u);
 
     VertexMerger<2, 2, G> merge22 {gr};
@@ -1595,9 +1597,7 @@ TEST_F(Pull_1, J4_LinLin_DrA_SrLiA_Srv)
     merge22(BSlot{w1, 3},
             BSlot{w0, 3});     // creates w2, w3
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
@@ -1608,94 +1608,85 @@ TEST_F(Pull_1, J4_LinLin_DrA_SrLiA_Srv)
     constexpr auto eS = eA;
     const auto v1 = w2;
     const auto v2 = w3;
+    constexpr int n {2};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src};
+    Path pp {&gr.compt(src.w), drv, src};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto num_vertices = c0.num_vertices();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnv1 = gr.chain(v1);  // copy
+    const auto cnv2 = gr.chain(v2);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 4);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eA);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eA);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_4way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwS.length() > n);
+    ASSERT_TRUE(cnv1.has_single_leaf_vertex());
+    ASSERT_TRUE(cnv2.has_single_leaf_vertex());
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
 
-    constexpr int n {2};
-    pu1f(pp, n);  // Pull two steps to leave source edge in the original chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains());
-    ASSERT_EQ(gr.ct[ic].num_vertices(), gr0.ct[ic].num_vertices());
-    ASSERT_EQ(gr.ct[ic].ww, gr0.ct[ic].ww);
-    ASSERT_EQ(gr.ct[ic].chis, gr0.ct[ic].chis);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wS].length(), gr0.cn[wS].length() - n);
-    ASSERT_EQ(gr.cn[v1].length(), gr0.cn[v1].length());
-    ASSERT_EQ(gr.cn[v2].length(), gr0.cn[v2].length());
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wD].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wS].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[4].ind, gr0.cn[wS].g[1].ind);
-    for (szt i {}; i<gr.cn[wD].length(); ++i) {
-        ASSERT_EQ(gr.cn[wD].g[i].indw, i);
-        ASSERT_EQ(gr.cn[wD].g[i].c, ic);
-        ASSERT_EQ(gr.cn[wD].g[i].w, wD);
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains);
+    ASSERT_EQ(c.num_vertices(), num_vertices);
+    ASSERT_EQ(c.ww, ww);
+    ASSERT_EQ(c.chis, chis);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& mD = gr.chain(wD);
+    const auto& mS = gr.chain(wS);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mS.length(), cnwS.length() - n);
+    ASSERT_EQ(gr.chain(v1).length(), cnv1.length());
+    ASSERT_EQ(gr.chain(v2).length(), cnv2.length());
+    ASSERT_EQ(mD.g[0].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwD.g[2].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwS.g[2].ind);
+    ASSERT_EQ(mD.g[4].ind, cnwS.g[1].ind);
+    for (std::size_t i {}; i<mD.length(); ++i) {
+        ASSERT_EQ(mD.g[i].indw, i);
+        ASSERT_EQ(mD.g[i].c, ic);
+        ASSERT_EQ(mD.g[i].w, wD);
     }
 
-}  //  end J4_LinLin_DrA_SrLiA_Srv
+}  // J4_LinLin_DrA_SrLiA_Srv
 
-/*  J4_LinLin_DrA_SrLiA_Srv
-
-TEST_BEFORE 1  ** {0 B} {2 A} {3 A}  0 [0]  len 3 > > > ( 6 7 8 )
-            [0] > ind 6 indc 0 w 1 c 0
-            [1] > ind 7 indc 1 w 1 c 0
-            [2] > ind 8 indc 2 w 1 c 0
-TEST_BEFORE 0  ** {1 B} {2 A} {3 A}  0 [1]  len 3 > > > ( 0 1 2 )
-            [0] > ind 0 indc 3 w 0 c 0
-            [1] > ind 1 indc 4 w 0 c 0
-            [2] > ind 2 indc 5 w 0 c 0
-TEST_BEFORE 2 {0 B} {1 B} {3 A}  **  0 [2]  len 3 > > > ( 9 10 11 )
-            [0] > ind 9 indc 6 w 2 c 0
-            [1] > ind 10 indc 7 w 2 c 0
-            [2] > ind 11 indc 8 w 2 c 0
-TEST_BEFORE 3 {0 B} {2 A} {1 B}  **  0 [3]  len 3 > > > ( 3 4 5 )
-            [0] > ind 3 indc 9 w 3 c 0
-            [1] > ind 4 indc 10 w 3 c 0
-            [2] > ind 5 indc 11 w 3 c 0
-
-Pulling from Vertex Deg 1+ :: 2 steps over path:
-
-driver (egEnd A) 0:   [0] > ind 6 indc 0 w 1 c 0
-                 1:   [1] > ind 7 indc 1 w 1 c 0
-                 2:   [2] > ind 8 indc 2 w 1 c 0
-                 3:   [2] > ind 2 indc 5 w 0 c 0
-                 4:   [1] > ind 1 indc 4 w 0 c 0
-source (end A)   5:   [0] > ind 0 indc 3 w 0 c 0
-
-TEST_AFTER 1  ** {0 B} {2 A} {3 A}  0 [0]  len 5 > > > > > ( 6 7 8 2 1 )
-           [0] > ind 6 indc 0 w 1 c 0
-           [1] > ind 7 indc 1 w 1 c 0
-           [2] > ind 8 indc 2 w 1 c 0
-           [3] > ind 2 indc 5 w 1 c 0
-           [4] > ind 1 indc 4 w 1 c 0
-TEST_AFTER 0  ** {1 B} {2 A} {3 A}  0 [1]  len 1 > ( 0 )
-           [0] > ind 0 indc 3 w 0 c 0
-TEST_AFTER 2 {0 B} {1 B} {3 A}  **  0 [2]  len 3 > > > ( 9 10 11 )
-           [0] > ind 9 indc 6 w 2 c 0
-           [1] > ind 10 indc 7 w 2 c 0
-           [2] > ind 11 indc 8 w 2 c 0
-TEST_AFTER 3 {0 B} {2 A} {1 B}  **  0 [3]  len 3 > > > ( 3 4 5 )
-           [0] > ind 3 indc 9 w 3 c 0
-           [1] > ind 4 indc 10 w 3 c 0
-           [2] > ind 5 indc 11 w 3 c 0
-*/
 
 /// Tests degree 1 pulling over a path traversing a 4-way junction
-/// connecting four linear chains. Driving edge is at the end A,
+/// connecting four linear chains. Driving edge is at the chain end A,
 /// source edge is at tne end B of a linear chain.
 /// The source chain survives.
 TEST_F(Pull_1, J4_LinLin_DrA_SrLiB_Srv)
@@ -1705,18 +1696,19 @@ TEST_F(Pull_1, J4_LinLin_DrA_SrLiB_Srv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 4-way junction ",
-            "connecting four linear chains. Driving edge is at the end A, ",
-            "source edge is at tne end B of a linear chain. ",
-            "The source chain survives."
+            "which connects four linear chains\n",
+            "Driving edge is at the chain end A\n",
+            "Source edge is at tne end B of a linear chain\n",
+            "The source chain survives"
         );
 
     // Create initial graph.
 
-    constexpr std::array<EgId, 2> len {6, 6};
-    const auto [w0, w1, w2, w3] = create_array<ChId, 4>();
+    constexpr std::array<size_t, 2> len {6, 6};
+    const auto [w0, w1, w2, w3] = id_sequence<ChIdG, 4>();
 
     G gr;
-    for (const auto u: len)
+    for (const auto u : len)
         gr.add_single_chain_component(u);
 
     VertexMerger<2, 2, G> merge22 {gr};
@@ -1725,9 +1717,7 @@ TEST_F(Pull_1, J4_LinLin_DrA_SrLiB_Srv)
     merge22(BSlot{w1, 3},
             BSlot{w0, 3});     // creates w2, w3
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
@@ -1738,95 +1728,85 @@ TEST_F(Pull_1, J4_LinLin_DrA_SrLiB_Srv)
     constexpr auto eS = eB;
     const auto v1 = w0;
     const auto v2 = w3;
+    constexpr int n {2};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src};
+    Path pp {&gr.compt(src.w), drv, src};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto num_vertices = c0.num_vertices();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnv1 = gr.chain(v1);  // copy
+    const auto cnv2 = gr.chain(v2);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 4);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eA);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eB);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_4way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwS.length() > n);
+    ASSERT_TRUE(cnv1.has_single_leaf_vertex());
+    ASSERT_TRUE(cnv2.has_single_leaf_vertex());
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
 
-    constexpr int n {2};
-    pu1f(pp, n);  // Pull two steps to leave source edge in the original chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains());
-    ASSERT_EQ(gr.ct[ic].num_vertices(), gr0.ct[ic].num_vertices());
-    ASSERT_EQ(gr.ct[ic].ww, gr0.ct[ic].ww);
-    ASSERT_EQ(gr.ct[ic].chis, gr0.ct[ic].chis);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wS].length(), gr0.cn[wS].length() - n);
-    ASSERT_EQ(gr.cn[v1].length(), gr0.cn[v1].length());
-    ASSERT_EQ(gr.cn[v2].length(), gr0.cn[v2].length());
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wD].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wS].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[4].ind, gr0.cn[wS].g[1].ind);
-    for (szt i {}; i<gr.cn[wD].length(); ++i) {
-        ASSERT_EQ(gr.cn[wD].g[i].indw, i);
-        ASSERT_EQ(gr.cn[wD].g[i].c, ic);
-        ASSERT_EQ(gr.cn[wD].g[i].w, wD);
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains);
+    ASSERT_EQ(c.num_vertices(), num_vertices);
+    ASSERT_EQ(c.ww, ww);
+    ASSERT_EQ(c.chis, chis);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& mD = gr.chain(wD);
+    const auto& mS = gr.chain(wS);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mS.length(), cnwS.length() - n);
+    ASSERT_EQ(gr.chain(v1).length(), cnv1.length());
+    ASSERT_EQ(gr.chain(v2).length(), cnv2.length());
+    ASSERT_EQ(mD.g[0].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwD.g[2].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwS.g[0].ind);
+    ASSERT_EQ(mD.g[4].ind, cnwS.g[1].ind);
+    for (std::size_t i {}; i<mD.length(); ++i) {
+        ASSERT_EQ(mD.g[i].indw, i);
+        ASSERT_EQ(mD.g[i].c, ic);
+        ASSERT_EQ(mD.g[i].w, wD);
     }
 
-}  //  end J4_LinLin_DrA_SrLiB_Srv
-
-/*  J4_LinLin_DrA_SrLiB_Srv
-
-TEST_BEFORE 1  ** {0 B} {2 A} {3 A}  0 [0]  len 3 > > > ( 6 7 8 )
-            [0] > ind 6 indc 0 w 1 c 0
-            [1] > ind 7 indc 1 w 1 c 0
-            [2] > ind 8 indc 2 w 1 c 0
-TEST_BEFORE 0  ** {1 B} {2 A} {3 A}  0 [1]  len 3 > > > ( 0 1 2 )
-            [0] > ind 0 indc 3 w 0 c 0
-            [1] > ind 1 indc 4 w 0 c 0
-            [2] > ind 2 indc 5 w 0 c 0
-TEST_BEFORE 2 {0 B} {1 B} {3 A}  **  0 [2]  len 3 > > > ( 9 10 11 )
-            [0] > ind 9 indc 6 w 2 c 0
-            [1] > ind 10 indc 7 w 2 c 0
-            [2] > ind 11 indc 8 w 2 c 0
-TEST_BEFORE 3 {0 B} {2 A} {1 B}  **  0 [3]  len 3 > > > ( 3 4 5 )
-            [0] > ind 3 indc 9 w 3 c 0
-            [1] > ind 4 indc 10 w 3 c 0
-            [2] > ind 5 indc 11 w 3 c 0
-
-Pulling from Vertex Deg 1+ :: 2 steps over path:
-
-driver (egEnd A) 0:   [0] > ind 6 indc 0 w 1 c 0
-                 1:   [1] > ind 7 indc 1 w 1 c 0
-                 2:   [2] > ind 8 indc 2 w 1 c 0
-                 3:   [0] > ind 9 indc 6 w 2 c 0
-                 4:   [1] > ind 10 indc 7 w 2 c 0
-source (end B)   5:   [2] > ind 11 indc 8 w 2 c 0
-
-TEST_AFTER 1  ** {0 B} {2 A} {3 A}  0 [0]  len 5 > > > > > ( 6 7 8 9 10 )
-           [0] > ind 6 indc 0 w 1 c 0
-           [1] > ind 7 indc 1 w 1 c 0
-           [2] > ind 8 indc 2 w 1 c 0
-           [3] > ind 9 indc 6 w 1 c 0
-           [4] > ind 10 indc 7 w 1 c 0
-TEST_AFTER 0  ** {1 B} {2 A} {3 A}  0 [1]  len 3 > > > ( 0 1 2 )
-           [0] > ind 0 indc 3 w 0 c 0
-           [1] > ind 1 indc 4 w 0 c 0
-           [2] > ind 2 indc 5 w 0 c 0
-TEST_AFTER 2 {0 B} {1 B} {3 A}  **  0 [2]  len 1 > ( 11 )
-           [0] > ind 11 indc 8 w 2 c 0
-TEST_AFTER 3 {0 B} {2 A} {1 B}  **  0 [3]  len 3 > > > ( 3 4 5 )
-           [0] > ind 3 indc 9 w 3 c 0
-           [1] > ind 4 indc 10 w 3 c 0
-           [2] > ind 5 indc 11 w 3 c 0
-*/
+}  // J4_LinLin_DrA_SrLiB_Srv
 
 
 /// Tests degree 1 pulling over a path traversing a 4-way junction
-/// connecting four linear chains. Driving edge is at the end B,
+/// connecting four linear chains. Driving edge is at the chain end B,
 /// source edge is at tne end B of a linear chain.
 /// The source chain survives.
 TEST_F(Pull_1, J4_LinLin_DrB_SrLiB_Srv)
@@ -1836,18 +1816,19 @@ TEST_F(Pull_1, J4_LinLin_DrB_SrLiB_Srv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 4-way junction ",
-            "connecting four linear chains. Driving edge is at the end B, ",
-            "source edge is at tne end B of a linear chain. ",
-            "The source chain survives."
+            "connecting four linear chains\n",
+            "Driving edge is at the chain end B\n",
+            "Source edge is at tne end B of a linear chain\n",
+            "The source chain survives"
         );
 
     // Create initial graph.
 
-    constexpr std::array<EgId, 2> len {6, 6};
-    const auto [w0, w1, w2, w3] = create_array<ChId, 4>();
+    constexpr std::array<size_t, 2> len {6, 6};
+    const auto [w0, w1, w2, w3] = id_sequence<ChIdG, 4>();
 
     G gr;
-    for (const auto u: len)
+    for (const auto u : len)
         gr.add_single_chain_component(u);
 
     VertexMerger<2, 2, G> merge22 {gr};
@@ -1856,9 +1837,7 @@ TEST_F(Pull_1, J4_LinLin_DrB_SrLiB_Srv)
     merge22(BSlot{w0, 3},
             BSlot{w1, 3});     // creates w2, w3
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
@@ -1869,96 +1848,86 @@ TEST_F(Pull_1, J4_LinLin_DrB_SrLiB_Srv)
     constexpr auto eS = eB;
     const auto v1 = w0;
     const auto v2 = w1;
+    constexpr int n {2};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src};
+    Path pp {&gr.compt(src.w), drv, src};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto num_vertices = c0.num_vertices();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnv1 = gr.chain(v1);  // copy
+    const auto cnv2 = gr.chain(v2);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 4);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eB);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eB);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_4way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwS.length() > n);
+    ASSERT_TRUE(cnv1.has_single_leaf_vertex());
+    ASSERT_TRUE(cnv2.has_single_leaf_vertex());
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
 
-    constexpr int n {2};
-    pu1f(pp, n);  // Pull two steps to leave source edge in the original chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains());
-    ASSERT_EQ(gr.ct[ic].num_vertices(), gr0.ct[ic].num_vertices());
-    ASSERT_EQ(gr.ct[ic].ww, gr0.ct[ic].ww);
-    ASSERT_EQ(gr.ct[ic].chis, gr0.ct[ic].chis);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wS].length(), gr0.cn[wS].length() - n);
-    ASSERT_EQ(gr.cn[v1].length(), gr0.cn[v1].length());
-    ASSERT_EQ(gr.cn[v2].length(), gr0.cn[v2].length());
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wS].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[4].ind, gr0.cn[wD].g[2].ind);
-    ASSERT_EQ(gr.cn[wS].g[0].ind, gr0.cn[wS].g[2].ind);
-    for (szt i {}; i<gr.cn[wD].length(); ++i) {
-        ASSERT_EQ(gr.cn[wD].g[i].indw, i);
-        ASSERT_EQ(gr.cn[wD].g[i].w, wD);
-        ASSERT_EQ(gr.cn[wD].g[i].c, ic);
+   const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains);
+    ASSERT_EQ(c.num_vertices(), num_vertices);
+    ASSERT_EQ(c.ww, ww);
+    ASSERT_EQ(c.chis, chis);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& mD = gr.chain(wD);
+    const auto& mS = gr.chain(wS);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mS.length(), cnwS.length() - n);
+    ASSERT_EQ(gr.chain(v1).length(), cnv1.length());
+    ASSERT_EQ(gr.chain(v2).length(), cnv2.length());
+    ASSERT_EQ(mD.g[0].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwS.g[0].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[4].ind, cnwD.g[2].ind);
+    ASSERT_EQ(mS.g[0].ind, cnwS.g[2].ind);
+    for (std::size_t i {}; i<mD.length(); ++i) {
+        ASSERT_EQ(mD.g[i].indw, i);
+        ASSERT_EQ(mD.g[i].w, wD);
+        ASSERT_EQ(mD.g[i].c, ic);
     }
 
-}  //  end J4_LinLin_DrB_SrLiB_Srv
-
-/*  J4_LinLin_DrB_SrLiB_Srv
-
-TEST_BEFORE 0  ** {1 B} {2 A} {3 A}  0 [0]  len 3 > > > ( 0 1 2 )
-            [0] > ind 0 indc 0 w 0 c 0
-            [1] > ind 1 indc 1 w 0 c 0
-            [2] > ind 2 indc 2 w 0 c 0
-TEST_BEFORE 1  ** {0 B} {2 A} {3 A}  0 [1]  len 3 > > > ( 6 7 8 )
-            [0] > ind 6 indc 3 w 1 c 0
-            [1] > ind 7 indc 4 w 1 c 0
-            [2] > ind 8 indc 5 w 1 c 0
-TEST_BEFORE 2 {1 B} {0 B} {3 A}  **  0 [2]  len 3 > > > ( 3 4 5 )
-            [0] > ind 3 indc 6 w 2 c 0
-            [1] > ind 4 indc 7 w 2 c 0
-            [2] > ind 5 indc 8 w 2 c 0
-TEST_BEFORE 3 {1 B} {2 A} {0 B}  **  0 [3]  len 3 > > > ( 9 10 11 )
-            [0] > ind 9 indc 9 w 3 c 0
-            [1] > ind 10 indc 10 w 3 c 0
-            [2] > ind 11 indc 11 w 3 c 0
-
-Pulling from Vertex Deg 1+ :: 2 steps over path:
-
-driver (egEnd B) 0:   [2] > ind 5 indc 8 w 2 c 0
-                 1:   [1] > ind 4 indc 7 w 2 c 0
-                 2:   [0] > ind 3 indc 6 w 2 c 0
-                 3:   [0] > ind 9 indc 9 w 3 c 0
-                 4:   [1] > ind 10 indc 10 w 3 c 0
-source (end B)   5:   [2] > ind 11 indc 11 w 3 c 0
-
-TEST_AFTER 0  ** {1 B} {2 A} {3 A}  0 [0]  len 3 > > > ( 0 1 2 )
-           [0] > ind 0 indc 0 w 0 c 0
-           [1] > ind 1 indc 1 w 0 c 0
-           [2] > ind 2 indc 2 w 0 c 0
-TEST_AFTER 1  ** {0 B} {2 A} {3 A}  0 [1]  len 3 > > > ( 6 7 8 )
-           [0] > ind 6 indc 3 w 1 c 0
-           [1] > ind 7 indc 4 w 1 c 0
-           [2] > ind 8 indc 5 w 1 c 0
-TEST_AFTER 2 {1 B} {0 B} {3 A}  **  0 [2]  len 5 > > > > > ( 10 9 3 4 5 )
-           [0] > ind 10 indc 10 w 2 c 0
-           [1] > ind 9 indc 9 w 2 c 0
-           [2] > ind 3 indc 6 w 2 c 0
-           [3] > ind 4 indc 7 w 2 c 0
-           [4] > ind 5 indc 8 w 2 c 0
-TEST_AFTER 3 {1 B} {2 A} {0 B}  **  0 [3]  len 1 > ( 11 )
-           [0] > ind 11 indc 11 w 3 c 0
-*/
+}  // J4_LinLin_DrB_SrLiB_Srv
 
 
 /// Tests degree 1 pulling over a path traversing a 4-way junction
-/// connecting four linear chains. Driving edge is at the end B,
+/// connecting four linear chains. Driving edge is at the chain end B,
 /// source edge is at tne end A of a linear chain.
 /// The source chain survives.
 TEST_F(Pull_1, J4_LinLin_DrB_SrLiA_Srv)
@@ -1968,18 +1937,19 @@ TEST_F(Pull_1, J4_LinLin_DrB_SrLiA_Srv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 4-way junction ",
-            "connecting four linear chains. Driving edge is at the end B, ",
-            "source edge is at tne end A of a linear chain. ",
-            "The source chain survives."
+            "connecting four linear chains\n",
+            "Driving edge is at the chain end B\n",
+            "Source edge is at tne end A of a linear chain\n",
+            "The source chain survives"
         );
 
     // Create initial graph.
 
-    constexpr std::array<EgId, 2> len {6, 6};
-    const auto [w0, w1, w2, w3] = create_array<ChId, 4>();
+    constexpr std::array<size_t, 2> len {6, 6};
+    const auto [w0, w1, w2, w3] = id_sequence<ChIdG, 4>();
 
     G gr;
-    for (const auto u: len)
+    for (const auto u : len)
         gr.add_single_chain_component(u);
 
     VertexMerger<2, 2, G> merge22 {gr};
@@ -1988,9 +1958,7 @@ TEST_F(Pull_1, J4_LinLin_DrB_SrLiA_Srv)
     merge22(BSlot{w0, 3},
             BSlot{w1, 3});     // creates w2, w3
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
@@ -2001,96 +1969,86 @@ TEST_F(Pull_1, J4_LinLin_DrB_SrLiA_Srv)
     constexpr auto eS = eA;
     const auto v1 = w1;
     const auto v2 = w3;
+    constexpr int n {2};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src};
+    Path pp {&gr.compt(src.w), drv, src};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto num_vertices = c0.num_vertices();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnv1 = gr.chain(v1);  // copy
+    const auto cnv2 = gr.chain(v2);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 4);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eB);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eA);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_4way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwS.length() > n);
+    ASSERT_TRUE(cnv1.has_single_leaf_vertex());
+    ASSERT_TRUE(cnv2.has_single_leaf_vertex());
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
 
-    constexpr int n {2};
-    pu1f(pp, n);  // Pull two steps to leave source edge in the original chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains());
-    ASSERT_EQ(gr.ct[ic].num_vertices(), gr0.ct[ic].num_vertices());
-    ASSERT_EQ(gr.ct[ic].ww, gr0.ct[ic].ww);
-    ASSERT_EQ(gr.ct[ic].chis, gr0.ct[ic].chis);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wS].length(), gr0.cn[wS].length() - n);
-    ASSERT_EQ(gr.cn[v1].length(), gr0.cn[v1].length());
-    ASSERT_EQ(gr.cn[v2].length(), gr0.cn[v2].length());
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wS].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[4].ind, gr0.cn[wD].g[2].ind);
-    ASSERT_EQ(gr.cn[wS].g[0].ind, gr0.cn[wS].g[0].ind);
-    for (szt i {}; i<gr.cn[wD].length(); ++i) {
-        ASSERT_EQ(gr.cn[wD].g[i].indw, i);
-        ASSERT_EQ(gr.cn[wD].g[i].w, wD);
-        ASSERT_EQ(gr.cn[wD].g[i].c, ic);
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains);
+    ASSERT_EQ(c.num_vertices(), num_vertices);
+    ASSERT_EQ(c.ww, ww);
+    ASSERT_EQ(c.chis, chis);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& mD = gr.chain(wD);
+    const auto& mS = gr.chain(wS);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mS.length(), cnwS.length() - n);
+    ASSERT_EQ(gr.chain(v1).length(), cnv1.length());
+    ASSERT_EQ(gr.chain(v2).length(), cnv2.length());
+    ASSERT_EQ(mD.g[0].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwS.g[2].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[4].ind, cnwD.g[2].ind);
+    ASSERT_EQ(mS.g[0].ind, cnwS.g[0].ind);
+    for (std::size_t i {}; i<mD.length(); ++i) {
+        ASSERT_EQ(mD.g[i].indw, i);
+        ASSERT_EQ(mD.g[i].w, wD);
+        ASSERT_EQ(mD.g[i].c, ic);
     }
 
-}  //  end J4_LinLin_DrB_SrLiA_Srv
-
-/*  J4_LinLin_DrB_SrLiA_Srv
-
-TEST_BEFORE 0  ** {1 B} {2 A} {3 A}  0 [0]  len 3 > > > ( 0 1 2 )
-            [0] > ind 0 indc 0 w 0 c 0
-            [1] > ind 1 indc 1 w 0 c 0
-            [2] > ind 2 indc 2 w 0 c 0
-TEST_BEFORE 1  ** {0 B} {2 A} {3 A}  0 [1]  len 3 > > > ( 6 7 8 )
-            [0] > ind 6 indc 3 w 1 c 0
-            [1] > ind 7 indc 4 w 1 c 0
-            [2] > ind 8 indc 5 w 1 c 0
-TEST_BEFORE 2 {1 B} {0 B} {3 A}  **  0 [2]  len 3 > > > ( 3 4 5 )
-            [0] > ind 3 indc 6 w 2 c 0
-            [1] > ind 4 indc 7 w 2 c 0
-            [2] > ind 5 indc 8 w 2 c 0
-TEST_BEFORE 3 {1 B} {2 A} {0 B}  **  0 [3]  len 3 > > > ( 9 10 11 )
-            [0] > ind 9 indc 9 w 3 c 0
-            [1] > ind 10 indc 10 w 3 c 0
-            [2] > ind 11 indc 11 w 3 c 0
-
-Pulling from Vertex Deg 1+ :: 2 steps over path:
-
-driver (egEnd B) 0:   [2] > ind 5 indc 8 w 2 c 0
-                 1:   [1] > ind 4 indc 7 w 2 c 0
-                 2:   [0] > ind 3 indc 6 w 2 c 0
-                 3:   [2] > ind 2 indc 2 w 0 c 0
-                 4:   [1] > ind 1 indc 1 w 0 c 0
-source (end A)   5:   [0] > ind 0 indc 0 w 0 c 0
-
-TEST_AFTER 0  ** {1 B} {2 A} {3 A}  0 [0]  len 1 > ( 0 )
-           [0] > ind 0 indc 0 w 0 c 0
-TEST_AFTER 1  ** {0 B} {2 A} {3 A}  0 [1]  len 3 > > > ( 6 7 8 )
-           [0] > ind 6 indc 3 w 1 c 0
-           [1] > ind 7 indc 4 w 1 c 0
-           [2] > ind 8 indc 5 w 1 c 0
-TEST_AFTER 2 {1 B} {0 B} {3 A}  **  0 [2]  len 5 > > > > > ( 1 2 3 4 5 )
-           [0] > ind 1 indc 1 w 2 c 0
-           [1] > ind 2 indc 2 w 2 c 0
-           [2] > ind 3 indc 6 w 2 c 0
-           [3] > ind 4 indc 7 w 2 c 0
-           [4] > ind 5 indc 8 w 2 c 0
-TEST_AFTER 3 {1 B} {2 A} {0 B}  **  0 [3]  len 3 > > > ( 9 10 11 )
-           [0] > ind 9 indc 9 w 3 c 0
-           [1] > ind 10 indc 10 w 3 c 0
-           [2] > ind 11 indc 11 w 3 c 0
-*/
+}  // J4_LinLin_DrB_SrLiA_Srv
 
 
 /// Tests degree 1 pulling over a path traversing a 4-way junction
-/// connecting four linear chains. Driving edge is at the end A,
+/// connecting four linear chains. Driving edge is at the chain end A,
 /// source edge is at tne end A of a linear chain.
 /// Source chain is engulfed completely.
 TEST_F(Pull_1, J4_LinLin_DrA_SrLiA_Rmv)
@@ -2100,18 +2058,19 @@ TEST_F(Pull_1, J4_LinLin_DrA_SrLiA_Rmv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 4-way junction ",
-            "connecting four linear chains. Driving edge is at the end A, ",
-            "source edge is at tne end A of a linear chain. ",
-            "Source chain is engulfed completely."
+            "connecting four linear chains\n",
+            "Driving edge is at the chain end A\n",
+            "Source edge is at tne end A of a linear chain\n",
+            "Source chain is engulfed completely"
         );
 
     // Create initial graph.
 
-    constexpr std::array<EgId, 2> len {6, 6};
-    const auto [w0, w1, w2, w3] = create_array<ChId, 4>();
+    constexpr std::array<size_t, 2> len {6, 6};
+    const auto [w0, w1, w2, w3] = id_sequence<ChIdG, 4>();
 
     G gr;
-    for (const auto u: len)
+    for (const auto u : len)
         gr.add_single_chain_component(u);
 
     VertexMerger<2, 2, G> merge22 {gr};
@@ -2120,9 +2079,7 @@ TEST_F(Pull_1, J4_LinLin_DrA_SrLiA_Rmv)
     merge22(BSlot{w1, 3},
             BSlot{w0, 3});     // creates w2, w3
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
@@ -2131,89 +2088,80 @@ TEST_F(Pull_1, J4_LinLin_DrA_SrLiA_Rmv)
     constexpr auto eD = eA;
     const auto wS = w0;
     constexpr auto eS = eA;
+    const auto v1 = w2;
+    const auto v2 = w3;
+    constexpr int n {3};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src};
+    Path pp {&gr.compt(src.w), drv, src};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnv1 = gr.chain(v1);  // copy
+    const auto cnv2 = gr.chain(v2);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 4);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eA);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eA);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_4way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwS.length() == n);
+    ASSERT_TRUE(cnv1.has_single_leaf_vertex());
+    ASSERT_TRUE(cnv2.has_single_leaf_vertex());
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull three steps to consume the source chain
 
-    constexpr int n {3};
-    pu1f(pp, n);  // Pull three steps to consume the source chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains() - 1);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wD].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wS].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[4].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[5].ind, gr0.cn[wS].g[0].ind);
-    for (szt i {}; i<gr.cn[wD].length(); ++i) {
-        ASSERT_EQ(gr.cn[wD].g[i].indw, i);
-        ASSERT_EQ(gr.cn[wD].g[i].w, wD);
-        ASSERT_EQ(gr.cn[wD].g[1].c, ic);
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains - 1);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& mD = gr.chain(wD);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mD.g[0].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwD.g[2].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwS.g[2].ind);
+    ASSERT_EQ(mD.g[4].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mD.g[5].ind, cnwS.g[0].ind);
+    for (std::size_t i {}; i<mD.length(); ++i) {
+        ASSERT_EQ(mD.g[i].indw, i);
+        ASSERT_EQ(mD.g[i].w, wD);
+        ASSERT_EQ(mD.g[1].c, ic);
     }
 
-}  //  end J4_LinLin_DrA_SrLiA_Rmv
-
-/* J4_LinLin_DrA_SrLiA_Rmv
-
-TEST_BEFORE 1  ** {0 B} {2 A} {3 A}  0 [0]  len 3 > > > ( 6 7 8 )
-            [0] > ind 6 indc 0 w 1 c 0
-            [1] > ind 7 indc 1 w 1 c 0
-            [2] > ind 8 indc 2 w 1 c 0
-TEST_BEFORE 0  ** {1 B} {2 A} {3 A}  0 [1]  len 3 > > > ( 0 1 2 )
-            [0] > ind 0 indc 3 w 0 c 0
-            [1] > ind 1 indc 4 w 0 c 0
-            [2] > ind 2 indc 5 w 0 c 0
-TEST_BEFORE 2 {0 B} {1 B} {3 A}  **  0 [2]  len 3 > > > ( 9 10 11 )
-            [0] > ind 9 indc 6 w 2 c 0
-            [1] > ind 10 indc 7 w 2 c 0
-            [2] > ind 11 indc 8 w 2 c 0
-TEST_BEFORE 3 {0 B} {2 A} {1 B}  **  0 [3]  len 3 > > > ( 3 4 5 )
-            [0] > ind 3 indc 9 w 3 c 0
-            [1] > ind 4 indc 10 w 3 c 0
-            [2] > ind 5 indc 11 w 3 c 0
-
-Pulling from Vertex Deg 1+ :: 3 steps over path:
-
-driver (egEnd A) 0:   [0] > ind 6 indc 0 w 1 c 0
-                 1:   [1] > ind 7 indc 1 w 1 c 0
-                 2:   [2] > ind 8 indc 2 w 1 c 0
-                 3:   [2] > ind 2 indc 5 w 0 c 0
-                 4:   [1] > ind 1 indc 4 w 0 c 0
-source (end A)   5:   [0] > ind 0 indc 3 w 0 c 0
-
-TEST_AFTER 1  ** {2 A} {0 A}  0 [0]  len 6 > > > > > > ( 6 7 8 2 1 0 )
-           [0] > ind 6 indc 0 w 1 c 0
-           [1] > ind 7 indc 1 w 1 c 0
-           [2] > ind 8 indc 2 w 1 c 0
-           [3] > ind 2 indc 3 w 1 c 0
-           [4] > ind 1 indc 4 w 1 c 0
-           [5] > ind 0 indc 5 w 1 c 0
-TEST_AFTER 2 {1 B} {0 A}  **  0 [1]  len 3 > > > ( 9 10 11 )
-           [0] > ind 9 indc 6 w 2 c 0
-           [1] > ind 10 indc 7 w 2 c 0
-           [2] > ind 11 indc 8 w 2 c 0
-TEST_AFTER 0 {2 A} {1 B}  **  0 [2]  len 3 > > > ( 3 4 5 )
-           [0] > ind 3 indc 9 w 0 c 0
-           [1] > ind 4 indc 10 w 0 c 0
-           [2] > ind 5 indc 11 w 0 c 0
-*/
+}  // J4_LinLin_DrA_SrLiA_Rmv
 
 
 /// Tests degree 1 pulling over a path traversing a 4-way junction
-/// connecting four linear chains. Driving edge is at the end A,
+/// connecting four linear chains. Driving edge is at the chain end A,
 /// source edge is at tne end B of a linear chain.
 /// Source chain is engulfed completely.
 TEST_F(Pull_1, J4_LinLin_DrA_SrLiB_Rmv)
@@ -2223,18 +2171,19 @@ TEST_F(Pull_1, J4_LinLin_DrA_SrLiB_Rmv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 4-way junction ",
-            "connecting four linear chains. Driving edge is at the end A, ",
-            "source edge is at tne end B of a linear chain. ",
+            "connecting four linear chains\n",
+            "Driving edge is at the chain end A\n",
+            "Source edge is at tne end B of a linear chain\n",
             "Source chain is engulfed completely."
         );
 
     // Create initial graph.
 
-    constexpr std::array<EgId, 2> len {6, 6};
-    const auto [w0, w1, w2, w3] = create_array<ChId, 4>();
+    constexpr std::array<size_t, 2> len {6, 6};
+    const auto [w0, w1, w2, w3] = id_sequence<ChIdG, 4>();
 
     G gr;
-    for (const auto u: len)
+    for (const auto u : len)
         gr.add_single_chain_component(u);
 
     VertexMerger<2, 2, G> merge22 {gr};
@@ -2243,9 +2192,7 @@ TEST_F(Pull_1, J4_LinLin_DrA_SrLiB_Rmv)
     merge22(BSlot{w1, 3},
             BSlot{w0, 3});     // creates w2, w3
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
@@ -2254,90 +2201,80 @@ TEST_F(Pull_1, J4_LinLin_DrA_SrLiB_Rmv)
     constexpr auto eD = eA;
     const auto wS = w2;
     constexpr auto eS = eB;
+    const auto v1 = w0;
+    const auto v2 = w3;
+    constexpr int n {3};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src};
+    Path pp {&gr.compt(src.w), drv, src};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnv1 = gr.chain(v1);  // copy
+    const auto cnv2 = gr.chain(v2);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 4);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eA);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eB);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_4way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwS.length() == n);
+    ASSERT_TRUE(cnv1.has_single_leaf_vertex());
+    ASSERT_TRUE(cnv2.has_single_leaf_vertex());
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull three steps to consume the source chain
 
-    constexpr int n {3};
-    pu1f(pp, n);  // Pull three steps to consume the source chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains() - 1);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wD].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wS].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[4].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[5].ind, gr0.cn[wS].g[2].ind);
-    for (szt i {}; i<gr.cn[wD].length(); ++i) {
-        ASSERT_EQ(gr.cn[wD].g[i].indw, i);
-        ASSERT_EQ(gr.cn[wD].g[i].w, wD);
-        ASSERT_EQ(gr.cn[wD].g[1].c, ic);
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains - 1);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& mD = gr.chain(wD);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mD.g[0].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwD.g[2].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwS.g[0].ind);
+    ASSERT_EQ(mD.g[4].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mD.g[5].ind, cnwS.g[2].ind);
+    for (std::size_t i {}; i<mD.length(); ++i) {
+        ASSERT_EQ(mD.g[i].indw, i);
+        ASSERT_EQ(mD.g[i].w, wD);
+        ASSERT_EQ(mD.g[1].c, ic);
     }
 
-}  //  end J4_LinLin_DrA_SrLiB_Rmv
-
-/* J4_LinLin_DrA_SrLiB_Rmv
-
-TEST_BEFORE 1  ** {0 B} {2 A} {3 A}  0 [0]  len 3 > > > ( 6 7 8 )
-            [0] > ind 6 indc 0 w 1 c 0
-            [1] > ind 7 indc 1 w 1 c 0
-            [2] > ind 8 indc 2 w 1 c 0
-TEST_BEFORE 0  ** {1 B} {2 A} {3 A}  0 [1]  len 3 > > > ( 0 1 2 )
-            [0] > ind 0 indc 3 w 0 c 0
-            [1] > ind 1 indc 4 w 0 c 0
-            [2] > ind 2 indc 5 w 0 c 0
-TEST_BEFORE 2 {0 B} {1 B} {3 A}  **  0 [2]  len 3 > > > ( 9 10 11 )
-            [0] > ind 9 indc 6 w 2 c 0
-            [1] > ind 10 indc 7 w 2 c 0
-            [2] > ind 11 indc 8 w 2 c 0
-TEST_BEFORE 3 {0 B} {2 A} {1 B}  **  0 [3]  len 3 > > > ( 3 4 5 )
-            [0] > ind 3 indc 9 w 3 c 0
-            [1] > ind 4 indc 10 w 3 c 0
-            [2] > ind 5 indc 11 w 3 c 0
-
-Pulling from Vertex Deg 1+ :: 3 steps over path:
-
-driver (egEnd A) 0:   [0] > ind 6 indc 0 w 1 c 0
-                 1:   [1] > ind 7 indc 1 w 1 c 0
-                 2:   [2] > ind 8 indc 2 w 1 c 0
-                 3:   [0] > ind 9 indc 6 w 2 c 0
-                 4:   [1] > ind 10 indc 7 w 2 c 0
-source (end B)   5:   [2] > ind 11 indc 8 w 2 c 0
-
-TEST_AFTER 1  ** {0 B} {2 A}  0 [0]  len 6 > > > > > > ( 6 7 8 9 10 11 )
-           [0] > ind 6 indc 0 w 1 c 0
-           [1] > ind 7 indc 1 w 1 c 0
-           [2] > ind 8 indc 2 w 1 c 0
-           [3] > ind 9 indc 3 w 1 c 0
-           [4] > ind 10 indc 4 w 1 c 0
-           [5] > ind 11 indc 5 w 1 c 0
-TEST_AFTER 0  ** {1 B} {2 A}  0 [1]  len 3 > > > ( 0 1 2 )
-           [0] > ind 0 indc 6 w 0 c 0
-           [1] > ind 1 indc 7 w 0 c 0
-           [2] > ind 2 indc 8 w 0 c 0
-TEST_AFTER 2 {0 B} {1 B}  **  0 [2]  len 3 > > > ( 3 4 5 )
-           [0] > ind 3 indc 9 w 2 c 0
-           [1] > ind 4 indc 10 w 2 c 0
-           [2] > ind 5 indc 11 w 2 c 0
-
-*/
+}  // J4_LinLin_DrA_SrLiB_Rmv
 
 
 /// Tests degree 1 pulling over a path traversing a 4-way junction
-/// connecting four linear chains. Driving edge is at the end B,
+/// connecting four linear chains. Driving edge is at the chain end B,
 /// source edge is at tne end B of a linear chain.
 /// Source chain is engulfed completely.
 TEST_F(Pull_1, J4_LinLin_DrB_SrLiB_Rmv)
@@ -2347,18 +2284,19 @@ TEST_F(Pull_1, J4_LinLin_DrB_SrLiB_Rmv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 4-way junction ",
-            "connecting four linear chains. Driving edge is at the end B, ",
-            "source edge is at tne end B of a linear chain. ",
-            "Source chain is engulfed completely."
+            "connecting four linear chains\n",
+            "Driving edge is at the chain end B\n",
+            "Source edge is at tne end B of a linear chain\n",
+            "Source chain is engulfed completely"
         );
 
     // Create initial graph.
 
-    constexpr std::array<EgId, 2> len {6, 6};
-    const auto [w0, w1, w2, w3] = create_array<ChId, 4>();
+    constexpr std::array<size_t, 2> len {6, 6};
+    const auto [w0, w1, w2, w3] = id_sequence<ChIdG, 4>();
 
     G gr;
-    for (const auto u: len)
+    for (const auto u : len)
         gr.add_single_chain_component(u);
 
     VertexMerger<2, 2, G> merge22 {gr};
@@ -2367,9 +2305,7 @@ TEST_F(Pull_1, J4_LinLin_DrB_SrLiB_Rmv)
     merge22(BSlot{w0, 3},
             BSlot{w1, 3});     // creates w2, w3
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
@@ -2378,89 +2314,82 @@ TEST_F(Pull_1, J4_LinLin_DrB_SrLiB_Rmv)
     constexpr auto eD = eB;
     const auto wS = w3;
     constexpr auto eS = eB;
+    const auto v1 = w0;
+    const auto v2 = w1;
+    constexpr int n {3};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src};
+    Path pp {&gr.compt(src.w), drv, src};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnv1 = gr.chain(v1);  // copy
+    const auto cnv2 = gr.chain(v2);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 4);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eB);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eB);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_4way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwS.length() == n);
+    ASSERT_TRUE(cnv1.has_single_leaf_vertex());
+    ASSERT_TRUE(cnv2.has_single_leaf_vertex());
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull three steps to consume the source chain
 
-    constexpr int n {3};
-    pu1f(pp, n);  // Pull three steps to consume the source chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains() - 1);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[w1].length(), 3);
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wS].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wS].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[4].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[5].ind, gr0.cn[wD].g[2].ind);
-    for (szt i {}; i<gr.cn[wD].length(); ++i) {
-        ASSERT_EQ(gr.cn[wD].g[i].indw, i);
-        ASSERT_EQ(gr.cn[wD].g[i].w, wD);
-        ASSERT_EQ(gr.cn[wD].g[i].c, ic);
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains - 1);
+    ASSERT_FALSE(c.template check<profuse>());
+
+
+    const auto& mD = gr.chain(wD);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(gr.chain(v2).length(), 3);
+    ASSERT_EQ(mD.g[0].ind, cnwS.g[2].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwS.g[0].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[4].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[5].ind, cnwD.g[2].ind);
+    for (std::size_t i {}; i<mD.length(); ++i) {
+        ASSERT_EQ(mD.g[i].indw, i);
+        ASSERT_EQ(mD.g[i].w, wD);
+        ASSERT_EQ(mD.g[i].c, ic);
     }
 
-}  //  end J4_LinLin_DrB_SrLiB_Rmv
+}  // J4_LinLin_DrB_SrLiB_Rmv
 
-/* J4_LinLin_DrB_SrLiB_Rmv
 
-TEST_BEFORE 0  ** {1 B} {2 A} {3 A}  0 [0]  len 3 > > > ( 0 1 2 )
-            [0] > ind 0 indc 0 w 0 c 0
-            [1] > ind 1 indc 1 w 0 c 0
-            [2] > ind 2 indc 2 w 0 c 0
-TEST_BEFORE 1  ** {0 B} {2 A} {3 A}  0 [1]  len 3 > > > ( 6 7 8 )
-            [0] > ind 6 indc 3 w 1 c 0
-            [1] > ind 7 indc 4 w 1 c 0
-            [2] > ind 8 indc 5 w 1 c 0
-TEST_BEFORE 2 {1 B} {0 B} {3 A}  **  0 [2]  len 3 > > > ( 3 4 5 )
-            [0] > ind 3 indc 6 w 2 c 0
-            [1] > ind 4 indc 7 w 2 c 0
-            [2] > ind 5 indc 8 w 2 c 0
-TEST_BEFORE 3 {1 B} {2 A} {0 B}  **  0 [3]  len 3 > > > ( 9 10 11 )
-            [0] > ind 9 indc 9 w 3 c 0
-            [1] > ind 10 indc 10 w 3 c 0
-            [2] > ind 11 indc 11 w 3 c 0
-
-Pulling from Vertex Deg 1+ :: 3 steps over path:
-
-driver (egEnd B) 0:   [2] > ind 5 indc 8 w 2 c 0
-                 1:   [1] > ind 4 indc 7 w 2 c 0
-                 2:   [0] > ind 3 indc 6 w 2 c 0
-                 3:   [0] > ind 9 indc 9 w 3 c 0
-                 4:   [1] > ind 10 indc 10 w 3 c 0
-source (end B)   5:   [2] > ind 11 indc 11 w 3 c 0
-
-TEST_AFTER 0  ** {1 B} {2 A}  0 [0]  len 3 > > > ( 0 1 2 )
-           [0] > ind 0 indc 0 w 0 c 0
-           [1] > ind 1 indc 1 w 0 c 0
-           [2] > ind 2 indc 2 w 0 c 0
-TEST_AFTER 1  ** {0 B} {2 A}  0 [1]  len 3 > > > ( 6 7 8 )
-           [0] > ind 6 indc 3 w 1 c 0
-           [1] > ind 7 indc 4 w 1 c 0
-           [2] > ind 8 indc 5 w 1 c 0
-TEST_AFTER 2 {1 B} {0 B}  **  0 [2]  len 6 > > > > > > ( 11 10 9 3 4 5 )
-           [0] > ind 11 indc 6 w 2 c 0
-           [1] > ind 10 indc 7 w 2 c 0
-           [2] > ind 9 indc 8 w 2 c 0
-           [3] > ind 3 indc 9 w 2 c 0
-           [4] > ind 4 indc 10 w 2 c 0
-           [5] > ind 5 indc 11 w 2 c 0
-
-*/
 /// Tests degree 1 pulling over a path traversing a 4-way junction
-/// connecting four linear chains. Driving edge is at the end B,
+/// connecting four linear chains. Driving edge is at the chain end B,
 /// source edge is at tne end A of a linear chain.
 /// Source chain is engulfed completely.
 TEST_F(Pull_1, J4_LinLin_DrB_SrLiA_Rmv)
@@ -2470,18 +2399,19 @@ TEST_F(Pull_1, J4_LinLin_DrB_SrLiA_Rmv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 4-way junction ",
-            "connecting four linear chains. Driving edge is at the end B, ",
-            "source edge is at tne end A of a linear chain. ",
-            "Source chain is engulfed completely."
+            "which connects four linear chains\n",
+            "Driving edge is at the chain end B\n",
+            "Source edge is at tne end A of a linear chain\n",
+            "Source chain is engulfed completely"
         );
 
     // Create initial graph.
 
-    constexpr std::array<EgId, 2> len {6, 6};
-    const auto [w0, w1, w2, w3] = create_array<ChId, 4>();
+    constexpr std::array<size_t, 2> len {6, 6};
+    const auto [w0, w1, w2, w3] = id_sequence<ChIdG, 4>();
 
     G gr;
-    for (const auto u: len)
+    for (const auto u : len)
         gr.add_single_chain_component(u);
 
     VertexMerger<2, 2, G> merge22 {gr};
@@ -2490,9 +2420,7 @@ TEST_F(Pull_1, J4_LinLin_DrB_SrLiA_Rmv)
     merge22(BSlot{w0, 3},
             BSlot{w1, 3});     // creates w2, w3
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
@@ -2501,86 +2429,77 @@ TEST_F(Pull_1, J4_LinLin_DrB_SrLiA_Rmv)
     constexpr auto eD = eB;
     const auto wS = w0;
     constexpr auto eS = eA;
+    const auto v1 = w1;
+    const auto v2 = w3;
+    constexpr int n {3};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src};
+    Path pp {&gr.compt(src.w), drv, src};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnv1 = gr.chain(v1);  // copy
+    const auto cnv2 = gr.chain(v2);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 4);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eB);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eA);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_4way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwS.length() == n);
+    ASSERT_TRUE(cnv1.has_single_leaf_vertex());
+    ASSERT_TRUE(cnv2.has_single_leaf_vertex());
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull three steps to consume the source chain
 
-    constexpr int n {3};
-    pu1f(pp, n);  // Pull three steps to consume the source chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains() - 1);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[w1].length(), 3);
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wS].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wS].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[4].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[5].ind, gr0.cn[wD].g[2].ind);
-    for (szt i {}; i<gr.cn[wD].length(); ++i) {
-        ASSERT_EQ(gr.cn[wD].g[i].indw, i);
-        ASSERT_EQ(gr.cn[wD].g[i].w, wD);
-        ASSERT_EQ(gr.cn[wD].g[i].c, ic);
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains - 1);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& mD = gr.chain(wD);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(gr.chain(v1).length(), 3);
+    ASSERT_EQ(mD.g[0].ind, cnwS.g[0].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwS.g[2].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[4].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[5].ind, cnwD.g[2].ind);
+    for (std::size_t i {}; i<mD.length(); ++i) {
+        ASSERT_EQ(mD.g[i].indw, i);
+        ASSERT_EQ(mD.g[i].w, wD);
+        ASSERT_EQ(mD.g[i].c, ic);
     }
 
-}  //  end J4_LinLin_DrB_SrLiA_Rmv
-
-/* J4_LinLin_DrB_SrLiA_Rmv
-TEST_BEFORE 0  ** {1 B} {2 A} {3 A}  0 [0]  len 3 > > > ( 0 1 2 )
-            [0] > ind 0 indc 0 w 0 c 0
-            [1] > ind 1 indc 1 w 0 c 0
-            [2] > ind 2 indc 2 w 0 c 0
-TEST_BEFORE 1  ** {0 B} {2 A} {3 A}  0 [1]  len 3 > > > ( 6 7 8 )
-            [0] > ind 6 indc 3 w 1 c 0
-            [1] > ind 7 indc 4 w 1 c 0
-            [2] > ind 8 indc 5 w 1 c 0
-TEST_BEFORE 2 {1 B} {0 B} {3 A}  **  0 [2]  len 3 > > > ( 3 4 5 )
-            [0] > ind 3 indc 6 w 2 c 0
-            [1] > ind 4 indc 7 w 2 c 0
-            [2] > ind 5 indc 8 w 2 c 0
-TEST_BEFORE 3 {1 B} {2 A} {0 B}  **  0 [3]  len 3 > > > ( 9 10 11 )
-            [0] > ind 9 indc 9 w 3 c 0
-            [1] > ind 10 indc 10 w 3 c 0
-            [2] > ind 11 indc 11 w 3 c 0
-
-Pulling from Vertex Deg 1+ :: 3 steps over path:
-
-driver (egEnd B) 0:   [2] > ind 5 indc 8 w 2 c 0
-                 1:   [1] > ind 4 indc 7 w 2 c 0
-                 2:   [0] > ind 3 indc 6 w 2 c 0
-                 3:   [2] > ind 2 indc 2 w 0 c 0
-                 4:   [1] > ind 1 indc 1 w 0 c 0
-source (end A)   5:   [0] > ind 0 indc 0 w 0 c 0
-
-TEST_AFTER 1  ** {2 A} {0 A}  0 [0]  len 3 > > > ( 6 7 8 )
-           [0] > ind 6 indc 0 w 1 c 0
-           [1] > ind 7 indc 1 w 1 c 0
-           [2] > ind 8 indc 2 w 1 c 0
-TEST_AFTER 2 {1 B} {0 A}  **  0 [1]  len 6 > > > > > > ( 0 1 2 3 4 5 )
-           [0] > ind 0 indc 3 w 2 c 0
-           [1] > ind 1 indc 4 w 2 c 0
-           [2] > ind 2 indc 5 w 2 c 0
-           [3] > ind 3 indc 6 w 2 c 0
-           [4] > ind 4 indc 7 w 2 c 0
-           [5] > ind 5 indc 8 w 2 c 0
-TEST_AFTER 0 {1 B} {2 A}  **  0 [2]  len 3 > > > ( 9 10 11 )
-           [0] > ind 9 indc 9 w 0 c 0
-           [1] > ind 10 indc 10 w 0 c 0
-           [2] > ind 11 indc 11 w 0 c 0
-
-*/
+}  // J4_LinLin_DrB_SrLiA_Rmv
 
 // =============================================================================
 // ===== Vertex Degree 4: Lin OutCyc Lin =======================================
@@ -2588,7 +2507,8 @@ TEST_AFTER 0 {1 B} {2 A}  **  0 [2]  len 3 > > > ( 9 10 11 )
 
 /// Tests degree 1 pulling over a path traversing a 4-way junction
 /// connecting two linear chains and a cycle.
-/// Driving edge is at the end A, source edge is at tne end A of a linear chain.
+/// Driving edge is at the chain end A;
+/// Source edge is at tne end A of a linear chain.
 /// Pulled edge sequence omits the cycle chain.
 /// The source chain survives.
 TEST_F(Pull_1, J4_DrA_OutCyc_SrLiA_Srv)
@@ -2598,19 +2518,20 @@ TEST_F(Pull_1, J4_DrA_OutCyc_SrLiA_Srv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 4-way junction ",
-            "connecting two linear chains and a cycle. Driving edge is at ",
-            "the end A, source edge is at tne end A of a linear chain. ",
-            "Pulled sequence omits the cycle chain. ",
-            "The source chain survives."
+            "connecting two linear chains and a cycle\n",
+            "Driving edge is at the chain end A\n",
+            "Source edge is at tne end A of a linear chain\n",
+            "Pulled sequence omits the cycle chain\n",
+            "The source chain survives"
         );
 
     // Create initial graph.
 
-    constexpr std::array<EgId, 2> len {7, 3};
-    const auto [w0, w1, w2] = create_array<ChId, 3>();
+    constexpr std::array<size_t, 2> len {7, 3};
+    const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
-    for (const auto u: len)
+    for (const auto u : len)
         gr.add_single_chain_component(u);
 
     VertexMerger<1, 2, G> merge12 {gr};
@@ -2623,105 +2544,98 @@ TEST_F(Pull_1, J4_DrA_OutCyc_SrLiA_Srv)
     merge13(ESlot{w1, eB},
             ESlot{w0, eB});
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
 
-    const auto wD = w0;
+    const auto wD = w2;
     constexpr auto eD = eA;
     const auto wS = w1;
     constexpr auto eS = eA;
-    const auto v1 = w2;
+    const auto v1 = w0;
+    constexpr int n {2};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src};
+    Path pp {&gr.compt(src.w), drv, src};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto num_vertices = c0.num_vertices();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnv1 = gr.chain(v1);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 3);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eA);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eA);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_4way_end(), End::opp(eS));
+    ASSERT_TRUE(cnv1.is_connected_cycle());
+    ASSERT_TRUE(cnwS.length() > n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
 
-    constexpr int n {2};
-    pu1f(pp, n);  // Pull two steps to leave source edge in the original chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains());
-    ASSERT_EQ(gr.ct[ic].num_vertices(), gr0.ct[ic].num_vertices());
-    ASSERT_EQ(gr.ct[ic].ww, gr0.ct[ic].ww);
-    ASSERT_EQ(gr.ct[ic].chis, gr0.ct[ic].chis);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wS].length(), gr0.cn[wS].length() - n);
-    ASSERT_EQ(gr.cn[v1].length(), gr0.cn[v1].length());
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wD].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wS].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[4].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wS].g[0].ind, gr0.cn[wS].g[0].ind);
-    for (EgId i {}; const auto& g: gr.cn[wD].g) {
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains);
+    ASSERT_EQ(c.num_vertices(), num_vertices);
+    ASSERT_EQ(c.ww, ww);
+    ASSERT_EQ(c.chis, chis);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& mD = gr.chain(wD);
+    const auto& mS = gr.chain(wS);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mS.length(), cnwS.length() - n);
+    ASSERT_EQ(gr.chain(v1).length(), cnv1.length());
+    ASSERT_EQ(mD.g[0].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwD.g[2].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwS.g[2].ind);
+    ASSERT_EQ(mD.g[4].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mS.g[0].ind, cnwS.g[0].ind);
+    for (EgIdA i {}; const auto& g: mD.g) {
         ASSERT_EQ(g.indw, i++);
         ASSERT_EQ(g.w, wD);
         ASSERT_EQ(g.c, ic);
     }
-    ASSERT_EQ(gr.cn[wS].g[0].indw, 0);
-    ASSERT_EQ(gr.cn[wS].g[0].w, wS);
-    ASSERT_EQ(gr.cn[wS].g[0].c, ic);
+    ASSERT_EQ(mS.g[0].indw, 0);
+    ASSERT_EQ(mS.g[0].w, wS);
+    ASSERT_EQ(mS.g[0].c, ic);
 
-}  //  end J4_DrA_OutCyc_SrLiA_Srv
-
-/*  J4_DrA_OutCyc_SrLiA_Srv
-
-TEST_BEFORE 1  ** {0 B} {2 A} {2 B}  0 [0]  len 3 > > > ( 7 8 9 )
-            [0] > ind 7 indc 0 w 1 c 0
-            [1] > ind 8 indc 1 w 1 c 0
-            [2] > ind 9 indc 2 w 1 c 0
-TEST_BEFORE 0  ** {2 A} {2 B} {1 B}  0 [1]  len 3 > > > ( 0 1 2 )
-            [0] > ind 0 indc 3 w 0 c 0
-            [1] > ind 1 indc 4 w 0 c 0
-            [2] > ind 2 indc 5 w 0 c 0
-TEST_BEFORE 2 {0 B} {2 B} {1 B}  ** {0 B} {2 A} {1 B} 0 [2] len 4 >>>> (3 4 5 6)
-            [0] > ind 3 indc 6 w 2 c 0
-            [1] > ind 4 indc 7 w 2 c 0
-            [2] > ind 5 indc 8 w 2 c 0
-            [3] > ind 6 indc 9 w 2 c 0
-
-Pulling from Vertex Deg 1+ :: 2 steps over path:
-
-driver (egEnd A) 0:   [0] > ind 0 indc 3 w 0 c 0
-                 1:   [1] > ind 1 indc 4 w 0 c 0
-                 2:   [2] > ind 2 indc 5 w 0 c 0
-                 3:   [2] > ind 9 indc 2 w 1 c 0
-                 4:   [1] > ind 8 indc 1 w 1 c 0
-source (end A)   5:   [0] > ind 7 indc 0 w 1 c 0
-
-TEST_AFTER 1  ** {0 B} {2 A} {2 B}  0 [0]  len 1 > ( 7 )
-           [0] > ind 7 indc 0 w 1 c 0
-TEST_AFTER 0  ** {2 A} {2 B} {1 B}  0 [1]  len 5 > > > > > ( 0 1 2 9 8 )
-           [0] > ind 0 indc 3 w 0 c 0
-           [1] > ind 1 indc 4 w 0 c 0
-           [2] > ind 2 indc 5 w 0 c 0
-           [3] > ind 9 indc 2 w 0 c 0
-           [4] > ind 8 indc 1 w 0 c 0
-TEST_AFTER 2 {0 B} {2 B} {1 B}  ** {0 B} {2 A} {1 B}  0 [2]  len 4 > > > > ( 3 4 5 6 )
-           [0] > ind 3 indc 6 w 2 c 0
-           [1] > ind 4 indc 7 w 2 c 0
-           [2] > ind 5 indc 8 w 2 c 0
-           [3] > ind 6 indc 9 w 2 c 0
-*/
+}  // J4_DrA_OutCyc_SrLiA_Srv
 
 
 /// Tests degree 1 pulling over a path traversing a 4-way junction
 /// connecting two linear chains and a cycle.
-/// Driving edge is at the end A, source edge is at tne end B of a linear chain.
+/// Driving edge is at the chain end A.
+/// Source edge is at tne end B of a linear chain.
 /// Pulled edge sequence omits the cycle chain.
 /// The source chain survives.
 TEST_F(Pull_1, J4_DrA_OutCyc_SrLiB_Srv)
@@ -2731,16 +2645,17 @@ TEST_F(Pull_1, J4_DrA_OutCyc_SrLiB_Srv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 4-way junction ",
-            "connecting two linear chains and a cycle. Driving edge is at ",
-            "the end A, source edge is at tne end B of a linear chain. ",
-            "Pulled sequence omits the cycle chain. ",
-            "The source chain survives."
+            "connecting two linear chains and a cycle\n",
+            "Driving edge is at the chain end A\n",
+            "Source edge is at tne end B of a linear chain\n",
+            "Pulled sequence omits the cycle chain\n",
+            "The source chain survives"
         );
 
     // Create initial graph.
 
-    constexpr EgId len {10};
-    const auto [w0, w1, w2] = create_array<ChId, 3>();
+    constexpr std::size_t len {10};
+    const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
     gr.add_single_chain_component(len);
@@ -2750,105 +2665,98 @@ TEST_F(Pull_1, J4_DrA_OutCyc_SrLiB_Srv)
     merge22(BSlot{w0, 3},
             BSlot{w0, 7});     // creates w1, w2
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
 
-    const auto wD = w0;
+    const auto wD = w1;
     constexpr auto eD = eA;
-    const auto wS = w1;
+    const auto wS = w2;
     constexpr auto eS = eB;
-    const auto v1 = w2;
+    const auto v1 = w0;
+    constexpr int n {2};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src};
+    Path pp {&gr.compt(src.w), drv, src};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto num_vertices = c0.num_vertices();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnv1 = gr.chain(v1);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 3);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eA);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eB);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_4way_end(), End::opp(eS));
+    ASSERT_TRUE(cnv1.is_connected_cycle());
+    ASSERT_TRUE(cnwS.length() > n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
 
-    constexpr int n {2};
-    pu1f(pp, n);  // Pull two steps to leave source edge in the original chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains());
-    ASSERT_EQ(gr.ct[ic].num_vertices(), gr0.ct[ic].num_vertices());
-    ASSERT_EQ(gr.ct[ic].ww, gr0.ct[ic].ww);
-    ASSERT_EQ(gr.ct[ic].chis, gr0.ct[ic].chis);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wS].length(), gr0.cn[wS].length() - n);
-    ASSERT_EQ(gr.cn[v1].length(), gr0.cn[v1].length());
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wD].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wS].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[4].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wS].g[0].ind, gr0.cn[wS].g[2].ind);
-    for (EgId i {}; const auto& g: gr.cn[wD].g) {
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains);
+    ASSERT_EQ(c.num_vertices(), num_vertices);
+    ASSERT_EQ(c.ww, ww);
+    ASSERT_EQ(c.chis, chis);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& mD = gr.chain(wD);
+    const auto& mS = gr.chain(wS);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mS.length(), cnwS.length() - n);
+    ASSERT_EQ(gr.chain(v1).length(), cnv1.length());
+    ASSERT_EQ(mD.g[0].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwD.g[2].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwS.g[0].ind);
+    ASSERT_EQ(mD.g[4].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mS.g[0].ind, cnwS.g[2].ind);
+    for (EgIdA i {}; const auto& g: mD.g) {
         ASSERT_EQ(g.indw, i++);
         ASSERT_EQ(g.w, wD);
         ASSERT_EQ(g.c, ic);
     }
-    ASSERT_EQ(gr.cn[wS].g[0].indw, 0);
-    ASSERT_EQ(gr.cn[wS].g[0].w, wS);
-    ASSERT_EQ(gr.cn[wS].g[0].c, ic);
+    ASSERT_EQ(mS.g[0].indw, 0);
+    ASSERT_EQ(mS.g[0].w, wS);
+    ASSERT_EQ(mS.g[0].c, ic);
 
-}  //  end J4_DrA_OutCyc_SrLiB_Srv
-
-/*  J4_DrA_OutCyc_SrLiB_Srv
-
-TEST_BEFORE 0  ** {2 A} {2 B} {1 A}  0 [0]  len 3 > > > ( 0 1 2 )
-            [0] > ind 0 indc 0 w 0 c 0
-            [1] > ind 1 indc 1 w 0 c 0
-            [2] > ind 2 indc 2 w 0 c 0
-TEST_BEFORE 2 {0 B} {2 B} {1 A}  ** {2 A} {0 B} {1 A}  0 [1]  len 4 > > > > ( 3 4 5 6 )
-            [0] > ind 3 indc 3 w 2 c 0
-            [1] > ind 4 indc 4 w 2 c 0
-            [2] > ind 5 indc 5 w 2 c 0
-            [3] > ind 6 indc 6 w 2 c 0
-TEST_BEFORE 1 {2 A} {2 B} {0 B}  **  0 [2]  len 3 > > > ( 7 8 9 )
-            [0] > ind 7 indc 7 w 1 c 0
-            [1] > ind 8 indc 8 w 1 c 0
-            [2] > ind 9 indc 9 w 1 c 0
-
-Pulling from Vertex Deg 1+ :: 2 steps over path:
-
-driver (egEnd A) 0:   [0] > ind 0 indc 0 w 0 c 0
-                 1:   [1] > ind 1 indc 1 w 0 c 0
-                 2:   [2] > ind 2 indc 2 w 0 c 0
-                 3:   [0] > ind 7 indc 7 w 1 c 0
-                 4:   [1] > ind 8 indc 8 w 1 c 0
-source (end B)   5:   [2] > ind 9 indc 9 w 1 c 0
-
-TEST_AFTER 0  ** {2 A} {2 B} {1 A}  0 [0]  len 5 > > > > > ( 0 1 2 7 8 )
-           [0] > ind 0 indc 0 w 0 c 0
-           [1] > ind 1 indc 1 w 0 c 0
-           [2] > ind 2 indc 2 w 0 c 0
-           [3] > ind 7 indc 7 w 0 c 0
-           [4] > ind 8 indc 8 w 0 c 0
-TEST_AFTER 2 {0 B} {2 B} {1 A}  ** {2 A} {0 B} {1 A}  0 [1]  len 4 > > > > ( 3 4 5 6 )
-           [0] > ind 3 indc 3 w 2 c 0
-           [1] > ind 4 indc 4 w 2 c 0
-           [2] > ind 5 indc 5 w 2 c 0
-           [3] > ind 6 indc 6 w 2 c 0
-TEST_AFTER 1 {2 A} {2 B} {0 B}  **  0 [2]  len 1 > ( 9 )
-           [0] > ind 9 indc 9 w 1 c 0
-*/
+}  // J4_DrA_OutCyc_SrLiB_Srv
 
 
 /// Tests degree 1 pulling over a path traversing a 4-way junction
 /// connecting two linear chains and a cycle.
-/// Driving edge is at the end B, source edge is at tne end B of a linear chain.
+/// Driving edge is at the chain end B.
+/// Source edge is at tne end B of a linear chain.
 /// Pulled edge sequence omits the cycle chain.
 /// The source chain survives.
 TEST_F(Pull_1, J4_DrB_OutCyc_SrLiB_Srv)
@@ -2858,19 +2766,20 @@ TEST_F(Pull_1, J4_DrB_OutCyc_SrLiB_Srv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 4-way junction ",
-            "connecting two linear chains and a cycle. Driving edge is at ",
-            "the end B, source edge is at tne end B of a linear chain. ",
-            "Pulled sequence omits the cycle chain. ",
-            "The source chain survives."
+            "connecting two linear chains and a cycle\n",
+            "Driving edge is at the chain end B\n",
+            "Source edge is at tne end B of a linear chain\n",
+            "Pulled sequence omits the cycle chain\n",
+            "The source chain survives"
         );
 
     // Create initial graph.
 
-    constexpr std::array<EgId, 2> len {7, 3};
-    const auto [w0, w1, w2] = create_array<ChId, 3>();
+    constexpr std::array<size_t, 2> len {7, 3};
+    const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
-    for (const auto u: len)
+    for (const auto u : len)
         gr.add_single_chain_component(u);
 
     VertexMerger<1, 2, G> merge12 {gr};
@@ -2883,9 +2792,7 @@ TEST_F(Pull_1, J4_DrB_OutCyc_SrLiB_Srv)
     merge13(ESlot{w1, eA},
             ESlot{w2, eA});
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
@@ -2895,93 +2802,88 @@ TEST_F(Pull_1, J4_DrB_OutCyc_SrLiB_Srv)
     const auto wS = w2;
     constexpr auto eS = eB;
     const auto v1 = w0;
+    constexpr int n {2};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src};
+    Path pp {&gr.compt(src.w), drv, src};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto num_vertices = c0.num_vertices();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnv1 = gr.chain(v1);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 3);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eB);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eB);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_4way_end(), End::opp(eS));
+    ASSERT_TRUE(cnv1.is_connected_cycle());
+    ASSERT_TRUE(cnwS.length() > n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
 
-    constexpr int n {2};
-    pu1f(pp, n);  // Pull two steps to leave source edge in the original chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains());
-    ASSERT_EQ(gr.ct[ic].num_vertices(), gr0.ct[ic].num_vertices());
-    ASSERT_EQ(gr.ct[ic].ww, gr0.ct[ic].ww);
-    ASSERT_EQ(gr.ct[ic].chis, gr0.ct[ic].chis);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wS].length(), gr0.cn[wS].length() - n);
-    ASSERT_EQ(gr.cn[v1].length(), gr0.cn[v1].length());
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wS].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[4].ind, gr0.cn[wD].g[2].ind);
-    ASSERT_EQ(gr.cn[wS].g[0].ind, gr0.cn[wS].g[2].ind);
-    for (EgId i {}; const auto& g: gr.cn[wD].g) {
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains);
+    ASSERT_EQ(c.num_vertices(), num_vertices);
+    ASSERT_EQ(c.ww, ww);
+    ASSERT_EQ(c.chis, chis);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& mD = gr.chain(wD);
+    const auto& mS = gr.chain(wS);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mS.length(), cnwS.length() - n);
+    ASSERT_EQ(gr.chain(v1).length(), cnv1.length());
+    ASSERT_EQ(mD.g[0].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwS.g[0].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[4].ind, cnwD.g[2].ind);
+    ASSERT_EQ(mS.g[0].ind, cnwS.g[2].ind);
+    for (EgIdA i {}; const auto& g: mD.g) {
         ASSERT_EQ(g.indw, i++);
         ASSERT_EQ(g.w, wD);
         ASSERT_EQ(g.c, ic);
     }
-    ASSERT_EQ(gr.cn[wS].g[0].indw, 0);
-    ASSERT_EQ(gr.cn[wS].g[0].w, wS);
-    ASSERT_EQ(gr.cn[wS].g[0].c, ic);
+    ASSERT_EQ(mS.g[0].indw, 0);
+    ASSERT_EQ(mS.g[0].w, wS);
+    ASSERT_EQ(mS.g[0].c, ic);
 
-}  //  end J4_DrB_OutCyc_SrLiB_Srv
-
-/*  J4_DrB_OutCyc_SrLiB_Srv
-
-TEST_BEFORE 1 {2 A} {0 A} {0 B}  **  0 [0]  len 3 > > > ( 7 8 9 )
-            [0] > ind 7 indc 0 w 1 c 0
-            [1] > ind 8 indc 1 w 1 c 0
-            [2] > ind 9 indc 2 w 1 c 0
-TEST_BEFORE 0 {0 B} {2 A} {1 A}  ** {0 A} {2 A} {1 A}  0 [1]  len 4 > > > > ( 0 1 2 3 )
-            [0] > ind 0 indc 3 w 0 c 0
-            [1] > ind 1 indc 4 w 0 c 0
-            [2] > ind 2 indc 5 w 0 c 0
-            [3] > ind 3 indc 6 w 0 c 0
-TEST_BEFORE 2 {0 A} {0 B} {1 A}  **  0 [2]  len 3 > > > ( 4 5 6 )
-            [0] > ind 4 indc 7 w 2 c 0
-            [1] > ind 5 indc 8 w 2 c 0
-            [2] > ind 6 indc 9 w 2 c 0
-
-Pulling from Vertex Deg 1+ :: 2 steps over path:
-
-driver (egEnd B) 0:   [2] > ind 9 indc 2 w 1 c 0
-                 1:   [1] > ind 8 indc 1 w 1 c 0
-                 2:   [0] > ind 7 indc 0 w 1 c 0
-                 3:   [0] > ind 4 indc 7 w 2 c 0
-                 4:   [1] > ind 5 indc 8 w 2 c 0
-source (end B)   5:   [2] > ind 6 indc 9 w 2 c 0
-
-TEST_AFTER 1 {2 A} {0 A} {0 B}  **  0 [0]  len 5 > > > > > ( 5 4 7 8 9 )
-           [0] > ind 5 indc 8 w 1 c 0
-           [1] > ind 4 indc 7 w 1 c 0
-           [2] > ind 7 indc 0 w 1 c 0
-           [3] > ind 8 indc 1 w 1 c 0
-           [4] > ind 9 indc 2 w 1 c 0
-TEST_AFTER 0 {0 B} {2 A} {1 A}  ** {0 A} {2 A} {1 A}  0 [1]  len 4 > > > > ( 0 1 2 3 )
-           [0] > ind 0 indc 3 w 0 c 0
-           [1] > ind 1 indc 4 w 0 c 0
-           [2] > ind 2 indc 5 w 0 c 0
-           [3] > ind 3 indc 6 w 0 c 0
-TEST_AFTER 2 {0 A} {0 B} {1 A}  **  0 [2]  len 1 > ( 6 )
-           [0] > ind 6 indc 9 w 2 c 0
-*/
+}  // J4_DrB_OutCyc_SrLiB_Srv
 
 
 /// Tests degree 1 pulling over a path traversing a 4-way junction
 /// connecting two linear chains and a cycle.
-/// Driving edge is at the end B, source edge is at tne end A of a linear chain.
+/// Driving edge is at the chain end B.
+/// Source edge is at tne end A of a linear chain.
 /// Pulled edge sequence omits the cycle chain.
 /// The source chain survives.
 TEST_F(Pull_1, J4_DrB_OutCyc_SrLiA_Srv)
@@ -2991,16 +2893,17 @@ TEST_F(Pull_1, J4_DrB_OutCyc_SrLiA_Srv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 4-way junction ",
-            "connecting two linear chains and a cycle. Driving edge is at ",
-            "the end B, source edge is at tne end A of a linear chain. ",
-            "Pulled sequence omits the cycle chain. ",
-            "The source chain survives."
+            "connecting two linear chains and a cycle\n",
+            "Driving edge is at the chain end B\n",
+            "Source edge is at tne end A of a linear chain\n",
+            "Pulled sequence omits the cycle chain\n",
+            "The source chain survives"
         );
 
     // Create initial graph.
 
-    constexpr EgId len {10};
-    const auto [w0, w1, w2] = create_array<ChId, 3>();
+    constexpr std::size_t len {10};
+    const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
     gr.add_single_chain_component(len);
@@ -3010,106 +2913,98 @@ TEST_F(Pull_1, J4_DrB_OutCyc_SrLiA_Srv)
     merge22(BSlot{w0, 3},
             BSlot{w0, 7});     // creates w1, w2
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
 
-    const auto wD = w1;
+    const auto wD = w2;
     constexpr auto eD = eB;
-    const auto wS = w0;
+    const auto wS = w1;
     constexpr auto eS = eA;
-    const auto v1 = w2;
+    const auto v1 = w0;
+    constexpr int n {2};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src};
+    Path pp {&gr.compt(src.w), drv, src};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto num_vertices = c0.num_vertices();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnv1 = gr.chain(v1);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 3);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eB);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eA);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_4way_end(), End::opp(eS));
+    ASSERT_TRUE(cnv1.is_connected_cycle());
+    ASSERT_TRUE(cnwS.length() > n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
 
-    constexpr int n {2};
-    pu1f(pp, n);  // Pull two steps to leave source edge in the original chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains());
-    ASSERT_EQ(gr.ct[ic].num_vertices(), gr0.ct[ic].num_vertices());
-    ASSERT_EQ(gr.ct[ic].ww, gr0.ct[ic].ww);
-    ASSERT_EQ(gr.ct[ic].chis, gr0.ct[ic].chis);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wS].length(), gr0.cn[wS].length() - n);
-    ASSERT_EQ(gr.cn[v1].length(), gr0.cn[v1].length());
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wS].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[4].ind, gr0.cn[wD].g[2].ind);
-    ASSERT_EQ(gr.cn[wS].g[0].ind, gr0.cn[wS].g[0].ind);
-    for (EgId i {}; const auto& eg: gr.cn[wD].g) {
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains);
+    ASSERT_EQ(c.num_vertices(), num_vertices);
+    ASSERT_EQ(c.ww, ww);
+    ASSERT_EQ(c.chis, chis);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& mD = gr.chain(wD);
+    const auto& mS = gr.chain(wS);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mS.length(), cnwS.length() - n);
+    ASSERT_EQ(gr.chain(v1).length(), cnv1.length());
+    ASSERT_EQ(mD.g[0].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwS.g[2].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[4].ind, cnwD.g[2].ind);
+    ASSERT_EQ(mS.g[0].ind, cnwS.g[0].ind);
+    for (EgIdA i {}; const auto& eg: mD.g) {
         ASSERT_EQ(eg.indw, i++);
         ASSERT_EQ(eg.w, wD);
         ASSERT_EQ(eg.c, ic);
     }
-    ASSERT_EQ(gr.cn[wS].g[0].indw, 0);
-    ASSERT_EQ(gr.cn[wS].g[0].w, wS);
-    ASSERT_EQ(gr.cn[wS].g[0].c, ic);
+    ASSERT_EQ(mS.g[0].indw, 0);
+    ASSERT_EQ(mS.g[0].w, wS);
+    ASSERT_EQ(mS.g[0].c, ic);
 
-}  //  end J4_DrB_OutCyc_SrLiA_Srv
-
-/*  J4_DrB_OutCyc_SrLiA_Srv
-
-TEST_BEFORE 0  ** {2 A} {2 B} {1 A}  0 [0]  len 3 > > > ( 0 1 2 )
-            [0] > ind 0 indc 0 w 0 c 0
-            [1] > ind 1 indc 1 w 0 c 0
-            [2] > ind 2 indc 2 w 0 c 0
-TEST_BEFORE 2 {0 B} {2 B} {1 A}  ** {2 A} {0 B} {1 A}  0 [1]  len 4 > > > > ( 3 4 5 6 )
-            [0] > ind 3 indc 3 w 2 c 0
-            [1] > ind 4 indc 4 w 2 c 0
-            [2] > ind 5 indc 5 w 2 c 0
-            [3] > ind 6 indc 6 w 2 c 0
-TEST_BEFORE 1 {2 A} {2 B} {0 B}  **  0 [2]  len 3 > > > ( 7 8 9 )
-            [0] > ind 7 indc 7 w 1 c 0
-            [1] > ind 8 indc 8 w 1 c 0
-            [2] > ind 9 indc 9 w 1 c 0
-
-Pulling from Vertex Deg 1+ :: 2 steps over path:
-
-driver (egEnd B) 0:   [2] > ind 9 indc 9 w 1 c 0
-                 1:   [1] > ind 8 indc 8 w 1 c 0
-                 2:   [0] > ind 7 indc 7 w 1 c 0
-                 3:   [2] > ind 2 indc 2 w 0 c 0
-                 4:   [1] > ind 1 indc 1 w 0 c 0
-source (end A)   5:   [0] > ind 0 indc 0 w 0 c 0
-
-TEST_AFTER 0  ** {2 A} {2 B} {1 A}  0 [0]  len 1 > ( 0 )
-           [0] > ind 0 indc 0 w 0 c 0
-TEST_AFTER 2 {0 B} {2 B} {1 A}  ** {2 A} {0 B} {1 A}  0 [1]  len 4 > > > > ( 3 4 5 6 )
-           [0] > ind 3 indc 3 w 2 c 0
-           [1] > ind 4 indc 4 w 2 c 0
-           [2] > ind 5 indc 5 w 2 c 0
-           [3] > ind 6 indc 6 w 2 c 0
-TEST_AFTER 1 {2 A} {2 B} {0 B}  **  0 [2]  len 5 > > > > > ( 1 2 7 8 9 )
-           [0] > ind 1 indc 1 w 1 c 0
-           [1] > ind 2 indc 2 w 1 c 0
-           [2] > ind 7 indc 7 w 1 c 0
-           [3] > ind 8 indc 8 w 1 c 0
-           [4] > ind 9 indc 9 w 1 c 0
-*/
-
+}  // J4_DrB_OutCyc_SrLiA_Srv
 
 
 /// Tests degree 1 pulling over a path traversing a 4-way junction
 /// connecting two linear chains and a cycle.
-/// Driving edge is at the end A, source edge is at tne end A of a linear chain.
+/// Driving edge is at the chain end A.
+/// Source edge is at tne end A of a linear chain.
 /// Pulled edge sequence omits the cycle chain.
 /// Source chain is engulfed completely.
 TEST_F(Pull_1, J4_DrA_OutCyc_SrLiA_Rmv)
@@ -3119,19 +3014,20 @@ TEST_F(Pull_1, J4_DrA_OutCyc_SrLiA_Rmv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 4-way junction ",
-            "connecting two linear chains and a cycle. Driving edge is at ",
-            "the end A, source edge is at tne end A of a linear chain. ",
-            "Pulled sequence omits the cycle chain. ",
-            "Source chain is engulfed completely."
+            "connecting two linear chains and a cycle\n",
+            "Driving edge is at the chain end A\n",
+            "Source edge is at tne end A of a linear chain\n",
+            "Pulled sequence omits the cycle chain\n",
+            "Source chain is engulfed completely"
         );
 
     // Create initial graph.
 
-    constexpr std::array<EgId, 2> len {7, 3};
-    const auto [w0, w1, w2] = create_array<ChId, 3>();
+    constexpr std::array<size_t, 2> len {7, 3};
+    const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
-    for (const auto u: len)
+    for (const auto u : len)
         gr.add_single_chain_component(u);
 
     VertexMerger<1, 2, G> merge12 {gr};
@@ -3144,96 +3040,89 @@ TEST_F(Pull_1, J4_DrA_OutCyc_SrLiA_Rmv)
     merge13(ESlot{w1, eB},
             ESlot{w0, eB});
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
 
-    const auto wD = w0;
+    const auto wD = w2;
     constexpr auto eD = eA;
+    const auto iD = gr.chain(wD).end_edge(eD).ind;
     const auto wS = w1;
     constexpr auto eS = eA;
+    const auto v1 = w0;
+    constexpr int n {3};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src};
+    Path pp {&gr.compt(src.w), drv, src};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnv1 = gr.chain(v1);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 3);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eA);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eA);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_4way_end(), End::opp(eS));
+    ASSERT_TRUE(cnv1.is_connected_cycle());
+    ASSERT_TRUE(cnwS.length() == n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull three steps to consume the source chain completely
 
-    // Pull three steps to consume the source chain completely.
-    constexpr int n {3};
-    pu1f(pp, n);
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains() - 1);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wD].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wS].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[4].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[5].ind, gr0.cn[wS].g[0].ind);
-    for (EgId i {}; const auto& g: gr.cn[wD].g) {
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains - 1);
+    ASSERT_FALSE(c.template check<profuse>());
+    const auto vD = gr.get_egl(iD).w;
+    const auto& mD = gr.chain(vD);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mD.g[0].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwD.g[2].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwS.g[2].ind);
+    ASSERT_EQ(mD.g[4].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mD.g[5].ind, cnwS.g[0].ind);
+    for (EgIdA i {}; const auto& g: mD.g) {
         ASSERT_EQ(g.indw, i++);
-        ASSERT_EQ(g.w, wD);
+        ASSERT_EQ(g.w, vD);
         ASSERT_EQ(g.c, ic);
     }
 
-}  //  end J4_DrA_OutCyc_SrLiA_Rmv
-
-/*  J4_DrA_OutCyc_SrLiA_Rmv
-
-TEST_BEFORE 1  ** {0 B} {2 A} {2 B}  0 [0]  len 3 > > > ( 7 8 9 )
-            [0] > ind 7 indc 0 w 1 c 0
-            [1] > ind 8 indc 1 w 1 c 0
-            [2] > ind 9 indc 2 w 1 c 0
-TEST_BEFORE 0  ** {2 A} {2 B} {1 B}  0 [1]  len 3 > > > ( 0 1 2 )
-            [0] > ind 0 indc 3 w 0 c 0
-            [1] > ind 1 indc 4 w 0 c 0
-            [2] > ind 2 indc 5 w 0 c 0
-TEST_BEFORE 2 {0 B} {2 B} {1 B}  ** {0 B} {2 A} {1 B} 0 [2] len 4 >>>> (3 4 5 6)
-            [0] > ind 3 indc 6 w 2 c 0
-            [1] > ind 4 indc 7 w 2 c 0
-            [2] > ind 5 indc 8 w 2 c 0
-            [3] > ind 6 indc 9 w 2 c 0
-
-Pulling from Vertex Deg 1+ :: 2 steps over path:
-
-driver (egEnd A) 0:   [0] > ind 0 indc 3 w 0 c 0
-                 1:   [1] > ind 1 indc 4 w 0 c 0
-                 2:   [2] > ind 2 indc 5 w 0 c 0
-                 3:   [2] > ind 9 indc 2 w 1 c 0
-                 4:   [1] > ind 8 indc 1 w 1 c 0
-source (end A)   5:   [0] > ind 7 indc 0 w 1 c 0
-
-TEST_AFTER 0  ** {1 A} {1 B}  0 [0]  len 6 > > > > > > ( 0 1 2 9 8 7 )
-           [0] > ind 0 indc 0 w 0 c 0
-           [1] > ind 1 indc 1 w 0 c 0
-           [2] > ind 2 indc 2 w 0 c 0
-           [3] > ind 9 indc 3 w 0 c 0
-           [4] > ind 8 indc 4 w 0 c 0
-           [5] > ind 7 indc 5 w 0 c 0
-TEST_AFTER 1 {0 B} {1 B}  ** {0 B} {1 A}  0 [1]  len 4 > > > > ( 3 4 5 6 )
-           [0] > ind 3 indc 6 w 1 c 0
-           [1] > ind 4 indc 7 w 1 c 0
-           [2] > ind 5 indc 8 w 1 c 0
-           [3] > ind 6 indc 9 w 1 c 0
-*/
+}  // J4_DrA_OutCyc_SrLiA_Rmv
 
 
 /// Tests degree 1 pulling over a path traversing a 4-way junction
 /// connecting two linear chains and a cycle.
-/// Driving edge is at the end A, source edge is at the end B of a linear chain.
+/// Driving edge is at the chain end A.
+/// Source edge is at the end B of a linear chain.
 /// Pulled edge sequence omits the cycle chain.
 /// Source chain is engulfed completely.
 TEST_F(Pull_1, J4_DrA_OutCyc_SrLiB_Rmv)
@@ -3243,16 +3132,17 @@ TEST_F(Pull_1, J4_DrA_OutCyc_SrLiB_Rmv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 4-way junction ",
-            "connecting two linear chains and a cycle. Driving edge is at ",
-            "the end A, source edge is at the end B of a linear chain. ",
-            "Pulled edge sequence omits the cycle chain. ",
+            "connecting two linear chains and a cycle\n",
+            "Driving edge is at the chain end A\n",
+            "Source edge is at the end B of a linear chain\n",
+            "Pulled edge sequence omits the cycle chain\n",
             "Source chain is engulfed completely."
         );
 
     // Create initial graph.
 
-    constexpr EgId len {10};
-    const auto [w0, w1, w2] = create_array<ChId, 3>();
+    constexpr std::size_t len {10};
+    const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
     gr.add_single_chain_component(len);
@@ -3262,96 +3152,88 @@ TEST_F(Pull_1, J4_DrA_OutCyc_SrLiB_Rmv)
     merge22(BSlot{w0, 3},
             BSlot{w0, 7});     // creates w1, w2
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
 
-    const auto wD = w0;
+    const auto wD = w1;
     constexpr auto eD = eA;
-    const auto wS = w1;
+    const auto wS = w2;
     constexpr auto eS = eB;
+    const auto v1 = w0;
+    constexpr int n {3};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src};
+    Path pp {&gr.compt(src.w), drv, src};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnv1 = gr.chain(v1);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 3);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eA);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eB);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_4way_end(), End::opp(eS));
+    ASSERT_TRUE(cnv1.is_connected_cycle());
+    ASSERT_TRUE(cnwS.length() == n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull three steps to consume the source chain completely
 
-    // Pull three steps to consume the source chain completely.
-    constexpr int n {3};
-    pu1f(pp, n);
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains() - 1);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wD].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wS].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[4].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[5].ind, gr0.cn[wS].g[2].ind);
-    for (EgId i {}; const auto& g: gr.cn[wD].g) {
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains - 1);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& mD = gr.chain(wD);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mD.g[0].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwD.g[2].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwS.g[0].ind);
+    ASSERT_EQ(mD.g[4].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mD.g[5].ind, cnwS.g[2].ind);
+    for (EgIdA i {}; const auto& g: mD.g) {
         ASSERT_EQ(g.indw, i++);
         ASSERT_EQ(g.w, wD);
         ASSERT_EQ(g.c, ic);
     }
 
-}  //  end J4_DrA_OutCyc_SrLiB_Rmv
-
-/*  J4_DrA_OutCyc_SrLiB_Rmv
-
-TEST_BEFORE 0  ** {2 A} {2 B} {1 A}  0 [0]  len 3 > > > ( 0 1 2 )
-            [0] > ind 0 indc 0 w 0 c 0
-            [1] > ind 1 indc 1 w 0 c 0
-            [2] > ind 2 indc 2 w 0 c 0
-TEST_BEFORE 2 {0 B} {2 B} {1 A}  ** {2 A} {0 B} {1 A}  0 [1]  len 4 > > > > ( 3 4 5 6 )
-            [0] > ind 3 indc 3 w 2 c 0
-            [1] > ind 4 indc 4 w 2 c 0
-            [2] > ind 5 indc 5 w 2 c 0
-            [3] > ind 6 indc 6 w 2 c 0
-TEST_BEFORE 1 {2 A} {2 B} {0 B}  **  0 [2]  len 3 > > > ( 7 8 9 )
-            [0] > ind 7 indc 7 w 1 c 0
-            [1] > ind 8 indc 8 w 1 c 0
-            [2] > ind 9 indc 9 w 1 c 0
-
-Pulling from Vertex Deg 1+ :: 3 steps over path:
-
-driver (egEnd A) 0:   [0] > ind 0 indc 0 w 0 c 0
-                 1:   [1] > ind 1 indc 1 w 0 c 0
-                 2:   [2] > ind 2 indc 2 w 0 c 0
-                 3:   [0] > ind 7 indc 7 w 1 c 0
-                 4:   [1] > ind 8 indc 8 w 1 c 0
-source (end B)   5:   [2] > ind 9 indc 9 w 1 c 0
-
-TEST_AFTER 0  ** {1 A} {1 B}  0 [0]  len 6 > > > > > > ( 0 1 2 7 8 9 )
-           [0] > ind 0 indc 0 w 0 c 0
-           [1] > ind 1 indc 1 w 0 c 0
-           [2] > ind 2 indc 2 w 0 c 0
-           [3] > ind 7 indc 3 w 0 c 0
-           [4] > ind 8 indc 4 w 0 c 0
-           [5] > ind 9 indc 5 w 0 c 0
-TEST_AFTER 1 {0 B} {1 B}  ** {1 A} {0 B}  0 [1]  len 4 > > > > ( 3 4 5 6 )
-           [0] > ind 3 indc 6 w 1 c 0
-           [1] > ind 4 indc 7 w 1 c 0
-           [2] > ind 5 indc 8 w 1 c 0
-           [3] > ind 6 indc 9 w 1 c 0
-*/
+}  // J4_DrA_OutCyc_SrLiB_Rmv
 
 
 /// Tests degree 1 pulling over a path traversing a 4-way junction
 /// connecting two linear chains and a cycle.
-/// Driving edge is at the end B, source edge is at tne end B of a linear chain.
+/// Driving edge is at the chain end B.
+/// Source edge is at tne end B of a linear chain.
 /// Pulled edge sequence omits the cycle chain.
 /// Source chain is engulfed completely.
 TEST_F(Pull_1, J4_DrB_OutCyc_SrLiB_Rmv)
@@ -3361,19 +3243,20 @@ TEST_F(Pull_1, J4_DrB_OutCyc_SrLiB_Rmv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 4-way junction ",
-            "connecting two linear chains and a cycle. Driving edge is at ",
-            "the end B, source edge is at tne end B of a linear chain. ",
-            "Pulled sequence omits the cycle chain. ",
-            "Source chain is engulfed completely."
+            "connecting two linear chains and a cycle\n",
+            "Driving edge is at the chain end B\n",
+            "Source edge is at tne end B of a linear chain\n",
+            "Pulled sequence omits the cycle chain\n",
+            "Source chain is engulfed completely"
         );
 
     // Create initial graph.
 
-    constexpr std::array<EgId, 2> len {7, 3};
-    const auto [w0, w1, w2] = create_array<ChId, 3>();
+    constexpr std::array<size_t, 2> len {7, 3};
+    const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
-    for (const auto u: len)
+    for (const auto u : len)
         gr.add_single_chain_component(u);
 
     VertexMerger<1, 2, G> merge12 {gr};
@@ -3386,9 +3269,7 @@ TEST_F(Pull_1, J4_DrB_OutCyc_SrLiB_Rmv)
     merge13(ESlot{w1, eA},
             ESlot{w2, eA});
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
@@ -3397,84 +3278,79 @@ TEST_F(Pull_1, J4_DrB_OutCyc_SrLiB_Rmv)
     constexpr auto eD = eB;
     const auto wS = w2;
     constexpr auto eS = eB;
+    const auto v1 = w0;
+    constexpr int n {3};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src};
+    Path pp {&gr.compt(src.w), drv, src};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnv1 = gr.chain(v1);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 3);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eB);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eB);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_4way_end(), End::opp(eS));
+    ASSERT_TRUE(cnv1.is_connected_cycle());
+    ASSERT_TRUE(cnwS.length() == n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull three steps to consume the source chain completely
 
-    // Pull three steps to consume the source chain completely.
-    constexpr int n {3};
-    pu1f(pp, n);
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains() - 1);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wS].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wS].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[4].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[5].ind, gr0.cn[wD].g[2].ind);
-    for (EgId i {}; const auto& g: gr.cn[wD].g) {
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains - 1);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& mD = gr.chain(wD);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mD.g[0].ind, cnwS.g[2].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwS.g[0].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[4].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[5].ind, cnwD.g[2].ind);
+    for (EgIdA i {}; const auto& g: mD.g) {
         ASSERT_EQ(g.indw, i++);
         ASSERT_EQ(g.w, wD);
         ASSERT_EQ(g.c, ic);
     }
 
-}  //  end J4_DrB_OutCyc_SrLiB_Rmv
+}  // J4_DrB_OutCyc_SrLiB_Rmv
 
-/*  J4_DrB_OutCyc_SrLiB_Rmv
-
-TEST_BEFORE 1 {2 A} {0 A} {0 B}  **  0 [0]  len 3 > > > ( 7 8 9 )
-            [0] > ind 7 indc 0 w 1 c 0
-            [1] > ind 8 indc 1 w 1 c 0
-            [2] > ind 9 indc 2 w 1 c 0
-TEST_BEFORE 0 {0 B} {2 A} {1 A}  ** {0 A} {2 A} {1 A}  0 [1]  len 4 > > > > ( 0 1 2 3 )
-            [0] > ind 0 indc 3 w 0 c 0
-            [1] > ind 1 indc 4 w 0 c 0
-            [2] > ind 2 indc 5 w 0 c 0
-            [3] > ind 3 indc 6 w 0 c 0
-TEST_BEFORE 2 {0 A} {0 B} {1 A}  **  0 [2]  len 3 > > > ( 4 5 6 )
-            [0] > ind 4 indc 7 w 2 c 0
-            [1] > ind 5 indc 8 w 2 c 0
-            [2] > ind 6 indc 9 w 2 c 0
-
-Pulling from Vertex Deg 1+ :: 2 steps over path:
-
-driver (egEnd B) 0:   [2] > ind 9 indc 2 w 1 c 0
-                 1:   [1] > ind 8 indc 1 w 1 c 0
-                 2:   [0] > ind 7 indc 0 w 1 c 0
-                 3:   [0] > ind 4 indc 7 w 2 c 0
-                 4:   [1] > ind 5 indc 8 w 2 c 0
-source (end B)   5:   [2] > ind 6 indc 9 w 2 c 0
-
-TEST_AFTER 1 {0 A} {0 B}  **  0 [0]  len 6 > > > > > > ( 6 5 4 7 8 9 )
-           [0] > ind 6 indc 0 w 1 c 0
-           [1] > ind 5 indc 1 w 1 c 0
-           [2] > ind 4 indc 2 w 1 c 0
-           [3] > ind 7 indc 3 w 1 c 0
-           [4] > ind 8 indc 4 w 1 c 0
-           [5] > ind 9 indc 5 w 1 c 0
-TEST_AFTER 0 {0 B} {1 A}  ** {0 A} {1 A}  0 [1]  len 4 > > > > ( 0 1 2 3 )
-           [0] > ind 0 indc 6 w 0 c 0
-           [1] > ind 1 indc 7 w 0 c 0
-           [2] > ind 2 indc 8 w 0 c 0
-           [3] > ind 3 indc 9 w 0 c 0
-*/
 
 /// Tests degree 1 pulling over a path traversing a 4-way junction
 /// connecting two linear chains and a cycle.
-/// Driving edge is at the end B, source edge is at the end A of a linear chain.
+/// Driving edge is at the chain end B.
+/// Source edge is at the end A of a linear chain.
 /// Pulled edge sequence omits the cycle chain.
 /// Source chain is engulfed completely.
 TEST_F(Pull_1, J4_DrB_OutCyc_SrLiA_Rmv)
@@ -3484,16 +3360,17 @@ TEST_F(Pull_1, J4_DrB_OutCyc_SrLiA_Rmv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 4-way junction ",
-            "connecting two linear chains and a cycle. Driving edge is at ",
-            "the end B, source edge is at the end A of a linear chain. ",
-            "Pulled edge sequence omits the cycle chain. ",
-            "Source chain is engulfed completely."
+            "connecting two linear chains and a cycle\n",
+            "Driving edge is at the chain end B\n",
+            "Source edge is at the end A of a linear chain\n",
+            "Pulled edge sequence omits the cycle chain\n",
+            "Source chain is engulfed completely"
         );
 
     // Create initial graph.
 
-    constexpr EgId len {10};
-    const auto [w0, w1, w2] = create_array<ChId, 3>();
+    constexpr std::size_t len {10};
+    const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
     gr.add_single_chain_component(len);
@@ -3503,91 +3380,84 @@ TEST_F(Pull_1, J4_DrB_OutCyc_SrLiA_Rmv)
     merge22(BSlot{w0, 3},
             BSlot{w0, 7});     // creates w1, w2
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
 
-    const auto wD = w1;
+    const auto wD = w2;
     constexpr auto eD = eB;
-    const auto wS = w0;
+    const auto iD = gr.chain(wD).end_edge(eD).ind;
+    const auto wS = w1;
     constexpr auto eS = eA;
+    const auto v1 = w0;
+    constexpr int n {3};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src};
+    Path pp {&gr.compt(src.w), drv, src};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnv1 = gr.chain(v1);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 3);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eB);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eA);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_4way_end(), End::opp(eS));
+    ASSERT_TRUE(cnv1.is_connected_cycle());
+    ASSERT_TRUE(cnwS.length() == n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull three steps to consume the source chain completely
 
-    // Pull three steps to consume the source chain completely.
-    constexpr int n {3};
-    pu1f(pp, n);
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains() - 1);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wS].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wS].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[4].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[5].ind, gr0.cn[wD].g[2].ind);
-    for (EgId i {}; const auto& g: gr.cn[wD].g) {
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains - 1);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto vD = gr.get_egl(iD).w;
+    const auto& mD = gr.chain(vD);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mD.g[0].ind, cnwS.g[0].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwS.g[2].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[4].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[5].ind, cnwD.g[2].ind);
+    for (EgIdA i {}; const auto& g: mD.g) {
         ASSERT_EQ(g.indw, i++);
-        ASSERT_EQ(g.w, wD);
+        ASSERT_EQ(g.w, vD);
         ASSERT_EQ(g.c, ic);
     }
 
-}  //  end J4_DrB_OutCyc_SrLiA_Rmv
-
-/*  J4_DrB_OutCyc_SrLiA_Rmv
-
-TEST_BEFORE 0  ** {2 A} {2 B} {1 A}  0 [0]  len 3 > > > ( 0 1 2 )
-            [0] > ind 0 indc 0 w 0 c 0
-            [1] > ind 1 indc 1 w 0 c 0
-            [2] > ind 2 indc 2 w 0 c 0
-TEST_BEFORE 2 {0 B} {2 B} {1 A}  ** {2 A} {0 B} {1 A}  0 [1]  len 4 > > > > ( 3 4 5 6 )
-            [0] > ind 3 indc 3 w 2 c 0
-            [1] > ind 4 indc 4 w 2 c 0
-            [2] > ind 5 indc 5 w 2 c 0
-            [3] > ind 6 indc 6 w 2 c 0
-TEST_BEFORE 1 {2 A} {2 B} {0 B}  **  0 [2]  len 3 > > > ( 7 8 9 )
-            [0] > ind 7 indc 7 w 1 c 0
-            [1] > ind 8 indc 8 w 1 c 0
-            [2] > ind 9 indc 9 w 1 c 0
-
-Pulling from Vertex Deg 1+ :: 3 steps over path:
-
-driver (egEnd B) 0:   [2] > ind 9 indc 9 w 1 c 0
-                 1:   [1] > ind 8 indc 8 w 1 c 0
-                 2:   [0] > ind 7 indc 7 w 1 c 0
-                 3:   [2] > ind 2 indc 2 w 0 c 0
-                 4:   [1] > ind 1 indc 1 w 0 c 0
-source (end A)   5:   [0] > ind 0 indc 0 w 0 c 0
-
-TEST_AFTER 0 {0 B} {1 A}  ** {0 A} {1 A}  0 [0]  len 4 > > > > ( 3 4 5 6 )
-           [0] > ind 3 indc 0 w 0 c 0
-           [1] > ind 4 indc 1 w 0 c 0
-           [2] > ind 5 indc 2 w 0 c 0
-           [3] > ind 6 indc 3 w 0 c 0
-TEST_AFTER 1 {0 A} {0 B}  **  0 [1]  len 6 > > > > > > ( 0 1 2 7 8 9 )
-           [0] > ind 0 indc 4 w 1 c 0
-           [1] > ind 1 indc 5 w 1 c 0
-           [2] > ind 2 indc 6 w 1 c 0
-           [3] > ind 7 indc 7 w 1 c 0
-           [4] > ind 8 indc 8 w 1 c 0
-           [5] > ind 9 indc 9 w 1 c 0
-*/
+}  // J4_DrB_OutCyc_SrLiA_Rmv
 
 
 // =============================================================================
@@ -3596,7 +3466,8 @@ TEST_AFTER 1 {0 A} {0 B}  **  0 [1]  len 6 > > > > > > ( 0 1 2 7 8 9 )
 
 /// Tests degree 1 pulling over a path traversing a 4-way junction
 /// connecting two linear chains and a cycle.
-/// Driving edge is at the end A, source edge is at tne end A of a linear chain.
+/// Driving edge is at the chain end A.
+/// Source edge is at tne end A of a linear chain.
 /// Pulled edge sequence includes the cycle chain in direction A -> B.
 /// The source chain survives.
 TEST_F(Pull_1, J4_DrA_InCyAB_SrLiA_Srv)
@@ -3606,19 +3477,20 @@ TEST_F(Pull_1, J4_DrA_InCyAB_SrLiA_Srv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 4-way junction ",
-            "connecting two linear chains and a cycle. Driving edge is at the ",
-            "end A, source edge is at tne end A of a linear chain. Pulled edge ",
-            "sequence includes the cycle chain in direction A -> B. ",
-            "The source chain survives."
+            "connecting two linear chains and a cycle\n",
+            "Driving edge is at the chain end A\n",
+            "Source edge is at tne end A of a linear chain\n",
+            "Pulled edge sequence includes the cycle chain in direction A->B\n",
+            "The source chain survives"
         );
 
     // Create initial graph.
 
-    constexpr std::array<EgId, 2> len {7, 3};
-    const auto [w0, w1, w2] = create_array<ChId, 3>();
+    constexpr std::array<size_t, 2> len {7, 3};
+    const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
-    for (const auto u: len)
+    for (const auto u : len)
         gr.add_single_chain_component(u);
 
     VertexMerger<1, 2, G> merge12 {gr};
@@ -3631,122 +3503,112 @@ TEST_F(Pull_1, J4_DrA_InCyAB_SrLiA_Srv)
     merge13(ESlot{w1, eB},
             ESlot{w0, eB});
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
 
-    const auto wD = w0;
+    const auto wD = w1;
     constexpr auto eD = eA;
-    const auto wS = w1;
+    const auto wS = w2;
     constexpr auto eS = eA;
-    const auto wI = w2;
+    const auto wI = w0;
+    constexpr int n {2};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
     const std::vector<Driver> internals {
-        Driver {&gr.cn[wI].end_edge(eA), eA},
-        Driver {&gr.cn[wI].end_edge(eB), eB}
+        Driver {&gr.chain(wI).end_edge(eA), eA},
+        Driver {&gr.chain(wI).end_edge(eB), eB}
     };
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src, internals};
+    Path pp {&gr.compt(src.w), drv, src, internals};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto num_vertices = c0.num_vertices();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnwI = gr.chain(wI);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 3);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eA);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eA);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_4way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwI.is_connected_cycle());
+    ASSERT_TRUE(cnwS.length() >= n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
 
-    constexpr int n {2};
-    pu1f(pp, n);  // Pull two steps to leave source edge in the original chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains());
-    ASSERT_EQ(gr.ct[ic].num_vertices(), gr0.ct[ic].num_vertices());
-    ASSERT_EQ(gr.ct[ic].ww, gr0.ct[ic].ww);
-    ASSERT_EQ(gr.ct[ic].chis, gr0.ct[ic].chis);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wS].length(), gr0.cn[wS].length() - n);
-    ASSERT_EQ(gr.cn[wI].length(), gr0.cn[wI].length());
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wD].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wI].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[4].ind, gr0.cn[wI].g[1].ind);
-    ASSERT_EQ(gr.cn[wI].g[0].ind, gr0.cn[wI].g[2].ind);
-    ASSERT_EQ(gr.cn[wI].g[1].ind, gr0.cn[wI].g[3].ind);
-    ASSERT_EQ(gr.cn[wI].g[2].ind, gr0.cn[wS].g[2].ind);
-    ASSERT_EQ(gr.cn[wI].g[3].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wS].g[0].ind, gr0.cn[wS].g[0].ind);
-    for (EgId i {}; const auto& g: gr.cn[wD].g) {
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains);
+    ASSERT_EQ(c.num_vertices(), num_vertices);
+    ASSERT_EQ(c.ww, ww);
+    ASSERT_EQ(c.chis, chis);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& mD = gr.chain(wD);
+    const auto& mS = gr.chain(wS);
+    const auto& mI = gr.chain(wI);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mS.length(), cnwS.length() - n);
+    ASSERT_EQ(mI.length(), cnwI.length());
+    ASSERT_EQ(mD.g[0].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwD.g[2].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwI.g[0].ind);
+    ASSERT_EQ(mD.g[4].ind, cnwI.g[1].ind);
+    ASSERT_EQ(mI.g[0].ind, cnwI.g[2].ind);
+    ASSERT_EQ(mI.g[1].ind, cnwI.g[3].ind);
+    ASSERT_EQ(mI.g[2].ind, cnwS.g[2].ind);
+    ASSERT_EQ(mI.g[3].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mS.g[0].ind, cnwS.g[0].ind);
+    for (EgIdA i {}; const auto& g: mD.g) {
         ASSERT_EQ(g.indw, i++);
         ASSERT_EQ(g.w, wD);
         ASSERT_EQ(g.c, ic);
     }
-    for (EgId i {}; const auto& g: gr.cn[wI].g) {
+    for (EgIdA i {}; const auto& g: gr.chain(wI).g) {
         ASSERT_EQ(g.indw, i++);
         ASSERT_EQ(g.w, wI);
         ASSERT_EQ(g.c, ic);
     }
-    ASSERT_EQ(gr.cn[wS].g[0].indw, 0);
-    ASSERT_EQ(gr.cn[wS].g[0].w, wS);
-    ASSERT_EQ(gr.cn[wS].g[0].c, ic);
+    ASSERT_EQ(mS.g[0].indw, 0);
+    ASSERT_EQ(mS.g[0].w, wS);
+    ASSERT_EQ(mS.g[0].c, ic);
 
-}  //  end J4_DrA_InCyAB_SrLiA_Srv
-
-/*  J4_DrA_InCyAB_SrLiA_Srv
-
-TEST_BEFORE 1  ** {0 B} {2 A} {2 B}  0 [0]  len 3 > > > ( 7 8 9 )
-            [0] > ind 7 indc 0 w 1 c 0
-            [1] > ind 8 indc 1 w 1 c 0
-            [2] > ind 9 indc 2 w 1 c 0
-TEST_BEFORE 0  ** {2 A} {2 B} {1 B}  0 [1]  len 3 > > > ( 0 1 2 )
-            [0] > ind 0 indc 3 w 0 c 0
-            [1] > ind 1 indc 4 w 0 c 0
-            [2] > ind 2 indc 5 w 0 c 0
-TEST_BEFORE 2 {0 B} {2 B} {1 B}  ** {0 B} {2 A} {1 B}  0 [2]  len 4 > > > > ( 3 4 5 6 )
-            [0] > ind 3 indc 6 w 2 c 0
-            [1] > ind 4 indc 7 w 2 c 0
-            [2] > ind 5 indc 8 w 2 c 0
-            [3] > ind 6 indc 9 w 2 c 0
-
-Pulling from Vertex Deg 1+ :: 2 steps over path:
-
-driver (egEnd A) 0:   [0] > ind 0 indc 3 w 0 c 0
-                 1:   [1] > ind 1 indc 4 w 0 c 0
-                 2:   [2] > ind 2 indc 5 w 0 c 0
-                 3:   [0] > ind 3 indc 6 w 2 c 0
-                 4:   [1] > ind 4 indc 7 w 2 c 0
-                 5:   [2] > ind 5 indc 8 w 2 c 0
-                 6:   [3] > ind 6 indc 9 w 2 c 0
-                 7:   [2] > ind 9 indc 2 w 1 c 0
-                 8:   [1] > ind 8 indc 1 w 1 c 0
-source (end A)   9:   [0] > ind 7 indc 0 w 1 c 0
-
-TEST_AFTER 1  ** {0 B} {2 A} {2 B}  0 [0]  len 1 > ( 7 )
-           [0] > ind 7 indc 0 w 1 c 0
-TEST_AFTER 0  ** {2 A} {2 B} {1 B}  0 [1]  len 5 > > > > > ( 0 1 2 3 4 )
-           [0] > ind 0 indc 3 w 0 c 0
-           [1] > ind 1 indc 4 w 0 c 0
-           [2] > ind 2 indc 5 w 0 c 0
-           [3] > ind 3 indc 6 w 0 c 0
-           [4] > ind 4 indc 7 w 0 c 0
-TEST_AFTER 2 {0 B} {2 B} {1 B}  ** {0 B} {2 A} {1 B}  0 [2]  len 4 > > > > ( 5 6 9 8 )
-           [0] > ind 5 indc 8 w 2 c 0
-           [1] > ind 6 indc 9 w 2 c 0
-           [2] > ind 9 indc 2 w 2 c 0
-           [3] > ind 8 indc 1 w 2 c 0
-*/
+}  // J4_DrA_InCyAB_SrLiA_Srv
 
 
 /// Tests degree 1 pulling over a path traversing a 4-way junction
 /// connecting two linear chains and a cycle.
-/// Driving edge is at the end A, source edge is at tne end A of a linear chain.
+/// Driving edge is at the chain end A.
+/// Source edge is at tne end A of a linear chain.
 /// Pulled edge sequence includes the cycle chain in direction B -> A.
 /// The source chain survives.
 TEST_F(Pull_1, J4_DrA_InCyBA_SrLiA_Srv)
@@ -3756,19 +3618,20 @@ TEST_F(Pull_1, J4_DrA_InCyBA_SrLiA_Srv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 4-way junction ",
-            "connecting two linear chains and a cycle. Driving edge is at the ",
-            "end A, source edge is at tne end A of a linear chain. Pulled edge ",
-            "sequence includes the cycle chain in direction B -> A. ",
-            "The source chain survives."
+            "connecting two linear chains and a cycle\n",
+            "Driving edge is at the chain end A\n",
+            "Source edge is at tne end A of a linear chain\n",
+            "Pulled edge sequence includes the cycle chain in direction B->A\n",
+            "The source chain survives"
         );
 
     // Create initial graph.
 
-    constexpr std::array<EgId, 2> len {7, 3};
-    const auto [w0, w1, w2] = create_array<ChId, 3>();
+    constexpr std::array<size_t, 2> len {7, 3};
+    const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
-    for (const auto u: len)
+    for (const auto u : len)
         gr.add_single_chain_component(u);
 
     VertexMerger<1, 2, G> merge12 {gr};
@@ -3781,122 +3644,112 @@ TEST_F(Pull_1, J4_DrA_InCyBA_SrLiA_Srv)
     merge13(ESlot{w1, eB},
             ESlot{w0, eB});
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
 
-    const auto wD = w0;
+    const auto wD = w1;
     constexpr auto eD = eA;
-    const auto wS = w1;
+    const auto wS = w2;
     constexpr auto eS = eA;
-    const auto wI = w2;
+    const auto wI = w0;
+    constexpr int n {2};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
     const std::vector<Driver> internals {
-        Driver {&gr.cn[wI].end_edge(eB), eB},
-        Driver {&gr.cn[wI].end_edge(eA), eA}
+        Driver {&gr.chain(wI).end_edge(eB), eB},
+        Driver {&gr.chain(wI).end_edge(eA), eA}
     };
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src, internals};
+    Path pp {&gr.compt(src.w), drv, src, internals};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto num_vertices = c0.num_vertices();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnwI = gr.chain(wI);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 3);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eA);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eA);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_4way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwI.is_connected_cycle());
+    ASSERT_TRUE(cnwS.length() >= n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
 
-    constexpr int n {2};
-    pu1f(pp, n);  // Pull two steps to leave source edge in the original chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains());
-    ASSERT_EQ(gr.ct[ic].num_vertices(), gr0.ct[ic].num_vertices());
-    ASSERT_EQ(gr.ct[ic].ww, gr0.ct[ic].ww);
-    ASSERT_EQ(gr.ct[ic].chis, gr0.ct[ic].chis);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wS].length(), gr0.cn[wS].length() - n);
-    ASSERT_EQ(gr.cn[wI].length(), gr0.cn[wI].length());
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wD].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wI].g[3].ind);
-    ASSERT_EQ(gr.cn[wD].g[4].ind, gr0.cn[wI].g[2].ind);
-    ASSERT_EQ(gr.cn[wI].g[0].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wI].g[1].ind, gr0.cn[wS].g[2].ind);
-    ASSERT_EQ(gr.cn[wI].g[2].ind, gr0.cn[wI].g[0].ind);
-    ASSERT_EQ(gr.cn[wI].g[3].ind, gr0.cn[wI].g[1].ind);
-    ASSERT_EQ(gr.cn[wS].g[0].ind, gr0.cn[wS].g[0].ind);
-    for (EgId i {}; const auto& g: gr.cn[wD].g) {
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains);
+    ASSERT_EQ(c.num_vertices(), num_vertices);
+    ASSERT_EQ(c.ww, ww);
+    ASSERT_EQ(c.chis, chis);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& mD = gr.chain(wD);
+    const auto& mS = gr.chain(wS);
+    const auto& mI = gr.chain(wI);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mS.length(), cnwS.length() - n);
+    ASSERT_EQ(mI.length(), cnwI.length());
+    ASSERT_EQ(mD.g[0].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwD.g[2].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwI.g[3].ind);
+    ASSERT_EQ(mD.g[4].ind, cnwI.g[2].ind);
+    ASSERT_EQ(mI.g[0].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mI.g[1].ind, cnwS.g[2].ind);
+    ASSERT_EQ(mI.g[2].ind, cnwI.g[0].ind);
+    ASSERT_EQ(mI.g[3].ind, cnwI.g[1].ind);
+    ASSERT_EQ(mS.g[0].ind, cnwS.g[0].ind);
+    for (EgIdA i {}; const auto& g: mD.g) {
         ASSERT_EQ(g.indw, i++);
         ASSERT_EQ(g.w, wD);
         ASSERT_EQ(g.c, ic);
     }
-    for (EgId i {}; const auto& g: gr.cn[wI].g) {
+    for (EgIdA i {}; const auto& g: gr.chain(wI).g) {
         ASSERT_EQ(g.indw, i++);
         ASSERT_EQ(g.w, wI);
         ASSERT_EQ(g.c, ic);
     }
-    ASSERT_EQ(gr.cn[wS].g[0].indw, 0);
-    ASSERT_EQ(gr.cn[wS].g[0].w, wS);
-    ASSERT_EQ(gr.cn[wS].g[0].c, ic);
+    ASSERT_EQ(mS.g[0].indw, 0);
+    ASSERT_EQ(mS.g[0].w, wS);
+    ASSERT_EQ(mS.g[0].c, ic);
 
-}  //  end J4_DrA_InCyBA_SrLiA_Srv
-
-/* J4_DrA_InCyBA_SrLiA_Srv
-
-TEST_BEFORE 1  ** {0 B} {2 A} {2 B}  0 [0]  len 3 > > > ( 7 8 9 )
-            [0] > ind 7 indc 0 w 1 c 0
-            [1] > ind 8 indc 1 w 1 c 0
-            [2] > ind 9 indc 2 w 1 c 0
-TEST_BEFORE 0  ** {2 A} {2 B} {1 B}  0 [1]  len 3 > > > ( 0 1 2 )
-            [0] > ind 0 indc 3 w 0 c 0
-            [1] > ind 1 indc 4 w 0 c 0
-            [2] > ind 2 indc 5 w 0 c 0
-TEST_BEFORE 2 {0 B} {2 B} {1 B}  ** {0 B} {2 A} {1 B}  0 [2]  len 4 > > > > ( 3 4 5 6 )
-            [0] > ind 3 indc 6 w 2 c 0
-            [1] > ind 4 indc 7 w 2 c 0
-            [2] > ind 5 indc 8 w 2 c 0
-            [3] > ind 6 indc 9 w 2 c 0
-
-Pulling from Vertex Deg 1+ :: 2 steps over path:
-
-driver (egEnd A) 0:   [0] > ind 0 indc 3 w 0 c 0
-                 1:   [1] > ind 1 indc 4 w 0 c 0
-                 2:   [2] > ind 2 indc 5 w 0 c 0
-                 3:   [3] > ind 6 indc 9 w 2 c 0
-                 4:   [2] > ind 5 indc 8 w 2 c 0
-                 5:   [1] > ind 4 indc 7 w 2 c 0
-                 6:   [0] > ind 3 indc 6 w 2 c 0
-                 7:   [2] > ind 9 indc 2 w 1 c 0
-                 8:   [1] > ind 8 indc 1 w 1 c 0
-source (end A)   9:   [0] > ind 7 indc 0 w 1 c 0
-
-TEST_AFTER 1  ** {0 B} {2 A} {2 B}  0 [0]  len 1 > ( 7 )
-           [0] > ind 7 indc 0 w 1 c 0
-TEST_AFTER 0  ** {2 A} {2 B} {1 B}  0 [1]  len 5 > > > > > ( 0 1 2 6 5 )
-           [0] > ind 0 indc 3 w 0 c 0
-           [1] > ind 1 indc 4 w 0 c 0
-           [2] > ind 2 indc 5 w 0 c 0
-           [3] > ind 6 indc 9 w 0 c 0
-           [4] > ind 5 indc 8 w 0 c 0
-TEST_AFTER 2 {0 B} {2 B} {1 B}  ** {0 B} {2 A} {1 B}  0 [2]  len 4 > > > > ( 8 9 3 4 )
-           [0] > ind 8 indc 1 w 2 c 0
-           [1] > ind 9 indc 2 w 2 c 0
-           [2] > ind 3 indc 6 w 2 c 0
-           [3] > ind 4 indc 7 w 2 c 0
-*/
+}  // J4_DrA_InCyBA_SrLiA_Srv
 
 
 /// Tests degree 1 pulling over a path traversing a 4-way junction
 /// connecting two linear chains and a cycle.
-/// Driving edge is at the end A, source edge is at tne end B of a linear chain.
+/// Driving edge is at the chain end A.
+/// Source edge is at tne end B of a linear chain.
 /// Pulled edge sequence includes the cycle chain in direction A -> B.
 /// The source chain survives.
 TEST_F(Pull_1, J4_DrA_InCyAB_SrLiB_Srv)
@@ -3906,16 +3759,17 @@ TEST_F(Pull_1, J4_DrA_InCyAB_SrLiB_Srv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 4-way junction ",
-            "connecting two linear chains and a cycle. Driving edge is at the ",
-            "end B, source edge is at tne end A of a linear chain. Pulled edge ",
-            "sequence includes the cycle chain in direction A -> B. ",
-            "The source chain survives."
+            "connecting two linear chains and a cycle\n",
+            "Driving edge is at the chain end B\n",
+            "Source edge is at tne end A of a linear chain\n",
+            "Pulled edge sequence includes the cycle chain in direction A->B\n",
+            "The source chain survives"
         );
 
     // Create initial graph.
 
-    constexpr EgId len {10};
-    const auto [w0, w1, w2] = create_array<ChId, 3>();
+    constexpr std::size_t len {10};
+    const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
     gr.add_single_chain_component(len);
@@ -3925,120 +3779,112 @@ TEST_F(Pull_1, J4_DrA_InCyAB_SrLiB_Srv)
     merge22(BSlot{w0, 3},
             BSlot{w0, 7});     // creates w1, w2
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
 
+    const auto wD = w1;
     constexpr auto eD = eA;
-    const auto wD = w0;
+    const auto wS = w2;
     constexpr auto eS = eB;
-    const auto wS = w1;
-    const auto wI = w2;
+    const auto wI = w0;
+    constexpr int n {2};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
     const std::vector<Driver> internals {
-        Driver {&gr.cn[wI].end_edge(eA), eA},
-        Driver {&gr.cn[wI].end_edge(eB), eB}
+        Driver {&gr.chain(wI).end_edge(eA), eA},
+        Driver {&gr.chain(wI).end_edge(eB), eB}
     };
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src, internals};
+    Path pp {&gr.compt(src.w), drv, src, internals};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto num_vertices = c0.num_vertices();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnwI = gr.chain(wI);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 3);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eA);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eB);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_4way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwI.is_connected_cycle());
+    ASSERT_TRUE(cnwS.length() >= n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
 
-    constexpr int n {2};
-    pu1f(pp, n);  // Pull two steps to leave source edge in the original chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains());
-    ASSERT_EQ(gr.ct[ic].num_vertices(), gr0.ct[ic].num_vertices());
-    ASSERT_EQ(gr.ct[ic].ww, gr0.ct[ic].ww);
-    ASSERT_EQ(gr.ct[ic].chis, gr0.ct[ic].chis);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wS].length(), gr0.cn[wS].length() - n);
-    ASSERT_EQ(gr.cn[wI].length(), gr0.cn[wI].length());
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wD].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wI].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[4].ind, gr0.cn[wI].g[1].ind);
-    ASSERT_EQ(gr.cn[wI].g[0].ind, gr0.cn[wI].g[2].ind);
-    ASSERT_EQ(gr.cn[wI].g[1].ind, gr0.cn[wI].g[3].ind);
-    ASSERT_EQ(gr.cn[wI].g[2].ind, gr0.cn[wS].g[0].ind);
-    ASSERT_EQ(gr.cn[wI].g[3].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wS].g[0].ind, gr0.cn[wS].g[2].ind);
-    for (EgId i {}; const auto& g: gr.cn[wD].g) {
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains);
+    ASSERT_EQ(c.num_vertices(), num_vertices);
+    ASSERT_EQ(c.ww, ww);
+    ASSERT_EQ(c.chis, chis);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& mD = gr.chain(wD);
+    const auto& mS = gr.chain(wS);
+    const auto& mI = gr.chain(wI);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mS.length(), cnwS.length() - n);
+    ASSERT_EQ(mI.length(), cnwI.length());
+    ASSERT_EQ(mD.g[0].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwD.g[2].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwI.g[0].ind);
+    ASSERT_EQ(mD.g[4].ind, cnwI.g[1].ind);
+    ASSERT_EQ(mI.g[0].ind, cnwI.g[2].ind);
+    ASSERT_EQ(mI.g[1].ind, cnwI.g[3].ind);
+    ASSERT_EQ(mI.g[2].ind, cnwS.g[0].ind);
+    ASSERT_EQ(mI.g[3].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mS.g[0].ind, cnwS.g[2].ind);
+    for (EgIdA i {}; const auto& g: mD.g) {
         ASSERT_EQ(g.indw, i++);
         ASSERT_EQ(g.w, wD);
         ASSERT_EQ(g.c, ic);
     }
-    for (EgId i {}; const auto& g: gr.cn[wI].g) {
+    for (EgIdA i {}; const auto& g: gr.chain(wI).g) {
         ASSERT_EQ(g.indw, i++);
         ASSERT_EQ(g.w, wI);
         ASSERT_EQ(g.c, ic);
     }
-    ASSERT_EQ(gr.cn[wS].g[0].indw, 0);
-    ASSERT_EQ(gr.cn[wS].g[0].w, wS);
-    ASSERT_EQ(gr.cn[wS].g[0].c, ic);
+    ASSERT_EQ(mS.g[0].indw, 0);
+    ASSERT_EQ(mS.g[0].w, wS);
+    ASSERT_EQ(mS.g[0].c, ic);
 
-}  //  end J4_DrA_InCyAB_SrLiB_Srv
+}  // J4_DrA_InCyAB_SrLiB_Srv
 
-/* J4_DrA_InCyAB_SrLiB_Srv
-
-TEST_BEFORE 0  ** {2 A} {2 B} {1 A}  0 [0]  len 3 > > > ( 0 1 2 )
-            [0] > ind 0 indc 0 w 0 c 0
-            [1] > ind 1 indc 1 w 0 c 0
-            [2] > ind 2 indc 2 w 0 c 0
-TEST_BEFORE 2 {0 B} {2 B} {1 A}  ** {2 A} {0 B} {1 A}  0 [1]  len 4 > > > > ( 3 4 5 6 )
-            [0] > ind 3 indc 3 w 2 c 0
-            [1] > ind 4 indc 4 w 2 c 0
-            [2] > ind 5 indc 5 w 2 c 0
-            [3] > ind 6 indc 6 w 2 c 0
-TEST_BEFORE 1 {2 A} {2 B} {0 B}  **  0 [2]  len 3 > > > ( 7 8 9 )
-            [0] > ind 7 indc 7 w 1 c 0
-            [1] > ind 8 indc 8 w 1 c 0
-            [2] > ind 9 indc 9 w 1 c 0
-
-driver (egEnd A) 0:   [0] > ind 0 indc 0 w 0 c 0
-                 1:   [1] > ind 1 indc 1 w 0 c 0
-                 2:   [2] > ind 2 indc 2 w 0 c 0
-                 3:   [0] > ind 3 indc 3 w 2 c 0
-                 4:   [1] > ind 4 indc 4 w 2 c 0
-                 5:   [2] > ind 5 indc 5 w 2 c 0
-                 6:   [3] > ind 6 indc 6 w 2 c 0
-                 7:   [0] > ind 7 indc 7 w 1 c 0
-                 8:   [1] > ind 8 indc 8 w 1 c 0
-source (end B)   9:   [2] > ind 9 indc 9 w 1 c 0
-
-TEST_AFTER 0  ** {2 A} {2 B} {1 A}  0 [0]  len 5 > > > > > ( 0 1 2 3 4 )
-           [0] > ind 0 indc 0 w 0 c 0
-           [1] > ind 1 indc 1 w 0 c 0
-           [2] > ind 2 indc 2 w 0 c 0
-           [3] > ind 3 indc 3 w 0 c 0
-           [4] > ind 4 indc 4 w 0 c 0
-TEST_AFTER 2 {0 B} {2 B} {1 A}  ** {2 A} {0 B} {1 A}  0 [1]  len 4 > > > > ( 5 6 7 8 )
-           [0] > ind 5 indc 5 w 2 c 0
-           [1] > ind 6 indc 6 w 2 c 0
-           [2] > ind 7 indc 7 w 2 c 0
-           [3] > ind 8 indc 8 w 2 c 0
-TEST_AFTER 1 {2 A} {2 B} {0 B}  **  0 [2]  len 1 > ( 9 )
-           [0] > ind 9 indc 9 w 1 c 0
-
-*/
 
 /// Tests degree 1 pulling over a path traversing a 4-way junction
 /// connecting two linear chains and a cycle.
-/// Driving edge is at the end A, source edge is at tne end B of a linear chain.
+/// Driving edge is at the chain end A.
+/// Source edge is at tne end B of a linear chain.
 /// Pulled edge sequence includes the cycle chain in direction B -> A.
 /// The source chain survives.
 TEST_F(Pull_1, J4_DrA_InCyBA_SrLiB_Srv)
@@ -4048,16 +3894,17 @@ TEST_F(Pull_1, J4_DrA_InCyBA_SrLiB_Srv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 4-way junction ",
-            "connecting two linear chains and a cycle. Driving edge is at the ",
-            "end B, source edge is at tne end A of a linear chain. Pulled edge ",
-            "sequence includes the cycle chain in direction B -> A. ",
-            "The source chain survives."
+            "connecting two linear chains and a cycle\n",
+            "Driving edge is at the chain end B\n",
+            "Source edge is at tne end A of a linear chain\n",
+            "Pulled edge sequence includes the cycle chain in direction B->A\n",
+            "The source chain survives"
         );
 
     // Create initial graph.
 
-    constexpr EgId len {10};
-    const auto [w0, w1, w2] = create_array<ChId, 3>();
+    constexpr std::size_t len {10};
+    const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
     gr.add_single_chain_component(len);
@@ -4067,121 +3914,112 @@ TEST_F(Pull_1, J4_DrA_InCyBA_SrLiB_Srv)
     merge22(BSlot{w0, 3},
             BSlot{w0, 7});     // creates w1, w2
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
 
+    const auto wD = w1;
     constexpr auto eD = eA;
-    const auto wD = w0;
+    const auto wS = w2;
     constexpr auto eS = eB;
-    const auto wS = w1;
-    const auto wI = w2;
+    const auto wI = w0;
+    constexpr int n {2};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
     const std::vector<Driver> internals {
-        Driver {&gr.cn[wI].end_edge(eB), eB},
-        Driver {&gr.cn[wI].end_edge(eA), eA}
+        Driver {&gr.chain(wI).end_edge(eB), eB},
+        Driver {&gr.chain(wI).end_edge(eA), eA}
     };
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src, internals};
+    Path pp {&gr.compt(src.w), drv, src, internals};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto num_vertices = c0.num_vertices();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnwI = gr.chain(wI);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 3);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eA);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eB);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_4way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwI.is_connected_cycle());
+    ASSERT_TRUE(cnwS.length() >= n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
 
-    constexpr int n {2};
-    pu1f(pp, n);  // Pull two steps to leave source edge in the original chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains());
-    ASSERT_EQ(gr.ct[ic].num_vertices(), gr0.ct[ic].num_vertices());
-    ASSERT_EQ(gr.ct[ic].ww, gr0.ct[ic].ww);
-    ASSERT_EQ(gr.ct[ic].chis, gr0.ct[ic].chis);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wS].length(), gr0.cn[wS].length() - n);
-    ASSERT_EQ(gr.cn[wI].length(), gr0.cn[wI].length());
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wD].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wI].g[3].ind);
-    ASSERT_EQ(gr.cn[wD].g[4].ind, gr0.cn[wI].g[2].ind);
-    ASSERT_EQ(gr.cn[wI].g[0].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wI].g[1].ind, gr0.cn[wS].g[0].ind);
-    ASSERT_EQ(gr.cn[wI].g[2].ind, gr0.cn[wI].g[0].ind);
-    ASSERT_EQ(gr.cn[wI].g[3].ind, gr0.cn[wI].g[1].ind);
-    ASSERT_EQ(gr.cn[wS].g[0].ind, gr0.cn[wS].g[2].ind);
-    for (EgId i {}; const auto& g: gr.cn[wD].g) {
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains);
+    ASSERT_EQ(c.num_vertices(), num_vertices);
+    ASSERT_EQ(c.ww, ww);
+    ASSERT_EQ(c.chis, chis);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& mD = gr.chain(wD);
+    const auto& mS = gr.chain(wS);
+    const auto& mI = gr.chain(wI);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mS.length(), cnwS.length() - n);
+    ASSERT_EQ(mI.length(), cnwI.length());
+    ASSERT_EQ(mD.g[0].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwD.g[2].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwI.g[3].ind);
+    ASSERT_EQ(mD.g[4].ind, cnwI.g[2].ind);
+    ASSERT_EQ(mI.g[0].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mI.g[1].ind, cnwS.g[0].ind);
+    ASSERT_EQ(mI.g[2].ind, cnwI.g[0].ind);
+    ASSERT_EQ(mI.g[3].ind, cnwI.g[1].ind);
+    ASSERT_EQ(mS.g[0].ind, cnwS.g[2].ind);
+    for (EgIdA i {}; const auto& g: mD.g) {
         ASSERT_EQ(g.indw, i++);
         ASSERT_EQ(g.w, wD);
         ASSERT_EQ(g.c, ic);
     }
-    for (EgId i {}; const auto& g: gr.cn[wI].g) {
+    for (EgIdA i {}; const auto& g: gr.chain(wI).g) {
         ASSERT_EQ(g.indw, i++);
         ASSERT_EQ(g.w, wI);
         ASSERT_EQ(g.c, ic);
     }
-    ASSERT_EQ(gr.cn[wS].g[0].indw, 0);
-    ASSERT_EQ(gr.cn[wS].g[0].w, wS);
-    ASSERT_EQ(gr.cn[wS].g[0].c, ic);
+    ASSERT_EQ(mS.g[0].indw, 0);
+    ASSERT_EQ(mS.g[0].w, wS);
+    ASSERT_EQ(mS.g[0].c, ic);
 
-}  //  end J4_DrA_InCyBA_SrLiB_Srv
+}  // J4_DrA_InCyBA_SrLiB_Srv
 
-/* J4_DrA_InCyBA_SrLiB_Srv
-
-TEST_BEFORE 0  ** {2 A} {2 B} {1 A}  0 [0]  len 3 > > > ( 0 1 2 )
-            [0] > ind 0 indc 0 w 0 c 0
-            [1] > ind 1 indc 1 w 0 c 0
-            [2] > ind 2 indc 2 w 0 c 0
-TEST_BEFORE 2 {0 B} {2 B} {1 A}  ** {2 A} {0 B} {1 A}  0 [1]  len 4 > > > > ( 3 4 5 6 )
-            [0] > ind 3 indc 3 w 2 c 0
-            [1] > ind 4 indc 4 w 2 c 0
-            [2] > ind 5 indc 5 w 2 c 0
-            [3] > ind 6 indc 6 w 2 c 0
-TEST_BEFORE 1 {2 A} {2 B} {0 B}  **  0 [2]  len 3 > > > ( 7 8 9 )
-            [0] > ind 7 indc 7 w 1 c 0
-            [1] > ind 8 indc 8 w 1 c 0
-            [2] > ind 9 indc 9 w 1 c 0
-
-Pulling from Vertex Deg 1+ :: 2 steps over path:
-
-driver (egEnd A) 0:   [0] > ind 0 indc 0 w 0 c 0
-                 1:   [1] > ind 1 indc 1 w 0 c 0
-                 2:   [2] > ind 2 indc 2 w 0 c 0
-                 3:   [3] > ind 6 indc 6 w 2 c 0
-                 4:   [2] > ind 5 indc 5 w 2 c 0
-                 5:   [1] > ind 4 indc 4 w 2 c 0
-                 6:   [0] > ind 3 indc 3 w 2 c 0
-                 7:   [0] > ind 7 indc 7 w 1 c 0
-                 8:   [1] > ind 8 indc 8 w 1 c 0
-source (end B)   9:   [2] > ind 9 indc 9 w 1 c 0
-
-TEST_AFTER 0  ** {2 A} {2 B} {1 A}  0 [0]  len 5 > > > > > ( 0 1 2 6 5 )
-           [0] > ind 0 indc 0 w 0 c 0
-           [1] > ind 1 indc 1 w 0 c 0
-           [2] > ind 2 indc 2 w 0 c 0
-           [3] > ind 6 indc 6 w 0 c 0
-           [4] > ind 5 indc 5 w 0 c 0
-TEST_AFTER 2 {0 B} {2 B} {1 A}  ** {2 A} {0 B} {1 A}  0 [1]  len 4 > > > > ( 8 7 3 4 )
-           [0] > ind 8 indc 8 w 2 c 0
-           [1] > ind 7 indc 7 w 2 c 0
-           [2] > ind 3 indc 3 w 2 c 0
-           [3] > ind 4 indc 4 w 2 c 0
-TEST_AFTER 1 {2 A} {2 B} {0 B}  **  0 [2]  len 1 > ( 9 )
-           [0] > ind 9 indc 9 w 1 c 0
-*/
 
 /// Tests degree 1 pulling over a path traversing a 4-way junction
 /// connecting two linear chains and a cycle.
-/// Driving edge is at the end B, source edge is at tne end B of a linear chain.
+/// Driving edge is at the chain end B.
+/// Source edge is at tne end B of a linear chain.
 /// Pulled edge sequence includes the cycle chain in direction A -> B.
 /// The source chain survives.
 TEST_F(Pull_1, J4_DrB_InCyAB_SrLiB_Srv)
@@ -4191,34 +4029,33 @@ TEST_F(Pull_1, J4_DrB_InCyAB_SrLiB_Srv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 4-way junction ",
-            "connecting two linear chains and a cycle. Driving edge is at the ",
-            "end B, source edge is at tne end B of a linear chain. Pulled edge ",
-            "sequence includes the cycle chain in direction A -> B. ",
-            "The source chain survives."
+            "connecting two linear chains and a cycle\n",
+            "Driving edge is at the chain end B\n",
+            "Source edge is at tne end B of a linear chain\n",
+            "Pulled edge sequence includes the cycle chain in direction A->B\n",
+            "The source chain survives"
         );
 
     // Create initial graph.
 
-    constexpr std::array<EgId, 2> len {7, 3};
-    const auto [w0, w1, w2] = create_array<ChId, 3>();
+    constexpr std::array<size_t, 2> len {7, 3};
+    const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
-    for (const auto u: len)
+    for (const auto u : len)
         gr.add_single_chain_component(u);
 
     VertexMerger<1, 2, G> merge12 {gr};
     // w0, w2 : length (7) -> (3, 4)
     merge12(ESlot{w0, eA},
-            BSlot{w0, 4});     // creates w2
+            BSlot{w0, 4});  // creates w2
 
     VertexMerger<1, 3, G> merge13 {gr};
 
     merge13(ESlot{w1, eA},
             ESlot{w2, eA});
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
@@ -4228,110 +4065,102 @@ TEST_F(Pull_1, J4_DrB_InCyAB_SrLiB_Srv)
     const auto wS = w2;
     constexpr auto eS = eB;
     const auto wI = w0;
+    constexpr int n {2};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
     const std::vector<Driver> internals {
-        Driver {&gr.cn[wI].end_edge(eA), eA},
-        Driver {&gr.cn[wI].end_edge(eB), eB}
+        Driver {&gr.chain(wI).end_edge(eA), eA},
+        Driver {&gr.chain(wI).end_edge(eB), eB}
     };
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src, internals};
+    Path pp {&gr.compt(src.w), drv, src, internals};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto num_vertices = c0.num_vertices();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnwI = gr.chain(wI);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 3);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eB);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eB);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_4way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwI.is_connected_cycle());
+    ASSERT_TRUE(cnwS.length() >= n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
 
-    constexpr int n {2};
-    pu1f(pp, n);  // Pull two steps to leave source edge in the original chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains());
-    ASSERT_EQ(gr.ct[ic].num_vertices(), gr0.ct[ic].num_vertices());
-    ASSERT_EQ(gr.ct[ic].ww, gr0.ct[ic].ww);
-    ASSERT_EQ(gr.ct[ic].chis, gr0.ct[ic].chis);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wS].length(), gr0.cn[wS].length() - n);
-    ASSERT_EQ(gr.cn[wI].length(), gr0.cn[wI].length());
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wI].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wI].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[4].ind, gr0.cn[wD].g[2].ind);
-    ASSERT_EQ(gr.cn[wI].g[0].ind, gr0.cn[wI].g[2].ind);
-    ASSERT_EQ(gr.cn[wI].g[1].ind, gr0.cn[wI].g[3].ind);
-    ASSERT_EQ(gr.cn[wI].g[2].ind, gr0.cn[wS].g[0].ind);
-    ASSERT_EQ(gr.cn[wI].g[3].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wS].g[0].ind, gr0.cn[wS].g[2].ind);
-    for (EgId i {}; const auto& g: gr.cn[wD].g) {
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains);
+    ASSERT_EQ(c.num_vertices(), num_vertices);
+    ASSERT_EQ(c.ww, ww);
+    ASSERT_EQ(c.chis, chis);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& mD = gr.chain(wD);
+    const auto& mS = gr.chain(wS);
+    const auto& mI = gr.chain(wI);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mS.length(), cnwS.length() - n);
+    ASSERT_EQ(mI.length(), cnwI.length());
+    ASSERT_EQ(mD.g[0].ind, cnwI.g[1].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwI.g[0].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[4].ind, cnwD.g[2].ind);
+    ASSERT_EQ(mI.g[0].ind, cnwI.g[2].ind);
+    ASSERT_EQ(mI.g[1].ind, cnwI.g[3].ind);
+    ASSERT_EQ(mI.g[2].ind, cnwS.g[0].ind);
+    ASSERT_EQ(mI.g[3].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mS.g[0].ind, cnwS.g[2].ind);
+    for (EgIdA i {}; const auto& g: mD.g) {
         ASSERT_EQ(g.indw, i++);
         ASSERT_EQ(g.w, wD);
         ASSERT_EQ(g.c, ic);
     }
-    for (EgId i {}; const auto& g: gr.cn[wI].g) {
+    for (EgIdA i {}; const auto& g: gr.chain(wI).g) {
         ASSERT_EQ(g.indw, i++);
         ASSERT_EQ(g.w, wI);
         ASSERT_EQ(g.c, ic);
     }
-    ASSERT_EQ(gr.cn[wS].g[0].indw, 0);
-    ASSERT_EQ(gr.cn[wS].g[0].w, wS);
-    ASSERT_EQ(gr.cn[wS].g[0].c, ic);
+    ASSERT_EQ(mS.g[0].indw, 0);
+    ASSERT_EQ(mS.g[0].w, wS);
+    ASSERT_EQ(mS.g[0].c, ic);
 
-}  //  end J4_DrB_InCyAB_SrLiB_Srv
-
-/* J4_DrB_InCyAB_SrLiB_Srv
-
-TEST_BEFORE 1 {2 A} {0 A} {0 B}  **  0 [0]  len 3 > > > ( 7 8 9 )
-            [0] > ind 7 indc 0 w 1 c 0
-            [1] > ind 8 indc 1 w 1 c 0
-            [2] > ind 9 indc 2 w 1 c 0
-TEST_BEFORE 0 {0 B} {2 A} {1 A}  ** {0 A} {2 A} {1 A}  0 [1]  len 4 > > > > ( 0 1 2 3 )
-            [0] > ind 0 indc 3 w 0 c 0
-            [1] > ind 1 indc 4 w 0 c 0
-            [2] > ind 2 indc 5 w 0 c 0
-            [3] > ind 3 indc 6 w 0 c 0
-TEST_BEFORE 2 {0 A} {0 B} {1 A}  **  0 [2]  len 3 > > > ( 4 5 6 )
-            [0] > ind 4 indc 7 w 2 c 0
-            [1] > ind 5 indc 8 w 2 c 0
-            [2] > ind 6 indc 9 w 2 c 0
-
-Pulling from Vertex Deg 1+ :: 2 steps over path:
-
-driver (egEnd B) 0:   [2] > ind 9 indc 2 w 1 c 0
-                 1:   [1] > ind 8 indc 1 w 1 c 0
-                 2:   [0] > ind 7 indc 0 w 1 c 0
-                 3:   [0] > ind 0 indc 3 w 0 c 0
-                 4:   [1] > ind 1 indc 4 w 0 c 0
-                 5:   [2] > ind 2 indc 5 w 0 c 0
-                 6:   [3] > ind 3 indc 6 w 0 c 0
-                 7:   [0] > ind 4 indc 7 w 2 c 0
-                 8:   [1] > ind 5 indc 8 w 2 c 0
-source (end B)   9:   [2] > ind 6 indc 9 w 2 c 0
-
-TEST_AFTER 1 {2 A} {0 A} {0 B}  **  0 [0]  len 5 > > > > > ( 1 0 7 8 9 )
-           [0] > ind 1 indc 4 w 1 c 0
-           [1] > ind 0 indc 3 w 1 c 0
-           [2] > ind 7 indc 0 w 1 c 0
-           [3] > ind 8 indc 1 w 1 c 0
-           [4] > ind 9 indc 2 w 1 c 0
-TEST_AFTER 0 {0 B} {2 A} {1 A}  ** {0 A} {2 A} {1 A}  0 [1]  len 4 > > > > ( 2 3 4 5 )
-           [0] > ind 2 indc 5 w 0 c 0
-           [1] > ind 3 indc 6 w 0 c 0
-           [2] > ind 4 indc 7 w 0 c 0
-           [3] > ind 5 indc 8 w 0 c 0
-TEST_AFTER 2 {0 A} {0 B} {1 A}  **  0 [2]  len 1 > ( 6 )
-           [0] > ind 6 indc 9 w 2 c 0
-*/
+}  // J4_DrB_InCyAB_SrLiB_Srv
 
 
 /// Tests degree 1 pulling over a path traversing a 4-way junction
 /// connecting two linear chains and a cycle.
-/// Driving edge is at the end B, source edge is at tne end B of a linear chain.
+/// Driving edge is at the chain end B.
+/// Source edge is at tne end B of a linear chain.
 /// Pulled edge sequence includes the cycle chain in direction B -> A.
 /// The source chain survives.
 TEST_F(Pull_1, J4_DrB_InCyBA_SrLiB_Srv)
@@ -4341,34 +4170,33 @@ TEST_F(Pull_1, J4_DrB_InCyBA_SrLiB_Srv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 4-way junction ",
-            "connecting two linear chains and a cycle. Driving edge is at the ",
-            "end B, source edge is at tne end B of a linear chain. Pulled edge ",
-            "sequence includes the cycle chain in direction B -> A. ",
-            "The source chain survives."
+            "connecting two linear chains and a cycle\n",
+            "Driving edge is at the chain end B\n",
+            "Source edge is at tne end B of a linear chain\n",
+            "Pulled edge sequence includes the cycle chain in direction B->A\n",
+            "The source chain survives"
         );
 
     // Create initial graph.
 
-    constexpr std::array<EgId, 2> len {7, 3};
-    const auto [w0, w1, w2] = create_array<ChId, 3>();
+    constexpr std::array<size_t, 2> len {7, 3};
+    const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
-    for (const auto u: len)
+    for (const auto u : len)
         gr.add_single_chain_component(u);
 
     VertexMerger<1, 2, G> merge12 {gr};
     // w0, w2 : length (7) -> (3, 4)
     merge12(ESlot{w0, eA},
-            BSlot{w0, 4});     // creates w2
+            BSlot{w0, 4});  // creates w2
 
     VertexMerger<1, 3, G> merge13 {gr};
 
     merge13(ESlot{w1, eA},
             ESlot{w2, eA});
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
@@ -4378,110 +4206,102 @@ TEST_F(Pull_1, J4_DrB_InCyBA_SrLiB_Srv)
     const auto wS = w2;
     constexpr auto eS = eB;
     const auto wI = w0;
+    constexpr int n {2};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
     const std::vector<Driver> internals {
-        Driver {&gr.cn[wI].end_edge(eB), eB},
-        Driver {&gr.cn[wI].end_edge(eA), eA}
+        Driver {&gr.chain(wI).end_edge(eB), eB},
+        Driver {&gr.chain(wI).end_edge(eA), eA}
     };
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src, internals};
+    Path pp {&gr.compt(src.w), drv, src, internals};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto num_vertices = c0.num_vertices();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnwI = gr.chain(wI);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 3);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eB);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eB);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_4way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwI.is_connected_cycle());
+    ASSERT_TRUE(cnwS.length() >= n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
 
-    constexpr int n {2};
-    pu1f(pp, n);  // Pull two steps to leave source edge in the original chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains());
-    ASSERT_EQ(gr.ct[ic].num_vertices(), gr0.ct[ic].num_vertices());
-    ASSERT_EQ(gr.ct[ic].ww, gr0.ct[ic].ww);
-    ASSERT_EQ(gr.ct[ic].chis, gr0.ct[ic].chis);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wS].length(), gr0.cn[wS].length() - n);
-    ASSERT_EQ(gr.cn[wI].length(), gr0.cn[wI].length());
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wI].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wI].g[3].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[4].ind, gr0.cn[wD].g[2].ind);
-    ASSERT_EQ(gr.cn[wI].g[0].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wI].g[1].ind, gr0.cn[wS].g[0].ind);
-    ASSERT_EQ(gr.cn[wI].g[2].ind, gr0.cn[wI].g[0].ind);
-    ASSERT_EQ(gr.cn[wI].g[3].ind, gr0.cn[wI].g[1].ind);
-    ASSERT_EQ(gr.cn[wS].g[0].ind, gr0.cn[wS].g[2].ind);
-    for (EgId i {}; const auto& g: gr.cn[wD].g) {
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains);
+    ASSERT_EQ(c.num_vertices(), num_vertices);
+    ASSERT_EQ(c.ww, ww);
+    ASSERT_EQ(c.chis, chis);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& mD = gr.chain(wD);
+    const auto& mS = gr.chain(wS);
+    const auto& mI = gr.chain(wI);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mS.length(), cnwS.length() - n);
+    ASSERT_EQ(mI.length(), cnwI.length());
+    ASSERT_EQ(mD.g[0].ind, cnwI.g[2].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwI.g[3].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[4].ind, cnwD.g[2].ind);
+    ASSERT_EQ(mI.g[0].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mI.g[1].ind, cnwS.g[0].ind);
+    ASSERT_EQ(mI.g[2].ind, cnwI.g[0].ind);
+    ASSERT_EQ(mI.g[3].ind, cnwI.g[1].ind);
+    ASSERT_EQ(mS.g[0].ind, cnwS.g[2].ind);
+    for (EgIdA i {}; const auto& g: mD.g) {
         ASSERT_EQ(g.indw, i++);
         ASSERT_EQ(g.w, wD);
         ASSERT_EQ(g.c, ic);
     }
-    for (EgId i {}; const auto& g: gr.cn[wI].g) {
+    for (EgIdA i {}; const auto& g: gr.chain(wI).g) {
         ASSERT_EQ(g.indw, i++);
         ASSERT_EQ(g.w, wI);
         ASSERT_EQ(g.c, ic);
     }
-    ASSERT_EQ(gr.cn[wS].g[0].indw, 0);
-    ASSERT_EQ(gr.cn[wS].g[0].w, wS);
-    ASSERT_EQ(gr.cn[wS].g[0].c, ic);
+    ASSERT_EQ(mS.g[0].indw, 0);
+    ASSERT_EQ(mS.g[0].w, wS);
+    ASSERT_EQ(mS.g[0].c, ic);
 
-}  //  end J4_DrB_InCyBA_SrLiB_Srv
-
-/* J4_DrB_InCyBA_SrLiB_Srv
-
-TEST_BEFORE 1 {2 A} {0 A} {0 B}  **  0 [0]  len 3 > > > ( 7 8 9 )
-            [0] > ind 7 indc 0 w 1 c 0
-            [1] > ind 8 indc 1 w 1 c 0
-            [2] > ind 9 indc 2 w 1 c 0
-TEST_BEFORE 0 {0 B} {2 A} {1 A}  ** {0 A} {2 A} {1 A}  0 [1]  len 4 > > > > ( 0 1 2 3 )
-            [0] > ind 0 indc 3 w 0 c 0
-            [1] > ind 1 indc 4 w 0 c 0
-            [2] > ind 2 indc 5 w 0 c 0
-            [3] > ind 3 indc 6 w 0 c 0
-TEST_BEFORE 2 {0 A} {0 B} {1 A}  **  0 [2]  len 3 > > > ( 4 5 6 )
-            [0] > ind 4 indc 7 w 2 c 0
-            [1] > ind 5 indc 8 w 2 c 0
-            [2] > ind 6 indc 9 w 2 c 0
-
-Pulling from Vertex Deg 1+ :: 2 steps over path:
-
-driver (egEnd B) 0:   [2] > ind 9 indc 2 w 1 c 0
-                 1:   [1] > ind 8 indc 1 w 1 c 0
-                 2:   [0] > ind 7 indc 0 w 1 c 0
-                 3:   [3] > ind 3 indc 6 w 0 c 0
-                 4:   [2] > ind 2 indc 5 w 0 c 0
-                 5:   [1] > ind 1 indc 4 w 0 c 0
-                 6:   [0] > ind 0 indc 3 w 0 c 0
-                 7:   [0] > ind 4 indc 7 w 2 c 0
-                 8:   [1] > ind 5 indc 8 w 2 c 0
-source (end B)   9:   [2] > ind 6 indc 9 w 2 c 0
-
-TEST_AFTER 1 {2 A} {0 A} {0 B}  **  0 [0]  len 5 > > > > > ( 2 3 7 8 9 )
-           [0] > ind 2 indc 5 w 1 c 0
-           [1] > ind 3 indc 6 w 1 c 0
-           [2] > ind 7 indc 0 w 1 c 0
-           [3] > ind 8 indc 1 w 1 c 0
-           [4] > ind 9 indc 2 w 1 c 0
-TEST_AFTER 0 {0 B} {2 A} {1 A}  ** {0 A} {2 A} {1 A}  0 [1]  len 4 > > > > ( 5 4 0 1 )
-           [0] > ind 5 indc 8 w 0 c 0
-           [1] > ind 4 indc 7 w 0 c 0
-           [2] > ind 0 indc 3 w 0 c 0
-           [3] > ind 1 indc 4 w 0 c 0
-TEST_AFTER 2 {0 A} {0 B} {1 A}  **  0 [2]  len 1 > ( 6 )
-           [0] > ind 6 indc 9 w 2 c 0
-*/
+}  // J4_DrB_InCyBA_SrLiB_Srv
 
 
 /// Tests degree 1 pulling over a path traversing a 4-way junction
 /// connecting two linear chains and a cycle.
-/// Driving edge is at the end B, source edge is at tne end A of a linear chain.
+/// Driving edge is at the chain end B.
+/// Source edge is at tne end A of a linear chain.
 /// Pulled edge sequence includes the cycle chain in direction A -> B.
 /// The source chain survives.
 TEST_F(Pull_1, J4_DrB_InCyAB_SrLiA_Srv)
@@ -4491,16 +4311,17 @@ TEST_F(Pull_1, J4_DrB_InCyAB_SrLiA_Srv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 4-way junction ",
-            "connecting two linear chains and a cycle. Driving edge is at the ",
-            "end B, source edge is at tne end A of a linear chain. Pulled edge ",
-            "sequence includes the cycle chain in direction A -> B. ",
-            "The source chain survives."
+            "connecting two linear chains and a cycle\n",
+            "Driving edge is at the chain end B\n",
+            "Source edge is at tne end A of a linear chain\n",
+            "Pulled edge sequence includes the cycle chain in direction A->B\n",
+            "The source chain survives"
         );
 
     // Create initial graph.
 
-    constexpr EgId len {10};
-    const auto [w0, w1, w2] = create_array<ChId, 3>();
+    constexpr std::size_t len {10};
+    const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
     gr.add_single_chain_component(len);
@@ -4510,120 +4331,109 @@ TEST_F(Pull_1, J4_DrB_InCyAB_SrLiA_Srv)
     merge22(BSlot{w0, 3},
             BSlot{w0, 7});     // creates w1, w2
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
 
+    const auto wD = w2;
     constexpr auto eD = eB;
-    const auto wD = w1;
+    const auto wS = w1;
     constexpr auto eS = eA;
-    const auto wS = w0;
-    const auto wI = w2;
+    const auto wI = w0;
+    constexpr int n {2};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
     const std::vector<Driver> internals {
-        Driver {&gr.cn[wI].end_edge(eA), eA},
-        Driver {&gr.cn[wI].end_edge(eB), eB}
+        Driver {&gr.chain(wI).end_edge(eA), eA},
+        Driver {&gr.chain(wI).end_edge(eB), eB}
     };
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src, internals};
+    Path pp {&gr.compt(src.w), drv, src, internals};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto num_vertices = c0.num_vertices();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnwI = gr.chain(wI);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 3);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eB);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eA);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_4way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwI.is_connected_cycle());
+    ASSERT_TRUE(cnwS.length() >= n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
 
-    constexpr int n {2};
-    pu1f(pp, n);  // Pull two steps to leave source edge in the original chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains());
-    ASSERT_EQ(gr.ct[ic].num_vertices(), gr0.ct[ic].num_vertices());
-    ASSERT_EQ(gr.ct[ic].ww, gr0.ct[ic].ww);
-    ASSERT_EQ(gr.ct[ic].chis, gr0.ct[ic].chis);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wS].length(), gr0.cn[wS].length() - n);
-    ASSERT_EQ(gr.cn[wI].length(), gr0.cn[wI].length());
-    ASSERT_EQ(gr.cn[wD].g[4].ind, gr0.cn[wD].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wI].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wI].g[1].ind);
-    ASSERT_EQ(gr.cn[wI].g[3].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wI].g[2].ind, gr0.cn[wS].g[2].ind);
-    for (EgId i {}; const auto& g: gr.cn[wD].g) {
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains);
+    ASSERT_EQ(c.num_vertices(), num_vertices);
+    ASSERT_EQ(c.ww, ww);
+    ASSERT_EQ(c.chis, chis);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& mD = gr.chain(wD);
+    const auto& mS = gr.chain(wS);
+    const auto& mI = gr.chain(wI);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mS.length(), cnwS.length() - n);
+    ASSERT_EQ(mI.length(), cnwI.length());
+    ASSERT_EQ(mD.g[4].ind, cnwD.g[2].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwI.g[0].ind);
+    ASSERT_EQ(mD.g[0].ind, cnwI.g[1].ind);
+    ASSERT_EQ(mI.g[3].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mI.g[2].ind, cnwS.g[2].ind);
+    for (EgIdA i {}; const auto& g: mD.g) {
         ASSERT_EQ(g.indw, i++);
         ASSERT_EQ(g.w, wD);
         ASSERT_EQ(g.c, ic);
     }
-    for (EgId i {}; const auto& g: gr.cn[wI].g) {
+    for (EgIdA i {}; const auto& g: gr.chain(wI).g) {
         ASSERT_EQ(g.indw, i++);
         ASSERT_EQ(g.w, wI);
         ASSERT_EQ(g.c, ic);
     }
-    ASSERT_EQ(gr.cn[wS].g[0].indw, 0);
-    ASSERT_EQ(gr.cn[wS].g[0].w, wS);
-    ASSERT_EQ(gr.cn[wS].g[0].c, ic);
+    ASSERT_EQ(mS.g[0].indw, 0);
+    ASSERT_EQ(mS.g[0].w, wS);
+    ASSERT_EQ(mS.g[0].c, ic);
 
-}  //  end J4_DrB_InCyAB_SrLiA_Srv
-
-/* J4_DrB_InCyAB_SrLiA_Srv
-
-TEST_BEFORE 0  ** {2 A} {2 B} {1 A}  0 [0]  len 3 > > > ( 0 1 2 )
-            [0] > ind 0 indc 0 w 0 c 0
-            [1] > ind 1 indc 1 w 0 c 0
-            [2] > ind 2 indc 2 w 0 c 0
-TEST_BEFORE 2 {0 B} {2 B} {1 A}  ** {2 A} {0 B} {1 A}  0 [1]  len 4 > > > > ( 3 4 5 6 )
-            [0] > ind 3 indc 3 w 2 c 0
-            [1] > ind 4 indc 4 w 2 c 0
-            [2] > ind 5 indc 5 w 2 c 0
-            [3] > ind 6 indc 6 w 2 c 0
-TEST_BEFORE 1 {2 A} {2 B} {0 B}  **  0 [2]  len 3 > > > ( 7 8 9 )
-            [0] > ind 7 indc 7 w 1 c 0
-            [1] > ind 8 indc 8 w 1 c 0
-            [2] > ind 9 indc 9 w 1 c 0
-
-Pulling from Vertex Deg 1+ :: 2 steps over path:
-
-driver (egEnd B) 0:   [2] > ind 9 indc 9 w 1 c 0
-                 1:   [1] > ind 8 indc 8 w 1 c 0
-                 2:   [0] > ind 7 indc 7 w 1 c 0
-                 3:   [0] > ind 3 indc 3 w 2 c 0
-                 4:   [1] > ind 4 indc 4 w 2 c 0
-                 5:   [2] > ind 5 indc 5 w 2 c 0
-                 6:   [3] > ind 6 indc 6 w 2 c 0
-                 7:   [2] > ind 2 indc 2 w 0 c 0
-                 8:   [1] > ind 1 indc 1 w 0 c 0
-source (end A)   9:   [0] > ind 0 indc 0 w 0 c 0
-
-TEST_AFTER 0  ** {2 A} {2 B} {1 A}  0 [0]  len 1 > ( 0 )
-           [0] > ind 0 indc 0 w 0 c 0
-TEST_AFTER 2 {0 B} {2 B} {1 A}  ** {2 A} {0 B} {1 A}  0 [1]  len 4 > > > > ( 5 6 2 1 )
-           [0] > ind 5 indc 5 w 2 c 0
-           [1] > ind 6 indc 6 w 2 c 0
-           [2] > ind 2 indc 2 w 2 c 0
-           [3] > ind 1 indc 1 w 2 c 0
-TEST_AFTER 1 {2 A} {2 B} {0 B}  **  0 [2]  len 5 > > > > > ( 4 3 7 8 9 )
-           [0] > ind 4 indc 4 w 1 c 0
-           [1] > ind 3 indc 3 w 1 c 0
-           [2] > ind 7 indc 7 w 1 c 0
-           [3] > ind 8 indc 8 w 1 c 0
-           [4] > ind 9 indc 9 w 1 c 0
-
-*/
+}  // J4_DrB_InCyAB_SrLiA_Srv
 
 
 /// Tests degree 1 pulling over a path traversing a 4-way junction
 /// connecting two linear chains and a cycle.
-/// Driving edge is at the end B, source edge is at tne end A of a linear chain.
+/// Driving edge is at the chain end B.
+/// Source edge is at tne end A of a linear chain.
 /// Pulled edge sequence includes the cycle chain in direction B -> A.
 /// The source chain survives.
 TEST_F(Pull_1, J4_DrB_InCyBA_SrLiA_Srv)
@@ -4633,16 +4443,17 @@ TEST_F(Pull_1, J4_DrB_InCyBA_SrLiA_Srv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 4-way junction ",
-            "connecting two linear chains and a cycle. Driving edge is at the ",
-            "end B, source edge is at tne end A of a linear chain. Pulled edge ",
-            "sequence includes the cycle chain in direction B -> A. ",
-            "The source chain survives."
+            "connecting two linear chains and a cycle\n",
+            "Driving edge is at the chain end B\n",
+            "Source edge is at tne end A of a linear chain\n",
+            "Pulled edge sequence includes the cycle chain in direction B->A\n",
+            "The source chain survives"
         );
 
     // Create initial graph.
 
-    constexpr EgId len {10};
-    const auto [w0, w1, w2] = create_array<ChId, 3>();
+    constexpr std::size_t len {10};
+    const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
     gr.add_single_chain_component(len);
@@ -4652,122 +4463,111 @@ TEST_F(Pull_1, J4_DrB_InCyBA_SrLiA_Srv)
     merge22(BSlot{w0, 3},
             BSlot{w0, 7});     // creates w1, w2
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
 
+    const auto wD = w2;
     constexpr auto eD = eB;
-    const auto wD = w1;
+    const auto wS = w1;
     constexpr auto eS = eA;
-    const auto wS = w0;
-    const auto wI = w2;
+    const auto wI = w0;
+    constexpr int n {2};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
     const std::vector<Driver> internals {
-        Driver {&gr.cn[wI].end_edge(eB), eB},
-        Driver {&gr.cn[wI].end_edge(eA), eA}
+        Driver {&gr.chain(wI).end_edge(eB), eB},
+        Driver {&gr.chain(wI).end_edge(eA), eA}
     };
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src, internals};
+    Path pp {&gr.compt(src.w), drv, src, internals};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto num_vertices = c0.num_vertices();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnwI = gr.chain(wI);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 3);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eB);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eA);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_4way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwI.is_connected_cycle());
+    ASSERT_TRUE(cnwS.length() >= n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
 
-    constexpr int n {2};
-    pu1f(pp, n);  // Pull two steps to leave source edge in the original chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains());
-    ASSERT_EQ(gr.ct[ic].num_vertices(), gr0.ct[ic].num_vertices());
-    ASSERT_EQ(gr.ct[ic].ww, gr0.ct[ic].ww);
-    ASSERT_EQ(gr.ct[ic].chis, gr0.ct[ic].chis);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wS].length(), gr0.cn[wS].length() - n);
-    ASSERT_EQ(gr.cn[wI].length(), gr0.cn[wI].length());
-    ASSERT_EQ(gr.cn[wD].g[4].ind, gr0.cn[wD].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wI].g[3].ind);
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wI].g[2].ind);
-    ASSERT_EQ(gr.cn[wI].g[3].ind, gr0.cn[wI].g[1].ind);
-    ASSERT_EQ(gr.cn[wI].g[2].ind, gr0.cn[wI].g[0].ind);
-    ASSERT_EQ(gr.cn[wI].g[1].ind, gr0.cn[wS].g[2].ind);
-    ASSERT_EQ(gr.cn[wI].g[0].ind, gr0.cn[wS].g[1].ind);
-    for (EgId i {}; const auto& g: gr.cn[wD].g) {
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains);
+    ASSERT_EQ(c.num_vertices(), num_vertices);
+    ASSERT_EQ(c.ww, ww);
+    ASSERT_EQ(c.chis, chis);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& mD = gr.chain(wD);
+    const auto& mS = gr.chain(wS);
+    const auto& mI = gr.chain(wI);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mS.length(), cnwS.length() - n);
+    ASSERT_EQ(mI.length(), cnwI.length());
+    ASSERT_EQ(mD.g[4].ind, cnwD.g[2].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwI.g[3].ind);
+    ASSERT_EQ(mD.g[0].ind, cnwI.g[2].ind);
+    ASSERT_EQ(mI.g[3].ind, cnwI.g[1].ind);
+    ASSERT_EQ(mI.g[2].ind, cnwI.g[0].ind);
+    ASSERT_EQ(mI.g[1].ind, cnwS.g[2].ind);
+    ASSERT_EQ(mI.g[0].ind, cnwS.g[1].ind);
+    for (EgIdA i {}; const auto& g: mD.g) {
         ASSERT_EQ(g.indw, i++);
         ASSERT_EQ(g.w, wD);
         ASSERT_EQ(g.c, ic);
     }
-    for (EgId i {}; const auto& g: gr.cn[wI].g) {
+    for (EgIdA i {}; const auto& g: gr.chain(wI).g) {
         ASSERT_EQ(g.indw, i++);
         ASSERT_EQ(g.w, wI);
         ASSERT_EQ(g.c, ic);
     }
-    ASSERT_EQ(gr.cn[wS].g[0].indw, 0);
-    ASSERT_EQ(gr.cn[wS].g[0].w, wS);
-    ASSERT_EQ(gr.cn[wS].g[0].c, ic);
+    ASSERT_EQ(mS.g[0].indw, 0);
+    ASSERT_EQ(mS.g[0].w, wS);
+    ASSERT_EQ(mS.g[0].c, ic);
 
-}  //  end J4_DrB_InCyBA_SrLiA_Srv
-
-/* J4_DrB_InCyBA_SrLiA_Srv
-
-TEST_BEFORE 0  ** {2 A} {2 B} {1 A}  0 [0]  len 3 > > > ( 0 1 2 )
-            [0] > ind 0 indc 0 w 0 c 0
-            [1] > ind 1 indc 1 w 0 c 0
-            [2] > ind 2 indc 2 w 0 c 0
-TEST_BEFORE 2 {0 B} {2 B} {1 A}  ** {2 A} {0 B} {1 A}  0 [1]  len 4 > > > > ( 3 4 5 6 )
-            [0] > ind 3 indc 3 w 2 c 0
-            [1] > ind 4 indc 4 w 2 c 0
-            [2] > ind 5 indc 5 w 2 c 0
-            [3] > ind 6 indc 6 w 2 c 0
-TEST_BEFORE 1 {2 A} {2 B} {0 B}  **  0 [2]  len 3 > > > ( 7 8 9 )
-            [0] > ind 7 indc 7 w 1 c 0
-            [1] > ind 8 indc 8 w 1 c 0
-            [2] > ind 9 indc 9 w 1 c 0
-
-Pulling from Vertex Deg 1+ :: 2 steps over path:
-
-driver (egEnd B) 0:   [2] > ind 9 indc 9 w 1 c 0
-                 1:   [1] > ind 8 indc 8 w 1 c 0
-                 2:   [0] > ind 7 indc 7 w 1 c 0
-                 3:   [3] > ind 6 indc 6 w 2 c 0
-                 4:   [2] > ind 5 indc 5 w 2 c 0
-                 5:   [1] > ind 4 indc 4 w 2 c 0
-                 6:   [0] > ind 3 indc 3 w 2 c 0
-                 7:   [2] > ind 2 indc 2 w 0 c 0
-                 8:   [1] > ind 1 indc 1 w 0 c 0
-source (end A)   9:   [0] > ind 0 indc 0 w 0 c 0
-
-TEST_AFTER 0  ** {2 A} {2 B} {1 A}  0 [0]  len 1 > ( 0 )
-           [0] > ind 0 indc 0 w 0 c 0
-TEST_AFTER 2 {0 B} {2 B} {1 A}  ** {2 A} {0 B} {1 A}  0 [1]  len 4 > > > > ( 1 2 3 4 )
-           [0] > ind 1 indc 1 w 2 c 0
-           [1] > ind 2 indc 2 w 2 c 0
-           [2] > ind 3 indc 3 w 2 c 0
-           [3] > ind 4 indc 4 w 2 c 0
-TEST_AFTER 1 {2 A} {2 B} {0 B}  **  0 [2]  len 5 > > > > > ( 5 6 7 8 9 )
-           [0] > ind 5 indc 5 w 1 c 0
-           [1] > ind 6 indc 6 w 1 c 0
-           [2] > ind 7 indc 7 w 1 c 0
-           [3] > ind 8 indc 8 w 1 c 0
-           [4] > ind 9 indc 9 w 1 c 0
-
-*/
+}  // J4_DrB_InCyBA_SrLiA_Srv
 
 
 /// Tests degree 1 pulling over a path traversing a 4-way junction
 /// connecting two linear chains and a cycle.
-/// Driving edge is at the end A, source edge is at tne end A of a linear chain.
+/// Driving edge is at the chain end A.
+/// Source edge is at tne end A of a linear chain.
 /// Pulled edge sequence includes the cycle chain in direction A -> B.
 /// Source chain is engulfed completely.
 TEST_F(Pull_1, J4_DrA_InCyAB_SrLiA_Rmv)
@@ -4777,19 +4577,20 @@ TEST_F(Pull_1, J4_DrA_InCyAB_SrLiA_Rmv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 4-way junction ",
-            "connecting two linear chains and a cycle. Driving edge is at the ",
-            "end A, source edge is at tne end A of a linear chain. Pulled edge ",
-            "sequence includes the cycle chain in direction A -> B. ",
-            "Source chain is engulfed completely."
+            "connecting two linear chains and a cycle\n",
+            "Driving edge is at the chain end A\n",
+            "Source edge is at tne end A of a linear chain\n",
+            "Pulled edge sequence includes the cycle chain in direction A->B\n",
+            "Source chain is engulfed completely"
         );
 
     // Create initial graph.
 
-    constexpr std::array<EgId, 2> len {7, 3};
-    const auto [w0, w1, w2] = create_array<ChId, 3>();
+    constexpr std::array<size_t, 2> len {7, 3};
+    const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
-    for (const auto u: len)
+    for (const auto u : len)
         gr.add_single_chain_component(u);
 
     VertexMerger<1, 2, G> merge12 {gr};
@@ -4802,113 +4603,106 @@ TEST_F(Pull_1, J4_DrA_InCyAB_SrLiA_Rmv)
     merge13(ESlot{w1, eB},
             ESlot{w0, eB});
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
 
-    const auto wD = w0;
+    const auto wD = w2;
     constexpr auto eD = eA;
+    const auto& egD = gr.chain(wD).end_edge(eD);
+    const auto iD = egD.ind;
     const auto wS = w1;
     constexpr auto eS = eA;
-    const auto wI = w2;
+    const auto wI = w0;
+    constexpr int n {3};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&egD, eD};
     const Source src {wS, eS};
     const std::vector<Driver> internals {
-        Driver {&gr.cn[wI].end_edge(eA), eA},
-        Driver {&gr.cn[wI].end_edge(eB), eB}
+        Driver {&gr.chain(wI).end_edge(eA), eA},
+        Driver {&gr.chain(wI).end_edge(eB), eB}
     };
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src, internals};
+    Path pp {&gr.compt(src.w), drv, src, internals};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnwI = gr.chain(wI);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 3);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eA);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eA);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_4way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwI.is_connected_cycle());
+    ASSERT_TRUE(cnwS.length() == n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull three steps to consume the source chain
 
-    constexpr int n {3};
-    pu1f(pp, n);  // Pull three steps to consume the source chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains() - 1);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wS].length(), gr0.cn[wI].length());
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wD].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wI].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[4].ind, gr0.cn[wI].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[5].ind, gr0.cn[wI].g[2].ind);
-    ASSERT_EQ(gr.cn[wS].g[0].ind, gr0.cn[wI].g[3].ind);
-    ASSERT_EQ(gr.cn[wS].g[1].ind, gr0.cn[wS].g[2].ind);
-    ASSERT_EQ(gr.cn[wS].g[2].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wS].g[3].ind, gr0.cn[wS].g[0].ind);
-    for (EgId i {}; const auto& g: gr.cn[wD].g) {
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains - 1);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto vD = gr.get_egl(iD).w;
+    const auto& mD = gr.chain(vD);
+    const auto& mI = gr.chain(wI);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mI.length(), cnwI.length());
+    ASSERT_EQ(mD.g[0].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwD.g[2].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwI.g[0].ind);
+    ASSERT_EQ(mD.g[4].ind, cnwI.g[1].ind);
+    ASSERT_EQ(mD.g[5].ind, cnwI.g[2].ind);
+    ASSERT_EQ(mI.g[0].ind, cnwI.g[3].ind);
+    ASSERT_EQ(mI.g[1].ind, cnwS.g[2].ind);
+    ASSERT_EQ(mI.g[2].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mI.g[3].ind, cnwS.g[0].ind);
+    for (EgIdA i {}; const auto& g: mD.g) {
         ASSERT_EQ(g.indw, i++);
-        ASSERT_EQ(g.w, wD);
+        ASSERT_EQ(g.w, vD);
         ASSERT_EQ(g.c, ic);
     }
-    for (EgId i {}; const auto& g: gr.cn[wS].g) {
+    for (EgIdA i {}; const auto& g: mI.g) {
         ASSERT_EQ(g.indw, i++);
-        ASSERT_EQ(g.w, wS);
+        ASSERT_EQ(g.w, wI);
         ASSERT_EQ(g.c, ic);
     }
 
-}  //  end J4_DrA_InCyAB_SrLiA_Rmv
-
-/* J4_DrA_InCyAB_SrLiA_Rmv
-TEST_BEFORE 1  ** {0 B} {2 A} {2 B}  0 [0]  len 3 > > > ( 7 8 9 )
-            [0] > ind 7 indc 0 w 1 c 0
-            [1] > ind 8 indc 1 w 1 c 0
-            [2] > ind 9 indc 2 w 1 c 0
-TEST_BEFORE 0  ** {2 A} {2 B} {1 B}  0 [1]  len 3 > > > ( 0 1 2 )
-            [0] > ind 0 indc 3 w 0 c 0
-            [1] > ind 1 indc 4 w 0 c 0
-            [2] > ind 2 indc 5 w 0 c 0
-TEST_BEFORE 2 {0 B} {2 B} {1 B}  ** {0 B} {2 A} {1 B}  0 [2]  len 4 > > > > ( 3 4 5 6 )
-            [0] > ind 3 indc 6 w 2 c 0
-            [1] > ind 4 indc 7 w 2 c 0
-            [2] > ind 5 indc 8 w 2 c 0
-            [3] > ind 6 indc 9 w 2 c 0
-
-Pulling from Vertex Deg 1+ :: 3 steps over path:
-
-driver (egEnd A) 0:   [0] > ind 0 indc 3 w 0 c 0
-                 1:   [1] > ind 1 indc 4 w 0 c 0
-                 2:   [2] > ind 2 indc 5 w 0 c 0
-                 3:   [0] > ind 3 indc 6 w 2 c 0
-                 4:   [1] > ind 4 indc 7 w 2 c 0
-                 5:   [2] > ind 5 indc 8 w 2 c 0
-                 6:   [3] > ind 6 indc 9 w 2 c 0
-                 7:   [2] > ind 9 indc 2 w 1 c 0
-                 8:   [1] > ind 8 indc 1 w 1 c 0
-source (end A)   9:   [0] > ind 7 indc 0 w 1 c 0
-
-TEST_AFTER 0  ** {1 A} {1 B}  0 [0]  len 6 > > > > > > ( 0 1 2 3 4 5 )
-           [0] > ind 0 indc 0 w 0 c 0
-           [1] > ind 1 indc 1 w 0 c 0
-           [2] > ind 2 indc 2 w 0 c 0
-           [3] > ind 3 indc 3 w 0 c 0
-           [4] > ind 4 indc 4 w 0 c 0
-           [5] > ind 5 indc 5 w 0 c 0
-TEST_AFTER 1 {0 B} {1 B}  ** {0 B} {1 A}  0 [1]  len 4 > > > > ( 6 9 8 7 )
-           [0] > ind 6 indc 6 w 1 c 0
-           [1] > ind 9 indc 7 w 1 c 0
-           [2] > ind 8 indc 8 w 1 c 0
-           [3] > ind 7 indc 9 w 1 c 0
-*/
+}  // J4_DrA_InCyAB_SrLiA_Rmv
 
 
 /// Tests degree 1 pulling over a path traversing a 4-way junction
 /// connecting two linear chains and a cycle.
-/// Driving edge is at the end A, source edge is at tne end A of a linear chain.
+/// Driving edge is at the chain end A.
+/// Source edge is at tne end A of a linear chain.
 /// Pulled edge sequence includes the cycle chain in direction B -> A.
 /// Source chain is engulfed completely.
 TEST_F(Pull_1, J4_DrA_InCyBA_SrLiA_Rmv)
@@ -4918,19 +4712,20 @@ TEST_F(Pull_1, J4_DrA_InCyBA_SrLiA_Rmv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 4-way junction ",
-            "connecting two linear chains and a cycle. Driving edge is at the ",
-            "end A, source edge is at tne end A of a linear chain. Pulled edge ",
-            "sequence includes the cycle chain in direction B -> A. ",
-            "Source chain is engulfed completely."
+            "connecting two linear chains and a cycle\n",
+            "Driving edge is at the chain end A\n",
+            "Source edge is at tne end A of a linear chain\n",
+            "Pulled edge sequence includes the cycle chain in direction B->A\n",
+            "Source chain is engulfed completely"
         );
 
     // Create initial graph.
 
-    constexpr std::array<EgId, 2> len {7, 3};
-    const auto [w0, w1, w2] = create_array<ChId, 3>();
+    constexpr std::array<size_t, 2> len {7, 3};
+    const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
-    for (const auto u: len)
+    for (const auto u : len)
         gr.add_single_chain_component(u);
 
     VertexMerger<1, 2, G> merge12 {gr};
@@ -4943,115 +4738,106 @@ TEST_F(Pull_1, J4_DrA_InCyBA_SrLiA_Rmv)
     merge13(ESlot{w1, eB},
             ESlot{w0, eB});
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
 
-    const auto wD = w0;
+    const auto wD = w2;
     constexpr auto eD = eA;
+    const auto& egD = gr.chain(wD).end_edge(eD);
+    const auto iD = egD.ind;
     const auto wS = w1;
     constexpr auto eS = eA;
-    const auto wI = w2;
+    const auto wI = w0;
+    constexpr int n {3};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&egD, eD};
     const Source src {wS, eS};
     const std::vector<Driver> internals {
-        Driver {&gr.cn[wI].end_edge(eB), eB},
-        Driver {&gr.cn[wI].end_edge(eA), eA}
+        Driver {&gr.chain(wI).end_edge(eB), eB},
+        Driver {&gr.chain(wI).end_edge(eA), eA}
     };
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src, internals};
+    Path pp {&gr.compt(src.w), drv, src, internals};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+   const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnwI = gr.chain(wI);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 3);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eA);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eA);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_4way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwI.is_connected_cycle());
+    ASSERT_TRUE(cnwS.length() == n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull three steps to consume the source chain
 
-    constexpr int n {3};
-    pu1f(pp, n);  // Pull three steps to consume the source chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains() - 1);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wS].length(), gr0.cn[wI].length());
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wD].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wI].g[3].ind);
-    ASSERT_EQ(gr.cn[wD].g[4].ind, gr0.cn[wI].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[5].ind, gr0.cn[wI].g[1].ind);
-    ASSERT_EQ(gr.cn[wS].g[0].ind, gr0.cn[wS].g[0].ind);
-    ASSERT_EQ(gr.cn[wS].g[1].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wS].g[2].ind, gr0.cn[wS].g[2].ind);
-    ASSERT_EQ(gr.cn[wS].g[3].ind, gr0.cn[wI].g[0].ind);
-    for (EgId i {}; const auto& g: gr.cn[wD].g) {
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains - 1);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto vD = gr.get_egl(iD).w;
+    const auto& mD = gr.chain(vD);
+    const auto& mI = gr.chain(wI);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mI.length(), cnwI.length());
+    ASSERT_EQ(mD.g[0].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwD.g[2].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwI.g[3].ind);
+    ASSERT_EQ(mD.g[4].ind, cnwI.g[2].ind);
+    ASSERT_EQ(mD.g[5].ind, cnwI.g[1].ind);
+    ASSERT_EQ(mI.g[0].ind, cnwS.g[0].ind);
+    ASSERT_EQ(mI.g[1].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mI.g[2].ind, cnwS.g[2].ind);
+    ASSERT_EQ(mI.g[3].ind, cnwI.g[0].ind);
+    for (EgIdA i {}; const auto& g: mD.g) {
         ASSERT_EQ(g.indw, i++);
-        ASSERT_EQ(g.w, wD);
+        ASSERT_EQ(g.w, vD);
         ASSERT_EQ(g.c, ic);
     }
-    for (EgId i {}; const auto& g: gr.cn[wS].g) {
+    for (EgIdA i {}; const auto& g: mI.g) {
         ASSERT_EQ(g.indw, i++);
-        ASSERT_EQ(g.w, wS);
+        ASSERT_EQ(g.w, wI);
         ASSERT_EQ(g.c, ic);
     }
 
-}  //  end J4_DrA_InCyBA_SrLiA_Rmv
-
-/* J4_DrA_InCyBA_SrLiA_Rmv
-
-TEST_BEFORE 1  ** {0 B} {2 A} {2 B}  0 [0]  len 3 > > > ( 7 8 9 )
-            [0] > ind 7 indc 0 w 1 c 0
-            [1] > ind 8 indc 1 w 1 c 0
-            [2] > ind 9 indc 2 w 1 c 0
-TEST_BEFORE 0  ** {2 A} {2 B} {1 B}  0 [1]  len 3 > > > ( 0 1 2 )
-            [0] > ind 0 indc 3 w 0 c 0
-            [1] > ind 1 indc 4 w 0 c 0
-            [2] > ind 2 indc 5 w 0 c 0
-TEST_BEFORE 2 {0 B} {2 B} {1 B}  ** {0 B} {2 A} {1 B}  0 [2]  len 4 > > > > ( 3 4 5 6 )
-            [0] > ind 3 indc 6 w 2 c 0
-            [1] > ind 4 indc 7 w 2 c 0
-            [2] > ind 5 indc 8 w 2 c 0
-            [3] > ind 6 indc 9 w 2 c 0
-
-Pulling from Vertex Deg 1+ :: 3 steps over path:
-
-driver (egEnd A) 0:   [0] > ind 0 indc 3 w 0 c 0
-                 1:   [1] > ind 1 indc 4 w 0 c 0
-                 2:   [2] > ind 2 indc 5 w 0 c 0
-                 3:   [3] > ind 6 indc 9 w 2 c 0
-                 4:   [2] > ind 5 indc 8 w 2 c 0
-                 5:   [1] > ind 4 indc 7 w 2 c 0
-                 6:   [0] > ind 3 indc 6 w 2 c 0
-                 7:   [2] > ind 9 indc 2 w 1 c 0
-                 8:   [1] > ind 8 indc 1 w 1 c 0
-source (end A)   9:   [0] > ind 7 indc 0 w 1 c 0
-
-TEST_AFTER 0  ** {1 A} {1 B}  0 [0]  len 6 > > > > > > ( 0 1 2 6 5 4 )
-           [0] > ind 0 indc 0 w 0 c 0
-           [1] > ind 1 indc 1 w 0 c 0
-           [2] > ind 2 indc 2 w 0 c 0
-           [3] > ind 6 indc 3 w 0 c 0
-           [4] > ind 5 indc 4 w 0 c 0
-           [5] > ind 4 indc 9 w 0 c 0
-TEST_AFTER 1 {0 B} {1 B}  ** {0 B} {1 A}  0 [1]  len 4 > > > > ( 7 8 9 3 )
-           [0] > ind 7 indc 5 w 1 c 0
-           [1] > ind 8 indc 6 w 1 c 0
-           [2] > ind 9 indc 7 w 1 c 0
-           [3] > ind 3 indc 8 w 1 c 0
-
-*/
+}  // J4_DrA_InCyBA_SrLiA_Rmv
 
 
 /// Tests degree 1 pulling over a path traversing a 4-way junction
 /// connecting two linear chains and a cycle.
-/// Driving edge is at the end A, source edge is at tne end B of a linear chain.
+/// Driving edge is at the chain end A.
+/// Source edge is at tne end B of a linear chain.
 /// Pulled edge sequence includes the cycle chain in direction A -> B.
 /// Source chain is engulfed completely.
 TEST_F(Pull_1, J4_DrA_InCyAB_SrLiB_Rmv)
@@ -5061,16 +4847,17 @@ TEST_F(Pull_1, J4_DrA_InCyAB_SrLiB_Rmv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 4-way junction ",
-            "connecting two linear chains and a cycle. Driving edge is at the ",
-            "end B, source edge is at tne end A of a linear chain. Pulled edge ",
-            "sequence includes the cycle chain in direction A -> B. ",
-            "Source chain is engulfed completely."
+            "connecting two linear chains and a cycle\n",
+            "Driving edge is at the chain end B\n",
+            "Source edge is at tne end A of a linear chain\n",
+            "Pulled edge sequence includes the cycle chain in direction A->B\n",
+            "Source chain is engulfed completely"
         );
 
     // Create initial graph.
 
-    constexpr EgId len {10};
-    const auto [w0, w1, w2] = create_array<ChId, 3>();
+    constexpr std::size_t len {10};
+    const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
     gr.add_single_chain_component(len);
@@ -5080,113 +4867,103 @@ TEST_F(Pull_1, J4_DrA_InCyAB_SrLiB_Rmv)
     merge22(BSlot{w0, 3},
             BSlot{w0, 7});     // creates w1, w2
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
 
+    const auto wD = w1;
     constexpr auto eD = eA;
-    const auto wD = w0;
+    const auto wS = w2;
     constexpr auto eS = eB;
-    const auto wS = w1;
-    const auto wI = w2;
+    const auto wI = w0;
+    constexpr int n {3};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
     const std::vector<Driver> internals {
-        Driver {&gr.cn[wI].end_edge(eA), eA},
-        Driver {&gr.cn[wI].end_edge(eB), eB}
+        Driver {&gr.chain(wI).end_edge(eA), eA},
+        Driver {&gr.chain(wI).end_edge(eB), eB}
     };
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src, internals};
+    Path pp {&gr.compt(src.w), drv, src, internals};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnwI = gr.chain(wI);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 3);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eA);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eB);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_4way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwI.is_connected_cycle());
+    ASSERT_TRUE(cnwS.length() == n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull three steps to consume the source chain
 
-    constexpr int n {3};
-    pu1f(pp, n);  // Pull three steps to consume the source chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains() - 1);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wS].length(), gr0.cn[wI].length());
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wD].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wI].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[4].ind, gr0.cn[wI].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[5].ind, gr0.cn[wI].g[2].ind);
-    ASSERT_EQ(gr.cn[wS].g[0].ind, gr0.cn[wI].g[3].ind);
-    ASSERT_EQ(gr.cn[wS].g[1].ind, gr0.cn[wS].g[0].ind);
-    ASSERT_EQ(gr.cn[wS].g[2].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wS].g[3].ind, gr0.cn[wS].g[2].ind);
-    for (EgId i {}; const auto& g: gr.cn[wD].g) {
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains - 1);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& mD = gr.chain(wD);
+    const auto& mI = gr.chain(wI);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mI.length(), cnwI.length());
+    ASSERT_EQ(mD.g[0].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwD.g[2].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwI.g[0].ind);
+    ASSERT_EQ(mD.g[4].ind, cnwI.g[1].ind);
+    ASSERT_EQ(mD.g[5].ind, cnwI.g[2].ind);
+    ASSERT_EQ(mI.g[0].ind, cnwI.g[3].ind);
+    ASSERT_EQ(mI.g[1].ind, cnwS.g[0].ind);
+    ASSERT_EQ(mI.g[2].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mI.g[3].ind, cnwS.g[2].ind);
+    for (EgIdA i {}; const auto& g: mD.g) {
         ASSERT_EQ(g.indw, i++);
         ASSERT_EQ(g.w, wD);
         ASSERT_EQ(g.c, ic);
     }
-    for (EgId i {}; const auto& g: gr.cn[wS].g) {
+    for (EgIdA i {}; const auto& g: mI.g) {
         ASSERT_EQ(g.indw, i++);
-        ASSERT_EQ(g.w, wS);
+        ASSERT_EQ(g.w, wI);
         ASSERT_EQ(g.c, ic);
     }
 
-}  //  end J4_DrA_InCyAB_SrLiB_Rmv
-
-/* J4_DrA_InCyAB_SrLiB_Rmv
-TEST_BEFORE 0  ** {2 A} {2 B} {1 A}  0 [0]  len 3 > > > ( 0 1 2 )
-            [0] > ind 0 indc 0 w 0 c 0
-            [1] > ind 1 indc 1 w 0 c 0
-            [2] > ind 2 indc 2 w 0 c 0
-TEST_BEFORE 2 {0 B} {2 B} {1 A}  ** {2 A} {0 B} {1 A}  0 [1]  len 4 > > > > ( 3 4 5 6 )
-            [0] > ind 3 indc 3 w 2 c 0
-            [1] > ind 4 indc 4 w 2 c 0
-            [2] > ind 5 indc 5 w 2 c 0
-            [3] > ind 6 indc 6 w 2 c 0
-TEST_BEFORE 1 {2 A} {2 B} {0 B}  **  0 [2]  len 3 > > > ( 7 8 9 )
-            [0] > ind 7 indc 7 w 1 c 0
-            [1] > ind 8 indc 8 w 1 c 0
-            [2] > ind 9 indc 9 w 1 c 0
-
-Pulling from Vertex Deg 1+ :: 3 steps over path:
-
-driver (egEnd A) 0:   [0] > ind 0 indc 0 w 0 c 0
-                 1:   [1] > ind 1 indc 1 w 0 c 0
-                 2:   [2] > ind 2 indc 2 w 0 c 0
-                 3:   [0] > ind 3 indc 3 w 2 c 0
-                 4:   [1] > ind 4 indc 4 w 2 c 0
-                 5:   [2] > ind 5 indc 5 w 2 c 0
-                 6:   [3] > ind 6 indc 6 w 2 c 0
-                 7:   [0] > ind 7 indc 7 w 1 c 0
-                 8:   [1] > ind 8 indc 8 w 1 c 0
-source (end B)   9:   [2] > ind 9 indc 9 w 1 c 0
-
-TEST_AFTER 0  ** {1 A} {1 B}  0 [0]  len 6 > > > > > > ( 0 1 2 3 4 5 )
-           [0] > ind 0 indc 0 w 0 c 0
-           [1] > ind 1 indc 1 w 0 c 0
-           [2] > ind 2 indc 2 w 0 c 0
-           [3] > ind 3 indc 3 w 0 c 0
-           [4] > ind 4 indc 4 w 0 c 0
-           [5] > ind 5 indc 5 w 0 c 0
-TEST_AFTER 1 {0 B} {1 B}  ** {1 A} {0 B}  0 [1]  len 4 > > > > ( 6 7 8 9 )
-           [0] > ind 6 indc 6 w 1 c 0
-           [1] > ind 7 indc 7 w 1 c 0
-           [2] > ind 8 indc 8 w 1 c 0
-           [3] > ind 9 indc 9 w 1 c 0
-*/
+}  // J4_DrA_InCyAB_SrLiB_Rmv
 
 
 /// Tests degree 1 pulling over a path traversing a 4-way junction
 /// connecting two linear chains and a cycle.
-/// Driving edge is at the end A, source edge is at tne end B of a linear chain.
+/// Driving edge is at the chain end A.
+/// Source edge is at tne end B of a linear chain.
 /// Pulled edge sequence includes the cycle chain in direction B -> A.
 /// Source chain is engulfed completely.
 TEST_F(Pull_1, J4_DrA_InCyBA_SrLiB_Rmv)
@@ -5196,16 +4973,17 @@ TEST_F(Pull_1, J4_DrA_InCyBA_SrLiB_Rmv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 4-way junction ",
-            "connecting two linear chains and a cycle. Driving edge is at the ",
-            "end B, source edge is at tne end A of a linear chain. Pulled edge ",
-            "sequence includes the cycle chain in direction B -> A. ",
-            "Source chain is engulfed completely."
+            "connecting two linear chains and a cycle\n",
+            "Driving edge is at the chain end B\n",
+            "Source edge is at tne end A of a linear chain\n",
+            "Pulled edge sequence includes the cycle chain in direction B->A\n",
+            "Source chain is engulfed completely"
         );
 
     // Create initial graph.
 
-    constexpr EgId len {10};
-    const auto [w0, w1, w2] = create_array<ChId, 3>();
+    constexpr std::size_t len {10};
+    const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
     gr.add_single_chain_component(len);
@@ -5215,114 +4993,103 @@ TEST_F(Pull_1, J4_DrA_InCyBA_SrLiB_Rmv)
     merge22(BSlot{w0, 3},
             BSlot{w0, 7});     // creates w1, w2
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
 
+    const auto wD = w1;
     constexpr auto eD = eA;
-    const auto wD = w0;
+    const auto wS = w2;
     constexpr auto eS = eB;
-    const auto wS = w1;
-    const auto wI = w2;
+    const auto wI = w0;
+    constexpr int n {3};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
     const std::vector<Driver> internals {
-        Driver {&gr.cn[wI].end_edge(eB), eB},
-        Driver {&gr.cn[wI].end_edge(eA), eA}
+        Driver {&gr.chain(wI).end_edge(eB), eB},
+        Driver {&gr.chain(wI).end_edge(eA), eA}
     };
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src, internals};
+    Path pp {&gr.compt(src.w), drv, src, internals};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnwI = gr.chain(wI);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 3);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eA);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eB);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_4way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwI.is_connected_cycle());
+    ASSERT_TRUE(cnwS.length() == n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull three steps to consume the source chain
 
-    constexpr int n {3};
-    pu1f(pp, n);  // Pull three steps to consume the source chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains() - 1);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wS].length(), gr0.cn[wI].length());
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wD].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wI].g[3].ind);
-    ASSERT_EQ(gr.cn[wD].g[4].ind, gr0.cn[wI].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[5].ind, gr0.cn[wI].g[1].ind);
-    ASSERT_EQ(gr.cn[wS].g[0].ind, gr0.cn[wS].g[2].ind);
-    ASSERT_EQ(gr.cn[wS].g[1].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wS].g[2].ind, gr0.cn[wS].g[0].ind);
-    ASSERT_EQ(gr.cn[wS].g[3].ind, gr0.cn[wI].g[0].ind);
-    for (EgId i {}; const auto& g: gr.cn[wD].g) {
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains - 1);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& mD = gr.chain(wD);
+    const auto& mI = gr.chain(wI);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mI.length(), cnwI.length());
+    ASSERT_EQ(mD.g[0].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwD.g[2].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwI.g[3].ind);
+    ASSERT_EQ(mD.g[4].ind, cnwI.g[2].ind);
+    ASSERT_EQ(mD.g[5].ind, cnwI.g[1].ind);
+    ASSERT_EQ(mI.g[0].ind, cnwS.g[2].ind);
+    ASSERT_EQ(mI.g[1].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mI.g[2].ind, cnwS.g[0].ind);
+    ASSERT_EQ(mI.g[3].ind, cnwI.g[0].ind);
+    for (EgIdA i {}; const auto& g: mD.g) {
         ASSERT_EQ(g.indw, i++);
         ASSERT_EQ(g.w, wD);
         ASSERT_EQ(g.c, ic);
     }
-    for (EgId i {}; const auto& g: gr.cn[wS].g) {
+    for (EgIdA i {}; const auto& g: mI.g) {
         ASSERT_EQ(g.indw, i++);
-        ASSERT_EQ(g.w, wS);
+        ASSERT_EQ(g.w, wI);
         ASSERT_EQ(g.c, ic);
     }
 
-}  //  end J4_DrA_InCyBA_SrLiB_Rmv
-
-/* J4_DrA_InCyBA_SrLiB_Rmv
-
-TEST_BEFORE 0  ** {2 A} {2 B} {1 A}  0 [0]  len 3 > > > ( 0 1 2 )
-            [0] > ind 0 indc 0 w 0 c 0
-            [1] > ind 1 indc 1 w 0 c 0
-            [2] > ind 2 indc 2 w 0 c 0
-TEST_BEFORE 2 {0 B} {2 B} {1 A}  ** {2 A} {0 B} {1 A}  0 [1]  len 4 > > > > ( 3 4 5 6 )
-            [0] > ind 3 indc 3 w 2 c 0
-            [1] > ind 4 indc 4 w 2 c 0
-            [2] > ind 5 indc 5 w 2 c 0
-            [3] > ind 6 indc 6 w 2 c 0
-TEST_BEFORE 1 {2 A} {2 B} {0 B}  **  0 [2]  len 3 > > > ( 7 8 9 )
-            [0] > ind 7 indc 7 w 1 c 0
-            [1] > ind 8 indc 8 w 1 c 0
-            [2] > ind 9 indc 9 w 1 c 0
-
-Pulling from Vertex Deg 1+ :: 3 steps over path:
-
-driver (egEnd A) 0:   [0] > ind 0 indc 0 w 0 c 0
-                 1:   [1] > ind 1 indc 1 w 0 c 0
-                 2:   [2] > ind 2 indc 2 w 0 c 0
-                 3:   [3] > ind 6 indc 6 w 2 c 0
-                 4:   [2] > ind 5 indc 5 w 2 c 0
-                 5:   [1] > ind 4 indc 4 w 2 c 0
-                 6:   [0] > ind 3 indc 3 w 2 c 0
-                 7:   [0] > ind 7 indc 7 w 1 c 0
-                 8:   [1] > ind 8 indc 8 w 1 c 0
-source (end B)   9:   [2] > ind 9 indc 9 w 1 c 0
-
-TEST_AFTER 0  ** {1 A} {1 B}  0 [0]  len 6 > > > > > > ( 0 1 2 6 5 4 )
-           [0] > ind 0 indc 0 w 0 c 0
-           [1] > ind 1 indc 1 w 0 c 0
-           [2] > ind 2 indc 2 w 0 c 0
-           [3] > ind 6 indc 3 w 0 c 0
-           [4] > ind 5 indc 4 w 0 c 0
-           [5] > ind 4 indc 9 w 0 c 0
-TEST_AFTER 1 {0 B} {1 B}  ** {1 A} {0 B}  0 [1]  len 4 > > > > ( 9 8 7 3 )
-           [0] > ind 9 indc 5 w 1 c 0
-           [1] > ind 8 indc 6 w 1 c 0
-           [2] > ind 7 indc 7 w 1 c 0
-           [3] > ind 3 indc 8 w 1 c 0
-*/
+}  // J4_DrA_InCyBA_SrLiB_Rmv
 
 
 /// Tests degree 1 pulling over a path traversing a 4-way junction
 /// connecting two linear chains and a cycle.
-/// Driving edge is at the end B, source edge is at tne end B of a linear chain.
+/// Driving edge is at the chain end B.
+/// Source edge is at tne end B of a linear chain.
 /// Pulled edge sequence includes the cycle chain in direction A -> B.
 /// Source chain is engulfed completely.
 TEST_F(Pull_1, J4_DrB_InCyAB_SrLiB_Rmv)
@@ -5332,19 +5099,20 @@ TEST_F(Pull_1, J4_DrB_InCyAB_SrLiB_Rmv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 4-way junction ",
-            "connecting two linear chains and a cycle. Driving edge is at the ",
-            "end B, source edge is at tne end B of a linear chain. Pulled edge ",
-            "sequence includes the cycle chain in direction A -> B. ",
-            "Source chain is engulfed completely."
+            "connecting two linear chains and a cycle\n",
+            "Driving edge is at the chain end B\n",
+            "Source edge is at tne end B of a linear chain\n",
+            "Pulled edge sequence includes the cycle chain in direction A->B\n",
+            "Source chain is engulfed completely"
         );
 
     // Create initial graph.
 
-    constexpr std::array<EgId, 2> len {7, 3};
-    const auto [w0, w1, w2] = create_array<ChId, 3>();
+    constexpr std::array<size_t, 2> len {7, 3};
+    const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
-    for (const auto u: len)
+    for (const auto u : len)
         gr.add_single_chain_component(u);
 
     VertexMerger<1, 2, G> merge12 {gr};
@@ -5357,9 +5125,7 @@ TEST_F(Pull_1, J4_DrB_InCyAB_SrLiB_Rmv)
     merge13(ESlot{w1, eA},
             ESlot{w2, eA});
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
@@ -5369,101 +5135,93 @@ TEST_F(Pull_1, J4_DrB_InCyAB_SrLiB_Rmv)
     const auto wS = w2;
     constexpr auto eS = eB;
     const auto wI = w0;
+    constexpr int n {3};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
     const std::vector<Driver> internals {
-        Driver {&gr.cn[wI].end_edge(eA), eA},
-        Driver {&gr.cn[wI].end_edge(eB), eB}
+        Driver {&gr.chain(wI).end_edge(eA), eA},
+        Driver {&gr.chain(wI).end_edge(eB), eB}
     };
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src, internals};
+    Path pp {&gr.compt(src.w), drv, src, internals};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnwI = gr.chain(wI);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 3);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eB);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eB);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_4way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwI.is_connected_cycle());
+    ASSERT_TRUE(cnwS.length() == n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull three steps to consume the source chain
 
-    constexpr int n {3};
-    pu1f(pp, n);  // Pull three steps to consume the source chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains() - 1);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wI].length(), gr0.cn[wI].length());
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wI].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wI].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wI].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[4].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[5].ind, gr0.cn[wD].g[2].ind);
-    ASSERT_EQ(gr.cn[wI].g[0].ind, gr0.cn[wI].g[3].ind);
-    ASSERT_EQ(gr.cn[wI].g[1].ind, gr0.cn[wS].g[0].ind);
-    ASSERT_EQ(gr.cn[wI].g[2].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wI].g[3].ind, gr0.cn[wS].g[2].ind);
-    for (EgId i {}; const auto& g: gr.cn[wD].g) {
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains - 1);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& mD = gr.chain(wD);
+    const auto& mI = gr.chain(wI);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mI.length(), cnwI.length());
+    ASSERT_EQ(mD.g[0].ind, cnwI.g[2].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwI.g[1].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwI.g[0].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[4].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[5].ind, cnwD.g[2].ind);
+    ASSERT_EQ(mI.g[0].ind, cnwI.g[3].ind);
+    ASSERT_EQ(mI.g[1].ind, cnwS.g[0].ind);
+    ASSERT_EQ(mI.g[2].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mI.g[3].ind, cnwS.g[2].ind);
+    for (EgIdA i {}; const auto& g: mD.g) {
         ASSERT_EQ(g.indw, i++);
         ASSERT_EQ(g.w, wD);
         ASSERT_EQ(g.c, ic);
     }
-    for (EgId i {}; const auto& g: gr.cn[wI].g) {
+    for (EgIdA i {}; const auto& g: gr.chain(wI).g) {
         ASSERT_EQ(g.indw, i++);
         ASSERT_EQ(g.w, wI);
         ASSERT_EQ(g.c, ic);
     }
 
-}  //  end J4_DrB_InCyAB_SrLiB_Rmv
-
-/*
-TEST_BEFORE 1 {2 A} {0 A} {0 B}  **  0 [0]  len 3 > > > ( 7 8 9 )
-            [0] > ind 7 indc 0 w 1 c 0
-            [1] > ind 8 indc 1 w 1 c 0
-            [2] > ind 9 indc 2 w 1 c 0
-TEST_BEFORE 0 {0 B} {2 A} {1 A}  ** {0 A} {2 A} {1 A}  0 [1]  len 4 > > > > ( 0 1 2 3 )
-            [0] > ind 0 indc 3 w 0 c 0
-            [1] > ind 1 indc 4 w 0 c 0
-            [2] > ind 2 indc 5 w 0 c 0
-            [3] > ind 3 indc 6 w 0 c 0
-TEST_BEFORE 2 {0 A} {0 B} {1 A}  **  0 [2]  len 3 > > > ( 4 5 6 )
-            [0] > ind 4 indc 7 w 2 c 0
-            [1] > ind 5 indc 8 w 2 c 0
-            [2] > ind 6 indc 9 w 2 c 0
-
-Pulling from Vertex Deg 1+ :: 3 steps over path:
-
-driver (egEnd B) 0:   [2] > ind 9 indc 2 w 1 c 0
-                 1:   [1] > ind 8 indc 1 w 1 c 0
-                 2:   [0] > ind 7 indc 0 w 1 c 0
-                 3:   [0] > ind 0 indc 3 w 0 c 0
-                 4:   [1] > ind 1 indc 4 w 0 c 0
-                 5:   [2] > ind 2 indc 5 w 0 c 0
-                 6:   [3] > ind 3 indc 6 w 0 c 0
-                 7:   [0] > ind 4 indc 7 w 2 c 0
-                 8:   [1] > ind 5 indc 8 w 2 c 0
-source (end B)   9:   [2] > ind 6 indc 9 w 2 c 0
-
-TEST_AFTER 1 {0 A} {0 B}  **  0 [0]  len 6 > > > > > > ( 2 1 0 7 8 9 )
-           [0] > ind 2 indc 5 w 1 c 0
-           [1] > ind 1 indc 0 w 1 c 0
-           [2] > ind 0 indc 1 w 1 c 0
-           [3] > ind 7 indc 2 w 1 c 0
-           [4] > ind 8 indc 3 w 1 c 0
-           [5] > ind 9 indc 4 w 1 c 0
-TEST_AFTER 0 {0 B} {1 A}  ** {0 A} {1 A}  0 [1]  len 4 > > > > ( 3 4 5 6 )
-           [0] > ind 3 indc 6 w 0 c 0
-           [1] > ind 4 indc 7 w 0 c 0
-           [2] > ind 5 indc 8 w 0 c 0
-           [3] > ind 6 indc 9 w 0 c 0
-*/
+}  // J4_DrB_InCyAB_SrLiB_Rmv
 
 
 /// Tests degree 1 pulling over a path traversing a 4-way junction
 /// connecting two linear chains and a cycle.
-/// Driving edge is at the end B, source edge is at tne end B of a linear chain.
+/// Driving edge is at the chain end B.
+/// Source edge is at tne end B of a linear chain.
 /// Pulled edge sequence includes the cycle chain in direction B -> A.
 /// Source chain is engulfed completely.
 TEST_F(Pull_1, J4_DrB_InCyBA_SrLiB_Rmv)
@@ -5473,19 +5231,20 @@ TEST_F(Pull_1, J4_DrB_InCyBA_SrLiB_Rmv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 4-way junction ",
-            "connecting two linear chains and a cycle. Driving edge is at the ",
-            "end B, source edge is at tne end B of a linear chain. Pulled edge ",
-            "sequence includes the cycle chain in direction B -> A. ",
-            "Source chain is engulfed completely."
+            "connecting two linear chains and a cycle\n",
+            "Driving edge is at the chain end B\n",
+            "Source edge is at tne end B of a linear chain\n",
+            "Pulled edge sequence includes the cycle chain in direction B->A\n",
+            "Source chain is engulfed completely"
         );
 
     // Create initial graph.
 
-    constexpr std::array<EgId, 2> len {7, 3};
-    const auto [w0, w1, w2] = create_array<ChId, 3>();
+    constexpr std::array<size_t, 2> len {7, 3};
+    const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
-    for (const auto u: len)
+    for (const auto u : len)
         gr.add_single_chain_component(u);
 
     VertexMerger<1, 2, G> merge12 {gr};
@@ -5498,9 +5257,7 @@ TEST_F(Pull_1, J4_DrB_InCyBA_SrLiB_Rmv)
     merge13(ESlot{w1, eA},
             ESlot{w2, eA});
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
@@ -5510,101 +5267,93 @@ TEST_F(Pull_1, J4_DrB_InCyBA_SrLiB_Rmv)
     const auto wS = w2;
     constexpr auto eS = eB;
     const auto wI = w0;
+    constexpr int n {3};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
     const std::vector<Driver> internals {
-        Driver {&gr.cn[wI].end_edge(eB), eB},
-        Driver {&gr.cn[wI].end_edge(eA), eA}
+        Driver {&gr.chain(wI).end_edge(eB), eB},
+        Driver {&gr.chain(wI).end_edge(eA), eA}
     };
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src, internals};
+    Path pp {&gr.compt(src.w), drv, src, internals};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnwI = gr.chain(wI);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 3);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eB);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eB);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_4way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwI.is_connected_cycle());
+    ASSERT_TRUE(cnwS.length() == n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull three steps to consume the source chain
 
-    constexpr int n {3};
-    pu1f(pp, n);  // Pull three steps to consume the source chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains() - 1);
-    ASSERT_EQ(gr.cn[wD].length(), gr0.cn[wD].length() + n);
-    ASSERT_EQ(gr.cn[wI].length(), gr0.cn[wI].length());
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wI].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wI].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wI].g[3].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[4].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[5].ind, gr0.cn[wD].g[2].ind);
-    ASSERT_EQ(gr.cn[wI].g[0].ind, gr0.cn[wS].g[2].ind);
-    ASSERT_EQ(gr.cn[wI].g[1].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wI].g[2].ind, gr0.cn[wS].g[0].ind);
-    ASSERT_EQ(gr.cn[wI].g[3].ind, gr0.cn[wI].g[0].ind);
-    for (EgId i {}; const auto& g: gr.cn[wD].g) {
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains - 1);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto& mD = gr.chain(wD);
+    const auto& mI = gr.chain(wI);
+    ASSERT_EQ(mD.length(), cnwD.length() + n);
+    ASSERT_EQ(mI.length(), cnwI.length());
+    ASSERT_EQ(mD.g[0].ind, cnwI.g[1].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwI.g[2].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwI.g[3].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[4].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[5].ind, cnwD.g[2].ind);
+    ASSERT_EQ(mI.g[0].ind, cnwS.g[2].ind);
+    ASSERT_EQ(mI.g[1].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mI.g[2].ind, cnwS.g[0].ind);
+    ASSERT_EQ(mI.g[3].ind, cnwI.g[0].ind);
+    for (EgIdA i {}; const auto& g: mD.g) {
         ASSERT_EQ(g.indw, i++);
         ASSERT_EQ(g.w, wD);
         ASSERT_EQ(g.c, ic);
     }
-    for (EgId i {}; const auto& g: gr.cn[wI].g) {
+    for (EgIdA i {}; const auto& g: gr.chain(wI).g) {
         ASSERT_EQ(g.indw, i++);
         ASSERT_EQ(g.w, wI);
         ASSERT_EQ(g.c, ic);
     }
 
-}  //  end J4_DrB_InCyBA_SrLiB_Rmv
-
-/*
-TEST_BEFORE 1 {2 A} {0 A} {0 B}  **  0 [0]  len 3 > > > ( 7 8 9 )
-            [0] > ind 7 indc 0 w 1 c 0
-            [1] > ind 8 indc 1 w 1 c 0
-            [2] > ind 9 indc 2 w 1 c 0
-TEST_BEFORE 0 {0 B} {2 A} {1 A}  ** {0 A} {2 A} {1 A}  0 [1]  len 4 > > > > ( 0 1 2 3 )
-            [0] > ind 0 indc 3 w 0 c 0
-            [1] > ind 1 indc 4 w 0 c 0
-            [2] > ind 2 indc 5 w 0 c 0
-            [3] > ind 3 indc 6 w 0 c 0
-TEST_BEFORE 2 {0 A} {0 B} {1 A}  **  0 [2]  len 3 > > > ( 4 5 6 )
-            [0] > ind 4 indc 7 w 2 c 0
-            [1] > ind 5 indc 8 w 2 c 0
-            [2] > ind 6 indc 9 w 2 c 0
-
-Pulling from Vertex Deg 1+ :: 3 steps over path:
-
-driver (egEnd B) 0:   [2] > ind 9 indc 2 w 1 c 0
-                 1:   [1] > ind 8 indc 1 w 1 c 0
-                 2:   [0] > ind 7 indc 0 w 1 c 0
-                 3:   [3] > ind 3 indc 6 w 0 c 0
-                 4:   [2] > ind 2 indc 5 w 0 c 0
-                 5:   [1] > ind 1 indc 4 w 0 c 0
-                 6:   [0] > ind 0 indc 3 w 0 c 0
-                 7:   [0] > ind 4 indc 7 w 2 c 0
-                 8:   [1] > ind 5 indc 8 w 2 c 0
-source (end B)   9:   [2] > ind 6 indc 9 w 2 c 0
-
-TEST_AFTER 1 {0 A} {0 B}  **  0 [0]  len 6 > > > > > > ( 1 2 3 7 8 9 )
-           [0] > ind 1 indc 9 w 1 c 0
-           [1] > ind 2 indc 0 w 1 c 0
-           [2] > ind 3 indc 1 w 1 c 0
-           [3] > ind 7 indc 2 w 1 c 0
-           [4] > ind 8 indc 3 w 1 c 0
-           [5] > ind 9 indc 4 w 1 c 0
-TEST_AFTER 0 {0 B} {1 A}  ** {0 A} {1 A}  0 [1]  len 4 > > > > ( 6 5 4 0 )
-           [0] > ind 6 indc 5 w 0 c 0
-           [1] > ind 5 indc 6 w 0 c 0
-           [2] > ind 4 indc 7 w 0 c 0
-           [3] > ind 0 indc 8 w 0 c 0
-*/
+}  // J4_DrB_InCyBA_SrLiB_Rmv
 
 
 /// Tests degree 1 pulling over a path traversing a 4-way junction
 /// connecting two linear chains and a cycle.
-/// Driving edge is at the end B, source edge is at tne end A of a linear chain.
+/// Driving edge is at the chain end B.
+/// Source edge is at tne end A of a linear chain.
 /// Pulled edge sequence includes the cycle chain in direction A -> B.
 /// Source chain is engulfed completely.
 TEST_F(Pull_1, J4_DrB_InCyAB_SrLiA_Rmv)
@@ -5614,16 +5363,17 @@ TEST_F(Pull_1, J4_DrB_InCyAB_SrLiA_Rmv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 4-way junction ",
-            "connecting two linear chains and a cycle. Driving edge is at the ",
-            "end B, source edge is at tne end A of a linear chain. Pulled edge ",
-            "sequence includes the cycle chain in direction A -> B. ",
-            "Source chain is engulfed completely."
+            "connecting two linear chains and a cycle\n",
+            "Driving edge is at the chain end B\n",
+            "Source edge is at tne end A of a linear chain\n",
+            "Pulled edge sequence includes the cycle chain in direction A->B\n",
+            "Source chain is engulfed completely"
         );
 
     // Create initial graph.
 
-    constexpr EgId len {10};
-    const auto [w0, w1, w2] = create_array<ChId, 3>();
+    constexpr std::size_t len {10};
+    const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
     gr.add_single_chain_component(len);
@@ -5633,71 +5383,107 @@ TEST_F(Pull_1, J4_DrB_InCyAB_SrLiA_Rmv)
     merge22(BSlot{w0, 3},
             BSlot{w0, 7});     // creates w1, w2
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
 
+    const auto wD = w2;
     constexpr auto eD = eB;
-    const auto wD = w1;
+    const auto& egD = gr.chain(wD).end_edge(eD);
+    const auto iD = egD.ind;
+    const auto wS = w1;
     constexpr auto eS = eA;
-    const auto wS = w0;
-    const auto wI = w2;
+    const auto wI = w0;
+    constexpr int n {3};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&egD, eD};
     const Source src {wS, eS};
     const std::vector<Driver> internals {
-        Driver {&gr.cn[wI].end_edge(eA), eA},
-        Driver {&gr.cn[wI].end_edge(eB), eB}
+        Driver {&gr.chain(wI).end_edge(eA), eA},
+        Driver {&gr.chain(wI).end_edge(eB), eB}
     };
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src, internals};
+    Path pp {&gr.compt(src.w), drv, src, internals};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnwI = gr.chain(wI);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 3);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eB);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eA);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_4way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwI.is_connected_cycle());
+    ASSERT_TRUE(cnwS.length() == n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull three steps to consume the source chain
 
-    constexpr int n {3};
-    pu1f(pp, n);  // Pull three steps to consume the source chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.cn[wD].g[2].c, ic);
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains() - 1);
-    ASSERT_EQ(gr.cn[wS].length(), 4);
-    ASSERT_EQ(gr.cn[wD].length(), 6);
-    ASSERT_EQ(gr.cn[wD].g[5].ind, gr0.cn[wD].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[4].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[wI].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[wI].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[wI].g[2].ind);
-    ASSERT_EQ(gr.cn[wS].g[3].ind, gr0.cn[wS].g[0].ind);
-    ASSERT_EQ(gr.cn[wS].g[2].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wS].g[1].ind, gr0.cn[wS].g[2].ind);
-    ASSERT_EQ(gr.cn[wS].g[0].ind, gr0.cn[wI].g[3].ind);
-    for (szt i {}; i<gr.cn[wD].length(); ++i) {
-        ASSERT_EQ(gr.cn[wD].g[i].indw, i);
-        ASSERT_EQ(gr.cn[wD].g[i].w, wD);
-        ASSERT_EQ(gr.cn[wD].g[i].c, ic);
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains - 1);
+    ASSERT_FALSE(c.template check<profuse>());
+
+    const auto vD = gr.get_egl(iD).w;
+    const auto& mD = gr.chain(vD);
+    const auto& mI = gr.chain(wI);
+    ASSERT_EQ(mD.g[2].c, ic);
+    ASSERT_EQ(mI.length(), 4);
+    ASSERT_EQ(mD.length(), 6);
+    ASSERT_EQ(mD.g[5].ind, cnwD.g[2].ind);
+    ASSERT_EQ(mD.g[4].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwI.g[0].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwI.g[1].ind);
+    ASSERT_EQ(mD.g[0].ind, cnwI.g[2].ind);
+    ASSERT_EQ(mI.g[3].ind, cnwS.g[0].ind);
+    ASSERT_EQ(mI.g[2].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mI.g[1].ind, cnwS.g[2].ind);
+    ASSERT_EQ(mI.g[0].ind, cnwI.g[3].ind);
+    for (std::size_t i {}; i<mD.length(); ++i) {
+        ASSERT_EQ(mD.g[i].indw, i);
+        ASSERT_EQ(mD.g[i].w, vD);
+        ASSERT_EQ(mD.g[i].c, ic);
     }
-    for (szt i {}; i<gr.cn[wS].length(); ++i) {
-        ASSERT_EQ(gr.cn[wS].g[i].indw, i);
-        ASSERT_EQ(gr.cn[wS].g[i].w, wS);
-        ASSERT_EQ(gr.cn[wS].g[i].c, ic);
+    for (std::size_t i {}; i<mI.length(); ++i) {
+        ASSERT_EQ(mI.g[i].indw, i);
+        ASSERT_EQ(mI.g[i].w, wI);
+        ASSERT_EQ(mI.g[i].c, ic);
     }
 
-}  //  end J4_DrB_InCyAB_SrLiA_Rmv
+}  // J4_DrB_InCyAB_SrLiA_Rmv
+
 
 /// Tests degree 1 pulling over a path traversing a 4-way junction
 /// connecting two linear chains and a cycle.
-/// Driving edge is at the end B, source edge is at tne end A of a linear chain.
+/// Driving edge is at the chain end B.
+/// Source edge is at tne end A of a linear chain.
 /// Pulled edge sequence includes the cycle chain in direction B -> A.
 /// Source chain is engulfed completely.
 TEST_F(Pull_1, J4_DrB_InCyBA_SrLiA_Rmv)
@@ -5707,16 +5493,17 @@ TEST_F(Pull_1, J4_DrB_InCyBA_SrLiA_Rmv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 4-way junction ",
-            "connecting two linear chains and a cycle. Driving edge is at the ",
-            "end B, source edge is at tne end A of a linear chain. Pulled edge ",
-            "sequence includes the cycle chain in direction B -> A. ",
-            "Source chain is engulfed completely."
+            "connecting two linear chains and a cycle\n",
+            "Driving edge is at the chain end B\n",
+            "Source edge is at tne end A of a linear chain\n",
+            "Pulled edge sequence includes the cycle chain in direction B->A\n",
+            "Source chain is engulfed completely"
         );
 
     // Create initial graph.
 
-    constexpr EgId len {10};
-    const auto [w0, w1, w2] = create_array<ChId, 3>();
+    constexpr std::size_t len {10};
+    const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
     gr.add_single_chain_component(len);
@@ -5726,66 +5513,100 @@ TEST_F(Pull_1, J4_DrB_InCyBA_SrLiA_Rmv)
     merge22(BSlot{w0, 3},
             BSlot{w0, 7});     // creates w1, w2
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
 
+    const auto wD = w2;
     constexpr auto eD = eB;
-    const auto wD = w1;
+    const auto& egD = gr.chain(wD).end_edge(eD);
+    const auto iD = egD.ind;
+    const auto wS = w1;
     constexpr auto eS = eA;
-    const auto wS = w0;
-    const auto wI = w2;
+    const auto wI = w0;
+    constexpr int n {3};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&egD, eD};
     const Source src {wS, eS};
     const std::vector<Driver> internals {
-        Driver {&gr.cn[wI].end_edge(eB), eB},
-        Driver {&gr.cn[wI].end_edge(eA), eA}
+        Driver {&gr.chain(wI).end_edge(eB), eB},
+        Driver {&gr.chain(wI).end_edge(eA), eA}
     };
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src, internals};
+    Path pp {&gr.compt(src.w), drv, src, internals};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnwI = gr.chain(wI);  // copy
+    const auto cnwQ = gr.chain(w0);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 3);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eB);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eA);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_4way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwI.is_connected_cycle());
+    ASSERT_TRUE(cnwS.length() == n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull three steps to consume the source chain
 
-    constexpr int n {3};
-    pu1f(pp, n);  // Pull three steps to consume the source chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.cn[wD].g[1].c, ic);
-    ASSERT_EQ(gr.cn[wD].g[2].c, ic);
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains() - 1);
-    ASSERT_EQ(gr.cn[wS].length(), 4);
-    ASSERT_EQ(gr.cn[wD].length(), 6);
-    ASSERT_EQ(gr.cn[wD].g[5].ind, gr0.cn[wD].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[4].ind, gr0.cn[wD].g[1].ind);
-    ASSERT_EQ(gr.cn[wD].g[3].ind, gr0.cn[wD].g[0].ind);
-    ASSERT_EQ(gr.cn[wD].g[2].ind, gr0.cn[w2].g[3].ind);
-    ASSERT_EQ(gr.cn[wD].g[1].ind, gr0.cn[w2].g[2].ind);
-    ASSERT_EQ(gr.cn[wD].g[0].ind, gr0.cn[w2].g[1].ind);
-    ASSERT_EQ(gr.cn[wS].g[3].ind, gr0.cn[w2].g[0].ind);
-    ASSERT_EQ(gr.cn[wS].g[2].ind, gr0.cn[wS].g[2].ind);
-    ASSERT_EQ(gr.cn[wS].g[1].ind, gr0.cn[wS].g[1].ind);
-    ASSERT_EQ(gr.cn[wS].g[0].ind, gr0.cn[wS].g[0].ind);
-    for (szt i {}; i<gr.cn[wS].length(); ++i) {
-        ASSERT_EQ(gr.cn[wS].g[i].indw, i);
-        ASSERT_EQ(gr.cn[wS].g[i].w, wS);
-    }
-    for (szt i {}; i<gr.cn[wD].length(); ++i) {
-        ASSERT_EQ(gr.cn[wD].g[i].indw, i);
-        ASSERT_EQ(gr.cn[wD].g[i].w, wD);
-    }
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains - 1);
+    ASSERT_FALSE(c.template check<profuse>());
 
-}  //  end J4_DrB_InCyBA_SrLiA_Rmv
+    const auto vD = gr.get_egl(iD).w;
+    const auto& mD = gr.chain(vD);
+    const auto& mI = gr.chain(wI);
+    ASSERT_EQ(mD.g[1].c, ic);
+    ASSERT_EQ(mD.g[2].c, ic);
+    ASSERT_EQ(mI.length(), 4);
+    ASSERT_EQ(mD.length(), 6);
+    ASSERT_EQ(mD.g[5].ind, cnwD.g[2].ind);
+    ASSERT_EQ(mD.g[4].ind, cnwD.g[1].ind);
+    ASSERT_EQ(mD.g[3].ind, cnwD.g[0].ind);
+    ASSERT_EQ(mD.g[2].ind, cnwQ.g[3].ind);
+    ASSERT_EQ(mD.g[1].ind, cnwQ.g[2].ind);
+    ASSERT_EQ(mD.g[0].ind, cnwQ.g[1].ind);
+    ASSERT_EQ(mI.g[3].ind, cnwQ.g[0].ind);
+    ASSERT_EQ(mI.g[2].ind, cnwS.g[2].ind);
+    ASSERT_EQ(mI.g[1].ind, cnwS.g[1].ind);
+    ASSERT_EQ(mI.g[0].ind, cnwS.g[0].ind);
+    for (std::size_t i {}; i<mI.length(); ++i) {
+        ASSERT_EQ(mI.g[i].indw, i);
+        ASSERT_EQ(mI.g[i].w, wI);
+    }
+    for (std::size_t i {}; i<mD.length(); ++i) {
+        ASSERT_EQ(mD.g[i].indw, i);
+        ASSERT_EQ(mD.g[i].w, vD);
+    }
+}  // J4_DrB_InCyBA_SrLiA_Rmv
 
 
 /// Tests degree 1 pulling over a path traversing a 3-way and two 4-way
@@ -5798,17 +5619,19 @@ TEST_F(Pull_1, J344_DrA_SrLiB_Srv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 3-way and ",
-            "two 4-way junctions. Pulling is driven at chain end A to source ",
-            "end B. The source chain survives."
+            "two 4-way junctions\n",
+            "Pulling is driven at chain end A to source end B\n",
+            "The source chain survives"
         );
 
     // Create initial graph.
 
-    constexpr std::array<EgId, 4> len {5, 7, 3, 3};
-    const auto [w0, w1, w2, w3, w4, w5, w6, w7, w8] = create_array<ChId, 9>();
+    constexpr std::array<size_t, 4> len {5, 7, 3, 3};
+    const auto [w0, w1, w2, w3, w4, w5, w6, w7, w8] =
+        id_sequence<ChIdG, 9>();
 
     G gr;
-    for (const auto u: len)
+    for (const auto u : len)
         gr.add_single_chain_component(u);
 
     VertexMerger<2, 2, G> merge22 {gr};
@@ -5835,9 +5658,7 @@ TEST_F(Pull_1, J344_DrA_SrLiB_Srv)
     merge12(ESlot{w3, eA},
             BSlot{w6, 2});     // creates w7
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
@@ -5846,60 +5667,93 @@ TEST_F(Pull_1, J344_DrA_SrLiB_Srv)
     constexpr auto eD = eA;
     const auto wS = w7;
     constexpr auto eS = eB;
+    constexpr int n {2};
 
-    const Driver drv {&gr.cn[wD].end_edge(eD), eD};
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
     const Source src {wS, eS};
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src};
+    Path pp {&gr.compt(src.w), drv, src};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto num_vertices = c0.num_vertices();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnw0 = gr.chain(w0);  // copy
+    const auto cnw4 = gr.chain(w4);  // copy
+    const auto cnw6 = gr.chain(w6);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 8);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eA);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eB);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_3way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwS.length() > n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
 
-    constexpr int n {2};
-    pu1f(pp, n);  // Pull two steps to leave source edge in the original chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    ASSERT_EQ(gr.cn[w1].length(), 3);
-    ASSERT_EQ(gr.cn[w4].length(), 1);
-    ASSERT_EQ(gr.cn[w6].length(), 2);
-    ASSERT_EQ(gr.cn[w7].length(), 1);
-    ASSERT_EQ(gr.cn[w1].g[1].ind, gr0.cn[w4].g[0].ind);
-    ASSERT_EQ(gr.cn[w1].g[2].ind, gr0.cn[w6].g[0].ind);
-    ASSERT_EQ(gr.cn[w4].g[0].ind, gr0.cn[w6].g[1].ind);
-    ASSERT_EQ(gr.cn[w6].g[0].ind, gr0.cn[w7].g[0].ind);
-    ASSERT_EQ(gr.cn[w6].g[1].ind, gr0.cn[w7].g[1].ind);
-    ASSERT_EQ(gr.cn[w1].g[1].indc, gr0.cn[w4].g[0].indc);
-    ASSERT_EQ(gr.cn[w1].g[2].indc, gr0.cn[w6].g[0].indc);
-    ASSERT_EQ(gr.cn[w4].g[0].indc, gr0.cn[w6].g[1].indc);
-    ASSERT_EQ(gr.cn[w6].g[0].indc, gr0.cn[w7].g[0].indc);
-    ASSERT_EQ(gr.cn[w6].g[1].indc, gr0.cn[w7].g[1].indc);
-    ASSERT_EQ(gr.cn[w1].g[1].indw, 1);
-    ASSERT_EQ(gr.cn[w1].g[2].indw, 2);
-    ASSERT_EQ(gr.cn[w4].g[0].indw, 0);
-    ASSERT_EQ(gr.cn[w6].g[0].indw, 0);
-    ASSERT_EQ(gr.cn[w6].g[1].indw, 1);
-    ASSERT_EQ(gr.cn[w1].g[1].w, w1);
-    ASSERT_EQ(gr.cn[w1].g[2].w, w1);
-    ASSERT_EQ(gr.cn[w4].g[0].w, w4);
-    ASSERT_EQ(gr.cn[w6].g[0].w, w6);
-    ASSERT_EQ(gr.cn[w6].g[1].w, w6);
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.cn[w1].g[1].c, ic);
-    ASSERT_EQ(gr.cn[w1].g[2].c, ic);
-    ASSERT_EQ(gr.cn[w4].g[0].c, ic);
-    ASSERT_EQ(gr.cn[w6].g[0].c, ic);
-    ASSERT_EQ(gr.cn[w6].g[1].c, ic);
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains());
-    ASSERT_EQ(gr.ct[ic].num_vertices(), gr0.ct[ic].num_vertices());
-    ASSERT_EQ(gr.ct[ic].ww, gr0.ct[ic].ww);
-    ASSERT_EQ(gr.ct[ic].chis, gr0.ct[ic].chis);
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains);
+    ASSERT_EQ(c.num_vertices(), num_vertices);
+    ASSERT_EQ(c.ww, ww);
+    ASSERT_EQ(c.chis, chis);
+    ASSERT_FALSE(c.template check<profuse>());
 
-}  //  end J344_DrA_SrLiB_Srv
+    ASSERT_EQ(gr.chain(wD).length(), 3);
+    ASSERT_EQ(gr.chain(w4).length(), 1);
+    ASSERT_EQ(gr.chain(w6).length(), 2);
+    ASSERT_EQ(gr.chain(wS).length(), 1);
+    ASSERT_EQ(gr.chain(wD).g[1].ind, cnw4.g[0].ind);
+    ASSERT_EQ(gr.chain(wD).g[2].ind, cnw6.g[0].ind);
+    ASSERT_EQ(gr.chain(w4).g[0].ind, cnw6.g[1].ind);
+    ASSERT_EQ(gr.chain(w6).g[0].ind, cnwS.g[0].ind);
+    ASSERT_EQ(gr.chain(w6).g[1].ind, cnwS.g[1].ind);
+    ASSERT_EQ(gr.chain(wD).g[1].indc, cnw4.g[0].indc);
+    ASSERT_EQ(gr.chain(wD).g[2].indc, cnw6.g[0].indc);
+    ASSERT_EQ(gr.chain(w4).g[0].indc, cnw6.g[1].indc);
+    ASSERT_EQ(gr.chain(w6).g[0].indc, cnwS.g[0].indc);
+    ASSERT_EQ(gr.chain(w6).g[1].indc, cnwS.g[1].indc);
+    ASSERT_EQ(gr.chain(wD).g[1].indw, 1);
+    ASSERT_EQ(gr.chain(wD).g[2].indw, 2);
+    ASSERT_EQ(gr.chain(w4).g[0].indw, 0);
+    ASSERT_EQ(gr.chain(w6).g[0].indw, 0);
+    ASSERT_EQ(gr.chain(w6).g[1].indw, 1);
+    ASSERT_EQ(gr.chain(wD).g[1].w, wD);
+    ASSERT_EQ(gr.chain(wD).g[2].w, wD);
+    ASSERT_EQ(gr.chain(w4).g[0].w, w4);
+    ASSERT_EQ(gr.chain(w6).g[0].w, w6);
+    ASSERT_EQ(gr.chain(w6).g[1].w, w6);
+    ASSERT_EQ(gr.chain(wD).g[1].c, ic);
+    ASSERT_EQ(gr.chain(wD).g[2].c, ic);
+    ASSERT_EQ(gr.chain(w4).g[0].c, ic);
+    ASSERT_EQ(gr.chain(w6).g[0].c, ic);
+    ASSERT_EQ(gr.chain(w6).g[1].c, ic);
+
+}  // J344_DrA_SrLiB_Srv
 
 
 /// Tests degree 1 pulling over a path traversing a 3-way and
@@ -5911,16 +5765,18 @@ TEST_F(Pull_1, J344_DrA_SrLiB_Rmv)
     if constexpr (verboseT)
         print_description(
             "Tests degree 1 pulling over a path traversing a 3-way and ",
-            "two 4-way junctions. Source chain is engulfed completely."
+            "two 4-way junctions\n",
+            "Source chain is engulfed completely"
         );
 
     // Create initial graph.
 
-    constexpr std::array<EgId, 4> len {5, 7, 3, 3};
-    const auto [w0, w1, w2, w3, w4, w5, w6, w7, w8] = create_array<ChId, 9>();
+    constexpr std::array<size_t, 4> len {5, 7, 3, 3};
+    const auto [w0, w1, w2, w3, w4, w5, w6, w7, w8] =
+        id_sequence<ChIdG, 9>();
 
     G gr;
-    for (const auto u: len)
+    for (const auto u : len)
         gr.add_single_chain_component(u);
 
     VertexMerger<2, 2, G> merge22 {gr};
@@ -5947,65 +5803,100 @@ TEST_F(Pull_1, J344_DrA_SrLiB_Rmv)
     merge12(ESlot{w3, eA},
             BSlot{w6, 2});     // creates w7
 
-    const auto gr0 = gr;  // copy the graph in its initial state
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagBefore);
 
     // Define a sequence of edges to pull.
 
-    const Driver drv {&gr.cn[w1].tail(), eA};
-    const Source src {w7, eB};
-    Path pp {&gr.ct[gr.cn[src.w].c], drv, src};
+    const auto wD = w1;
+    constexpr auto eD = eA;
+    const auto wS = w7;
+    constexpr auto eS = eB;
+    constexpr int n {3};
+
+    const Driver drv {&gr.chain(wD).end_edge(eD), eD};
+    const Source src {wS, eS};
+    Path pp {&gr.compt(src.w), drv, src};
+
+    if constexpr (profuse)
+        pp.print_detailed(tagPathBefore);
+
+    // Save initial values.
+
+    const auto ic = pp.cmp->ind;
+    const auto& c0 = gr.compt(ic);
+    const auto num_edges = c0.num_edges();
+    const auto num_chains = c0.num_chains();
+    const auto ww = c0.ww;  // copy
+    const auto chis = c0.chis;  // copy
+    const auto cnwD = gr.chain(wD);  // copy
+    const auto cnwS = gr.chain(wS);  // copy
+    const auto cnw0 = gr.chain(w0);  // copy
+    const auto cnw4 = gr.chain(w4);  // copy
+    const auto cnw6 = gr.chain(w6);  // copy
+
+    // Check initial state.
+
+    ASSERT_EQ(num_chains, 8);
+    ASSERT_EQ(pp.driver_chid(), wD);
+    ASSERT_EQ(pp.driver_chain_end(), eA);
+    ASSERT_EQ(cnwD.get_single_leaf_end(), eD);
+    ASSERT_EQ(cnwD.get_single_4way_end(), End::opp(eD));
+    ASSERT_EQ(pp.source_chid(), wS);
+    ASSERT_EQ(pp.source_end(), eB);
+    ASSERT_EQ(cnwS.get_single_leaf_end(), eS);
+    ASSERT_EQ(cnwS.get_single_3way_end(), End::opp(eS));
+    ASSERT_TRUE(cnwS.length() == n);
+    ASSERT_FALSE(c0.template check<profuse>());
 
     // Do the transformation.
 
-    Pulling<1, Orientation::Forwards, G> pu1f {gr};
+    PullForw pu1f {gr};
+    pu1f(pp, n);  // pull three steps to consume the source chain
 
-    constexpr int n {3};
-    pu1f(pp, n);  // Pull three steps to consume the source chain.
-
-    if constexpr (withMaxVerbosity)
+    if constexpr (profuse)
         gr.print_components(tagAfter);
 
     // Compare the result to the expectation.
 
-    ASSERT_EQ(gr.cn[w1].length(), 4);
-    ASSERT_EQ(gr.cn[w3].length(), 5);
-    ASSERT_EQ(gr.cn[w4].length(), 1);
-    ASSERT_EQ(gr.cn[w1].g[0].ind, gr0.cn[w1].g[0].ind);
-    ASSERT_EQ(gr.cn[w1].g[1].ind, gr0.cn[w4].g[0].ind);
-    ASSERT_EQ(gr.cn[w1].g[2].ind, gr0.cn[w6].g[0].ind);
-    ASSERT_EQ(gr.cn[w1].g[3].ind, gr0.cn[w6].g[1].ind);
-    ASSERT_EQ(gr.cn[w4].g[0].ind, gr0.cn[w7].g[0].ind);
-    ASSERT_EQ(gr.cn[w3].g[0].ind, gr0.cn[w7].g[1].ind);
-    ASSERT_EQ(gr.cn[w3].g[1].ind, gr0.cn[w7].g[2].ind);
-    ASSERT_EQ(gr.cn[w1].g[0].indw, 0);
-    ASSERT_EQ(gr.cn[w1].g[1].indw, 1);
-    ASSERT_EQ(gr.cn[w1].g[2].indw, 2);
-    ASSERT_EQ(gr.cn[w1].g[3].indw, 3);
-    ASSERT_EQ(gr.cn[w4].g[0].indw, 0);
-    ASSERT_EQ(gr.cn[w3].g[0].indw, 0);
-    ASSERT_EQ(gr.cn[w3].g[1].indw, 1);
-    ASSERT_EQ(gr.cn[w1].g[0].w, w1);
-    ASSERT_EQ(gr.cn[w1].g[1].w, w1);
-    ASSERT_EQ(gr.cn[w1].g[2].w, w1);
-    ASSERT_EQ(gr.cn[w1].g[3].w, w1);
-    ASSERT_EQ(gr.cn[w4].g[0].w, w4);
-    ASSERT_EQ(gr.cn[w3].g[0].w, w3);
-    ASSERT_EQ(gr.cn[w3].g[1].w, w3);
-    const auto ic = pp.cmp->ind;
-    ASSERT_EQ(gr.cn[w1].g[0].c, ic);
-    ASSERT_EQ(gr.cn[w1].g[1].c, ic);
-    ASSERT_EQ(gr.cn[w1].g[2].c, ic);
-    ASSERT_EQ(gr.cn[w1].g[3].c, ic);
-    ASSERT_EQ(gr.cn[w4].g[0].c, ic);
-    ASSERT_EQ(gr.cn[w3].g[0].c, ic);
-    ASSERT_EQ(gr.cn[w3].g[1].c, ic);
-    ASSERT_EQ(gr.ct[ic].num_edges(), gr0.ct[ic].num_edges());
-    ASSERT_EQ(gr.ct[ic].num_chains(), gr0.ct[ic].num_chains() - 2);
+    const auto& c = gr.compt(ic);
+    ASSERT_EQ(c.num_edges(), num_edges);
+    ASSERT_EQ(c.num_chains(), num_chains - 2);
+    ASSERT_FALSE(c.template check<profuse>());
 
-}  //  end J344_DrA_SrLiB_Rmv
+    ASSERT_EQ(gr.chain(wD).length(), 4);
+    ASSERT_EQ(gr.chain(w3).length(), 5);
+    ASSERT_EQ(gr.chain(w4).length(), 1);
+    ASSERT_EQ(gr.chain(wD).g[0].ind, cnwD.g[0].ind);
+    ASSERT_EQ(gr.chain(wD).g[1].ind, cnw4.g[0].ind);
+    ASSERT_EQ(gr.chain(wD).g[2].ind, cnw6.g[0].ind);
+    ASSERT_EQ(gr.chain(wD).g[3].ind, cnw6.g[1].ind);
+    ASSERT_EQ(gr.chain(w4).g[0].ind, cnwS.g[0].ind);
+    ASSERT_EQ(gr.chain(w3).g[0].ind, cnwS.g[1].ind);
+    ASSERT_EQ(gr.chain(w3).g[1].ind, cnwS.g[2].ind);
+    ASSERT_EQ(gr.chain(wD).g[0].indw, 0);
+    ASSERT_EQ(gr.chain(wD).g[1].indw, 1);
+    ASSERT_EQ(gr.chain(wD).g[2].indw, 2);
+    ASSERT_EQ(gr.chain(wD).g[3].indw, 3);
+    ASSERT_EQ(gr.chain(w4).g[0].indw, 0);
+    ASSERT_EQ(gr.chain(w3).g[0].indw, 0);
+    ASSERT_EQ(gr.chain(w3).g[1].indw, 1);
+    ASSERT_EQ(gr.chain(wD).g[0].w, wD);
+    ASSERT_EQ(gr.chain(wD).g[1].w, wD);
+    ASSERT_EQ(gr.chain(wD).g[2].w, wD);
+    ASSERT_EQ(gr.chain(wD).g[3].w, wD);
+    ASSERT_EQ(gr.chain(w4).g[0].w, w4);
+    ASSERT_EQ(gr.chain(w3).g[0].w, w3);
+    ASSERT_EQ(gr.chain(w3).g[1].w, w3);
+    ASSERT_EQ(gr.chain(wD).g[0].c, ic);
+    ASSERT_EQ(gr.chain(wD).g[1].c, ic);
+    ASSERT_EQ(gr.chain(wD).g[2].c, ic);
+    ASSERT_EQ(gr.chain(wD).g[3].c, ic);
+    ASSERT_EQ(gr.chain(w4).g[0].c, ic);
+    ASSERT_EQ(gr.chain(w3).g[0].c, ic);
+    ASSERT_EQ(gr.chain(w3).g[1].c, ic);
+
+}  // J344_DrA_SrLiB_Rmv
 
 
-}  // namespace graph_mutator::tests::pulling::d1
+}  // namespace graffine::tests::pulling::d1

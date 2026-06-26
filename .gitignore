@@ -1,10 +1,9 @@
 .DS_Store
 build*/**
 .vscode/**
-docs/html/**
-docs/latex/**
+docs/doxygen/**
 app/**
-graph_mutator_qt/**
+graffine_qt/**
 examples/graph*
 examples/log*
 *.user
@@ -13,3 +12,6 @@ tests/bin/
 valgrind-out.txt
 _*_.*
 _*_
+testPly*
+out/**
+examples/bin/**
