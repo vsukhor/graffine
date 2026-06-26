@@ -2,9 +2,9 @@ name: Build
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -19,7 +19,7 @@ jobs:
         matrix:
             config:
             - {
-                name: "Ubuntu_latest_gcc-14",
+                name: "Ubuntu_latest_gcc-15",
                 os: ubuntu-latest,
                 build_type: "Release",
                 cc: "gcc",
@@ -29,8 +29,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Install dependencies on Ubuntu_latest_gcc-14
-      if: startsWith(matrix.config.name, 'Ubuntu_latest_gcc-14')
+    - name: Install dependencies on Ubuntu_latest_gcc-15
+      if: startsWith(matrix.config.name, 'Ubuntu_latest_gcc-15')
       run: |
         echo =============== Install dependencies ==========================
         sudo apt-get update
@@ -50,8 +50,8 @@ jobs:
         gcc --version
         sudo add-apt-repository ppa:ubuntu-toolchain-r/test
         sudo apt-get update
-        sudo apt-get install ninja-build gcc-14 g++-14
-        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 91 --slave /usr/bin/g++ g++ /usr/bin/g++-14 --slave /usr/bin/gcov gcov /usr/bin/gcov-14
+        sudo apt-get install ninja-build gcc-15 g++-15
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-15 91 --slave /usr/bin/g++ g++ /usr/bin/g++-15 --slave /usr/bin/gcov gcov /usr/bin/gcov-15
         echo gcc version after
         gcc --version
         echo =============== Finished installing dependencies ================
@@ -64,4 +64,4 @@ jobs:
 
     - name: Test
       working-directory: ${{github.workspace}}/build
-      run: for i in ${{github.workspace}}/tests/bin/*; do $i; done
+      run: ${{github.workspace}}/tests/bin/unittests;
