@@ -41,7 +41,7 @@ jobs:
         echo "CMake generator: ${{matrix.config.generators}}"
         echo "CC: ${{matrix.config.cc}}"
         echo "CXX: ${{matrix.config.cxx}}"
-
+        mkdir -p ${{github.workspace}}/tests/bin
         mkdir -p ${{github.workspace}}/build
         mkdir -p ${{github.workspace}}/build/tests/bin
         echo =============== Update gcc ======================================
