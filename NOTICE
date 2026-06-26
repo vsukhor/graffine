@@ -1,4 +1,4 @@
-Copyright (c) 2021-2025 Valerii Sukhorukov <vsukhorukov@yahoo.com>
+Copyright (c) 2021-2026 Valerii Sukhorukov <vsukhorukov@yahoo.com>
 All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,9 +13,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-
-This product includes modified parts of "utils" software
+This repository contains parts derived from two other libraries:
 
 https://github.com/vsukhor/utils
+https://github.com/ddiakopoulos/tinyply
 
- which is Copyright (C) 2009-2025 Valerii Sukhorukov. All Rights Reserved.
+Thesse are licensed under similar or more permissive conditions.
