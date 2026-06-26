@@ -58,15 +58,15 @@ TEST_F(IOTest, PlyCircularWriteRead)
     // Create initial graph (24 chains over 11 connected components).
     auto gr = create_sample_graph<G>();
 
-    const auto workingDir = std::filesystem::current_path(); ///"test1.ply";
+    const auto workingDir = std::filesystem::current_path();
 
     if constexpr (profuse)
         gr.print_components(tagBefore);
 
     Ply<G> ply;
-    ply.template write<profuse>(gr, "testPlyCircularWriteRead", false);
+    ply.template write<profuse>(gr, workingDir/"testPlyCircularWriteRead", false);
 
-    auto grNew = ply.template read<profuse>("testPlyCircularWriteRead", true);
+    auto grNew = ply.template read<profuse>(workingDir/"testPlyCircularWriteRead", true);
 
     elements::IntegralTests<G, profuse> integral_test {grNew};
     integral_test();
