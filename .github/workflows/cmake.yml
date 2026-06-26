@@ -28,7 +28,7 @@ jobs:
             }
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Install dependencies on Ubuntu_latest_gcc-15
       if: startsWith(matrix.config.name, 'Ubuntu_latest_gcc-15')
       run: |
@@ -44,7 +44,6 @@ jobs:
 
         mkdir -p ${{github.workspace}}/build
         mkdir -p ${{github.workspace}}/build/tests
-        cp -r ${{github.workspace}}/tests/data ${{github.workspace}}/build/tests
         echo =============== Update gcc ======================================
         echo gcc version before:
         gcc --version
