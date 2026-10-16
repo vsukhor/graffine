@@ -28,6 +28,7 @@ list(APPEND cpps
     vertex_split_22.cpp
     edge_creation.cpp
     edge_deletion.cpp
+    edge_split_merger.cpp
     component_creation_deletion.cpp
     pulling_1.cpp
     pulling_2.cpp

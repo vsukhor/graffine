@@ -38,6 +38,7 @@ limitations under the License.
 #include <array>
 #include <memory>
 #include <type_traits>
+#include <utility>
 
 namespace graffine::transforms {
 
@@ -162,19 +163,25 @@ operator()(const EgIdG ind1,
     if constexpr (!std::is_void_v<PP>)
     gr.template on_transform<Trait>.at_start({eg1, eg2});
 
-    Edge* eg {};
-    if (m1.is_shrinkable()) {
-        m1.length() == 1 && m1.has_single_leaf_vertex()
-            ? remSE(ind1)
-            : remME(ind1);
-        eg = &eg2;
-    }
-    else if (m2.is_shrinkable()) {
-        m2.length() == 1 && m2.has_single_leaf_vertex()
-            ? remSE(ind2)
-            : remME(ind2);
-        eg = &eg1;
-    }
+    const auto remove = [this](const EgIdG ind)
+    {
+        const auto& m = gr.chain(ind);
+        m.length() == 1 && m.has_single_leaf_vertex()
+            ? remSE(ind)
+            : remME(ind);
+    };
+
+    // The edge deletion invalidates references to the edges and possibly to
+    // the chains. Besides, the edge having the last graph-wide index gets
+    // reindexed to occupy the index of the deleted edge. Hence, the surviving
+    // edge is retrieved after the deletion via its updated index.
+    const auto indLast = EgIdG{gr.num_edges() - 1};
+    const auto [indDel, indKept] = m1.is_shrinkable()
+                                 ? std::pair{ind1, ind2}
+                                 : std::pair{ind2, ind1};
+    remove(indDel);
+
+    Edge* eg = &gr.edge(indKept == indLast ? indDel : indKept);
 
     Res res {eg};
 
@@ -182,10 +189,8 @@ operator()(const EgIdG ind1,
     gr.template on_transform<Trait>.at_end(eg);
 
     if constexpr (verboseF) {
-        m1.print(shortName, "  produces ");
-        if (m1.idw != m2.idw)
-            m2.print("       and");
-        eg.print("result: ");
+        gr.chain(eg->w).print(shortName, "  produces ");
+        eg->print("result: ");
         jot("");
     }
 

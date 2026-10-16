@@ -131,26 +131,29 @@ template<typename G,
 auto Functor<G, PP>::
 operator()(const EgIdG ind) noexcept -> Res
 {
-    auto& eg0 = gr.edge(ind);
-    auto& m = gr.cn[eg0.w];
+    const auto& eg0 = gr.edge(ind);
+    const auto w = eg0.w;
+    const auto a = eg0.indw;
+    auto& m = gr.chain(w);
 
-   if constexpr (verboseF) {
+    if constexpr (verboseF) {
         jot(colorcodes::GREEN, "Edge split: ");
         eg0.print("source: ");
         jot("");
     }
 
-    const auto d = eg0.vertex_at_outer(End::B)->deg();
-
-    Edge* eg1 = (d == Deg2 && !m.is_head_ind(ind))
-              ? create(BulkSlot{eg0.w, eg0.indw})  // innternal chain vertex
-              : create(EndSlot{eg0.w, End::B});
-
-    Res res {eg1};
+    // The new edge is inserted right after the source edge: either at the
+    // internal vertex connecting it to the next edge of the chain, or, if the
+    // source edge is the chain head, appended at chain end B. Both keep the
+    // vertex at end B of the source edge in place, so that the chain
+    // connectivity is preserved. Note: 'eg0' is invalidated by the insertion.
+    const auto res = m.is_headind(ind)
+                   ? create(EndSlot{w, End::B})
+                   : create(BulkSlot{w, a + 1});
 
     if constexpr (verboseF) {
         m.print(shortName, "  produces ");
-        eg1.print("result: ");
+        res[0]->print("result: ");
         jot("");
     }
 
