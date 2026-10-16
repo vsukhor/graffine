@@ -78,6 +78,7 @@ TEST_F(GraphTest, Constructor)
         print_description("Tests constructor of the graph struct");
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
 
     ASSERT_EQ(gr.num_edges(), 0);
     ASSERT_EQ(gr.num_chains(), 0);
@@ -110,6 +111,7 @@ TEST_F(GraphTest, AddSingleChainComponent)
     constexpr auto lensum = std::accumulate(len.begin(), len.end(), 0);
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
 
     for (const auto u : len)
         gr.add_single_chain_component(u);
@@ -175,6 +177,7 @@ TEST_F(GraphTest, GenerateSingleChainComponents)
     constexpr std::size_t len {4};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
 
     gr.generate_single_chain_components(num, len);
 
@@ -242,6 +245,7 @@ TEST_F(GraphTest, AddComponent)
     constexpr std::size_t len {4};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (CmpId i {}; i<num; ++i) {
         G::Compt cmp{i, gr.chains()};
         cmp.create_chain(len, egidIni);
@@ -321,6 +325,7 @@ TEST_F(GraphTest, MergeComponents)
     constexpr auto lensum = std::accumulate(len.begin(), len.end(), 0);
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     G::Chains& cn = gr.chains();
     for (CmpId i {}; i<num; ++i) {
         G::Compt cmp{i, cn};
@@ -428,6 +433,9 @@ TEST_F(GraphTest, RenameChain)
     constexpr ESlot xB {x, End::B};
 
     G gr;
+    IntegrityCheck integrityCheck {gr};
+    // Low-level neighbour manipulation leaves the graph inconsistent on purpose.
+    integrityCheck.skip();
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -539,6 +547,9 @@ TEST_F(GraphTest, CopyNeigs)
     constexpr ESlot xA {x, End::A};
 
     G gr;
+    IntegrityCheck integrityCheck {gr};
+    // Low-level neighbour manipulation leaves the graph inconsistent on purpose.
+    integrityCheck.skip();
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -652,6 +663,9 @@ TEST_F(GraphTest, RemSlotFromNeigs)
     constexpr ESlot wA {w, End::A};
 
     G gr;
+    IntegrityCheck integrityCheck {gr};
+    // Low-level neighbour manipulation leaves the graph inconsistent on purpose.
+    integrityCheck.skip();
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -745,6 +759,9 @@ TEST_F(GraphTest, ReplaceSlotInNeigs)
     constexpr ESlot xA {x, End::A};
 
     G gr;
+    IntegrityCheck integrityCheck {gr};
+    // Low-level neighbour manipulation leaves the graph inconsistent on purpose.
+    integrityCheck.skip();
     for (const auto u : len)
         gr.add_single_chain_component(u);
 

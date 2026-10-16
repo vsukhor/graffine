@@ -45,6 +45,7 @@ TEST_F(Pull_2, SingleLinChain_Step1_PathLen1_SrcA)
     constexpr ChIdG w {};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     if constexpr (profuse)
@@ -158,6 +159,7 @@ TEST_F(Pull_2, SingleLinChain_Step1_PathLen1_SrcB)
     constexpr ChIdG w {};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     if constexpr (profuse)
@@ -274,6 +276,7 @@ TEST_F(Pull_2, SingleLinChain_Step1_PathLenMult_SrcA)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     if constexpr (profuse)
@@ -394,6 +397,7 @@ TEST_F(Pull_2, SingleLinChain_SrcB_SrcSurvives)
     const auto w {w0};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     if constexpr (profuse)
@@ -517,6 +521,7 @@ TEST_F(Pull_2, SingleLinChain_SrcA_SrcConsumed_Reversed)
     constexpr ChIdG w {};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     if constexpr (profuse)
@@ -649,6 +654,7 @@ TEST_F(Pull_2, SingleLinChain_SrcB_SrcConsumed)
     constexpr ChIdG w {};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     if constexpr (profuse)
@@ -779,6 +785,7 @@ TEST_F(Pull_2, J3_DrvLinB_SrcLinA_SrcSurvives)
     const auto [w0, w1, w2, w3, w4] = id_sequence<ChIdG, 5>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -881,6 +888,7 @@ TEST_F(Pull_2, J3_DrvLinA_SrcLinB_SrcSurvives)
     const auto [w0, w1, w2, w3, w4] = id_sequence<ChIdG, 5>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -982,6 +990,7 @@ TEST_F(Pull_2, J3_DrvLinB_SrcLinB_SrcSurvives)
     const auto [w0, w1, w2, w3, w4] = id_sequence<ChIdG, 5>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -1083,6 +1092,7 @@ TEST_F(Pull_2, J3_DrvLinA_SrcLinA_SrcSurvives)
     const auto [w0, w1, w2, w3, w4] = id_sequence<ChIdG, 5>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -1184,6 +1194,7 @@ TEST_F(Pull_2, J3_LinDrvA_LinSrcA_SrcConsumed)
     const auto [w0, w1, w2, w3, w4] = id_sequence<ChIdG, 5>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -1283,6 +1294,7 @@ TEST_F(Pull_2, J3_LinDrvB_LinSrcB_SrcConsumed)
     const auto [w0, w1, w2, w3, w4] = id_sequence<ChIdG, 5>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -1380,6 +1392,7 @@ TEST_F(Pull_2, J3_LinDrvA_LinSrcB_SrcConsumed)
     const auto [w0, w1, w2, w3, w4] = id_sequence<ChIdG, 5>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -1477,6 +1490,7 @@ TEST_F(Pull_2, J3_LinDrvB_LinSrcA_SrcConsumed)
     const auto [w0, w1, w2, w3, w4] = id_sequence<ChIdG, 5>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -1575,6 +1589,7 @@ TEST_F(Pull_2, J4_LinDrvA_LinSrcB_SrcSurvives)
     const auto [w0, w1, w2, w3, w4, w5] = id_sequence<ChIdG, 6>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -1684,6 +1699,7 @@ TEST_F(Pull_2, J4_LinDrvB_LinSrcB_SrcSurvives)
     const auto [w0, w1, w2, w3, w4, w5] = id_sequence<ChIdG, 6>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -1798,6 +1814,7 @@ TEST_F(Pull_2, J344_LinDrvA_LinSrcB_SrcSurvives)
         = id_sequence<ChIdG, 10>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -2010,6 +2027,7 @@ TEST_F(Pull_2, J344_LinDrvB_LinSrcB_SrcSurvives)
         = id_sequence<ChIdG, 10>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -2217,6 +2235,7 @@ TEST_F(Pull_2, J3_SameChainAB_SrcConsumed)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -2357,6 +2376,7 @@ TEST_F(Pull_2, J3_SameChainBA_SrcConsumed)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -2490,6 +2510,7 @@ TEST_F(Pull_2, Deg3junctionSrcRem_X)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -2626,6 +2647,7 @@ TEST_F(Pull_2, J344_DrvLinA_SrcLinB_SrcConsumed)
         id_sequence<ChIdG, 9>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 

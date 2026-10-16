@@ -30,6 +30,7 @@ TEST_F(VertexMergerTest, Constructor)
     if constexpr (verboseT)
         print_description("Tests constructor of the vertex merger 1+2 functor");
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     VertexMerger1<2, G> {gr};
 
     ASSERT_TRUE(gr.get_egl().empty());
@@ -60,6 +61,7 @@ TEST_F(VertexMergerTest, vm11a_eB_case_distinct_components)
     constexpr auto eB = End::B;
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -187,6 +189,7 @@ TEST_F(VertexMergerTest, vm11a_eB_case_same_component)
     constexpr auto eB = End::B;
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -339,6 +342,7 @@ TEST_F(VertexMergerTest, vm11p_eA_case_same_component)
     constexpr auto eB = End::B;
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -447,6 +451,7 @@ TEST_F(VertexMergerTest, vm11p_eB_case_same_component)
     constexpr auto eB = End::B;
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 

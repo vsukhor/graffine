@@ -22,6 +22,7 @@ limitations under the License.
 #define GRAFFINE_TESTS_COMMON_H
 
 #include "graffine/definitions.h"
+#include "graffine/structure/analyzers/integral_tests.h"
 #include "graffine/structure/elements/chain.h"
 #include "graffine/structure/elements/component.h"
 #include "graffine/structure/elements/edge.h"
@@ -50,6 +51,39 @@ using ESlot = Chain::EndSlot;
 using BSlot = Chain::BulkSlot;
 
 inline constexpr auto profuse = verboseT && false;
+
+
+/**
+ * Runs the graph-wide integral tests on a graph when going out of scope.
+ * \details Declared right after the graph in a test body, it is destroyed
+ * just before the graph, so that the final graph state of every test gets
+ * validated. The check is skipped if the test has already failed, or if
+ * skip() was called by a test leaving the graph inconsistent on purpose.
+ * \note The integral tests terminate the test executable on failure.
+ * \tparam Gr Graph type.
+ */
+template<typename Gr>
+struct IntegrityCheck {
+
+    explicit IntegrityCheck(const Gr& gr) : gr {gr} {}
+
+    IntegrityCheck(const IntegrityCheck&) = delete;
+    IntegrityCheck& operator=(const IntegrityCheck&) = delete;
+
+    ~IntegrityCheck()
+    {
+        if (!skipped && !testing::Test::HasFailure())
+            structure::IntegralTests<Gr, profuse> {gr}();
+    }
+
+    /// Disables the check.
+    void skip() noexcept { skipped = true; }
+
+private:
+
+    const Gr& gr;      ///< Graph to be checked.
+    bool skipped {};   ///< Whether the check is disabled.
+};
 
 struct Test
     : public testing::Test {

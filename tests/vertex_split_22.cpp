@@ -54,6 +54,7 @@ TEST_F(VertexSplitTest, To22_4Lines_AA_BB)
     constexpr auto e = eA;
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -142,6 +143,7 @@ TEST_F(VertexSplitTest, To22_4Lines_AB_AB)
     constexpr EgIdA a2 {2};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -230,6 +232,7 @@ TEST_F(VertexSplitTest, To22_4Lines_BB_AA)
     constexpr auto e = eB;
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -318,6 +321,7 @@ TEST_F(VertexSplitTest, To22_2Lines_Cycle_AA_BB)
     constexpr auto e = eA;
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     // connect two linear chains at internal vertices to make a cycle and
@@ -401,6 +405,7 @@ TEST_F(VertexSplitTest, To22_2Lines_Cycle_BB_AA)
     constexpr auto e = eB;
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     // connect two linear chains at internal vertices to make a cycle and
@@ -483,6 +488,7 @@ TEST_F(VertexSplitTest, To22_2Lines_Cycle_AB_AB)
     constexpr EgIdA a2 {4};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     // connect two linear chains at internal vertices to make a cycle and
@@ -564,6 +570,7 @@ TEST_F(VertexSplitTest, To22_2Lines_Cycle1_AB_AB)
     constexpr EgIdA a2 {4};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     // connect two linear chains at internal vertices to make a cycle and
@@ -673,6 +680,7 @@ TEST_F(VertexSplitTest, To22_2Lines_Cycle2_AB_AB)
     constexpr EgIdA a2 {4};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     // connect two linear chains at internal vertices to make a cycle and
@@ -779,6 +787,7 @@ TEST_F(VertexSplitTest, To22_2Cycles)
     constexpr ChIdG w2 {1};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 

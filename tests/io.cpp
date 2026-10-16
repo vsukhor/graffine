@@ -57,6 +57,7 @@ TEST_F(IOTest, PlyCircularWriteRead)
 
     // Create initial graph (24 chains over 11 connected components).
     auto gr = create_sample_graph<G>();
+    const IntegrityCheck integrityCheck {gr};
 
     const auto workingDir = std::filesystem::current_path();
 
@@ -67,6 +68,7 @@ TEST_F(IOTest, PlyCircularWriteRead)
     ply.template write<profuse>(gr, workingDir/"testPlyCircularWriteRead", false);
 
     auto grNew = ply.template read<profuse>(workingDir/"testPlyCircularWriteRead", true);
+    const IntegrityCheck integrityCheckNew {grNew};
 
     elements::IntegralTests<G, profuse> integral_test {grNew};
     integral_test();

@@ -46,6 +46,7 @@ TEST_F(VertexSplitTest, Divide_A_CC)
     constexpr EgIdA a {6};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     VertexMerger<Deg1, Deg2, G> merge {gr};
@@ -141,6 +142,7 @@ TEST_F(VertexSplitTest, Divide12_unconnected13B)
     constexpr EgIdA a {2};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -227,6 +229,7 @@ TEST_F(VertexSplitTest, Divide12_unconnected13A)
     constexpr EgIdA a {2};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -314,6 +317,7 @@ TEST_F(VertexSplitTest, Divide12_circularA)
     constexpr EgIdA a {2};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -406,6 +410,7 @@ TEST_F(VertexSplitTest, Divide12_circularB)
     constexpr EgIdA a {2};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -498,6 +503,7 @@ TEST_F(VertexSplitTest, Divide12_linearA_separable)
     constexpr EgIdA a {2};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -612,6 +618,7 @@ TEST_F(VertexSplitTest, Divide12_linearB_separable)
     constexpr EgIdA a {2};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -730,6 +737,7 @@ TEST_F(VertexSplitTest, Divide12_linearA_unseparable)
     constexpr EgIdA a {2};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 

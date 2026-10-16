@@ -44,6 +44,7 @@ TEST_F(VertexMergerTest, vm22_case_1)
     constexpr EgIdA a2 {3};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
 
     gr.add_single_chain_component(len);
 
@@ -152,6 +153,7 @@ TEST_F(VertexMergerTest, vm22_case_2)
     constexpr EgIdA a2 {3};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
 
     gr.add_single_chain_component(len);
 
@@ -253,6 +255,7 @@ TEST_F(VertexMergerTest, vm22_case_3)
     constexpr EgIdA a2 {2};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
 
     for (const auto u : len)
         gr.add_single_chain_component(u);
@@ -371,6 +374,7 @@ TEST_F(VertexMergerTest, vm22_case_4)
     constexpr EgIdA a2 {3};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
 
     for (const auto u : len)
         gr.add_single_chain_component(u);
@@ -479,6 +483,7 @@ TEST_F(VertexMergerTest, vm22_case_5)
     constexpr EgIdA a2 {3};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
 
     for (const auto u : len)
         gr.add_single_chain_component(u);
@@ -596,6 +601,7 @@ TEST_F(VertexMergerTest, vm22_case_6)
     constexpr EgIdA a2 {3};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
 
     for (const auto u : len)
         gr.add_single_chain_component(u);
@@ -713,6 +719,7 @@ TEST_F(VertexMergerTest, vm22_case_7)
     constexpr EgIdA a {2};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     VertexMergerCore fc {gr};
@@ -827,6 +834,7 @@ TEST_F(VertexMergerTest, vm22_case_8)
     constexpr EgIdA a1 {3};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
 
     for (const auto u : len)
         gr.add_single_chain_component(u);
@@ -960,6 +968,7 @@ TEST_F(VertexMergerTest, vm22_case_9)
     constexpr EgIdA a {1};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -1062,6 +1071,7 @@ TEST_F(VertexMergerTest, vm22_case10)
     constexpr std::array vv {w1, w0};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
 
     for (const auto u : len)
         gr.add_single_chain_component(u);

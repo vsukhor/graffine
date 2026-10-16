@@ -91,6 +91,7 @@ TEST_F(PathTest, OverEndSlots)
         );
 
     const auto gr = create_sample_graph<G>();
+    const IntegrityCheck integrityCheck {gr};
 
 //    for (const auto& c : gr.compts()) {
         const auto& c = gr.compt(CmpId{8});
@@ -127,6 +128,7 @@ TEST_F(PathTest, OverEdgeInds)
         );
 
     const auto gr = create_sample_graph<G>();
+    const IntegrityCheck integrityCheck {gr};
 
 //    for (const auto& c : gr.compts()) {
         const auto& c = gr.compt(CmpId{8});

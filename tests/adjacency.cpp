@@ -112,6 +112,7 @@ TEST_F(AdjacencyTest, VerticesAdjacent)
     constexpr std::array<size_t, 9> len {4, 3, 3, 5, 2, 2, 5, 4, 1};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 

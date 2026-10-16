@@ -52,6 +52,7 @@ TEST_F(VertexMergerCoreTest, Constructor)
         print_description("Tests constructor of vertex merger Core functor");
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     Core ct {gr};
 
     ASSERT_TRUE(gr.get_egl().empty());
@@ -85,6 +86,7 @@ TEST_F(VertexMergerCoreTest, AntiparallelEndsA)
                     jot("==== Test case: w1 = ", w1, ",  w2 = ", w2, " ====\n");
 
                 G gr;
+                const IntegrityCheck integrityCheck {gr};
                 Core core {gr};
                 for (const auto u : len)
                     gr.add_single_chain_component(u);
@@ -229,6 +231,7 @@ TEST_F(VertexMergerCoreTest, AntiparallelEndsB)
             if (w1 != w2) {
 
                 G gr;
+                const IntegrityCheck integrityCheck {gr};
                 Core core {gr};
                 for (const auto u : len)
                     gr.add_single_chain_component(u);
@@ -366,6 +369,7 @@ TEST_F(VertexMergerCoreTest, Parallel)
             if (w1 != w2) {
 
                 G gr;
+                const IntegrityCheck integrityCheck {gr};
                 Core core {gr};
                 for (const auto u : len)
                     gr.add_single_chain_component(u);
@@ -465,6 +469,7 @@ TEST_F(VertexMergerCoreTest, MergeToLoop)
     constexpr auto lensum = std::accumulate(len.begin(), len.end(), 0);
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     Core core {gr};
 
     const auto& mt = gr.chains();

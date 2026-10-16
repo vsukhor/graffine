@@ -59,6 +59,7 @@ TEST_F(Pull_1, SingleLinChain_DrA)
     constexpr ChIdG w {0};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     if constexpr (profuse)
@@ -138,6 +139,7 @@ TEST_F(Pull_1, SingleLinChain_DrB)
     constexpr ChIdG w {0};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     if constexpr (profuse)
@@ -219,6 +221,7 @@ TEST_F(Pull_1, J3_DrA_SrLiA_Srv)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -333,6 +336,7 @@ TEST_F(Pull_1, J3_DrA_SrLiB_Srv)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -448,6 +452,7 @@ TEST_F(Pull_1, J3_DrB_SrLiA_Srv)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -561,6 +566,7 @@ TEST_F(Pull_1, J3_DrB_SrLiB_Srv)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -676,6 +682,7 @@ TEST_F(Pull_1, J3_DrA_SrLiA_Rmv)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -784,6 +791,7 @@ TEST_F(Pull_1, J3_DrA_SrLiB_Rmv)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -890,6 +898,7 @@ TEST_F(Pull_1, J3_DrB_SrLiB_Rmv)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -996,6 +1005,7 @@ TEST_F(Pull_1, J3_DrB_SrLiA_Rmv)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -1107,6 +1117,7 @@ TEST_F(Pull_1, J3_DrA_SrCyA_Srv)
     const auto [w0, w1] = id_sequence<ChIdG, 2>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     VertexMerger<1, 2, G> merge12 {gr};
@@ -1226,6 +1237,7 @@ TEST_F(Pull_1, J3_DrA_SrCyB_Srv)
     const auto [w0, w1] = id_sequence<ChIdG, 2>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     VertexMerger<1, 2, G> merge12 {gr};
@@ -1345,6 +1357,7 @@ TEST_F(Pull_1, J3_DrB_SrCyA_Srv)
     const auto [w0, w1] = id_sequence<ChIdG, 2>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     VertexMerger<1, 2, G> merge12 {gr};
@@ -1464,6 +1477,7 @@ TEST_F(Pull_1, J3_DrB_SrCyB_Srv)
     const auto [w0, w1] = id_sequence<ChIdG, 2>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     VertexMerger<1, 2, G> merge12 {gr};
@@ -1588,6 +1602,7 @@ TEST_F(Pull_1, J4_LinLin_DrA_SrLiA_Srv)
     const auto [w0, w1, w2, w3] = id_sequence<ChIdG, 4>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -1708,6 +1723,7 @@ TEST_F(Pull_1, J4_LinLin_DrA_SrLiB_Srv)
     const auto [w0, w1, w2, w3] = id_sequence<ChIdG, 4>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -1828,6 +1844,7 @@ TEST_F(Pull_1, J4_LinLin_DrB_SrLiB_Srv)
     const auto [w0, w1, w2, w3] = id_sequence<ChIdG, 4>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -1949,6 +1966,7 @@ TEST_F(Pull_1, J4_LinLin_DrB_SrLiA_Srv)
     const auto [w0, w1, w2, w3] = id_sequence<ChIdG, 4>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -2070,6 +2088,7 @@ TEST_F(Pull_1, J4_LinLin_DrA_SrLiA_Rmv)
     const auto [w0, w1, w2, w3] = id_sequence<ChIdG, 4>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -2183,6 +2202,7 @@ TEST_F(Pull_1, J4_LinLin_DrA_SrLiB_Rmv)
     const auto [w0, w1, w2, w3] = id_sequence<ChIdG, 4>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -2296,6 +2316,7 @@ TEST_F(Pull_1, J4_LinLin_DrB_SrLiB_Rmv)
     const auto [w0, w1, w2, w3] = id_sequence<ChIdG, 4>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -2411,6 +2432,7 @@ TEST_F(Pull_1, J4_LinLin_DrB_SrLiA_Rmv)
     const auto [w0, w1, w2, w3] = id_sequence<ChIdG, 4>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -2531,6 +2553,7 @@ TEST_F(Pull_1, J4_DrA_OutCyc_SrLiA_Srv)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -2658,6 +2681,7 @@ TEST_F(Pull_1, J4_DrA_OutCyc_SrLiB_Srv)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     VertexMerger<2, 2, G> merge22 {gr};
@@ -2779,6 +2803,7 @@ TEST_F(Pull_1, J4_DrB_OutCyc_SrLiB_Srv)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -2906,6 +2931,7 @@ TEST_F(Pull_1, J4_DrB_OutCyc_SrLiA_Srv)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     VertexMerger<2, 2, G> merge22 {gr};
@@ -3027,6 +3053,7 @@ TEST_F(Pull_1, J4_DrA_OutCyc_SrLiA_Rmv)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -3145,6 +3172,7 @@ TEST_F(Pull_1, J4_DrA_OutCyc_SrLiB_Rmv)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     VertexMerger<2, 2, G> merge22 {gr};
@@ -3256,6 +3284,7 @@ TEST_F(Pull_1, J4_DrB_OutCyc_SrLiB_Rmv)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -3373,6 +3402,7 @@ TEST_F(Pull_1, J4_DrB_OutCyc_SrLiA_Rmv)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     VertexMerger<2, 2, G> merge22 {gr};
@@ -3490,6 +3520,7 @@ TEST_F(Pull_1, J4_DrA_InCyAB_SrLiA_Srv)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -3631,6 +3662,7 @@ TEST_F(Pull_1, J4_DrA_InCyBA_SrLiA_Srv)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -3772,6 +3804,7 @@ TEST_F(Pull_1, J4_DrA_InCyAB_SrLiB_Srv)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     VertexMerger<2, 2, G> merge22 {gr};
@@ -3907,6 +3940,7 @@ TEST_F(Pull_1, J4_DrA_InCyBA_SrLiB_Srv)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     VertexMerger<2, 2, G> merge22 {gr};
@@ -4042,6 +4076,7 @@ TEST_F(Pull_1, J4_DrB_InCyAB_SrLiB_Srv)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -4183,6 +4218,7 @@ TEST_F(Pull_1, J4_DrB_InCyBA_SrLiB_Srv)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -4324,6 +4360,7 @@ TEST_F(Pull_1, J4_DrB_InCyAB_SrLiA_Srv)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     VertexMerger<2, 2, G> merge22 {gr};
@@ -4456,6 +4493,7 @@ TEST_F(Pull_1, J4_DrB_InCyBA_SrLiA_Srv)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     VertexMerger<2, 2, G> merge22 {gr};
@@ -4590,6 +4628,7 @@ TEST_F(Pull_1, J4_DrA_InCyAB_SrLiA_Rmv)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -4725,6 +4764,7 @@ TEST_F(Pull_1, J4_DrA_InCyBA_SrLiA_Rmv)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -4860,6 +4900,7 @@ TEST_F(Pull_1, J4_DrA_InCyAB_SrLiB_Rmv)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     VertexMerger<2, 2, G> merge22 {gr};
@@ -4986,6 +5027,7 @@ TEST_F(Pull_1, J4_DrA_InCyBA_SrLiB_Rmv)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     VertexMerger<2, 2, G> merge22 {gr};
@@ -5112,6 +5154,7 @@ TEST_F(Pull_1, J4_DrB_InCyAB_SrLiB_Rmv)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -5244,6 +5287,7 @@ TEST_F(Pull_1, J4_DrB_InCyBA_SrLiB_Rmv)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -5376,6 +5420,7 @@ TEST_F(Pull_1, J4_DrB_InCyAB_SrLiA_Rmv)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     VertexMerger<2, 2, G> merge22 {gr};
@@ -5506,6 +5551,7 @@ TEST_F(Pull_1, J4_DrB_InCyBA_SrLiA_Rmv)
     const auto [w0, w1, w2] = id_sequence<ChIdG, 3>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     VertexMerger<2, 2, G> merge22 {gr};
@@ -5631,6 +5677,7 @@ TEST_F(Pull_1, J344_DrA_SrLiB_Srv)
         id_sequence<ChIdG, 9>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -5776,6 +5823,7 @@ TEST_F(Pull_1, J344_DrA_SrLiB_Rmv)
         id_sequence<ChIdG, 9>();
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 

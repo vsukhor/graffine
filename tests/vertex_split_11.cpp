@@ -39,6 +39,7 @@ TEST_F(VertexSplitTest, Constructor)
         print_description("Tests constructor of vertex split 1-2 functor");
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     VertexSplit<1, 2, G> ct {gr};
 
     ASSERT_TRUE(gr.get_egl().empty());
@@ -66,6 +67,7 @@ TEST_F(VertexSplitTest, Divide11_linA)
     for (EgIdA a {1}; a<len; ++a) {
 
         G gr;
+        const IntegrityCheck integrityCheck {gr};
         gr.add_single_chain_component(len);
 
         if constexpr (profuse)
@@ -161,6 +163,7 @@ TEST_F(VertexSplitTest, Divide11_linB)
     constexpr EgIdA a2 {3};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -357,6 +360,7 @@ TEST_F(VertexSplitTest, Divide11_linC)
     constexpr EgIdA a2 {3};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -534,6 +538,7 @@ TEST_F(VertexSplitTest, Divide11_cyc)
     constexpr ChIdG w {};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     VertexMerger<1, 1, G> merge11 {gr};
@@ -621,6 +626,7 @@ TEST_F(VertexSplitTest, Divide11_dic)
     constexpr ChIdG w {};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     VertexMerger<1, 1, G> merge11 {gr};

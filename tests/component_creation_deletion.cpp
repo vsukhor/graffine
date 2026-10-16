@@ -83,6 +83,7 @@ TEST_F(CreateComponentTest, Test1)
     constexpr std::array<ChIdG, len.size()> w {0, 1, 2};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
 
     CreateComponent<G> create_comp {gr};  // component creating functor
 
@@ -155,6 +156,7 @@ TEST_F(DeleteComponentTest, Test1)
 
     // Create initial graph (24 chains over 11 connected components).
     auto gr = create_sample_graph<G>();
+    const IntegrityCheck integrityCheck {gr};
 
     if constexpr (profuse)
         gr.print_components(tagBefore);

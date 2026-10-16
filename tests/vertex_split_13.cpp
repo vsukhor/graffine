@@ -55,6 +55,7 @@ TEST_F(VertexSplitTest, To13_LLLL_LA)
     constexpr EgIdA a2 {3};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -179,6 +180,7 @@ TEST_F(VertexSplitTest, To13_LLLL_LB)
     constexpr EgIdA a2 {3};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -299,6 +301,7 @@ TEST_F(VertexSplitTest, To13b_LLLL_LB)
     constexpr auto e = eB;
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -349,6 +352,7 @@ TEST_F(VertexSplitTest, To13_LLCC_CA)
     constexpr EgIdA a2 {3};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     VertexMerger<2, 2, G> merge22 {gr};
@@ -441,6 +445,7 @@ TEST_F(VertexSplitTest, To13_LLCC_CB)
     constexpr EgIdA a2 {3};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     VertexMerger<2, 2, G> merge22 {gr};
@@ -536,6 +541,7 @@ TEST_F(VertexSplitTest, To13_LLCC_LB)
     constexpr EgIdA a2 {3};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     gr.add_single_chain_component(len);
 
     VertexMerger<2, 2, G> merge22 {gr};
@@ -648,6 +654,7 @@ TEST_F(VertexSplitTest, To13_CCCC_CA)
     constexpr auto e = eA;
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -735,6 +742,7 @@ TEST_F(VertexSplitTest, To13_CCCC_CB)
     constexpr auto e = eB;
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 

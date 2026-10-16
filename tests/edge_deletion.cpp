@@ -111,6 +111,7 @@ TEST_F(DeleteEdgeTest, LineFree)
     constexpr EgIdA a {2};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
 
     for (const auto o : len)
         gr.add_single_chain_component(o);
@@ -278,6 +279,7 @@ TEST_F(DeleteEdgeTest, Line3wayLines)
     constexpr EgIdA a {1};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
 
     for (const auto o : len)
         gr.add_single_chain_component(o);
@@ -549,6 +551,7 @@ TEST_F(DeleteEdgeTest, LineConnectedToCycle3)
     constexpr EgIdA a {3};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
 
     gr.add_single_chain_component(len);
 
@@ -782,6 +785,7 @@ TEST_F(DeleteEdgeTest, CycleConnectedToLine3)
     constexpr EgIdA a {1};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
 
     gr.add_single_chain_component(len);
 
@@ -1026,6 +1030,7 @@ TEST_F(DeleteEdgeTest, LineConnectedToCycle4)
     constexpr EgIdA a2 {6};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
 
     gr.add_single_chain_component(len);
 
@@ -1277,6 +1282,7 @@ TEST_F(DeleteEdgeTest, DisconnectedCycle)
     constexpr auto eB = End::B;
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
 
     gr.add_single_chain_component(len);
 

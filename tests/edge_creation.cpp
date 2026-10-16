@@ -111,6 +111,7 @@ TEST_F(CreateEdgeTest, LineSingleEdgeExistingChain)
     constexpr EgIdA a {1};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
 
     for (const auto u : len)
         gr.add_single_chain_component(u);
@@ -164,6 +165,7 @@ TEST_F(CreateEdgeTest, LineMultiEdgeExistingChain)
     constexpr EgIdA a {2};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
 
     for (const auto u : len)
         gr.add_single_chain_component(u);
@@ -220,6 +222,7 @@ TEST_F(CreateEdgeTest, CycleExistingChain)
     constexpr EgIdA a {2};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
 
     for (const auto u : len)
         gr.add_single_chain_component(u);
@@ -303,6 +306,7 @@ TEST_F(CreateEdgeTest, CycleLineExistingChain)
     constexpr EgIdA b {1};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
 
     for (const auto u : len)
         gr.add_single_chain_component(u);
@@ -390,6 +394,7 @@ TEST_F(CreateEdgeTest, LineNewChain)
     constexpr EgIdA a2 {1};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
 
     gr.add_single_chain_component(len);
 
@@ -467,6 +472,7 @@ TEST_F(CreateEdgeTest, DiscCycleTrue)
     constexpr EgIdA a {1};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
 
     gr.add_single_chain_component(len);
 
@@ -585,6 +591,7 @@ TEST_F(CreateEdgeTest, LineJunctionTrue)
     constexpr EgIdA a {1};
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
 
     gr.add_single_chain_component(len);
 

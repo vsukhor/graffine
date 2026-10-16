@@ -41,9 +41,11 @@ TEST_F(VertexMergerTest, vm12_case_1)
     constexpr auto e = End::A;
     constexpr auto oe = End::opp(e);
 
-    for (EgIdA a=1; a<len; ++a) {
+    // Restrict the merger to cycle lengths allowed by Chain::minCycleLength
+    for (EgIdA a=Chain::minCycleLength; a<len; ++a) {
 
         G gr;
+        const IntegrityCheck integrityCheck {gr};
         gr.add_single_chain_component(len);
 
         if constexpr (profuse)
@@ -155,9 +157,12 @@ TEST_F(VertexMergerTest, vm12_case_2)
     constexpr auto e = End::B;
     constexpr auto oe = End::opp(e);
 
-    for (EgIdA a=1; a<len; ++a) {
+    // Restrict the merger to cycle lengths allowed by Chain::minCycleLength:
+    // the cycle formed has len - a edges.
+    for (EgIdA a=1; a<=len-Chain::minCycleLength; ++a) {
 
         G gr;
+        const IntegrityCheck integrityCheck {gr};
         gr.add_single_chain_component(len);
 
         if constexpr (profuse)
@@ -261,6 +266,7 @@ TEST_F(VertexMergerTest, vm12_case_3_lin_lin)
     for (EgIdA a=1; a<len[w2()]; ++a) {
 
         G gr;
+        const IntegrityCheck integrityCheck {gr};
 
         for (const auto u : len)
             gr.add_single_chain_component(u);
@@ -379,6 +385,7 @@ TEST_F(VertexMergerTest, vm12_case_3_lin_cyc)
     for (EgIdA a=1; a<len[w0()]; ++a) {
 
         G gr;
+        const IntegrityCheck integrityCheck {gr};
         for (const auto u : len)
             gr.add_single_chain_component(u);
 
@@ -481,6 +488,7 @@ TEST_F(VertexMergerTest, vm12C_endA)
     constexpr auto oe = End::opp(e);
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -591,6 +599,7 @@ TEST_F(VertexMergerTest, vm12C_endB)
     constexpr auto oe = End::opp(e);
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 

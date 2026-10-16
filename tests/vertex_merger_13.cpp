@@ -42,6 +42,7 @@ TEST_F(VertexMergerTest, vm13_eA_case_same_component)
     constexpr auto eB = End::B;
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -128,6 +129,7 @@ TEST_F(VertexMergerTest, vm13_eB_case_same_component)
     constexpr auto eB = End::B;
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -213,6 +215,7 @@ TEST_F(VertexMergerTest, vm13_eA_case_distinct_components)
     constexpr auto eB = End::B;
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
@@ -333,6 +336,7 @@ TEST_F(VertexMergerTest, vm13_eB_case_distinct_components)
     constexpr auto eB = End::B;
 
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
