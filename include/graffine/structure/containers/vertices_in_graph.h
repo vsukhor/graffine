@@ -134,7 +134,7 @@ operator[](const VIdH h) const noexcept -> const VertexDescr&
 {
     const auto i = find(h);
 
-    ASSERT(is_defined(i));
+    ASSERT(utils::is_defined(i));
 
     return m_data[i];
 }

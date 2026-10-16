@@ -44,9 +44,9 @@ limitations under the License.
 
 namespace graffine::structure::containers {
 
-/**
- * Implements class for managing collections of chains in the graph.
- * \details Derives from Sequence container class adding to it chain-specific
+/** Container for managing collections of chains in the graph.
+ *
+ * Derives from Sequence container class adding to it chain-specific
  * functionality.
  * \tparam Eg Container element type.Should be derived from core::elements::Edge.
  */
@@ -72,8 +72,8 @@ struct Edges
 
     void print(std::string_view tag) const;
 
-    /**
-     * Checks that \p cond is satisfied, else terminates program.
+    /** Checks that \p cond is satisfied, else terminates program.
+     *
      * \details Prints out the component using \p tag before terminating the
      * program if \p cond is false. \p message is printed at termination.
      * \tparam T Types of the message arguments.

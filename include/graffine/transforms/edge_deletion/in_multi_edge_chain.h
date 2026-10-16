@@ -122,7 +122,7 @@ auto InMultiEdgeChain<G, PP>::
 operator()(const EgIdG ind) noexcept -> Res
 {
     const auto& m = gr.chain(ind);
-    const auto& eg = m.g[gr.egl[ind].a];
+    const auto& eg = m.g[gr.get_egl(ind).a];
 
     ASSERT_CALLING(m.length() > 1,
                    m.print("InMultiEdgeChain"),
@@ -133,8 +133,8 @@ operator()(const EgIdG ind) noexcept -> Res
     const auto& vA = *eg.vertex_at_outer(End::A);
     const auto& vB = *eg.vertex_at_outer(End::B);
 
-    const auto bA = m.is_unconnected_cycle_boundary(vA);
-    const auto bB = m.is_unconnected_cycle_boundary(vB);
+    [[maybe_unused]] const auto bA = m.is_unconnected_cycle_boundary(vA);
+    [[maybe_unused]] const auto bB = m.is_unconnected_cycle_boundary(vB);
 
     ASSERT(not(bA || bB),
            "edge is not deleatable: boundary of disconnected cycle chain");

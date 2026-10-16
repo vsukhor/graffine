@@ -46,16 +46,16 @@
 #include <string>
 #include <vector>
 
+#undef ASSERT
 #ifdef DEBUG
-    #undef ASSERT
     #define ASSERT(EX, ...) \
         (void)((EX) || (utils::failure_message(#EX, std::source_location::current()  __VA_OPT__(,) __VA_ARGS__), 0))
 #else
     #define ASSERT(EX, ...)
 #endif
 
+#undef ASSERT_CALLING
 #ifdef DEBUG
-    #undef ASSERT_CALLING
     #define ASSERT_CALLING(EX, FUN, ...) \
         (void)((EX) || (FUN, 0) || (utils::failure_message(#EX, std::source_location::current() __VA_OPT__(,) __VA_ARGS__), 0))
 #else
