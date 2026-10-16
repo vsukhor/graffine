@@ -1,0 +1,55 @@
+/* =============================================================================
+
+This file is part of graffine, a lightweight graph transformation library.
+
+Copyright (c) 2021-2026 Valerii Sukhorukov <vsukhorukov@yahoo.com>
+All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+================================================================================
+*/
+
+/**
+ * \file config_cmake.h
+ * \brief Defines variables originally preset in CMakeLists.txt.
+ * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
+ */
+
+#ifndef GRAFFINE_CONFIG_CMAKE_H
+#define GRAFFINE_CONFIG_CMAKE_H
+
+#include <string_view>
+
+// WARNING: Do not modify config_cmake.h directly.
+// Instead, modify config_cmake.h.in.
+
+namespace graffine {
+
+inline constexpr auto projectName = std::string_view("@PROJECT_NAME@");
+inline constexpr auto projectDescription = std::string_view("@PROJECT_DESCRIPTION@");
+inline constexpr auto projectVer = std::string_view("@PROJECT_VERSION@");
+inline constexpr auto projectVerMajor = std::string_view("@PROJECT_VERSION_MAJOR@");
+inline constexpr auto projectVerMinor = std::string_view("@PROJECT_VERSION_MINOR@");
+inline constexpr auto projectVerPatch = std::string_view("@PROJECT_VERSION_PATCH@");
+
+inline constexpr bool verboseF {std::string_view("@GRAFFINE_FUNCTORS_VERBOSE@") == std::string_view("ON")};
+inline constexpr bool printEdges {std::string_view("@GRAFFINE_PRINT_EDGES@") == std::string_view("ON")};
+inline constexpr bool printVertices {std::string_view("@GRAFFINE_PRINT_VERTICES@") == std::string_view("ON")};
+inline constexpr bool doIntegralTests {std::string_view("@GRAFFINE_DO_INTEGRAL_TESTS@") == std::string_view("ON")};
+
+inline constexpr bool realIsDouble {std::string_view("@GRAFFINE_REAL_IS_DOUBLE@") == std::string_view("ON")};
+
+}  // namespace graffine
+
+#endif // GRAFFINE_CONFIG_CMAKE_H

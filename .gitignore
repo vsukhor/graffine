@@ -15,3 +15,4 @@ _*_
 testPly*
 out/**
 examples/bin/**
+include/graffine/config_cmake.h

@@ -6,10 +6,10 @@ project(graffine
     LANGUAGES CXX)
 
 add_compile_options("-std=c++23" "-Wall" "-Wextra" "-fexceptions")
-if(CMAKE_BUILD_TYPE==Debug)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_compile_options("-O0;-g3;-ggdb")
-elseif(CMAKE_BUILD_TYPE==Release)
-    add_compile_options("-O3; -march=native")
+elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+    add_compile_options("-O3;-march=native")
 endif()
 
 if(POLICY CMP0135)
@@ -28,17 +28,13 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     # Add the cmake folder so the FindSphinx module is found
     set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
-    # Let's nicely support folders in IDE's
+    # Support folders in IDE's
     set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
     option(BUILD_DOCS "Build documentation" OFF)
     if(BUILD_DOCS)
         add_subdirectory(docs)
     endif()
-
-endif()
-
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 
     option(BUILD_TESTS "Build test files" ON)
     if(BUILD_TESTS)
@@ -50,5 +46,33 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     if(BUILD_EXAMPLES)
         add_subdirectory(examples)
     endif()
+endif()
+
+set(INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include/graffine")
+
+# Whether functors should report verbosely.
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+    if(NOT DEFINED GRAFFINE_FUNCTORS_VERBOSE)
+        set(GRAFFINE_FUNCTORS_VERBOSE ON)  # ON/OFF
+    endif()
+    if(NOT DEFINED GRAFFINE_PRINT_EDGES)
+        set(GRAFFINE_PRINT_EDGES ON)  # ON/OFF
+    endif()
+    if(NOT DEFINED GRAFFINE_PRINT_VERTICES)
+        set(GRAFFINE_PRINT_VERTICES ON)  # ON/OFF
+    endif()
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        if(NOT DEFINED GRAFFINE_DO_INTEGRAL_TESTS)
+            set(GRAFFINE_DO_INTEGRAL_TESTS ON)  # ON/OFF
+        endif()
+    endif()
+    if(NOT DEFINED GRAFFINE_REAL_IS_DOUBLE)
+        set(GRAFFINE_REAL_IS_DOUBLE OFF)  # ON/OFF
+    endif()
 
 endif()
+
+# Fill in configuration options
+configure_file(
+  "${INCLUDE_DIR}/config_cmake.h.in"
+  "${INCLUDE_DIR}/config_cmake.h")

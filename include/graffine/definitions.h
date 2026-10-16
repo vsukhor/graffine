@@ -31,6 +31,7 @@ limitations under the License.
 #ifndef GRAFFINE_DEFINITIONS_H
 #define GRAFFINE_DEFINITIONS_H
 
+#include "graffine/config_cmake.h"
 #include "graffine/structure/descriptors/id.h"
 #include "graffine/structure/descriptors/vertex_degrees.h"
 #include "graffine/utils/colorcodes.h"
@@ -47,6 +48,7 @@ limitations under the License.
 #include <ranges>
 #include <streambuf>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 /// Project namespace
@@ -62,21 +64,17 @@ using namespace structure::descriptors::vertex_degrees;
 namespace colorcodes = utils::colorcodes;
 
 using Msgr = utils::Msgr;
-using real = float;
+using real = std::conditional_t<realIsDouble, double, float>;
 
-/// Functors report in verbose mode.
-inline constexpr bool verboseF {true};
+// 'verboseF' flag to decide if functors should report verbosely,
+// was set by cmake.
+// 'printEdges' flag to decide if detailed info on edges should be printed,
+// was set by cmake.
+// 'printVertices' flag to decide if detailed info on vertices should be
+// printed, was set by cmake.
+
 /// Tests report in verbose mode.
 inline constexpr bool verboseT {true};
-
-/// Print detailed data on edges.
-inline constexpr bool print_edges {true};
-
-/// Print detailed data on vertices.
-inline constexpr bool print_vertices {true};
-
-/// Toggles integral testing on and off.
-inline constexpr bool integral_testing {true};
 
 /// Orientation of elements relative to ther orientation of their host.
 enum Orientation {

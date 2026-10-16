@@ -1753,12 +1753,12 @@ print(T&&... tag) const
         jot<false>(eg.ind);
     jot(')');
 
-    if constexpr (print_edges) {
+    if constexpr (printEdges) {
         const std::string spaces(tag_length, ' ');
         for (const auto& eg : g)
             eg.print(spaces);
     }
-    if constexpr (print_vertices)
+    if constexpr (printVertices)
         for (EgIdA aa {}; const auto v : vertices()) {
             const auto a = aa() / 2;  // integer division
             jot<false>("[",
