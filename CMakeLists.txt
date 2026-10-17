@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.28)
 
 project(graffine
-    VERSION 1.84.0
+    VERSION 1.85.0
     DESCRIPTION "Elementary Transformations on Graphs"
     LANGUAGES CXX)
 
