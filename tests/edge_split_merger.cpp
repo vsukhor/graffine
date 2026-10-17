@@ -53,34 +53,6 @@ using EdgeSplit = trs::edge_split::Functor<G>;
 using EdgeMerger = trs::edge_merger::Functor<G>;
 
 
-/// Topology-level summary of a graph, used to compare graph states.
-struct Snapshot {
-
-    std::size_t numEdges {};
-    std::size_t numChains {};
-    std::size_t numCompts {};
-    std::vector<std::size_t> lengths;               ///< Per chain.
-    std::vector<std::array<std::size_t, 2>> ngs;    ///< Per chain end.
-    std::array<std::size_t, 4> numVertices {};      ///< Per degree 1 to 4.
-
-    explicit Snapshot(const G& gr)
-        : numEdges {gr.num_edges()}
-        , numChains {gr.num_chains()}
-        , numCompts {gr.num_compts()}
-        , numVertices {gr.num_vertices(Deg1), gr.num_vertices(Deg2),
-                       gr.num_vertices(Deg3), gr.num_vertices(Deg4)}
-    {
-        for (ChIdG w {}; w < gr.num_chains(); ++w) {
-            const auto& m = gr.chain(w);
-            lengths.push_back(m.length());
-            ngs.push_back({m.ngs[End::A].num(), m.ngs[End::B].num()});
-        }
-    }
-
-    bool operator==(const Snapshot&) const = default;
-};
-
-
 /// Checks graph-wide edge indexes to be consistent with the edge positions.
 void check_edge_indexes(const G& gr)
 {
