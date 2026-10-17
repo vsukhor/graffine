@@ -52,7 +52,7 @@ If the IO capability is required, also [external/tinyply/](external/tinyply) dir
 
 A working [example](examples/create_merge_components/main.cpp) of a driver function using ***graffine*** creates a graph consisting of two components and subsequently merges the components into one on a chosen pair of vertices.
 
-A multitude of various examples on how the library can be used in practice can be found among the extensive set of unit [tests](tests/).
+Various examples on how the library can be used in practice can be found among the extensive set of unit [tests](tests/).
 
 
 ## License
