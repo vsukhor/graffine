@@ -44,7 +44,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[])
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
-    gr.print_components("BEFORE");  // print out initial conformation
+    // Print out initial conformation
+    gr.print_components("BEFORE");
 
     // Create a 'vertex merger' transformation
 
