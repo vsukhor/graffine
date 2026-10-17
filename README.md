@@ -16,44 +16,45 @@ Elementary transformations of graphs.
 
 ***graffine*** is a header-only C++ library for constructing and modifying low-degree graphs (space-independent networks of edges and vertices).
 
-While it operates on graphs of arbitrary geometry, provided that the max vertex degree does not exceed 4, it is optimized with emphasis on the graphs containing abundant chains of linearly connected vertices.
+While it operates on graphs of arbitrary geometry — provided that the max vertex degree does not exceed 4 — it is optimized for graphs containing abundant chains of linearly connected vertices.
 
 ## Core elements
 
-Two major parts of ***graffine*** are **structure** that defines and holds graph elements, and a set of topological **transforms** that modify its structure.
+Two major parts of ***graffine*** are **structure** which defines and holds graph elements, and a set of topological **transforms**, which modify that structure.
 
 ### Structure
 
-***graffine*** stores a graph in layers of increasing complexity. The most elementary layer defines, as espected, a set of graph *edges* and *vertices*. The edges are spanned between vertex pairs at the edge ends; vertex order inside the pair defines the edge directionality. On the other hand, the graph outer structural layer is a set of disconnected *components*, each formed by mutually connected vertices and edges. Notably, ***graffine*** defines an intermediate layer of edge *chains* which are linear runs of edges with no branches.
+***graffine*** stores a graph in layers of increasing complexity. The most elementary layer defines, as expected, a set of graph *edges* and *vertices*. Edges span between vertex pairs at the edge ends; the order of vertices within a pair defines edge directionality. Conversely, the outermost structural layer consists of disconnected *components*, each formed by mutually connected vertices and edges. Notably, ***graffine*** defines an intermediate layer of edge *chains*, which are linear runs of edges with no branches.
 
 ### Transformations
 
-***graffine*** provides vertex degree-specific operators for modifying graphs on elementary layer:
+***graffine*** provides vertex degree-specific operators for modifying graphs at the elementary layer:
 
-- creation and deletion of edges and components
-- split and merger of edges
-- split and merger of vertices for each combination of degrees.
+- Creation and deletion of edges and components
+- Splitting and merging of edges
+- Splitting and merging of vertices for each combination of degrees.
 
-On top of these, ***graffine*** defines "pull" operations. These are modifications of the graph components whereis a path of edges spanned between two preselected vertices (a "driver" and a "source") is shifted as a whole relative to the rest of the component.
+On top of these, ***graffine*** defines "pull" operations. These modify graph components by shifting an entire path of edges—spanned between two preselected vertices (a "driver" and a "source") — relative to the rest of the component.
 
 Internally, all transformations are implemented as function object templates under [include/graffine/transforms/](include/graffine/transforms/).
 
 ### Additional features
 
-- adjacency and connectivity analyzers
-- path traversal
+- Adjacency and connectivity analyzers
+- Path traversal
 - PLY file I/O
-- graph's integrity checks to verify internal consistency
+- Graph integrity checks to verify internal consistency
 
 ## Usage
 
-***graffine*** is a header-only C++ library, soit is sufficient to plug the [include/graffine/](include/graffine/) directory into your project and provide the corresponding #include's.
-If the IO capability is required, also [external/tinyply/](external/tinyply) directory should be inserted. It contains a modification of the popular [tinyply](https://github.com/ddiakopoulos/tinyply.git) library.
+***graffine*** is a header-only C++ library, so it is sufficient to add the [include/graffine/](include/graffine/) directory to your project and include the relevant headers.
+If the IO capabilities are required, you should also include the [external/tinyply/](external/tinyply) directory, which contains a modified version of the popular [tinyply](https://github.com/ddiakopoulos/tinyply.git) library.
 
-A working [example](examples/create_merge_components/main.cpp) of a driver function using ***graffine*** creates a graph consisting of two components and subsequently merges the components into one on a chosen pair of vertices.
+A working [example](examples/create_merge_components/main.cpp) of a driver function using ***graffine*** creates a graph consisting of two components and subsequently merges them into one via a chosen pair of vertices.
 
-Various examples on how the library can be used in practice can be found among the extensive set of unit [tests](tests/).
+You can find additional usage examples within the extensive set of unit [tests](tests/).
 
+Build options are set in CMake and written into a generated config_cmake.h. These include verbose logging, how much detail gets printed about edges vertices and chains, whether the integrity checks are run, and whether  float or double precision is used.
 
 ## License
 
