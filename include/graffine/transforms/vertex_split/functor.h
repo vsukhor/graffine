@@ -111,6 +111,14 @@ operator()(Vertex& v,
 {
     const auto d = v.deg();
 
+    ASSERT_CALLING(d == Deg2 || d == Deg3 || d == Deg4,
+                   v.print("UNSPLITTABLE"),
+                   "Vertex split is not implemented for vertex degree ", d);
+    ASSERT(d == Deg2 ||
+           (d == Deg3 && ss.size() == 1) ||
+           (d == Deg4 && (ss.size() == 1 || ss.size() == 2)),
+           "Vertex split: ", ss.size(), " slots passed for vertex degree ", d);
+
     if (d == Deg2)      return to_1_1(v);
     if (d == Deg3)      return to_1_2(v, ss[0]);
     /* if (d == Deg4)*/ return ss.size() == 1 ? to_1_3(v, ss[0])

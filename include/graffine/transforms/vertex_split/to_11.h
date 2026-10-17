@@ -169,11 +169,10 @@ operator()(Vertex& v) -> Res
                    v.print("INCORRECT DEGREE"),
                    "Vertex must have degree", I1, " actual degree is", v.deg());
 
-    const auto d = v.deg();
-    const auto& cmp = gr.ct[v.get_c()];
+    const auto& cmp = gr.compt(v.get_c());
     const auto& egd = *v.edges().begin();
     const auto w = cmp.get_egl(egd.indc()).w;
-    const auto& m = gr.cn[w];
+    const auto& m = gr.chain(w);
 
     if (m.is_unconnected_cycle_boundary(v))
 

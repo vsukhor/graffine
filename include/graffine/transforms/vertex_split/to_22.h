@@ -186,7 +186,7 @@ operator()(Vertex& v,
                    v.print("NOT CONNECTED"),
                    "Vertex is not connected to ", s[1].str_short());
 
-    const auto& cmp = gr.ct[v.get_c()];
+    const auto& cmp = gr.compt(v.get_c());
     const auto s1 = cmp.end_slot(s[0]);
     const auto s2 = cmp.end_slot(s[1]);
 
