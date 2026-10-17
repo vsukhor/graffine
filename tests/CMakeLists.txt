@@ -26,6 +26,7 @@ list(APPEND cpps
     vertex_split_12.cpp
     vertex_split_13.cpp
     vertex_split_22.cpp
+    vertex_split_functor.cpp
     edge_creation.cpp
     edge_deletion.cpp
     edge_split_merger.cpp
