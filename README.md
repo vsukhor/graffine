@@ -1,9 +1,9 @@
 
-<p style="width: 50%; height: 50%">
+<p>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/imgs/graffine-logo_1-dark.png">
   <source media="(prefers-color-scheme: light)" srcset="docs/imgs/graffine-logo_1.png">
-  <img src="docs/imgs/graffine-logo_1.png">
+  <img style="width: 50%; height: 50%" src="docs/imgs/graffine-logo_1.png">
 </picture>
 </p>
 
