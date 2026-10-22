@@ -538,7 +538,7 @@ template<typename G,
 void IntegralTests<G, beLoud>::
 edges(const itT it) const
 {
-    std::size_t egn {};
+    [[maybe_unused]] std::size_t egn {};
     for (const auto& m : cn) {
         egn += m.length();
         for (EgIdA a {}; const auto& o : m.g) {
