@@ -37,7 +37,9 @@ limitations under the License.
 
 #include "graffine/utils/io.h"
 
+#include <cstddef>  // byte
 #include <cstdint>  // uint8_t, int8_t, uint16_t, int16_t, etc
+#include <cstring>  // memcpy
 #include <filesystem>
 #include <istream>
 #include <list>
@@ -74,11 +76,58 @@ struct Ply
 
     static constexpr const char* version {"11"};
 
+    /**
+     * Copies property data read from file into a vector of T.
+     * If the file stores the property with a type different from that of
+     * T elements (e.g. edge weights written as float but read with real set
+     * to double), the values are converted element by element.
+     * \tparam T Arithmetic type or a fixed-size array of it.
+     * \param dd Data buffer filled by the ply reader.
+     */
     template<typename T>
     auto convert_from_data(const Reader::Data& dd) const -> std::vector<T>
     {
+        using E = std::remove_all_extents_t<T>;
+        static_assert(std::is_arithmetic_v<E>);
+        constexpr auto n = sizeof(T) / sizeof(E);  // scalars per item
+        constexpr auto ownType = static_cast<Type>(
+            ply::impl::Index<E, ply::impl::typetup>::value);
+
         std::vector<T> res(dd.count);
-        std::memcpy(res.data(), dd.buffer.get(), dd.buffer.size_bytes());
+
+        if (dd.t == ownType) {
+            if (dd.buffer.size_bytes() != res.size() * sizeof(T))
+                throw std::runtime_error(
+                    "ply: unexpected size of property data buffer");
+            std::memcpy(res.data(), dd.buffer.get(), dd.buffer.size_bytes());
+            return res;
+        }
+
+        auto cast_from = [&]<typename U>() {
+            if (dd.buffer.size_bytes() != dd.count * n * sizeof(U))
+                throw std::runtime_error(
+                    "ply: unexpected size of property data buffer");
+            const auto* src = dd.buffer.get();
+            auto* dst = reinterpret_cast<std::byte*>(res.data());
+            for (std::size_t k {}; k < dd.count * n; ++k) {
+                U u;
+                std::memcpy(&u, src + k * sizeof(U), sizeof(U));
+                const auto e = static_cast<E>(u);
+                std::memcpy(dst + k * sizeof(E), &e, sizeof(E));
+            }
+        };
+
+        switch (dd.t) {
+            case Type::INT8:    cast_from.template operator()<ply::type<Type::INT8>>();    break;
+            case Type::UINT8:   cast_from.template operator()<ply::type<Type::UINT8>>();   break;
+            case Type::INT16:   cast_from.template operator()<ply::type<Type::INT16>>();   break;
+            case Type::UINT16:  cast_from.template operator()<ply::type<Type::UINT16>>();  break;
+            case Type::INT32:   cast_from.template operator()<ply::type<Type::INT32>>();   break;
+            case Type::UINT32:  cast_from.template operator()<ply::type<Type::UINT32>>();  break;
+            case Type::FLOAT32: cast_from.template operator()<ply::type<Type::FLOAT32>>(); break;
+            case Type::FLOAT64: cast_from.template operator()<ply::type<Type::FLOAT64>>(); break;
+            case Type::INVALID: throw std::runtime_error("ply: invalid property type");
+        }
 
         return res;
     };
