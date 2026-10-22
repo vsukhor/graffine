@@ -174,15 +174,15 @@ protected:  // Data
 
 public:  // Functions
 
-    constexpr Vertex();
-    explicit constexpr Vertex(VIdH id);
-    explicit constexpr Vertex(VIdH id, bool isFixed);
+    Vertex();
+    explicit Vertex(VIdH id);
+    explicit Vertex(VIdH id, bool isFixed);
 
     /**
      * Constructor for an unconnected vertex.
      * \param[in] c Id of the graph connected component hosting the vertex.
      */
-    explicit constexpr Vertex(CmpId c);
+    explicit Vertex(CmpId c);
 
     /// Vertex degree (number of incident edges).
     constexpr auto deg() const noexcept -> Degree;
@@ -253,15 +253,14 @@ public:  // Functions
 
 // IMPLEMENTATION ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-constexpr
+inline
 Vertex<ED>::
 Vertex()
     : c {CmpId::undefined}
     , isFixed {FixedAttr{"isFixed", "F", {}}}
 {}
 
-
-constexpr
+inline
 Vertex<ED>::
 Vertex(
     const VIdH id
@@ -271,7 +270,7 @@ Vertex(
     , isFixed {"isFixed", "F", {}}
 {}
 
-constexpr
+inline
 Vertex<ED>::
 Vertex(
     const VIdH id,
@@ -282,7 +281,7 @@ Vertex(
     , isFixed {"isFixed", "F", isFixed}
 {}
 
-constexpr
+inline
 Vertex<ED>::
 Vertex(
     const CmpId c
