@@ -192,4 +192,52 @@ TEST_F(IOTest, PlyReadWeightsOfOtherPrecision)
     }
 }
 
+
+/// Reading of a file lacking a property required by the importer.
+TEST_F(IOTest, PlyReadMissingProperty)
+{
+    ++testCount;
+
+    if constexpr (verboseT)
+        print_description(
+            "Tests that reading of a .PLY file lacking a required property ",
+            "returns an empty graph"
+        );
+
+    using Type = tinyply::Type;
+
+    const std::vector<uint32_t> vIds {0, 1};
+    const std::vector<int8_t> vFxd {0, 0};
+    const std::vector<uint32_t> eVidA {0};
+    const std::vector<uint32_t> eVidB {1};
+    const std::vector<int8_t> eOrnt {1};
+
+    // Same as written by Ply<G>, but without edge weights.
+    tinyply::FileOut writer;
+    auto add = [&writer](const std::string& el, const std::string& prop,
+                         const Type t, const auto& v) {
+        writer.add_properties_to_element(
+            el, {prop}, t, v.size(),
+            reinterpret_cast<const uint8_t*>(v.data()), Type::INVALID, 0);
+    };
+    add("vertex", "id", Type::UINT32, vIds);
+    add("vertex", "isFixed", Type::INT8, vFxd);
+    add("edge", "vertex_index_at_outer_end_A", Type::UINT32, eVidA);
+    add("edge", "vertex_index_at_outer_end_B", Type::UINT32, eVidB);
+    add("edge", "orientation", Type::INT8, eOrnt);
+
+    const auto file = std::filesystem::current_path()/"testPlyMissingProperty";
+    {
+        std::ofstream ofs {file, std::ios::binary};
+        writer.write(ofs, false);
+    }
+
+    Ply<G> ply;
+    for (const bool preload : {false, true}) {
+        const auto grNew = ply.template read<profuse>(file, preload);
+        EXPECT_EQ(grNew.num_vertices(), 0);
+        EXPECT_EQ(grNew.num_edges(), 0);
+    }
+}
+
 }  // namespace graffine::tests::io
