@@ -41,6 +41,7 @@ limitations under the License.
 #include <cstdint>  // uint8_t, int8_t, uint16_t, int16_t, etc
 #include <cstring>  // memcpy
 #include <filesystem>
+#include <fstream>
 #include <istream>
 #include <list>
 #include <memory>
@@ -269,7 +270,15 @@ write(
 
     // Write out to file:
 
-    writer.template write<beLoud>(file, asBinary, msgr->so, msgr->sl);
+    std::ofstream ofs(file, asBinary ? std::ios::out | std::ios::binary
+                                     : std::ios::out);
+    if (ofs.fail())
+        throw std::runtime_error("failed to open " + file.string());
+
+    if constexpr (beLoud)
+        jot("writing to ", file.string());
+
+    writer.write(ofs, asBinary);
 }
 
 
@@ -281,16 +290,8 @@ register_for_import(
     Reader& reader
 ) -> std::shared_ptr<Reader::Data>
 {
-    std::shared_ptr<Reader::Data> dp;
-
-    try {
-        dp = reader.request_properties_from_element(elementName, properties);
-    }
-    catch (const std::exception& e) {
-        jot("ply exception: ", e.what());
-    }
-
-    return dp;
+    // Throws if the element or any of the properties are absent in the file.
+    return reader.request_properties_from_element(elementName, properties);
 }
 
 
