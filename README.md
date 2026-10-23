@@ -3,7 +3,7 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/imgs/graffine-logo_1-dark.png">
   <source media="(prefers-color-scheme: light)" srcset="docs/imgs/graffine-logo_1.png">
-  <img style="width: 50%; height: 50%" src="docs/imgs/graffine-logo_1.png">
+  <img alt="graffine logo" width="50%" src="docs/imgs/graffine-logo_1.png">
 </picture>
 </p>
 
@@ -34,7 +34,7 @@ Two major parts of ***graffine*** are **structure** which defines and holds grap
 - Splitting and merging of edges
 - Splitting and merging of vertices for each combination of degrees.
 
-On top of these, ***graffine*** defines "pull" operations. These modify graph components by shifting an entire path of edges—spanned between two preselected vertices (a "driver" and a "source") — relative to the rest of the component.
+On top of these, ***graffine*** defines "pull" operations. These modify graph components by shifting an entire path of edges — spanned between two preselected vertices (a "driver" and a "source") — relative to the rest of the component.
 
 Internally, all transformations are implemented as function object templates under [include/graffine/transforms/](include/graffine/transforms/).
 
@@ -47,18 +47,41 @@ Internally, all transformations are implemented as function object templates und
 
 ## Usage
 
-***graffine*** is a header-only C++ library, so it is sufficient to add the [include/graffine/](include/graffine/) directory to your project and include the relevant headers.
-If the IO capabilities are required, you should also include the [external/tinyply/](external/tinyply) directory, which contains a modified version of the popular [tinyply](https://github.com/ddiakopoulos/tinyply.git) library.
+***graffine*** requires a C++23 compiler. Since the library is header-only, using it amounts to adding the [include/](include/) directory to your include path and including the relevant headers (e.g. `#include "graffine/structure/elements/graph.h"`).
+If the IO capabilities are required, you should also add the [external/tinyply/](external/tinyply) directory, which contains a modified version of the popular [tinyply](https://github.com/ddiakopoulos/tinyply) library.
 
-A working [example](examples/create_merge_components/main.cpp) of a driver function using ***graffine*** creates a graph consisting of two components and subsequently merges them into one via a chosen pair of vertices.
+Note that the headers depend on `include/graffine/config_cmake.h`, which is not part of the repository: it is generated from [config_cmake.h.in](include/graffine/config_cmake.h.in) when the project is configured with CMake. Configure the project at least once (see below) before using the headers.
+
+### Building
+
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+```
+
+The CMake options `BUILD_TESTS` (default `ON`), `BUILD_EXAMPLES` (default `ON`) and `BUILD_DOCS` (default `OFF`) control which targets are built.
+
+Library configuration is passed through the following CMake variables, which are written into the generated `config_cmake.h`:
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `GRAFFINE_FUNCTORS_VERBOSE` | `ON` | Transformation functors report verbosely |
+| `GRAFFINE_PRINT_EDGES` | `ON` | Print detailed information on edges |
+| `GRAFFINE_PRINT_VERTICES` | `ON` | Print detailed information on vertices |
+| `GRAFFINE_DO_INTEGRAL_TESTS` | `ON` in Debug builds, otherwise `OFF` | Run graph integrity checks |
+| `GRAFFINE_REAL_IS_DOUBLE` | `OFF` | Use `double` instead of `float` for real numbers |
+
+These defaults apply only when ***graffine*** is the top-level CMake project.
+
+### Examples
+
+A working [example](examples/create_merge_components/main.cpp) of a driver function using ***graffine*** creates a graph consisting of four linear components and subsequently merges two of them into one via a chosen pair of end vertices.
 
 You can find additional usage examples within the extensive set of unit [tests](tests/).
 
-Build options are set in CMake and written into a generated config_cmake.h. These include verbose logging, how much detail gets printed about edges vertices and chains, whether the integrity checks are run, and whether  float or double precision is used.
-
 ## License
 
-Unless otherwise specified, content of this repository is licensed under
+Unless otherwise specified, the content of this repository is licensed under
 the Apache License, Version 2.0.
 Third-party code may have its own licensing,
 please see [NOTICE](/NOTICE) for more details.
