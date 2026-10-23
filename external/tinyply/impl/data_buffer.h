@@ -41,13 +41,13 @@ namespace tinyply::impl {
 
         std::unique_ptr<uint8_t, decltype(Buffer::delete_array())> data;
 
-        std::size_t size {};
+        size_t size {};
         uint8_t* alias {};
 
     public:
 
         Buffer() {};
-        explicit Buffer(const std::size_t size)
+        explicit Buffer(const size_t size)
             : data (new uint8_t[size], delete_array())
             , size {size}
             , alias {data.get()}  // allocating
@@ -67,7 +67,7 @@ namespace tinyply::impl {
             return alias;
         }
 
-        constexpr std::size_t size_bytes() const noexcept
+        constexpr size_t size_bytes() const noexcept
         {
             return size;
         }
@@ -78,12 +78,12 @@ namespace tinyply::impl {
 
         Type t;
         Buffer buffer;
-        std::size_t count {};  // how many items are in the element?
+        size_t count {};  // how many items are in the element?
         bool isList {};
 
         explicit Data(
             const Type t,
-            const std::size_t count,
+            const size_t count,
             const bool isList
         )
             : t {t}
@@ -94,7 +94,7 @@ namespace tinyply::impl {
         explicit Data(
             const Type t,
             Buffer&& buffer,
-            const std::size_t count,
+            const size_t count,
             const bool isList
         )
             : t {t}
@@ -103,7 +103,7 @@ namespace tinyply::impl {
             , isList {isList}
         {}
 
-        std::size_t num_items() const noexcept;
+        size_t num_items() const noexcept;
 
         void endian_reverse() noexcept;
     };
@@ -111,8 +111,8 @@ namespace tinyply::impl {
 
     struct DataCursor {
 
-        std::size_t byteOffset {};
-        std::size_t totalSizeBytes {};
+        size_t byteOffset {};
+        size_t totalSizeBytes {};
     };
 
 }  // namespace tinyply::impl
@@ -121,7 +121,7 @@ namespace tinyply::impl {
 
 namespace tinyply::impl {
 
-    std::size_t Data::
+    size_t Data::
     num_items() const noexcept
     {
         return (buffer.size_bytes() / types.at(t).stride);
@@ -131,8 +131,8 @@ namespace tinyply::impl {
     endian_reverse() noexcept
     {
         uint8_t* b = buffer.get();
-        const std::size_t stride = types.at(t).stride;
-        const std::size_t size = buffer.size_bytes();
+        const size_t stride = types.at(t).stride;
+        const size_t size = buffer.size_bytes();
 
         switch (t) {
 

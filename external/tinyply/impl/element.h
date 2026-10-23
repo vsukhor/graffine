@@ -26,6 +26,7 @@
 
 #include "impl/property.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cstdint>  // uint8_t, int8_t, uint16_t, int16_t, etc
 #include <string>
@@ -38,26 +39,45 @@ namespace tinyply::impl {
 
         std::string name;
 
-        std::size_t size {};  ///< number of records for this element
+        size_t size {};  ///< number of records for this element
 
         std::vector<Property> properties;
 
         explicit Element(std::istream& istream);
-        explicit constexpr Element(const std::string& name);
+
+        explicit constexpr Element(const std::string& name)
+            : name {name}
+        {}
+
         explicit constexpr Element(
             const std::string& name,
-            const std::size_t count
-        );
+            const size_t count
+        )
+            : name {name}
+            , size {count}
+        {}
 
         Property const* get_property(std::string_view propName) const;
-        constexpr int64_t find_property(std::string_view propName) const noexcept;
-        constexpr bool contains(std::string_view propName) const noexcept;
+
+        constexpr int64_t find_property(std::string_view propName) const noexcept
+        {
+            for (size_t i {}; i < properties.size(); ++i)
+                if (properties[i].name == propName)
+                    return i;
+
+            return -1;
+        }
+
+        constexpr bool contains(std::string_view propName) const noexcept
+        {
+            return find_property(propName) >= 0;
+        }
 
         void create_properties(
             const std::vector<std::string>& propNames,
             const Type type,
             const Type listType,
-            const std::size_t listCount
+            const size_t listCount
         );
 
         void report(std::string_view pref) const noexcept;
@@ -77,41 +97,6 @@ Element(std::istream& is)
     is >> name >> size;
 }
 
-constexpr
-Element::
-Element(const std::string& name)
-    : name {name}
-    , size {}
-{}
-
-constexpr
-Element::
-Element(
-    const std::string& name,
-    const std::size_t count
-)
-    : name {name}
-    , size {count}
-{}
-
-constexpr
-int64_t Element::
-find_property(std::string_view propName) const noexcept
-{
-    for (std::size_t i {}; i < properties.size(); ++i)
-        if (properties[i].name == propName)
-            return i;
-
-    return -1;
-}
-
-constexpr
-bool Element::
-contains(std::string_view propName) const noexcept
-{
-    return find_property(propName) >= 0;
-}
-
 Property const* Element::
 get_property(std::string_view propName) const
 {
@@ -129,16 +114,19 @@ void Element::
 create_properties(const std::vector<std::string>& propNames,
                   const Type type,
                   const Type listType,
-                  const std::size_t listCount)
+                  const size_t listCount)
 {
-    for (const auto& key: propNames) {
-
-        if (contains(key)) {
+    // Validate all keys before adding any, so a failure leaves no partial state.
+    for (size_t i {}; i < propNames.size(); ++i)
+        if (contains(propNames[i]) ||
+            std::find(propNames.begin(), propNames.begin() + i, propNames[i])
+                != propNames.begin() + i)
             throw std::invalid_argument(
-                "all requested properties must share the same type."
+                "property '" + propNames[i] +
+                "' already exists in element '" + name + "'"
             );
-            assert(false);
-        }
+
+    for (const auto& key: propNames) {
 
         auto newProp = listType == Type::INVALID
             ? Property{type, key}

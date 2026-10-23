@@ -38,8 +38,8 @@
 
 namespace tinyply {
 
-    class Reader
-    {
+    class Reader {
+
         std::unique_ptr<impl::FileIn> file;
 
     public:
@@ -67,7 +67,7 @@ namespace tinyply {
 
         /*
          * These functions are valid after a call to `parse_header(...)`.
-         * In the the case of writing, comments() reference may also be used to
+         * In the case of writing, comments() reference may also be used to
          * add new comments to the ply header.
          */
         std::vector<impl::Element> get_elements() const;

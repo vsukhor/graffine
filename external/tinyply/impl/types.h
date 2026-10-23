@@ -134,7 +134,7 @@ namespace impl {
         { Type::INVALID, Info(Type::INVALID, 0, "INVALID") }
     };
 
-    void endian_reverse(Type t, void* dst)
+    inline void endian_reverse(Type t, void* dst)
     {
         switch (t) {
 
@@ -151,8 +151,6 @@ namespace impl {
 
 using Type = impl::Type;
 template<Type T> using type = impl::type<T>;
-
-using typetup = impl::typetup;
 
 }  // namespace tinyply
 

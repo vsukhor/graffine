@@ -44,75 +44,48 @@ struct FileOut {
 
     Header header;
 
-    template<bool beLoud = true,
-             typename Logstream = std::ostream,
-             typename LogFile = std::ofstream>
-    void write(const std::filesystem::path& p,
-               bool asBinary,
-               Logstream* logstream = std::cout,
-               LogFile* logFilestream = nullptr);
-
     void write(std::ostream& os,
                bool asBinary);
+    void write(const std::filesystem::path& p,
+               bool asBinary);
 
-    constexpr Element& add_element(const std::string& elementName) noexcept;
+    constexpr Element& add_element(const std::string& elementName)
+    {
+        return header.elements.emplace_back(elementName);
+    }
 
     void add_properties_to_element(
         Element& element,
         const std::vector<std::string>& propertyKeys,
         const Type type,
-        const std::size_t count,
+        const size_t count,
         uint8_t const* data,
         const Type listType,
-        const std::size_t listCount
+        const size_t listCount
     );
 
     void add_properties_to_element(
         const std::string& elementKey,
         const std::vector<std::string>& propertyKeys,
         const Type type,
-        const std::size_t count,
+        const size_t count,
         uint8_t const* data,
         const Type listType,
-        const std::size_t listCount
+        const size_t listCount
     );
 
-    void write_ascii(std::ostream& os) noexcept;
-    void write_binary(std::ostream& os) noexcept;
+    void write_ascii(std::ostream& os);
+    void write_binary(std::ostream& os);
 
     void write_scalar_ascii(Type t,
                             std::ostream& os,
                             uint8_t const* src,
-                            std::size_t& srcOffset) const;
+                            size_t& srcOffset) const;
     void write_scalar_binary(std::ostream& os,
                              uint8_t const* src,
-                             std::size_t& srcOffset,
-                             const std::size_t stride) const noexcept;
+                             size_t& srcOffset,
+                             const size_t stride) const noexcept;
 };
-
-template<bool beLoud,
-         typename LogScreen,
-         typename LogFile>
-void FileOut::
-write(const std::filesystem::path& p,
-      const bool asBinary,
-      LogScreen* logScreenstream,
-      LogFile* logFilestreem)
-{
-    const auto a = asBinary ? std::ios::out
-                            : std::ios::out | std::ios::binary;
-    std::ofstream ost(p, a);
-    if (ost.fail())
-        throw std::runtime_error("failed to open " + p.string());
-
-    if constexpr (beLoud) {
-        const auto s = std::string("writing to ") + p.string() + '\n';
-        if (logScreenstream) *logScreenstream << s;
-        if (logFilestreem)   *logFilestreem << s;
-    }
-
-    write(ost, asBinary);
-}
 
 }  // namespace tinyply::impl
 
@@ -122,49 +95,51 @@ write(const std::filesystem::path& p,
 
 namespace tinyply::impl {
 
-constexpr Element& FileOut::
-add_element(const std::string& elName) noexcept
-{
-    return header.elements.emplace_back(elName);
-}
-
 void FileOut::
 add_properties_to_element(Element& element,
                           const std::vector<std::string>& propertyKeys,
                           const Type type,
-                          const std::size_t count,
+                          const size_t count,
                           uint8_t const* data,
                           const Type listType,
-                          const std::size_t listCount)
+                          const size_t listCount)
 {
+    // An element created empty (e.g. via `add_element`) takes its record
+    // count from the first property group added to it.
+    if (element.size == 0)
+        element.size = count;
+    else if (element.size != count)
+        throw std::invalid_argument(
+            "element '" + element.name + "' has " +
+            std::to_string(element.size) + " records, but " +
+            std::to_string(count) + " were given"
+        );
+
+    // Throws on duplicates before anything is registered in `userData`.
+    element.create_properties(propertyKeys, type, listType, listCount);
+
     ParsingHelper helper;
     helper.data = std::make_shared<Data>(type, Buffer(data), count, false);
     helper.cursor = std::make_shared<DataCursor>();
     for (auto& key: propertyKeys)
-        header.userData.insert(element.name, key, std::move(helper));
-
-    element.create_properties(propertyKeys, type, listType, listCount);
+        header.userData.insert(element.name, key, helper);
 }
 
 void FileOut::
 add_properties_to_element(const std::string& elementKey,
                           const std::vector<std::string>& propertyKeys,
                           const Type type,
-                          const std::size_t count,
+                          const size_t count,
                           uint8_t const* data,
                           const Type listType,
-                          const std::size_t listCount)
+                          const size_t listCount)
 {
-    ParsingHelper helper;
-    helper.data = std::make_shared<Data>(type, Buffer(data), count, false);
-    helper.cursor = std::make_shared<DataCursor>();
-    for (auto& key: propertyKeys)
-        header.userData.insert(elementKey, key, std::move(helper));
-
     auto e = header.find_element(elementKey);
     if (!e)
         e = &header.elements.emplace_back(elementKey, count);
-    e->create_properties(propertyKeys, type, listType, listCount);
+
+    add_properties_to_element(*e, propertyKeys, type, count, data,
+                              listType, listCount);
 }
 
 
@@ -172,7 +147,7 @@ void FileOut::
 write_scalar_ascii(const Type t,
                    std::ostream& os,
                    const uint8_t* src,
-                   std::size_t& srcOffset) const
+                   size_t& srcOffset) const
 {
     srcOffset += types.at(t).write_ascii(os, src);
     os << " ";
@@ -181,8 +156,8 @@ write_scalar_ascii(const Type t,
 void FileOut::
 write_scalar_binary(std::ostream& os,
                     uint8_t const* src,
-                    std::size_t& srcOffset,
-                    const std::size_t stride) const noexcept
+                    size_t& srcOffset,
+                    const size_t stride) const noexcept
 {
     os.write(reinterpret_cast<const char*>(src), stride);
     srcOffset += stride;
@@ -203,20 +178,35 @@ write(std::ostream& os,
 }
 
 void FileOut::
-write_binary(std::ostream& os) noexcept
+write(const std::filesystem::path& p,
+      const bool asBinary)
+{
+    const auto a = asBinary ? std::ios::out | std::ios::binary
+                            : std::ios::out;
+    std::ofstream ost(p, a);
+    if (ost.fail())
+        throw std::runtime_error("failed to open " + p.string());
+
+    std::cout << "writing to " << p.string() << std::endl;
+
+    write(ost, asBinary);
+}
+
+void FileOut::
+write_binary(std::ostream& os)
 {
     header.isBinary = true;
     header.write(os);
 
     uint8_t listSize[4] = {}; //{ 0, 0, 0, 0 };
-    std::size_t dummyCount {};
+    size_t dummyCount {};
 
     auto element_property_lookup = header.make_property_lookup_table();
 
-    for (std::size_t element_idx {};
+    for (size_t element_idx {};
          auto& e: header.elements) {
-        for (std::size_t i {}; i < e.size; ++i) {
-            for (std::size_t property_index {};
+        for (size_t i {}; i < e.size; ++i) {
+            for (size_t property_index {};
                  auto& p : e.properties) {
 
                 auto& f = element_property_lookup[element_idx][property_index];
@@ -254,16 +244,16 @@ write_binary(std::ostream& os) noexcept
 }
 
 void FileOut::
-write_ascii(std::ostream& os) noexcept
+write_ascii(std::ostream& os)
 {
     header.write(os);
 
     auto element_property_lookup = header.make_property_lookup_table();
 
-    for (std::size_t element_idx = 0;
+    for (size_t element_idx = 0;
          auto& e: header.elements) {
-        for (std::size_t i {}; i < e.size; ++i) {
-            for (std::size_t property_index = 0;
+        for (size_t i {}; i < e.size; ++i) {
+            for (size_t property_index = 0;
                  auto& p: e.properties) {
 
                 auto& f = element_property_lookup[element_idx][property_index];
@@ -275,7 +265,7 @@ write_ascii(std::ostream& os) noexcept
                 if (p.is_list()) {
 
                     os << p.listCount << " ";
-                    for (std::size_t j {}; j < p.listCount; ++j)
+                    for (size_t j {}; j < p.listCount; ++j)
 
                         write_scalar_ascii(
                             p.scalarType,

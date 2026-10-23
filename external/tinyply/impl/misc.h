@@ -112,32 +112,17 @@ template<typename T,
 constexpr
 void endian_swap_buffer(
     uint8_t* data_ptr,
-    const std::size_t num_bytes,
-    const std::size_t stride
+    const size_t num_bytes,
+    const size_t stride
 ) noexcept
 {
-    for (std::size_t count {}; count < num_bytes; count += stride) {
+    for (size_t count {}; count < num_bytes; count += stride) {
 
         *(reinterpret_cast<T2*>(data_ptr)) =
             endian_swap<T, T2>(*(reinterpret_cast<const T*>(data_ptr)));
 
         data_ptr += stride;
     }
-}
-
-// Hash ========================================================================
-
-uint32_t hash_fnv1a(const std::string& str) noexcept
-{
-    static constexpr uint32_t fnv1aBase32 {0x811C9DC5u};
-    static constexpr uint32_t fnv1aPrime32 {0x01000193u};
-
-    auto result = fnv1aBase32;
-    for (const auto& c: str) {
-        result ^= static_cast<uint32_t>(c);
-        result *= fnv1aPrime32;
-    }
-    return result;
 }
 
 // ascii =======================================================================

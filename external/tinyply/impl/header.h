@@ -43,8 +43,8 @@ namespace tinyply::impl {
 
             ParsingHelper const* helper {};
             bool skip {};
-            std::size_t prop_stride {};  // precomputed
-            std::size_t list_stride {};  // precomputed
+            size_t prop_stride {};  // precomputed
+            size_t list_stride {};  // precomputed
         };
 
         UserData userData;
@@ -57,7 +57,15 @@ namespace tinyply::impl {
         std::vector<std::string> objInfo;
 
         std::vector<std::vector<PropertyLookup>> make_property_lookup_table();
-        constexpr Element* find_element(std::string_view key) noexcept;
+        constexpr Element* find_element(std::string_view key) noexcept
+        {
+            for (auto& e: elements)
+                if (e.name == key)
+
+                    return &e;
+
+            return nullptr;
+        }
 
         bool parse(std::istream& is);
         void read_format(std::istream& is);
@@ -67,7 +75,7 @@ namespace tinyply::impl {
                        std::vector<std::string>& place,
                        int erase = 0);
 
-        void write(std::ostream& os) noexcept;
+        void write(std::ostream& os);
 
         void report() const noexcept;
     };
@@ -114,19 +122,6 @@ make_property_lookup_table()
 
     return element_property_lookup;
 }
-
-constexpr
-Element* Header::
-find_element(std::string_view key) noexcept
-{
-    for (auto& e: elements)
-        if (e.name == key)
-
-            return &e;
-
-    return nullptr;
-}
-
 
 bool Header::
 parse(std::istream& is)
@@ -195,7 +190,7 @@ read_property(std::istream& is)
 }
 
 void Header::
-write(std::ostream& os) noexcept
+write(std::ostream& os)
 {
     const std::locale& fixLoc = std::locale("C");
     os.imbue(fixLoc);
@@ -212,11 +207,11 @@ write(std::ostream& os) noexcept
 
     auto property_lookup = make_property_lookup_table();
 
-    std::size_t element_idx {};
+    size_t element_idx {};
     for (auto& e: elements) {
 
         os << "element " << e.name << " " << e.size << "\n";
-        std::size_t property_idx = 0;
+        size_t property_idx = 0;
         for (const auto& p: e.properties) {
 
             PropertyLookup& lookup = property_lookup[element_idx][property_idx];

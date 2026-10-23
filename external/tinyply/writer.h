@@ -47,23 +47,18 @@ namespace tinyply {
 
         /**
          * Performs no validation and assumes that the data passed into
-         * `add_properties_to_element`is well-formed.
+         * `add_properties_to_element` is well-formed.
          */
-        template<bool beLoud = true,
-                 typename LogStream = std::ostream,
-                 typename LogFile = std::ofstream>
-        void write(const std::filesystem::path& p,
-                   bool asBinary,
-                   LogStream* logstream = std::cout,
-                   LogFile* logFilestream = nullptr);
         void write(std::ofstream& os,
+                   bool asBinary);
+        void write(const std::filesystem::path& p,
                    bool asBinary);
 
         bool is_binary() const noexcept;
 
-        void add_comment(const std::string& str) noexcept;
+        void add_comment(const std::string& str);
 
-        impl::Element& add_element(const std::string& elementKey) noexcept;
+        impl::Element& add_element(const std::string& elementKey);
         /*
          * In the general case where |list_size_hint| is zero, `read` performs
          * a two-passparse to support variable length lists.
@@ -76,27 +71,14 @@ namespace tinyply {
             const std::string& elementKey,
             const std::vector<std::string>& propertyKeys,
             impl::Type type,
-            std::size_t count,
+            size_t count,
             uint8_t const* data,
             impl::Type listType,
-            std::size_t listCount
+            size_t listCount
         );
     };
 
     using FileOut = Writer;
-
-    template<bool beLoud,
-             typename LogScreen,
-             typename LogFile>
-    void Writer::
-    write(const std::filesystem::path& p,
-        const bool asBinary,
-        LogScreen* logScreenstream,
-        LogFile* logFilestream)
-    {
-        return file->template write<beLoud, LogScreen, LogFile>(p, asBinary, logScreenstream, logFilestream);
-    }
-
 
 }  // namespace tinyply
 
@@ -119,7 +101,14 @@ write(std::ofstream& os,
 }
 
 void Writer::
-add_comment(const std::string& str) noexcept
+write(const std::filesystem::path& p,
+      const bool asBinary)
+{
+    return file->write(p, asBinary);
+}
+
+void Writer::
+add_comment(const std::string& str)
 {
     file->header.comments.push_back(str);
 }
@@ -131,7 +120,7 @@ is_binary() const noexcept
 }
 
 impl::Element& Writer::
-add_element(const std::string& elementKey) noexcept
+add_element(const std::string& elementKey)
 {
     return file->add_element(elementKey);
 }
@@ -140,10 +129,10 @@ void Writer::
 add_properties_to_element(const std::string& elementKey,
                           const std::vector<std::string>& propertyKeys,
                           const impl::Type type,
-                          const std::size_t count,
+                          const size_t count,
                           uint8_t const* data,
                           const impl::Type listType,
-                          const std::size_t listCount)
+                          const size_t listCount)
 {
     return file->add_properties_to_element(elementKey,
                                            propertyKeys,
