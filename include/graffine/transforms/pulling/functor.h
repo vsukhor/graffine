@@ -48,6 +48,7 @@ namespace graffine::transforms::pulling {
 template<typename G,
          typename PP = void>
 struct Functor
+    : public Applicable<Functor<G, PP>>
 {
     using Trait = pulling::Trait<G>;
     using Graph = Trait::Graph;
@@ -77,10 +78,16 @@ struct Functor
      * \param[in] path Path containing the string of edges to get pulled.
      * \param[in] n Number of steps to pull over.
      */
-    auto operator()(Path<Compt>& path,
-                    const int n) -> Res;
+    auto apply(Path<Compt>& path,
+               int n) -> Res;
+
+    /// Checks that \p path can be pulled by \p n steps.
+    auto applicability(const Path<Compt>& path,
+                       int n) const -> Applicability;
 
 protected:
+
+    Graph& gr;  ///< Reference to the modified graph object.
 
     On<Deg1, Orientation::Forwards, G, PP> on_1f;
     On<Deg2, Orientation::Forwards, G, PP> on_2f;
@@ -96,7 +103,8 @@ constexpr
 Functor<G, PP>::
 Functor(Graph& gr,
         std::shared_ptr<PP> pp)
-    : on_1f {gr, pp}
+    : gr {gr}
+    , on_1f {gr, pp}
     , on_2f {gr, pp}
     , on_3f {gr, pp}
 {
@@ -107,14 +115,38 @@ Functor(Graph& gr,
 template<typename G,
          typename PP>
 auto Functor<G, PP>::
-operator()(Path<Compt>& path,
-           const int n) -> Res
+applicability(
+    const Path<Compt>& path,
+    const int n
+) const -> Applicability
+{
+    const auto c = path.cmp;
+    if (!c || c->ind >= gr.num_compts() || &gr.compt(c->ind) != c)
+        return reject("path does not refer to a component of the graph");
+    if (path.pthc.empty() || path.pthc[0] >= c->num_edges())
+        return reject("path has no driver edge");
+
+    const auto& v = path.driver_vertex();
+    if (v.is_leaf())      return on_1f.applicability(path, n);
+    if (v.is_bulk())      return on_2f.applicability(path, n);
+    if (v.is_junctionY()) return on_3f.applicability(path, n);
+
+    return reject("pulling is not implemented for the driver vertex degree");
+}
+
+
+template<typename G,
+         typename PP>
+auto Functor<G, PP>::
+apply(
+    Path<Compt>& path,
+    const int n
+) -> Res
 {
     const auto& v = path.driver_vertex();
-
-    if (v.is_leaf())      return on_1f(path, n);
-    if (v.is_bulk())      return on_2f(path, n);
-    if (v.is_junction3()) return on_3f(path, n);
+    if (v.is_leaf())      return on_1f.apply(path, n);
+    if (v.is_bulk())      return on_2f.apply(path, n);
+    /* is_junctionY() */  return on_3f.apply(path, n);
 }
 
 

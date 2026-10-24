@@ -375,31 +375,31 @@ TEST_F(VertexSplitFunctorTest, Deg4_TwoSlots)
 }
 
 
-#ifdef DEBUG
-
-using VertexSplitFunctorDeathTest = VertexSplitFunctorTest;
-
 /// Tests that a degree 1 vertex, which cannot be split, is rejected.
-TEST_F(VertexSplitFunctorDeathTest, Deg1_Rejected)
+TEST_F(VertexSplitFunctorTest, Deg1_Rejected)
 {
     ++testCount;
 
     if constexpr (verboseT)
         print_description("Tests that a degree 1 vertex is rejected");
 
-    GTEST_FLAG_SET(death_test_style, "threadsafe");
-
     G gr;
+    const IntegrityCheck integrityCheck {gr};
     make_line(gr, 3);
     auto& v = *gr.chain(ChIdG{0}).g[0].vertex_at_outer(End::A);
     ASSERT_EQ(v.deg(), Deg1);
 
     SplitFunctor split {gr};
-    EXPECT_DEATH(split(v, Slots{}),
-                 "not implemented for vertex degree");
-}
+    EXPECT_FALSE(split.is_applicable(v, Slots{}));
 
-#endif  // DEBUG
+    const auto res = split.try_apply(v, Slots{});
+    ASSERT_FALSE(res.has_value());
+    EXPECT_NE(std::string {res.error().reason}.find("not implemented"),
+              std::string::npos) << res.error().reason;
+
+    EXPECT_THROW(split(v, Slots{}), graffine::precondition_error);
+    EXPECT_EQ(gr.num_chains(), 1);  // unchanged
+}
 
 
 }  // namespace graffine::tests::vertex_split

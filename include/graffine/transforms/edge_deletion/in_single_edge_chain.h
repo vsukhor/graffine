@@ -58,6 +58,7 @@ namespace graffine::transforms::edge_deletion {
 template<typename G,
          typename PP = void>
 struct InSingleEdgeChain
+    : public Applicable<InSingleEdgeChain<G, PP>>
 {
     using Trait = edge_deletion::Trait<G>;
     using Graph = Trait::Graph;
@@ -81,7 +82,10 @@ struct InSingleEdgeChain
      * Function call operator executing the deletion using edge index.
      * \param[in] ind Graph-wide index of the deleted edge.
      */
-    auto operator()(EgIdG ind) -> Res;
+    auto apply(EgIdG ind) -> Res;
+
+    /// Checks that edge \p ind can be deleted with its single-edge chain.
+    auto applicability(EgIdG ind) const -> Applicability;
 
 protected:
 
@@ -111,22 +115,33 @@ InSingleEdgeChain(Graph& gr,
 template<typename G,
          typename PP>
 auto InSingleEdgeChain<G, PP>::
-operator()(const EgIdG ind) -> Res
+applicability(const EgIdG ind) const -> Applicability
+{
+    if (!checks::is_valid_edge(gr, ind))
+        return reject("invalid edge index");
+
+    const auto& m = gr.chain(ind);
+    if (m.length() != 1 || !m.has_single_leaf_vertex())
+        return reject("edge is not a chain attached by a single end");
+
+    const auto d = m.ngs[m.get_single_connected_end()].num() + 1;
+    if (d == Deg3) return deg3.applicability(ind);
+    if (d == Deg4) return deg4.applicability(ind);
+
+    return reject("vertex degree at the chain end is not 3 or 4");
+}
+
+
+template<typename G,
+         typename PP>
+auto InSingleEdgeChain<G, PP>::
+apply(const EgIdG ind) -> Res
 {
     const auto& m = gr.chain(ind);
+    const auto d = m.ngs[m.get_single_connected_end()].num() + 1;
 
-    GRAFFINE_ASSERT(m.length() == 1, "inncorrect functor for edge deletion: length > 1");
-    GRAFFINE_ASSERT(m.is_shrinkable(), "chain ", m.idw, " is not shrinkable.");
-    GRAFFINE_ASSERT(m.has_single_leaf_vertex(),
-            "chain ", m.idw, " does not a have single connected end");
-
-    const auto e = m.get_single_connected_end();
-    const auto d = m.ngs[e].num() + 1;
-
-    if (d == Deg3) return deg3(EndSlot{m.idw, e});
-    if (d == Deg4) return deg4(EndSlot{m.idw, e});
-
-    return {ResT::undefined};  // unreachable
+    return d == Deg3 ? deg3.apply(ind)
+                     : deg4.apply(ind);
 }
 
 

@@ -54,6 +54,7 @@ namespace graffine::transforms::edge_creation {
 template<typename G,
          typename PP = void>
 struct InExistingChain
+    : public Applicable<InExistingChain<G, PP>>
 {
     using Trait = edge_creation::Trait<G>;
     using Graph = Trait::Graph;
@@ -85,7 +86,7 @@ struct InExistingChain
     explicit InExistingChain(Graph& gr,
                              std::shared_ptr<PP> pp = nullptr);
 
-    auto operator()(Vertex& v) -> Res;
+    auto apply(Vertex& v) -> Res;
 
     /**
      * Executs the transformation.
@@ -96,7 +97,14 @@ struct InExistingChain
      * \param[in] s Slot inside a chain where the new edge is placed.
      */
     template<structure::descriptors::slot S>
-    auto operator()(const S& s) -> Res;
+    auto apply(const S& s) -> Res;
+
+    /// Checks that a new edge can be inserted at vertex \p v.
+    auto applicability(const Vertex& v) const -> Applicability;
+
+    /// Checks that a new edge can be inserted at slot \p s.
+    template<structure::descriptors::slot S>
+    auto applicability(const S& s) const -> Applicability;
 
 protected:
 
@@ -124,28 +132,62 @@ InExistingChain(Graph& gr,
 template<typename G,
          typename PP>
 auto InExistingChain<G, PP>::
-operator()(Vertex& v) -> Res
+applicability(const Vertex& v) const -> Applicability
 {
-    const auto d = v.deg();
-    const auto& cmp = gr.ct[v.get_c()];
-    const auto& egv = *v.edges().begin();  // EdgeInVertex
-    const auto& egl = cmp.get_egl(egv.w);  // EdgeEnComponent 'egv.w' is EgIdC
-    const auto w = egl.w;
+    if (!checks::is_in_graph(gr, v))
+        return reject("vertex not in the graph");
 
-    if (d == Deg2) {
-        const auto a = egl.a;
-        return (*this)(a == 0 ? BulkSlot{w, a+1} : BulkSlot{w, a});
+    if (v.deg() == Deg2) {
+        const auto s = locate::bulk_slot(gr, v);
+        const auto [w, a] = s.we();
+        return applicability(a == 0 ? BulkSlot {w, gr.chain(w).length()} : s);
     }
 
-    const auto& m = gr.cn[w];
-    return (*this)(m.end_slot(egl.a, egv.e));
+    return applicability(locate::end_slot(gr, v));
+}
+
+
+template<typename G,
+         typename PP>
+template<structure::descriptors::slot S>
+auto InExistingChain<G, PP>::
+applicability(const S& s) const -> Applicability
+{
+    if constexpr (std::is_same_v<S, EndSlot>) {
+        if (!checks::is_valid(gr, s))
+            return reject("invalid end slot");
+    }
+    else {
+        const auto [w, a] = s.we();
+        if (!checks::is_valid(gr, w) || a == 0 || a > gr.chain(w).length())
+            return reject("invalid bulk slot");
+    }
+
+    return {};
+}
+
+
+template<typename G,
+         typename PP>
+auto InExistingChain<G, PP>::
+apply(Vertex& v) -> Res
+{
+    if (v.deg() == Deg2) {
+        // Position 0 is the boundary vertex of an unconnected cycle: the edge
+        // is inserted after the last edge instead, at the same vertex.
+        const auto s = locate::bulk_slot(gr, v);
+        const auto [w, a] = s.we();
+        return apply(a == 0 ? BulkSlot {w, gr.chain(w).length()} : s);
+    }
+
+    return apply(locate::end_slot(gr, v));
 }
 
 template<typename G,
          typename PP>
 template<structure::descriptors::slot S>
 auto InExistingChain<G, PP>::
-operator()(const S& s) -> Res
+apply(const S& s) -> Res
 {
     constexpr auto atChainEnd = std::is_same_v<S, EndSlot>;
 

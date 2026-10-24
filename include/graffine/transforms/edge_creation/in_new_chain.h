@@ -60,6 +60,7 @@ template<Degree D,
          typename G,
          typename PP = void>
 struct InNewChain
+    : public Applicable<InNewChain<D, G, PP>>
 {
     static_assert(D == Deg2 || D == Deg3);
 
@@ -96,7 +97,7 @@ struct InNewChain
     explicit InNewChain(Graph& gr,
                         std::shared_ptr<PP> pp = nullptr);
 
-    auto operator()(Vertex& v) noexcept -> Res;
+    auto apply(Vertex& v) -> Res;
 
     /**
      * Creates a new edge packed into a single-edge chain.
@@ -110,7 +111,7 @@ struct InNewChain
      *    EndSlot: at branching vertex (D == Deg3).
      * \param[in] s Slot at the source vertex.
      */
-    auto operator()(const Slot& s) -> Res;
+    auto apply(const Slot& s) -> Res;
 
     /**
      * Creates a new edge packed into a single-edge chain.
@@ -118,7 +119,17 @@ struct InNewChain
      * \overload
      * \param[in] w Id of the an unconnected cycle chain .
      */
-    auto operator()(ChIdG w) -> Res;
+    auto apply(ChIdG w) -> Res;
+
+    /// Checks that a new edge can be attached to vertex \p v.
+    auto applicability(const Vertex& v) const -> Applicability;
+
+    /// Checks that a new edge can be attached to the vertex at \p s.
+    auto applicability(const Slot& s) const -> Applicability;
+
+    /// Checks that a new edge can be attached to the boundary vertex of the
+    /// unconnected cycle \p w.
+    auto applicability(ChIdG w) const -> Applicability;
 
 protected:
 
@@ -165,32 +176,72 @@ template<Degree D,
          typename G,
          typename PP>
 auto InNewChain<D, G, PP>::
-operator()(Vertex& v) noexcept -> Res
+applicability(const Vertex& v) const -> Applicability
 {
-    GRAFFINE_ASSERT(v.deg() == D);
-
-    const auto& cmp = gr.compt(v.get_c());
-    const auto& egv = *v.edges().begin();  // EdgeInVertex
-    const auto& egl = cmp.get_egl(egv.indc());  // EdgeEnComponent
-    const auto w = egl.w;
-    const auto& m = gr.chain(ChIdG{w});
+    if (!checks::is_in_graph(gr, v))
+        return reject("vertex not in the graph");
+    if (v.deg() != D)
+        return reject("vertex degree does not match the transformation");
 
     if constexpr (D == Deg2) {
-
-        if (m.is_unconnected_cycle_boundary(v))
-
-            return (*this)(w);
-
-        else {
-            const auto a = egl.a;
-
-            return (*this)(a == 0 ? BulkSlot{w, a+1}
-                                  : BulkSlot{w, a});
-        }
+        const auto s = locate::bulk_slot(gr, v);
+        return checks::is_valid(gr, s) ? applicability(s)
+                                       : applicability(s.w);  // cycle boundary
     }
-    else if constexpr (D == Deg3)
+    else
+        return applicability(locate::end_slot(gr, v));
+}
 
-        return (*this)(m.end_slot(egl.a, egv.e));
+
+template<Degree D,
+         typename G,
+         typename PP>
+auto InNewChain<D, G, PP>::
+applicability(const Slot& s) const -> Applicability
+{
+    if (!checks::is_valid(gr, s))
+        return reject("invalid slot");
+
+    if constexpr (D == Deg3)
+        if (gr.ngs_at(s).num() != structure::containers::numNeigs<D>)
+            return reject("chain end is not at a vertex of degree 3");
+
+    return {};
+}
+
+
+template<Degree D,
+         typename G,
+         typename PP>
+auto InNewChain<D, G, PP>::
+applicability(const ChIdG w) const -> Applicability
+{
+    if constexpr (D != Deg2)
+        return reject("boundary vertex of a cycle has degree 2");
+    else {
+        if (!checks::is_valid(gr, w))
+            return reject("invalid chain");
+        if (!cn[w].is_unconnected_cycle())
+            return reject("chain is not an unconnected cycle");
+
+        return {};
+    }
+}
+
+
+template<Degree D,
+         typename G,
+         typename PP>
+auto InNewChain<D, G, PP>::
+apply(Vertex& v) -> Res
+{
+    if constexpr (D == Deg2) {
+        const auto s = locate::bulk_slot(gr, v);
+        return checks::is_valid(gr, s) ? apply(s)
+                                       : apply(s.w);  // cycle boundary
+    }
+    else
+        return apply(locate::end_slot(gr, v));
 }
 
 // Creates new single-edge chain attached to the original chain(s) at slot 's'.
@@ -198,7 +249,7 @@ template<Degree D,
          typename G,
          typename PP>
 auto InNewChain<D, G, PP>::
-operator()(const Slot& s) -> Res
+apply(const Slot& s) -> Res
 {
     if constexpr (verboseF)
         log_before(s, pos_str(s));
@@ -233,7 +284,7 @@ template<Degree D,
          typename G,
          typename PP>
 auto InNewChain<D, G, PP>::
-operator()(const ChIdG w) -> Res
+apply(const ChIdG w) -> Res
 {
     if constexpr (verboseF)
         log_before(w, ": unconnected cycle");

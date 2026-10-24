@@ -59,6 +59,7 @@ namespace graffine::transforms::edge_deletion {
 template<typename G,
          typename PP = void>
 struct InMultiEdgeChain
+    : public Applicable<InMultiEdgeChain<G, PP>>
 {
     using Trait = edge_deletion::Trait<G>;
     using Graph = Trait::Graph;
@@ -85,7 +86,15 @@ struct InMultiEdgeChain
      * Function call operator executing the deletion using edge index.
      * \param[in] ind Graph-wide index of the deleted edge.
      */
-    auto operator()(EgIdG ind) -> Res;
+    auto apply(EgIdG ind) -> Res;
+
+    /// Checks that edge \p ind can be deleted from its multi-edge chain.
+    auto applicability(EgIdG ind) const -> Applicability;
+
+private:
+
+    /// Degree of the end vertex of edge \p ind other than of degree 2.
+    auto end_degree(EgIdG ind) const -> Degree;
 
 protected:
 
@@ -119,34 +128,53 @@ InMultiEdgeChain(Graph& gr,
 template<typename G,
          typename PP>
 auto InMultiEdgeChain<G, PP>::
-operator()(const EgIdG ind) -> Res
+end_degree(const EgIdG ind) const -> Degree
 {
-    const auto& m = gr.chain(ind);
-    const auto& eg = m.g[gr.get_egl(ind).a];
-
-    GRAFFINE_ASSERT_CALLING(m.length() > 1,
-                   m.print("InMultiEdgeChain"),
-                   "incorrect chain for edge deletion in multi-edge chain: ",
-                   m.length());
-    GRAFFINE_ASSERT(m.is_shrinkable(), "chain ", m.idw, " is not shrinkable.");
-
+    const auto& eg = gr.edge(ind);
     const auto& vA = *eg.vertex_at_outer(End::A);
     const auto& vB = *eg.vertex_at_outer(End::B);
 
-    [[maybe_unused]] const auto bA = m.is_unconnected_cycle_boundary(vA);
-    [[maybe_unused]] const auto bB = m.is_unconnected_cycle_boundary(vB);
+    return vA.is_bulk() ? vB.deg() : vA.deg();
+}
 
-    GRAFFINE_ASSERT(not(bA || bB),
-           "edge is not deleatable: boundary of disconnected cycle chain");
 
-    const auto d = vA.is_bulk() ? vB.deg() : vA.deg();
+template<typename G,
+         typename PP>
+auto InMultiEdgeChain<G, PP>::
+applicability(const EgIdG ind) const -> Applicability
+{
+    if (!checks::is_valid_edge(gr, ind))
+        return reject("invalid edge index");
 
-    if (d == Deg1) return deg1(ind);
-    if (d == Deg2) return deg2(ind);
-    if (d == Deg3) return deg3(ind);
-    if (d == Deg4) return deg4(ind);
+    const auto& m = gr.chain(ind);
+    const auto& eg = gr.edge(ind);
+    if (m.length() < 2)
+        return reject("chain has a single edge");
+    if (m.is_unconnected_cycle_boundary(*eg.vertex_at_outer(End::A)) ||
+        m.is_unconnected_cycle_boundary(*eg.vertex_at_outer(End::B)))
+        return reject("edge is at the boundary of an unconnected cycle");
 
-    return {ResT::undefined};  // unreachable
+    switch (end_degree(ind)) {
+        case Deg1: return deg1.applicability(ind);
+        case Deg2: return deg2.applicability(ind);
+        case Deg3: return deg3.applicability(ind);
+        case Deg4: return deg4.applicability(ind);
+        default:   return reject("vertex degree at the edge end is not implemented");
+    }
+}
+
+
+template<typename G,
+         typename PP>
+auto InMultiEdgeChain<G, PP>::
+apply(const EgIdG ind) -> Res
+{
+    switch (end_degree(ind)) {
+        case Deg1: return deg1.apply(ind);
+        case Deg2: return deg2.apply(ind);
+        case Deg3: return deg3.apply(ind);
+        default:   return deg4.apply(ind);
+    }
 }
 
 

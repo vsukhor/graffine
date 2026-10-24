@@ -54,6 +54,7 @@ template<Orientation Dir,
          typename PP>
 struct On<Deg1, Dir, G, PP>
     : public FunctorBase<G, PP>
+    , public Applicable<On<Deg1, Dir, G, PP>>
 {
     using Base = FunctorBase<G, PP>;
     using Trait = Base::Trait;
@@ -93,14 +94,24 @@ struct On<Deg1, Dir, G, PP>
      * \param[in] steps Number of steps to pull over.
      * \return Result containing the component ID after the pull operation.
      */
-    auto operator()(
+    /// Pulls along \p path by \p steps. Unchecked: see Applicable.
+    auto apply(
         Path& path,
         int steps
     ) -> Res;
 
+    /// Checks that \p path can be pulled by \p steps.
+    auto applicability(
+        const Path& path,
+        int steps
+    ) const -> Applicability;
+
 protected:
 
     using Base::cn;
+    using Base::gr;
+    using Base::check_path_basics;
+    using Base::check_source;
     using Base::updateProperties;
 
     /**
@@ -138,7 +149,27 @@ template<Orientation Dir,
          typename G,
          typename PP>
 auto On<Deg1, Dir, G, PP>::
-operator()(
+applicability(
+    const Path& path,
+    const int steps
+) const -> Applicability
+{
+    if (const auto ok = check_path_basics(path, steps); !ok)
+        return ok;
+
+    const auto& m = cn[path.d.w];
+    if (m.ngs[path.d.end_slot(m).e].num())
+        return reject("driver end is not free");
+
+    return check_source(path, steps);
+}
+
+
+template<Orientation Dir,
+         typename G,
+         typename PP>
+auto On<Deg1, Dir, G, PP>::
+apply(
     Path& path,
     int steps
 ) -> Res

@@ -54,6 +54,7 @@ namespace graffine::transforms::vertex_merger {
 template<typename G,
          typename PP>
 struct From<Deg1, Deg1, G, PP>
+    : public Applicable<From<Deg1, Deg1, G, PP>>
 {
     using Trait = vertex_merger::Trait<G>;
     using Graph = Trait::Graph;
@@ -86,11 +87,12 @@ struct From<Deg1, Deg1, G, PP>
     /**
      * Merges two vertices of degree 1 to produce a vertex of degree 2.
      * \details Calls its overload using chain free end slots.
+     * Unchecked: see Applicable.
      * \param[in] v1 First merged vertex.
      * \param[in] v2 Second merged vertex.
      */
-    auto operator()(Vertex& v1,
-                    Vertex& v2) noexcept -> Res;
+    auto apply(Vertex& v1,
+               Vertex& v2) -> Res;
 
     /**
      * Merges two vertices of degree 1 to produce a vertex of degree 2.
@@ -100,13 +102,26 @@ struct From<Deg1, Deg1, G, PP>
      * then, if \p e1 is A, reverses g of w1, if \p e1 is B, reverses g of w2:
      * e1 == A: 456 + 0123 -> 6540123 (>>> + >>>> -> <<<>>>>)
      * e1 == B: 456 + 0123 -> 4563210 (>>> + >>>> -> >>><<<<)
+     * Unchecked: see Applicable.
      * \param[in] s1 Chain boundary slot at the 1st parent vertex.
      * \param[in] s2 Chain boundary slot on the 2nd parent vertex.
      */
-    auto operator()(const EndSlot& s1,
-                    const EndSlot& s2) -> Res;
+    auto apply(const EndSlot& s1,
+               const EndSlot& s2) -> Res;
+
+    /// Checks that vertices \p v1 and \p v2 can be merged.
+    auto applicability(const Vertex& v1,
+                       const Vertex& v2) const -> Applicability;
+
+    /// Checks that the vertices at slots \p s1 and \p s2 can be merged.
+    auto applicability(const EndSlot& s1,
+                       const EndSlot& s2) const -> Applicability;
 
 private:
+
+    /// Free end slot of a vertex of degree 1 belonging to the graph.
+    auto slot_of(const Vertex& v) const -> EndSlot;
+
 
     Graph& gr;  ///< Reference to the modified graph object.
 
@@ -136,27 +151,67 @@ From(Graph& gr,
 template<typename G,
          typename PP>
 auto From<Deg1, Deg1, G, PP>::
-operator()(
+slot_of(const Vertex& v) const -> EndSlot
+{
+    const auto& egs = *v.edges().begin();
+    const auto& egl = gr.compt(v.get_c()).get_egl(egs.indc());
+
+    return gr.chain(egl.w).end_slot(egl.a, egs.e);
+}
+
+
+template<typename G,
+         typename PP>
+auto From<Deg1, Deg1, G, PP>::
+applicability(
+    const Vertex& v1,
+    const Vertex& v2
+) const -> Applicability
+{
+    if (!checks::is_in_graph(gr, v1) || !checks::is_in_graph(gr, v2))
+        return reject("vertex not in the graph");
+    if (!v1.is_leaf() || !v2.is_leaf())
+        return reject("vertex degree is not 1");
+
+    return applicability(slot_of(v1), slot_of(v2));
+}
+
+
+template<typename G,
+         typename PP>
+auto From<Deg1, Deg1, G, PP>::
+applicability(
+    const EndSlot& s1,
+    const EndSlot& s2
+) const -> Applicability
+{
+    if (!checks::is_valid(gr, s1) || !checks::is_valid(gr, s2))
+        return reject("invalid end slot");
+    if (s1 == s2)
+        return reject("merging a vertex with itself");
+
+    const auto& m1 = gr.chain(s1.w);
+    const auto& m2 = gr.chain(s2.w);
+    if (!m1.length() || !m2.length())
+        return reject("chain has no edges");
+    if (m1.is_connected_at(s1.e) || m2.is_connected_at(s2.e))
+        return reject("chain end is not free");
+    if (s1.w == s2.w && m1.length() < Chain::minCycleLength)
+        return reject("cycle would be shorter than the minimal cycle length");
+
+    return {};
+}
+
+
+template<typename G,
+         typename PP>
+auto From<Deg1, Deg1, G, PP>::
+apply(
     Vertex& v1,
     Vertex& v2
-) noexcept -> Res
+) -> Res
 {
-    GRAFFINE_ASSERT(v1.is_leaf(), "Vertex 1 is not Leaf");
-    GRAFFINE_ASSERT(v2.is_leaf(), "Vertex 2 is not Leaf");
-
-    const auto& egs1 = *v1.edges().begin();
-    const auto& egs2 = *v2.edges().begin();
-
-    const auto egl1 = gr.ct[v1.get_c()].get_egl(egs1.w);
-    const auto egl2 = gr.ct[v2.get_c()].get_egl(egs2.w);
-
-    const EndSlot s1 = gr.chain(egl1.w).end_slot(egl1.a, egs1.e);
-    const EndSlot s2 = gr.chain(egl2.w).end_slot(egl2.a, egs2.e);
-
-    GRAFFINE_ASSERT(s1.is_defined(), "Vertex 1 is not at chain end of", egl1.w);
-    GRAFFINE_ASSERT(s2.is_defined(), "Vertex 2 is not at chain end of", egl2.w);
-
-    return (*this)(s1, s2);
+    return apply(slot_of(v1), slot_of(v2));
 }
 
 
@@ -165,7 +220,7 @@ operator()(
 template<typename G,
          typename PP>
 auto From<Deg1, Deg1, G, PP>::
-operator()(
+apply(
     const EndSlot& s1,
     const EndSlot& s2
 ) -> Res

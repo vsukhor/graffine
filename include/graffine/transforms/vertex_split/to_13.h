@@ -53,6 +53,7 @@ namespace graffine::transforms::vertex_split {
 template<typename G,
          typename PP>
 struct To<Deg1, Deg3, G, PP>
+    : public Applicable<To<Deg1, Deg3, G, PP>>
 {
     using Trait = vertex_split::Trait<G>;
     using Graph = Trait::Graph;
@@ -92,14 +93,21 @@ struct To<Deg1, Deg3, G, PP>
      * \param[in] v Degree 3 vertex.
      * \param[in] s Descriptor of the incident edge to get disconnected.
      */
-    auto operator()(Vertex& v,
-                    const EdgeInVertex& s) -> Res;
+    auto apply(Vertex& v,
+               const EdgeInVertex& s) -> Res;
 
     /**
      * Divides the chain at a vertex of degree 4 to produce 1+3.
      * \param[in] s Slot on a oundary chain vertex.
      */
-    auto operator()(const EndSlot& s) -> Res;
+    auto apply(const EndSlot& s) -> Res;
+
+    /// Checks that edge \p s can be detached from vertex \p v.
+    auto applicability(const Vertex& v,
+                       const EdgeInVertex& s) const -> Applicability;
+
+    /// Checks that chain end \p s can be detached from its junction.
+    auto applicability(const EndSlot& s) const -> Applicability;
 
 private:
 
@@ -133,8 +141,41 @@ To(Graph& gr,
 template<typename G,
          typename PP>
 auto To<Deg1, Deg3, G, PP>::
-operator()(Vertex& v,
-           const EdgeInVertex& s) -> Res
+applicability(
+    const Vertex& v,
+    const EdgeInVertex& s
+) const -> Applicability
+{
+    if (!checks::is_in_graph(gr, v))
+        return reject("vertex not in the graph");
+    if (v.deg() != I)
+        return reject("vertex degree is not 4");
+    if (!v.is_conected_to(s))
+        return reject("edge is not connected to the vertex");
+
+    return applicability(gr.compt(v.get_c()).end_slot(s));
+}
+
+
+template<typename G,
+         typename PP>
+auto To<Deg1, Deg3, G, PP>::
+applicability(const EndSlot& s) const -> Applicability
+{
+    if (!checks::is_valid(gr, s))
+        return reject("invalid end slot");
+    if (gr.ngs_at(s).num() != structure::containers::numNeigs<I>)
+        return reject("chain end is not at a vertex of degree 4");
+
+    return {};
+}
+
+
+template<typename G,
+         typename PP>
+auto To<Deg1, Deg3, G, PP>::
+apply(Vertex& v,
+      const EdgeInVertex& s) -> Res
 {
     GRAFFINE_ASSERT_CALLING(v.deg() == I,
                    v.print("INCORRECT DEGREE"),
@@ -146,7 +187,7 @@ operator()(Vertex& v,
 
     const auto& cmp = gr.compt(v.get_c());
 
-    return (*this)(cmp.end_slot(s));
+    return apply(cmp.end_slot(s));
 }
 
 
@@ -154,7 +195,7 @@ operator()(Vertex& v,
 template<typename G,
          typename PP>
 auto To<Deg1, Deg3, G, PP>::
-operator()(const EndSlot& s) -> Res
+apply(const EndSlot& s) -> Res
 {
     const auto [w, e] = s.we();
 

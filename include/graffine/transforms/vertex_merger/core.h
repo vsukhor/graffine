@@ -173,6 +173,20 @@ antiparallel(
     const ChIdG w2
 ) -> Res
 {
+    GRAFFINE_REQUIRE(w1 < gr.num_chains() && w2 < gr.num_chains(),
+                     shortName, " antiparallel: invalid chain ", w1, " or ", w2);
+    GRAFFINE_REQUIRE(End::is_valid(end), shortName, " antiparallel: invalid end");
+    GRAFFINE_REQUIRE(w1 != w2, shortName, " antiparallel: same chain ", w1,
+                     ": to_cycle should be used instead");
+    GRAFFINE_REQUIRE(!cn[w1].is_connected_at(end), shortName,
+                     " antiparallel: end ", End::str(end), " of w1 ", w1,
+                     " is not free");
+    GRAFFINE_REQUIRE(!cn[w2].is_connected_at(end), shortName,
+                     " antiparallel: end ", End::str(end), " of w2 ", w2,
+                     " is not free");
+    GRAFFINE_REQUIRE(cn[w1].length() && cn[w2].length(), shortName,
+                     " antiparallel: chain ", w1, " or ", w2, " has no edges");
+
     auto& m1 = cn[w1];
     auto& m2 = cn[w2];
 
@@ -190,17 +204,6 @@ antiparallel(
 
     if constexpr (verboseF)
         report.before(s1, s2, "a");
-
-    GRAFFINE_ASSERT(w1 != w2, shortName, " antiparallel: same chain ", w1, " w1 == w2 ",
-           "merge_to_cycle should be used instead");
-    GRAFFINE_ASSERT(!m1.is_connected_at(end), shortName,
-           " antiparallel: end ", end, " of w1 ", w1, " is not free");
-    GRAFFINE_ASSERT(!m2.is_connected_at(end),
-           " antiparallel: end ", end, " of w2 ", w2, " is not free");
-    GRAFFINE_ASSERT(m1.length(), shortName,
-           " antiparallel: chain w1 ", w1, " has no edges");
-    GRAFFINE_ASSERT(m2.length(), shortName,
-           " antiparallel: chain w2 ", w2, " has no edges");
 
     if constexpr (!std::is_void_v<PP>)
         updateProperties->vertexMerger.on_start(s2, s1);  // (preserved, removed)
@@ -288,6 +291,17 @@ parallel(
 {
     // connects A_w2_B-A_w1_B  -->  A_w1_B
 
+    GRAFFINE_REQUIRE(w1 < gr.num_chains() && w2 < gr.num_chains(),
+                     shortName, " parallel: invalid chain ", w1, " or ", w2);
+    GRAFFINE_REQUIRE(w1 != w2, shortName, " parallel: same chain ", w1,
+                     ": to_cycle should be used instead");
+    GRAFFINE_REQUIRE(!cn[w1].is_connected_at(End::A), shortName,
+                     " parallel: end A of w1 ", w1, " is not free");
+    GRAFFINE_REQUIRE(!cn[w2].is_connected_at(End::B), shortName,
+                     " parallel: end B of w2 ", w2, " is not free");
+    GRAFFINE_REQUIRE(cn[w1].length() && cn[w2].length(), shortName,
+                     " parallel: chain ", w1, " or ", w2, " has no edges");
+
     constexpr typename End::Id e1 {End::A};
     constexpr typename End::Id e2 {End::B};
 
@@ -313,18 +327,6 @@ parallel(
 
     if constexpr (verboseF)
         report.before(s2, s1, "p");
-
-    GRAFFINE_ASSERT(w1 != w2,
-           shortName, " parallel: w1 == w2 == ", w1, ": ",
-            "merge_to_cycle should be used instead");
-    GRAFFINE_ASSERT(!cn[w1].is_connected_at(End::A),
-            shortName, " parallel: end A of w1 ", w1, " is not free");
-    GRAFFINE_ASSERT(!cn[w2].is_connected_at(End::B),
-            shortName, " parallel: end B of w2 ", w2, " is not free");
-    GRAFFINE_ASSERT(cn[w1].length(),
-            shortName, " parallel: chain w1 ", w1, " has no edges");
-    GRAFFINE_ASSERT(cn[w2].length(),
-            shortName, " parallel: chain w2 ", w2, " has no edges");
 
     if constexpr(!std::is_void_v<PP>)
         updateProperties->vertexMerger.on_start(s2, s1);  // (preserved, removed)
@@ -390,6 +392,9 @@ to_linear(
     const EndSlot& s2
 ) -> Res
 {
+    GRAFFINE_REQUIRE(End::is_valid(s1.e) && End::is_valid(s2.e),
+                     shortName, " to_linear: invalid end");
+
     const auto [w1, e1] = s1.we();
     const auto [w2, e2] = s2.we();
 
@@ -403,13 +408,12 @@ template<typename G,
 auto Core<G, PP>::
 to_cycle(const ChIdG w) -> Res
 {
-    GRAFFINE_ASSERT(!cn[w].is_unconnected_cycle(),
-           shortName, ": attempt to merge_to_cycle a separate cycle chain ", w);
-    GRAFFINE_ASSERT(!cn[w].is_connected_at(End::A) &&
-           !cn[w].is_connected_at(End::B),
-           shortName, ": attempt to merge_to_cycle a not separate chain ", w);
-    GRAFFINE_ASSERT(cn[w].length() >= Chain::minCycleLength,
-           shortName, " cycle: chain w ", w, "length < minCycleLength");
+    GRAFFINE_REQUIRE(w < gr.num_chains(), shortName, " to_cycle: invalid chain ", w);
+    GRAFFINE_REQUIRE(!cn[w].is_connected_at(End::A) &&
+                     !cn[w].is_connected_at(End::B), shortName,
+                     ": to_cycle of chain ", w, " not free at both ends");
+    GRAFFINE_REQUIRE(cn[w].length() >= Chain::minCycleLength, shortName,
+                     ": to_cycle of chain ", w, " shorter than minCycleLength");
 
     const EndSlot sA {w, End::A};
     const EndSlot sB {w, End::B};

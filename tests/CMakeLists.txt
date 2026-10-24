@@ -20,6 +20,7 @@ list(APPEND cpps
     graph.cpp
     io.cpp
     paths.cpp
+    preconditions.cpp
     vertex_merger_core.cpp
     vertex_merger_11.cpp
     vertex_merger_12.cpp

@@ -163,7 +163,7 @@ public: // Functions
 
     constexpr void set_egl() { egl.set(*this); };
     constexpr auto get_egl() const noexcept -> const EdgeDescriptors & { return egl; };
-    constexpr auto get_egl() noexcept -> EdgeDescriptors && { return std::move(egl); };
+    constexpr auto get_egl() noexcept -> EdgeDescriptors & { return egl; };
     constexpr auto get_egl(const EgIdC i) const noexcept -> const EdgeDescr&  { return egl[i]; };
     constexpr auto get_egl(const EgIdC i) noexcept -> EdgeDescr&  { return egl[i]; };
     constexpr void append(EdgeDescriptors &&other) noexcept { egl.append(std::move(other)); };
@@ -1857,7 +1857,11 @@ constexpr
 auto Component<Ch>::
 bulk_slot(const EdgeInVertex& ed) const noexcept -> BulkSlot
 {
-    return egl[ed.indc()].bulk_slot().next();
+    // The vertex is at the inner end ed.e of the edge: its position in the
+    // chain depends on the orientation of the edge.
+    const auto& d = egl[ed.indc()];
+
+    return cn[d.w].egEnd_to_bulkslot(ed.e, d.a);
 }
 
 template <typename Ch>

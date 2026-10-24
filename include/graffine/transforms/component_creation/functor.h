@@ -71,6 +71,7 @@ using Trait = transforms::Trait<TransformType::ComponentCreation, G>;
 template<typename G,
          typename PP = void>
 struct Functor
+    : public Applicable<Functor<G, PP>>
 {
     using Trait = component_creation::Trait<G>;
     using Graph = Trait::Graph;
@@ -95,7 +96,10 @@ struct Functor
      * Function call operator executing the transformation.
      * \param[in] s Length (in edges) of the chain forming the new component.
      */
-    auto operator()(std::size_t s = 1) -> Res;
+    auto apply(std::size_t s = 1) -> Res;
+
+    /// Checks that a component of \p s edges can be created.
+    auto applicability(std::size_t s = 1) const -> Applicability;
 
 protected:
 
@@ -123,7 +127,19 @@ Functor(Graph& gr,
 template<typename G,
          typename PP>
 auto Functor<G, PP>::
-operator()(const std::size_t s) -> Res
+applicability(const std::size_t s) const -> Applicability
+{
+    if (s < Graph::Chain::minLength)
+        return reject("component would have no edges");
+
+    return {};
+}
+
+
+template<typename G,
+         typename PP>
+auto Functor<G, PP>::
+apply(const std::size_t s) -> Res
 {
    if constexpr (verboseF) {
         jot(colorcodes::GREEN, "Component creation: ",

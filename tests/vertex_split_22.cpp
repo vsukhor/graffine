@@ -72,7 +72,7 @@ TEST_F(VertexSplitTest, To22_4Lines_AA_BB)
 
     VertexSplit<Deg2, Deg2, G> divide {gr};
 
-    divide.template operator()<true, false, false>(ESlot{w5, e},
+    divide.template apply<true, false, false>(ESlot{w5, e},
                                                    ESlot{w6, e});
 
     if constexpr (profuse)
@@ -161,7 +161,7 @@ TEST_F(VertexSplitTest, To22_4Lines_AB_AB)
 
     VertexSplit<Deg2, Deg2, G> divide {gr};
 
-    divide.template operator()<true, false, false>(ESlot{w6, eA},
+    divide.template apply<true, false, false>(ESlot{w6, eA},
                                                    ESlot{w1, eB});
 
     if constexpr (profuse)
@@ -250,7 +250,7 @@ TEST_F(VertexSplitTest, To22_4Lines_BB_AA)
 
     VertexSplit<2, 2, G> divide {gr};
 
-    divide.template operator()<true, false, false>(ESlot{w1, e},
+    divide.template apply<true, false, false>(ESlot{w1, e},
                                                    ESlot{w3, e});
 
     if constexpr (profuse)
@@ -339,7 +339,7 @@ TEST_F(VertexSplitTest, To22_2Lines_Cycle_AA_BB)
 
     VertexSplit<2, 2, G> divide {gr};
 
-    divide.template operator()<true, false, false>(ESlot{w1, e},
+    divide.template apply<true, false, false>(ESlot{w1, e},
                                                    ESlot{w3, e});
 
     if constexpr (profuse)
@@ -423,7 +423,7 @@ TEST_F(VertexSplitTest, To22_2Lines_Cycle_BB_AA)
 
     VertexSplit<2, 2, G> divide {gr};
 
-    divide.template operator()<true, false, false>(ESlot{w2, e},
+    divide.template apply<true, false, false>(ESlot{w2, e},
                                                    ESlot{w1, e});
 
     if constexpr (profuse)
@@ -506,7 +506,7 @@ TEST_F(VertexSplitTest, To22_2Lines_Cycle_AB_AB)
 
     VertexSplit<2, 2, G> divide {gr};
 
-    divide.template operator()<true, false, false>(ESlot{w3, eA},
+    divide.template apply<true, false, false>(ESlot{w3, eA},
                                                    ESlot{w1, eB});
 
     if constexpr (profuse)
@@ -588,7 +588,7 @@ TEST_F(VertexSplitTest, To22_2Lines_Cycle1_AB_AB)
 
     VertexSplit<2, 2, G> divide {gr};
 
-    divide.template operator()<true, false, true>(ESlot{w3, eA},
+    divide.template apply<true, false, true>(ESlot{w3, eA},
                                                   ESlot{w2, eB});
 
     if constexpr (profuse)
@@ -698,7 +698,7 @@ TEST_F(VertexSplitTest, To22_2Lines_Cycle2_AB_AB)
 
     VertexSplit<2, 2, G> divide {gr};
 
-    divide.template operator()<true, false, true>(ESlot{w1, eA},
+    divide.template apply<true, false, true>(ESlot{w1, eA},
                                                   ESlot{w1, eB});
 
     if constexpr (profuse)
@@ -809,7 +809,7 @@ TEST_F(VertexSplitTest, To22_2Cycles)
 
     VertexSplit<2, 2, G> divide {gr};  // disconnect the cycles
 
-    divide.template operator()<true, true, true>(ESlot{w1, eA},
+    divide.template apply<true, true, true>(ESlot{w1, eA},
                                                  ESlot{w1, eB});
 
     if constexpr (profuse)

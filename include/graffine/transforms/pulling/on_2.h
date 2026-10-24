@@ -58,6 +58,7 @@ template<Orientation Dir,
          typename PP>
 struct On<Deg2, Dir, G, PP>
     : public FunctorBase<G, PP>
+    , public Applicable<On<Deg2, Dir, G, PP>>
 {
     using Base = FunctorBase<G, PP>;
     using Trait = Base::Trait;
@@ -94,15 +95,24 @@ struct On<Deg2, Dir, G, PP>
     /**
      * Pulls a vertex of degree 2.
      */
-    auto operator()(
+    /// Pulls along \p path by \p steps. Unchecked: see Applicable.
+    auto apply(
         Path& path,
         int steps
     ) -> Res;
+
+    /// Checks that \p path can be pulled by \p steps.
+    auto applicability(
+        const Path& path,
+        int steps
+    ) const -> Applicability;
 
 protected:
 
     using Base::gr;
     using Base::cn;
+    using Base::check_path_basics;
+    using Base::check_source;
     using Base::egl;
     using Base::updateProperties;
 
@@ -173,7 +183,35 @@ template<Orientation Dir,
          typename G,
          typename PP>
 auto On<Deg2, Dir, G, PP>::
-operator()(
+applicability(
+    const Path& path,
+    const int steps
+) const -> Applicability
+{
+    if (const auto ok = check_path_basics(path, steps); !ok)
+        return ok;
+
+    // apply() corrects the driver before pulling: check the corrected path.
+    auto corrected = path;
+    if (corrected.length() > 1)
+        correct_driver(corrected);
+
+    if (corrected.drv().w == corrected.src().w) {
+        const auto& m = cn[corrected.s.w];
+        if (!m.is_cycle() && m.ngs[corrected.s.e].num())
+            return reject("source end is not free");
+        return {};
+    }
+
+    return check_source(corrected, steps);
+}
+
+
+template<Orientation Dir,
+         typename G,
+         typename PP>
+auto On<Deg2, Dir, G, PP>::
+apply(
     Path& path,
     const int steps
 ) -> Res

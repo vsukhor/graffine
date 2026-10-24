@@ -54,6 +54,7 @@ namespace graffine::transforms::vertex_merger {
 template<typename G,
          typename PP = void>
 struct Functor
+    : public Applicable<Functor<G, PP>>
 {
     using Trait = vertex_merger::Trait<G>;
     using Graph = Trait::Graph;
@@ -71,11 +72,16 @@ struct Functor
 
     /**
      * Merges two vertices into one.
+     * \details Unchecked: see Applicable.
      * \param[in] v1 The 1st parent vertex.
      * \param[in] v2 The 2nd parent vertex.
      */
-    auto operator()(Vertex& v1,
-                    Vertex& v2) noexcept -> Res;
+    auto apply(Vertex& v1,
+               Vertex& v2) -> Res;
+
+    /// Checks that vertices \p v1 and \p v2 can be merged.
+    auto applicability(const Vertex& v1,
+                       const Vertex& v2) const -> Applicability;
 
     From<Deg1, Deg1, G, PP> from11;
     From<Deg1, Deg2, G, PP> from12;
@@ -102,40 +108,56 @@ Functor(Graph& gr,
 template<typename G,
          typename PP>
 auto Functor<G, PP>::
-operator()(
-    Vertex& v1,
-    Vertex& v2
-) noexcept -> Res
+applicability(
+    const Vertex& v1,
+    const Vertex& v2
+) const -> Applicability
 {
     const auto d1 = v1.deg();
-
-    GRAFFINE_ASSERT(is_implemented_degree(d1),
-           "Vertex degree ", d1, " is not implemented: vertex ", v1.id);
-
     const auto d2 = v2.deg();
 
-    GRAFFINE_ASSERT(is_implemented_degree(d2),
-           "Vertex degree ", d2, " is not implemented: vertex ", v2.id);
-
     if (d1 == Deg1 && d2 == Deg1)
-
-        return from11(v1, v2);
+        return from11.applicability(v1, v2);
 
     if ((d1 == Deg1 && d2 == Deg2) ||
         (d1 == Deg2 && d2 == Deg1))
-
-        return from12(v1, v2);
+        return from12.applicability(v1, v2);
 
     if ((d1 == Deg1 && d2 == Deg3) ||
         (d1 == Deg3 && d2 == Deg1))
-
-        return from13(v1, v2);
+        return from13.applicability(v1, v2);
 
     if (d1 == Deg2 && d2 == Deg2)
+        return from22.applicability(v1, v2);
 
-        return from22(v1, v2);
+    return reject("merger is not implemented for these vertex degrees");
+}
 
-    return {};  // unreachable
+
+template<typename G,
+         typename PP>
+auto Functor<G, PP>::
+apply(
+    Vertex& v1,
+    Vertex& v2
+) -> Res
+{
+    const auto d1 = v1.deg();
+    const auto d2 = v2.deg();
+
+    if (d1 == Deg1 && d2 == Deg1)
+        return from11.apply(v1, v2);
+
+    if ((d1 == Deg1 && d2 == Deg2) ||
+        (d1 == Deg2 && d2 == Deg1))
+        return from12.apply(v1, v2);
+
+    if ((d1 == Deg1 && d2 == Deg3) ||
+        (d1 == Deg3 && d2 == Deg1))
+        return from13.apply(v1, v2);
+
+    /* (d1 == Deg2 && d2 == Deg2) */
+    return from22.apply(v1, v2);
 }
 
 }  // namespace graffine::transforms::vertex_merger

@@ -70,6 +70,7 @@ using Trait = transforms::Trait<TransformType::ComponentDeletion, G>;
 template<typename G,
          typename PP = void>
 struct Functor
+    : public Applicable<Functor<G, PP>>
 {
     using Trait = component_deletion::Trait<G>;
     using Graph = Trait::Graph;
@@ -95,7 +96,10 @@ struct Functor
      * Function call operator executing the transformation.
      * \param[in] c Index of the connected component to be deleted.
      */
-    auto operator()(CmpId c) -> Res;
+    auto apply(CmpId c) -> Res;
+
+    /// Checks that component \p c can be deleted.
+    auto applicability(CmpId c) const -> Applicability;
 
 protected:
 
@@ -122,7 +126,19 @@ Functor(Graph& gr,
 template<typename G,
          typename PP>
 auto Functor<G, PP>::
-operator()(const CmpId c) -> Res
+applicability(const CmpId c) const -> Applicability
+{
+    if (c >= gr.num_compts())
+        return reject("invalid component index");
+
+    return {};
+}
+
+
+template<typename G,
+         typename PP>
+auto Functor<G, PP>::
+apply(const CmpId c) -> Res
 {
     auto& cn = gr.chains();
     auto& ct = gr.compts();

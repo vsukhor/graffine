@@ -52,6 +52,7 @@ namespace graffine::transforms::vertex_merger {
 template<typename G,
          typename PP>
 struct From<Deg1, Deg2, G, PP>
+    : public Applicable<From<Deg1, Deg2, G, PP>>
 {
     using Trait = vertex_merger::Trait<G>;
     using Graph = Trait::Graph;
@@ -85,29 +86,50 @@ struct From<Deg1, Deg2, G, PP>
 
     /**
      * Merges a vertex of degree 1 to a chain internal vertex.
+     * \details Unchecked: see Applicable. The vertices may be given in any
+     * order. The degree 2 vertex may also be the boundary vertex of an
+     * unconnected cycle.
      * \param[in] v1 The 1st parent vertex.
      * \param[in] v2 The 2nd parent vertex.
      */
-    auto operator()(Vertex& v1,
-                    Vertex& v2) noexcept -> Res;
+    auto apply(Vertex& v1,
+               Vertex& v2) -> Res;
 
     /**
      * Merges a vertex of degree 1 to a chain internal vertex.
+     * \details Unchecked: see Applicable.
      * \param[in] s1 Slot on the parent degree 1 vertex.
      * \param[in] s2 Slot on the parent degree 2 vertex.
      */
-    auto operator()(const EndSlot& s1,
-                    const BulkSlot& s2) -> Res;
+    auto apply(const EndSlot& s1,
+               const BulkSlot& s2) -> Res;
 
     /**
      * Merges a vertex of degree 1 to a boundary vertex in an unconnected cycle.
+     * \details Unchecked: see Applicable.
      * \param[in] s1 Slot on the merged degree 1 vertex.
      * \param[in] w2 Chain index of the cycle chain.
      */
-    auto operator()(const EndSlot& s1,
-                    ChIdG w2) -> Res;
+    auto apply(const EndSlot& s1,
+               ChIdG w2) -> Res;
+
+    /// Checks that vertices \p v1 and \p v2 can be merged.
+    auto applicability(const Vertex& v1,
+                       const Vertex& v2) const -> Applicability;
+
+    /// Checks that the vertices at \p s1 and \p s2 can be merged.
+    auto applicability(const EndSlot& s1,
+                       const BulkSlot& s2) const -> Applicability;
+
+    /// Checks that the vertex at \p s1 can be merged to the boundary vertex
+    /// of the unconnected cycle \p w2.
+    auto applicability(const EndSlot& s1,
+                       ChIdG w2) const -> Applicability;
 
 private:
+
+    /// Checks of the free end \p s1.
+    auto check_free_end(const EndSlot& s1) const -> Applicability;
 
     Graph& gr;  ///< Reference to the modified graph object.
     Graph::Chains& cn;  ///< Reference to the graph edge chains.
@@ -139,42 +161,105 @@ From(Graph& gr,
 template<typename G,
          typename PP>
 auto From<Deg1, Deg2, G, PP>::
-operator()(
+check_free_end(const EndSlot& s1) const -> Applicability
+{
+    if (!checks::is_valid(gr, s1))
+        return reject("invalid end slot");
+    if (!gr.chain(s1.w).length())
+        return reject("chain has no edges");
+    if (gr.chain(s1.w).is_connected_at(s1.e))
+        return reject("chain end is not free");
+
+    return {};
+}
+
+
+template<typename G,
+         typename PP>
+auto From<Deg1, Deg2, G, PP>::
+applicability(
+    const Vertex& v1,
+    const Vertex& v2
+) const -> Applicability
+{
+    if (!checks::is_in_graph(gr, v1) || !checks::is_in_graph(gr, v2))
+        return reject("vertex not in the graph");
+
+    const auto& leaf = v1.is_leaf() ? v1 : v2;
+    const auto& bulk = v1.is_leaf() ? v2 : v1;
+    if (!leaf.is_leaf() || !bulk.is_bulk())
+        return reject("vertex degrees are not 1 and 2");
+
+    const auto s1 = locate::end_slot(gr, leaf);
+    const auto s2 = locate::bulk_slot(gr, bulk);
+    if (checks::is_valid(gr, s2))
+        return applicability(s1, s2);
+
+    return applicability(s1, s2.w);  // boundary vertex of a cycle
+}
+
+
+template<typename G,
+         typename PP>
+auto From<Deg1, Deg2, G, PP>::
+applicability(
+    const EndSlot& s1,
+    const BulkSlot& s2
+) const -> Applicability
+{
+    if (const auto ok = check_free_end(s1); !ok)
+        return ok;
+    if (!checks::is_valid(gr, s2))
+        return reject("invalid bulk slot");
+
+    // Merging an end to the bulk of its own chain closes a loop between them.
+    if (s1.w == s2.w) {
+        const auto [w, a] = s2.we();
+        const auto loop = s1.e == End::A ? a() : gr.chain(w).length() - a();
+        if (loop < Chain::minCycleLength)
+            return reject("loop would be shorter than the minimal cycle length");
+    }
+
+    return {};
+}
+
+
+template<typename G,
+         typename PP>
+auto From<Deg1, Deg2, G, PP>::
+applicability(
+    const EndSlot& s1,
+    const ChIdG w2
+) const -> Applicability
+{
+    if (const auto ok = check_free_end(s1); !ok)
+        return ok;
+    if (!checks::is_valid(gr, w2))
+        return reject("invalid chain");
+    if (!gr.chain(w2).is_unconnected_cycle())
+        return reject("chain is not an unconnected cycle");
+
+    return {};
+}
+
+
+template<typename G,
+         typename PP>
+auto From<Deg1, Deg2, G, PP>::
+apply(
     Vertex& v1,
     Vertex& v2
-) noexcept -> Res
+) -> Res
 {
-    GRAFFINE_ASSERT(v1.is_leaf() || v2.is_leaf(), "No leaf vertex found in input.");
+    const auto& leaf = v1.is_leaf() ? v1 : v2;
+    const auto& bulk = v1.is_leaf() ? v2 : v1;
 
-    const auto& egs1 = *v1.edges().begin();
-    const auto& egs2 = *v2.edges().begin();
+    const auto s1 = locate::end_slot(gr, leaf);
+    const auto s2 = locate::bulk_slot(gr, bulk);
+    if (checks::is_valid(gr, s2))
+        return apply(s1, s2);
 
-    const auto egl1 = gr.ct[v1.get_c()].get_egl(egs1.w);
-    const auto egl2 = gr.ct[v2.get_c()].get_egl(egs1.w);
-
-
-    if (v1.is_leaf()) {
-
-        GRAFFINE_ASSERT(v2.is_bulk(), "Vertex 2 is not BULK");
-
-        const EndSlot es = gr.cn[egl1.w].end_slot(egl1.a, egs1.e);
-        GRAFFINE_ASSERT(es.is_defined(), "Vertex 1 is not at chain end of", egl1.w);
-
-        const BulkSlot bs {egl2.w, egl2.a};
-
-        return (*this)(es, bs);
-    }
-    else {  // v2.is_leaf()
-
-        GRAFFINE_ASSERT(v1.is_bulk(), "Vertex 1 is not BULK");
-
-        const EndSlot es = gr.cn[egl2.w].end_slot(egl2.a, egs2.e);
-        GRAFFINE_ASSERT(es.is_defined(), "Vertex 2 is not at chain end of", egl2.w);
-
-        const BulkSlot bs {egl1.w, egl1.a};
-
-        return (*this)(es, bs);
-    }
+    return apply(s1, s2.w);  // boundary vertex of a cycle
 }
 
 
@@ -182,7 +267,7 @@ operator()(
 template<typename G,
          typename PP>
 auto From<Deg1, Deg2, G, PP>::
-operator()(
+apply(
     const EndSlot& s1,
     const BulkSlot& s2
 ) -> Res
@@ -199,7 +284,7 @@ operator()(
 
     if (cn[w2].is_unconnected_cycle()) {
         gr.rotate_chain(cn[w2], a2());
-        return (*this)(s1, w2);
+        return apply(s1, w2);
     }
 
     // Print out summary before the operation.
@@ -327,7 +412,7 @@ operator()(
 template<typename G,
          typename PP>
 auto From<Deg1, Deg2, G, PP>::
-operator()(
+apply(
     const EndSlot& s1,
     const ChIdG w2
 ) -> Res

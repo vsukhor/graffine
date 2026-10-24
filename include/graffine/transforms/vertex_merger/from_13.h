@@ -51,6 +51,7 @@ namespace graffine::transforms::vertex_merger {
 template<typename G,
          typename PP>
 struct From<Deg1, Deg3, G, PP>
+    : public Applicable<From<Deg1, Deg3, G, PP>>
 {
     using Trait = vertex_merger::Trait<G>;
     using Graph = Trait::Graph;
@@ -83,19 +84,30 @@ struct From<Deg1, Deg3, G, PP>
 
     /**
      * Merges a vertex of degree 1 to a vertex of degree 3.
+     * \details Unchecked: see Applicable. The vertices may be given in any
+     * order.
      * \param[in] v1 Degree 1 input vertex.
      * \param[in] v2 Degree 3 input vertex.
      */
-    auto operator()(const Vertex& v1,
-                    const Vertex& v2) noexcept -> Res;
+    auto apply(const Vertex& v1,
+               const Vertex& v2) -> Res;
 
     /**
      * Merges a vertex of degree 1 to a vertex of degree 3.
+     * \details Unchecked: see Applicable.
      * \param[in] s1 Slot on degree 1 input vertex.
      * \param[in] s2 Slot on degree 3 input vertex.
      */
-    auto operator()(const EndSlot& s1,
-                    const EndSlot& s2) -> Res;
+    auto apply(const EndSlot& s1,
+               const EndSlot& s2) -> Res;
+
+    /// Checks that vertices \p v1 and \p v2 can be merged.
+    auto applicability(const Vertex& v1,
+                       const Vertex& v2) const -> Applicability;
+
+    /// Checks that the vertices at \p s1 and \p s2 can be merged.
+    auto applicability(const EndSlot& s1,
+                       const EndSlot& s2) const -> Applicability;
 
 protected:
 
@@ -109,6 +121,55 @@ protected:
 };
 
 // IMPLEMENTATION ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+template<typename G,
+         typename PP>
+auto From<Deg1, Deg3, G, PP>::
+applicability(
+    const Vertex& v1,
+    const Vertex& v2
+) const -> Applicability
+{
+    if (!checks::is_in_graph(gr, v1) || !checks::is_in_graph(gr, v2))
+        return reject("vertex not in the graph");
+
+    const auto& leaf = v1.deg() == I1 ? v1 : v2;
+    const auto& junction = v1.deg() == I1 ? v2 : v1;
+    if (leaf.deg() != I1 || junction.deg() != I2)
+        return reject("vertex degrees are not 1 and 3");
+
+    return applicability(locate::end_slot(gr, leaf),
+                         locate::end_slot(gr, junction));
+}
+
+
+template<typename G,
+         typename PP>
+auto From<Deg1, Deg3, G, PP>::
+applicability(
+    const EndSlot& s1,
+    const EndSlot& s2
+) const -> Applicability
+{
+    if (!checks::is_valid(gr, s1) || !checks::is_valid(gr, s2))
+        return reject("invalid end slot");
+
+    const auto& m1 = gr.chain(s1.w);
+    if (!m1.length())
+        return reject("chain has no edges");
+    if (m1.is_connected_at(s1.e))
+        return reject("chain end is not free");
+    if (gr.chain(s2.w).num_neigs(s2.e) != I2 - 1)
+        return reject("chain end is not at a 3-way junction");
+
+    // If the chain of s1 is at the junction, the merger closes it in a loop.
+    const auto other = EndSlot {s1.w, End::opp(s1.e)};
+    if ((other == s2 || gr.ngs_at(s2).contains(other)) &&
+        m1.length() < Chain::minCycleLength)
+        return reject("loop would be shorter than the minimal cycle length");
+
+    return {};
+}
 
 template<typename G,
          typename PP>
@@ -127,41 +188,22 @@ From(Graph& gr,
 template<typename G,
          typename PP>
 auto From<Deg1, Deg3, G, PP>::
-operator()(
+apply(
     const Vertex& v1,
     const Vertex& v2
-) noexcept -> Res
+) -> Res
 {
-    GRAFFINE_ASSERT((v1.deg() == I1 && v2.deg() == I2) ||
-           (v1.deg() == I2 && v2.deg() == I1),
-           "Incorrect degrees of input vertices");
+    const auto& leaf = v1.deg() == I1 ? v1 : v2;
+    const auto& junction = v1.deg() == I1 ? v2 : v1;
 
-    auto slot = [&](const Vertex& v) -> EndSlot
-    {
-        const auto& egs = *v.edges().begin();
-        const auto& egd = gr.ct[v.get_c()].get_egl(egs.w);
-        const auto w = egd.w;
-        const auto& eg = gr.cn[w].g[egd.a];
-        const auto s = EndSlot{w, eg.outer_endId(egs.e)};
-
-        GRAFFINE_ASSERT_CALLING(gr.cn[w].template vertex_at_slot<EndSlot>(s)->operator==(v),
-                       v.print("ERROR"),
-                       "Vertex is not at chain end of", w);
-
-        return s;
-    };
-
-    const auto s1 = slot(v1);
-    const auto s2 = slot(v2);
-
-    return (v1.deg() == Deg1)   ? (*this)(s1, s2)
-         /*(v1.deg() == Deg3)*/ : (*this)(s2, s1);
+    return apply(locate::end_slot(gr, leaf),
+                 locate::end_slot(gr, junction));
 }
 
 template<typename G,
          typename PP>
 auto From<Deg1, Deg3, G, PP>::
-operator()(
+apply(
     const EndSlot& s1,
     const EndSlot& s2
 ) -> Res

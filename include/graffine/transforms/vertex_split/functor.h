@@ -51,6 +51,7 @@ namespace graffine::transforms::vertex_split {
 template<typename G,
          typename PP = void>
 struct Functor
+    : public Applicable<Functor<G, PP>>
 {
     using Graph = G;
     using Vertex = Graph::Vertex;
@@ -68,11 +69,18 @@ struct Functor
     /**
      * Divides the graph chain at given vertex \p v.
      * This is a wrapper operator able to process all implemented vertex degrees.
+     * Unchecked: see Applicable.
      * \param[in] v Internal chain vertex.
      * \param[in] ss Slots to get removed from the vertex.
      */
-    auto operator()(Vertex& v,
-                    const std::vector<typename Vertex::EgDescr>& ss) -> Res;
+    auto apply(Vertex& v,
+               const std::vector<typename Vertex::EgDescr>& ss) -> Res;
+
+    /// Checks that vertex \p v can be split, detaching edges \p ss.
+    auto applicability(
+        const Vertex& v,
+        const std::vector<typename Vertex::EgDescr>& ss
+    ) const -> Applicability;
 
 protected:
 
@@ -106,25 +114,41 @@ Functor(Graph& gr,
 template<typename G,
          typename PP>
 auto Functor<G, PP>::
-operator()(Vertex& v,
-           const std::vector<typename Vertex::EgDescr>& ss) -> Res
+applicability(
+    const Vertex& v,
+    const std::vector<typename Vertex::EgDescr>& ss
+) const -> Applicability
 {
     const auto d = v.deg();
 
-    GRAFFINE_ASSERT_CALLING(d == Deg2 || d == Deg3 || d == Deg4,
-                   v.print("UNSPLITTABLE"),
-                   "Vertex split is not implemented for vertex degree ", d);
-    GRAFFINE_ASSERT(d == Deg2 ||
-           (d == Deg3 && ss.size() == 1) ||
-           (d == Deg4 && (ss.size() == 1 || ss.size() == 2)),
-           "Vertex split: ", ss.size(), " slots passed for vertex degree ", d);
+    if (d == Deg2)
+        return to_1_1.applicability(v);
+    if (d == Deg3 && ss.size() == 1)
+        return to_1_2.applicability(v, ss[0]);
+    if (d == Deg4 && ss.size() == 1)
+        return to_1_3.applicability(v, ss[0]);
+    if (d == Deg4 && ss.size() == 2)
+        return to_2_2.applicability(v, ss);
+    if (d == Deg3 || d == Deg4)
+        return reject("number of edges to detach does not match the vertex degree");
 
-    if (d == Deg2)      return to_1_1(v);
-    if (d == Deg3)      return to_1_2(v, ss[0]);
-    /* if (d == Deg4)*/ return ss.size() == 1 ? to_1_3(v, ss[0])
-                                              : to_2_2(v, ss);
+    return reject("split is not implemented for this vertex degree");
 }
 
+
+template<typename G,
+         typename PP>
+auto Functor<G, PP>::
+apply(Vertex& v,
+      const std::vector<typename Vertex::EgDescr>& ss) -> Res
+{
+    const auto d = v.deg();
+
+    if (d == Deg2)      return to_1_1.apply(v);
+    if (d == Deg3)      return to_1_2.apply(v, ss[0]);
+    /* if (d == Deg4)*/ return ss.size() == 1 ? to_1_3.apply(v, ss[0])
+                                              : to_2_2.apply(v, ss);
+}
 
 }  // namespace graffine::transforms::vertex_split
 

@@ -57,6 +57,7 @@ namespace graffine::transforms::vertex_split {
 template<typename G,
          typename PP>
 struct To<Deg2, Deg2, G, PP>
+    : public Applicable<To<Deg2, Deg2, G, PP>>
 {
     using Trait = vertex_split::Trait<G>;
     using Graph = Trait::Graph;
@@ -93,8 +94,8 @@ struct To<Deg2, Deg2, G, PP>
      * \param[in] v Degree 3 vertex.
      * \param[in] s Descriptors of incident edges to get disconnected.
      */
-    auto operator()(Vertex& v,
-                    const std::vector<EdgeInVertex>& s) -> Res;
+    auto apply(Vertex& v,
+               const std::vector<EdgeInVertex>& s) -> Res;
 
     /**
      * Divides the component at a vertex of degree 4.
@@ -105,7 +106,7 @@ struct To<Deg2, Deg2, G, PP>
     template<bool checkValidity = false,
              bool toDisconnectedCycle1 = false,
              bool toDisconnectedCycle2 = false>
-    auto operator()(const std::array<EndSlot, J1>& s) -> Res;
+    auto apply(const std::array<EndSlot, J1>& s) -> Res;
 
     /**
      * Divides the component at a vertex of degree 4.
@@ -117,8 +118,21 @@ struct To<Deg2, Deg2, G, PP>
     template<bool checkValidity = false,
              bool toDisconnectedCycle1 = false,
              bool toDisconnectedCycle2 = false>
-    auto operator()(const EndSlot& s1,
-                    const EndSlot& s2) -> Res;
+    auto apply(const EndSlot& s1,
+               const EndSlot& s2) -> Res;
+
+    /// Checks that edges \p s can be detached together from vertex \p v.
+    auto applicability(const Vertex& v,
+                       const std::vector<EdgeInVertex>& s) const -> Applicability;
+
+    /// Checks that chain ends \p s can be detached together from their
+    /// junction.
+    auto applicability(const std::array<EndSlot, J1>& s) const -> Applicability;
+
+    /// Checks that chain ends \p s1 and \p s2 can be detached together from
+    /// their junction.
+    auto applicability(const EndSlot& s1,
+                       const EndSlot& s2) const -> Applicability;
 
 private:
 
@@ -169,8 +183,61 @@ To(Graph& gr,
 template<typename G,
          typename PP>
 auto To<Deg2, Deg2, G, PP>::
-operator()(Vertex& v,
-           const std::vector<EdgeInVertex>& s) -> Res
+applicability(
+    const Vertex& v,
+    const std::vector<EdgeInVertex>& s
+) const -> Applicability
+{
+    if (!checks::is_in_graph(gr, v))
+        return reject("vertex not in the graph");
+    if (v.deg() != I)
+        return reject("vertex degree is not 4");
+    if (s.size() != J1)
+        return reject("number of edges to detach is not 2");
+    if (!v.is_conected_to(s[0]) || !v.is_conected_to(s[1]))
+        return reject("edge is not connected to the vertex");
+
+    const auto& cmp = gr.compt(v.get_c());
+
+    return applicability(cmp.end_slot(s[0]), cmp.end_slot(s[1]));
+}
+
+
+template<typename G,
+         typename PP>
+auto To<Deg2, Deg2, G, PP>::
+applicability(const std::array<EndSlot, J1>& s) const -> Applicability
+{
+    return applicability(s[0], s[1]);
+}
+
+
+template<typename G,
+         typename PP>
+auto To<Deg2, Deg2, G, PP>::
+applicability(
+    const EndSlot& s1,
+    const EndSlot& s2
+) const -> Applicability
+{
+    if (!checks::is_valid(gr, s1) || !checks::is_valid(gr, s2))
+        return reject("invalid end slot");
+    if (s1 == s2)
+        return reject("the two chain ends are the same");
+    if (gr.ngs_at(s1).num() != structure::containers::numNeigs<I>)
+        return reject("chain end is not at a vertex of degree 4");
+    if (!gr.ngs_at(s1).contains(s2))
+        return reject("chain ends are not at the same vertex");
+
+    return {};
+}
+
+
+template<typename G,
+         typename PP>
+auto To<Deg2, Deg2, G, PP>::
+apply(Vertex& v,
+      const std::vector<EdgeInVertex>& s) -> Res
 {
     GRAFFINE_ASSERT_CALLING(v.deg() == I,
                    v.print("INCORRECT DEGREE"),
@@ -190,7 +257,7 @@ operator()(Vertex& v,
     const auto s1 = cmp.end_slot(s[0]);
     const auto s2 = cmp.end_slot(s[1]);
 
-    return (*this)(s1, s2);
+    return apply(s1, s2);
 }
 
 
@@ -201,11 +268,11 @@ template<bool checkValidity,
          bool toDisconnectedCycle1,
          bool toDisconnectedCycle2>
 auto To<Deg2, Deg2, G, PP>::
-operator()(const std::array<EndSlot, J1>& s) -> Res
+apply(const std::array<EndSlot, J1>& s) -> Res
 {
-    return (*this)<checkValidity,
-                   toDisconnectedCycle1,
-                   toDisconnectedCycle2>(s[0], s[1]);
+    return this->template apply<checkValidity,
+                                toDisconnectedCycle1,
+                                toDisconnectedCycle2>(s[0], s[1]);
 }
 
 
@@ -216,8 +283,8 @@ template<bool checkValidity,
          bool toDisconnectedCycle1,
          bool toDisconnectedCycle2>
 auto To<Deg2, Deg2, G, PP>::
-operator()(const EndSlot& _s1,
-           const EndSlot& _s2) -> Res
+apply(const EndSlot& _s1,
+      const EndSlot& _s2) -> Res
 {
     const auto s1 = _s1;  // copy
     const auto s2 = _s2;  // copy

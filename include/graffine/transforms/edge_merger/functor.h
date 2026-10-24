@@ -71,6 +71,7 @@ using Trait = transforms::Trait<TransformType::EdgeMerger, G>;
 template<typename G,
          typename PP = void>
 struct Functor
+    : public Applicable<Functor<G, PP>>
 {
     using Trait = edge_merger::Trait<G>;
     using Graph = Trait::Graph;
@@ -102,8 +103,12 @@ struct Functor
      * \param[in] ind1 Graph_wide index of the 1st edge merged.
      * \param[in] ind2 Graph_wide index of the 2nd edge merged.
      */
-    auto operator()(const EgIdG ind1,
-                    const EgIdG ind2) -> Res;
+    auto apply(const EgIdG ind1,
+               const EgIdG ind2) -> Res;
+
+    /// Checks that edges \p ind1 and \p ind2 can be merged.
+    auto applicability(EgIdG ind1,
+                       EgIdG ind2) const -> Applicability;
 
 protected:
 
@@ -138,7 +143,36 @@ Functor(Graph& gr,
 template<typename G,
          typename PP>
 auto Functor<G, PP>::
-operator()(const EgIdG ind1,
+applicability(
+    const EgIdG ind1,
+    const EgIdG ind2
+) const -> Applicability
+{
+    if (!checks::is_valid_edge(gr, ind1) || !checks::is_valid_edge(gr, ind2))
+        return reject("invalid edge index");
+    if (ind1 == ind2)
+        return reject("merging an edge with itself");
+    if (!gr.edge(ind1).is_neig_of(gr.edge(ind2)))
+        return reject("edges are not adjacent");
+
+    const auto& m1 = gr.chain(ind1);
+    if (!m1.is_shrinkable() && !gr.chain(ind2).is_shrinkable())
+        return reject("chains of the edges are not shrinkable");
+
+    // The merger deletes one of the edges, chosen as in apply().
+    const auto indDel = m1.is_shrinkable() ? ind1 : ind2;
+    const auto& m = gr.chain(indDel);
+
+    return m.length() == 1 && m.has_single_leaf_vertex()
+        ? remSE.applicability(indDel)
+        : remME.applicability(indDel);
+}
+
+
+template<typename G,
+         typename PP>
+auto Functor<G, PP>::
+apply(const EgIdG ind1,
            const EgIdG ind2) -> Res
 {
     auto& eg1 = gr.edge(ind1);

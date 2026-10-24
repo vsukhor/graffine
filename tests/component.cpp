@@ -31,6 +31,7 @@ limitations under the License.
 #include <iostream>
 #include <numeric>  // accumulate
 #include <string>
+#include <type_traits>
 
 
 namespace graffine::tests::graph {
@@ -1034,6 +1035,31 @@ TEST_F(ComponentTest, CreateChain2)
         ASSERT_EQ(cn[w].g[i  ].vertex_at_outer(End::B),
                   cn[w].g[i+1].vertex_at_outer(End::A));
     ASSERT_FALSE(cmp.template check<profuse>());
+}
+
+
+/// Tests that copying the edge descriptors leaves those of the component.
+TEST_F(ComponentTest, GetEglDoesNotMove)
+{
+    ++testCount;
+
+    if constexpr (verboseT)
+        print_description(
+            "Tests that copying the edge descriptors of a mutable component ",
+            "leaves those of the component");
+
+    constexpr std::size_t len {3};
+
+    G gr;
+    const IntegrityCheck integrityCheck {gr};
+    gr.add_single_chain_component(len);
+    auto& cmp = gr.compt(CmpId {0});
+
+    static_assert(std::is_lvalue_reference_v<decltype(cmp.get_egl())>);
+
+    const auto copy = cmp.get_egl();
+    EXPECT_EQ(copy.size(), len);
+    EXPECT_EQ(cmp.get_egl().size(), len);
 }
 
 }

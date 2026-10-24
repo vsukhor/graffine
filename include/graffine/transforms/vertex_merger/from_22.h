@@ -35,8 +35,10 @@ limitations under the License.
 #include "graffine/transforms/vertex_merger/common.h"
 #include "graffine/transforms/vertex_merger/reporter.h"
 
+#include <algorithm>
 #include <array>
 #include <memory>
+#include <tuple>
 #include <vector>
 #include <type_traits>
 
@@ -51,6 +53,7 @@ namespace graffine::transforms::vertex_merger {
 template<typename G,
          typename PP>
 struct From<Deg2, Deg2, G, PP>
+    : public Applicable<From<Deg2, Deg2, G, PP>>
 {
     using Trait = vertex_merger::Trait<G>;
     using Graph = Trait::Graph;
@@ -90,37 +93,67 @@ struct From<Deg2, Deg2, G, PP>
 
     /**
      * Merges two degree 2 vertices.
+     * \details Unchecked: see Applicable.
      * \param[in] v1 1st input vertex.
      * \param[in] v2 2nd input vertex.
      */
-    auto operator()(const Vertex& v1,
-                    const Vertex& v2) noexcept -> Res;
+    auto apply(const Vertex& v1,
+               const Vertex& v2) -> Res;
 
     /**
      * Merges two chain internal vertices.
+     * \details Unchecked: see Applicable.
      * \param[in] s1 Slot on the 1st input vertex.
      * \param[in] s2 Slot on the 2nd input vertex.
      */
-    auto operator()(const BulkSlot& s1,
-                    const BulkSlot& s2) -> Res;
+    auto apply(const BulkSlot& s1,
+               const BulkSlot& s2) -> Res;
 
     /**
      * Merges a chain internal vertex to a boundary vertex on a cycle chain.
+     * \details Unchecked: see Applicable.
      * \param[in] b1 Slot incident to degree 2 vertex.
      * \param[in] w2 Chain index of the cycle chain.
      */
-    auto operator()(const BulkSlot& b1,
-                    ChIdG w2) -> Res;
+    auto apply(const BulkSlot& b1,
+               ChIdG w2) -> Res;
 
     /**
      * Merges two unconnected cycles on their boundary vertices.
+     * \details Unchecked: see Applicable.
      * \param[in] w1 Chain index of the 1st cycle chain.
      * \param[in] w2 Chain index of the 2nd cycle chain.
      */
-    auto operator()(ChIdG w1,
-                    ChIdG w2) -> Res;
+    auto apply(ChIdG w1,
+               ChIdG w2) -> Res;
+
+    /// Checks that vertices \p v1 and \p v2 can be merged.
+    auto applicability(const Vertex& v1,
+                       const Vertex& v2) const -> Applicability;
+
+    /// Checks that the vertices at \p b1 and \p b2 can be merged.
+    auto applicability(const BulkSlot& b1,
+                       const BulkSlot& b2) const -> Applicability;
+
+    /// Checks that the vertex at \p b1 can be merged to the boundary vertex
+    /// of the unconnected cycle \p w2.
+    auto applicability(const BulkSlot& b1,
+                       ChIdG w2) const -> Applicability;
+
+    /// Checks that the boundary vertices of unconnected cycles \p w1 and
+    /// \p w2 can be merged.
+    auto applicability(ChIdG w1,
+                       ChIdG w2) const -> Applicability;
 
 private:
+
+    /**
+     * Checks the loops closed by merging two vertices of the same chain.
+     * \param[in] m The chain.
+     * \param[in] d Number of edges between the vertices along the chain.
+     */
+    static auto check_loops(const Chain& m,
+                            std::size_t d) -> Applicability;
 
     Graph&      gr;  ///< Reference to the modified graph object.
     Chains&     cn;  ///< Reference to the graph edge chains.
@@ -171,42 +204,132 @@ From(Graph& gr,
 template<typename G,
          typename PP>
 auto From<Deg2, Deg2, G, PP>::
-operator()(
+check_loops(
+    const Chain& m,
+    const std::size_t d
+) -> Applicability
+{
+    // Merging two vertices of a linear chain closes the part between them
+    // in a loop. On an unconnected cycle, both parts become loops.
+    const auto shortest = m.is_unconnected_cycle() ? std::min(d, m.length() - d)
+                                                   : d;
+    if (shortest < Chain::minCycleLength)
+        return reject("loop would be shorter than the minimal cycle length");
+
+    return {};
+}
+
+
+template<typename G,
+         typename PP>
+auto From<Deg2, Deg2, G, PP>::
+applicability(
     const Vertex& v1,
     const Vertex& v2
-) noexcept -> Res
+) const -> Applicability
 {
-    GRAFFINE_ASSERT(v1.deg() == Deg2, "Incorrect v1 degree.");
-    GRAFFINE_ASSERT(v2.deg() == Deg2, "Incorrect v1 degree.");
+    if (!checks::is_in_graph(gr, v1) || !checks::is_in_graph(gr, v2))
+        return reject("vertex not in the graph");
+    if (!v1.is_bulk() || !v2.is_bulk())
+        return reject("vertex degree is not 2");
+    if (&v1 == &v2)
+        return reject("merging a vertex with itself");
 
-    const auto& egs1 = *v1.edges().begin();
-    const auto& egs2 = *v2.edges().begin();
+    const auto b1 = locate::bulk_slot(gr, v1);
+    const auto b2 = locate::bulk_slot(gr, v2);
+    const auto isCB1 = !checks::is_valid(gr, b1);  // cycle boundary
+    const auto isCB2 = !checks::is_valid(gr, b2);
 
-    const auto egl1 = ct[v1.get_c()].get_egl(egs1.w);
-    const auto egl2 = ct[v2.get_c()].get_egl(egs1.w);
+    if (isCB1 && isCB2) return applicability(b1.w, b2.w);
+    if (isCB1)          return applicability(b2, b1.w);
+    if (isCB2)          return applicability(b1, b2.w);
+    /* else */          return applicability(b1, b2);
+}
 
-    const auto w1 = egl1.w;
-    const auto w2 = egl2.w;
 
-    const auto isCB1 = cn[w1].is_unconnected_cycle_boundary(v1);
-    const auto isCB2 = cn[w2].is_unconnected_cycle_boundary(v2);
+template<typename G,
+         typename PP>
+auto From<Deg2, Deg2, G, PP>::
+applicability(
+    const BulkSlot& b1,
+    const BulkSlot& b2
+) const -> Applicability
+{
+    if (!checks::is_valid(gr, b1) || !checks::is_valid(gr, b2))
+        return reject("invalid bulk slot");
+    if (b1 == b2)
+        return reject("merging a vertex with itself");
 
-    if (isCB1 && isCB2) // two unconnected cycles on boundary vertices
+    if (b1.w == b2.w) {
+        const std::size_t a1 = std::get<1>(b1.we())();
+        const std::size_t a2 = std::get<1>(b2.we())();
+        return check_loops(gr.chain(b1.w), a1 > a2 ? a1 - a2 : a2 - a1);
+    }
 
-        return (*this)(w1, w2);
+    return {};
+}
 
-    else if (isCB1)  // a bulk vertex to a boundary of an unconnected cycle w1
 
-        return (*this)(BulkSlot{w2, egl2.a}, w1);
+template<typename G,
+         typename PP>
+auto From<Deg2, Deg2, G, PP>::
+applicability(
+    const BulkSlot& b1,
+    const ChIdG w2
+) const -> Applicability
+{
+    if (!checks::is_valid(gr, b1))
+        return reject("invalid bulk slot");
+    if (!checks::is_valid(gr, w2))
+        return reject("invalid chain");
+    if (!gr.chain(w2).is_unconnected_cycle())
+        return reject("chain is not an unconnected cycle");
 
-    else if (isCB2)  // a bulk vertex to a boundary of an unconnected cycle w2
+    // The boundary vertex is at position 0 of the cycle.
+    if (b1.w == w2)
+        return check_loops(gr.chain(w2), std::get<1>(b1.we())());
 
-        return (*this)(BulkSlot{w1, egl1.a}, w2);
+    return {};
+}
 
-    else  // two chain internal vertices
 
-        return (*this)(BulkSlot{w1, egl1.a},
-                       BulkSlot{w2, egl2.a});
+template<typename G,
+         typename PP>
+auto From<Deg2, Deg2, G, PP>::
+applicability(
+    const ChIdG w1,
+    const ChIdG w2
+) const -> Applicability
+{
+    if (!checks::is_valid(gr, w1) || !checks::is_valid(gr, w2))
+        return reject("invalid chain");
+    if (w1 == w2)
+        return reject("merging a vertex with itself");
+    if (!gr.chain(w1).is_unconnected_cycle() ||
+        !gr.chain(w2).is_unconnected_cycle())
+        return reject("chain is not an unconnected cycle");
+
+    return {};
+}
+
+
+template<typename G,
+         typename PP>
+auto From<Deg2, Deg2, G, PP>::
+apply(
+    const Vertex& v1,
+    const Vertex& v2
+) -> Res
+{
+    const auto b1 = locate::bulk_slot(gr, v1);
+    const auto b2 = locate::bulk_slot(gr, v2);
+    const auto isCB1 = !checks::is_valid(gr, b1);  // cycle boundary
+    const auto isCB2 = !checks::is_valid(gr, b2);
+
+    if (isCB1 && isCB2) return apply(b1.w, b2.w);
+    if (isCB1)          return apply(b2, b1.w);
+    if (isCB2)          return apply(b1, b2.w);
+    /* else */          return apply(b1, b2);
 }
 
 
@@ -214,7 +337,7 @@ operator()(
 template<typename G,
          typename PP>
 auto From<Deg2, Deg2, G, PP>::
-operator()(
+apply(
     const BulkSlot& b1,
     const BulkSlot& b2
 ) -> Res
@@ -478,7 +601,7 @@ operator()(
 template<typename G,
          typename PP>
 auto From<Deg2, Deg2, G, PP>::
-operator()(
+apply(
     const BulkSlot& b1,
     const ChIdG w2
 ) -> Res
@@ -610,7 +733,7 @@ operator()(
 template<typename G,
          typename PP>
 auto From<Deg2, Deg2, G, PP>::
-operator()(
+apply(
     const ChIdG w1,
     const ChIdG w2
 ) -> Res

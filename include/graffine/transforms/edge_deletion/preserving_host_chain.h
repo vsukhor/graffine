@@ -58,6 +58,7 @@ template<Degree D,
          typename G,
          typename PP = void>
 struct PreservingHostChain
+    : public Applicable<PreservingHostChain<D, G, PP>>
 {
     static_assert(isImplementedDegree<D>);
 
@@ -120,13 +121,20 @@ struct PreservingHostChain
      * Function call operator executing the deletion using edge index.
      * \param[in] ind Graph-wide index of the deleted edge.
      */
-    auto operator()(EgIdG ind) -> Res;
+    auto apply(EgIdG ind) -> Res;
 
     /**
      * Delete edge using its position.
      * \param[in] s Slot incident to a chain internal vertex.
      */
-    auto operator()(const BulkSlot& s) -> Res;
+    auto apply(const BulkSlot& s) -> Res;
+
+    /// Checks that edge \p ind can be deleted, keeping its chain.
+    auto applicability(EgIdG ind) const -> Applicability;
+
+    /// Checks that the edge at chain position \p s can be deleted, keeping
+    /// its chain.
+    auto applicability(const BulkSlot& s) const -> Applicability;
 
 protected:  // Data
 
@@ -157,7 +165,47 @@ template<Degree D,
          typename G,
          typename PP>
 auto PreservingHostChain<D, G, PP>::
-operator()(const BulkSlot& s) -> Res
+applicability(const EgIdG ind) const -> Applicability
+{
+    if (!checks::is_valid_edge(gr, ind))
+        return reject("invalid edge index");
+
+    return applicability(gr.ind2bslot(ind));
+}
+
+
+template<Degree D,
+         typename G,
+         typename PP>
+auto PreservingHostChain<D, G, PP>::
+applicability(const BulkSlot& s) const -> Applicability
+{
+    // Here, the bulk slot denotes an edge by its position in the chain.
+    const auto [w, a] = s.we();
+    if (!checks::is_valid(gr, w) || a >= gr.chain(w).length())
+        return reject("invalid edge position");
+
+    const auto& m = gr.chain(w);
+    if (m.length() < 2)
+        return reject("chain has a single edge");
+    if (!m.is_shrinkable())
+        return reject("chain is not shrinkable");
+
+    const auto& eg = m.g[a()];
+    const auto& vA = *eg.vertex_at_outer(End::A);
+    const auto& vB = *eg.vertex_at_outer(End::B);
+    if ((vA.is_bulk() ? vB.deg() : vA.deg()) != D)
+        return reject("vertex degree at the edge end does not match");
+
+    return {};
+}
+
+
+template<Degree D,
+         typename G,
+         typename PP>
+auto PreservingHostChain<D, G, PP>::
+apply(const BulkSlot& s) -> Res
 {
     const auto [w, a] = s.we();
 
@@ -211,9 +259,9 @@ template<Degree D,
          typename G,
          typename PP>
 auto PreservingHostChain<D, G, PP>::
-operator()(const EgIdG ind) -> Res
+apply(const EgIdG ind) -> Res
 {
-    return (*this)(gr.ind2bslot(ind));
+    return apply(gr.ind2bslot(ind));
 }
 
 

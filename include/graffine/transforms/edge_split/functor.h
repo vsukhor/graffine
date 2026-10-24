@@ -71,6 +71,7 @@ using Trait = transforms::Trait<TransformType::EdgeSplit, G>;
 template<typename G,
          typename PP = void>
 struct Functor
+    : public Applicable<Functor<G, PP>>
 {
 //    static_assert(std::is_base_of_v<structure::GraphBase, G>);
 
@@ -102,7 +103,10 @@ struct Functor
      * Function call operator executing the transformation.
      * \param[in] ind Graph-wide index of the source edge.
      */
-    auto operator()(const EgIdG ind) -> Res;
+    auto apply(const EgIdG ind) -> Res;
+
+    /// Checks that edge \p ind can be split.
+    auto applicability(EgIdG ind) const -> Applicability;
 
 protected:
 
@@ -129,7 +133,19 @@ Functor(Graph& gr,
 template<typename G,
          typename PP>
 auto Functor<G, PP>::
-operator()(const EgIdG ind) -> Res
+applicability(const EgIdG ind) const -> Applicability
+{
+    if (!checks::is_valid_edge(gr, ind))
+        return reject("invalid edge index");
+
+    return {};
+}
+
+
+template<typename G,
+         typename PP>
+auto Functor<G, PP>::
+apply(const EgIdG ind) -> Res
 {
     const auto& eg0 = gr.edge(ind);
     const auto w = eg0.w;

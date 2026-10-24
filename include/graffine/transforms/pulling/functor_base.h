@@ -70,6 +70,20 @@ struct FunctorBase
 
 protected:
 
+    /**
+     * Checks that \p path refers to this graph, with valid chains, and that
+     * \p steps is positive.
+     */
+    auto check_path_basics(const Path& path,
+                           int steps) const -> Applicability;
+
+    /**
+     * Checks that the source end of \p path is free, unless the source is a
+     * cycle, and that the source chain is long enough for \p steps.
+     */
+    auto check_source(const Path& path,
+                      int steps) const -> Applicability;
+
     Graph&         gr;  ///< Reference to the modified graph object
     Graph::Chains& cn;  ///< Reference to the graph edge chains.
 
@@ -113,6 +127,50 @@ private:
 
 
 // IMPLEMENTATION ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+template<typename G,
+         typename PP>
+auto FunctorBase<G, PP>::
+check_path_basics(
+    const Path& path,
+    const int steps
+) const -> Applicability
+{
+    const auto c = path.cmp;
+    if (!c || c->ind >= gr.num_compts() || &gr.compt(c->ind) != c)
+        return reject("path does not refer to a component of the graph");
+    if (path.d.w >= gr.num_chains() || path.s.w >= gr.num_chains() ||
+        !End::is_valid(path.s.e))
+        return reject("path refers to invalid chains");
+    if (steps < 1)
+        return reject("number of steps is not positive");
+
+    return {};
+}
+
+
+template<typename G,
+         typename PP>
+auto FunctorBase<G, PP>::
+check_source(
+    const Path& path,
+    const int steps
+) const -> Applicability
+{
+    const auto& m = cn[path.s.w];
+    const auto sourceIsCycle = m.is_cycle();
+
+    if (!sourceIsCycle && m.ngs[path.s.e].num())
+        return reject("source end is not free");
+
+    const auto need = static_cast<std::size_t>(steps) +
+                      (sourceIsCycle ? Chain::minCycleLength : 0);
+    if (path.length_over_source_chain() < need)
+        return reject("path over the source chain is too short for the steps");
+
+    return {};
+}
 
 template<typename G,
          typename PP>

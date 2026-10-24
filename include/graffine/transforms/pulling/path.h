@@ -152,7 +152,7 @@ struct Path
 
     Path() = default;
     ~Path() = default;
-    constexpr Path(const Path& p) noexcept;
+    constexpr Path(const Path& p);  // copies vectors: may throw
     constexpr Path(Path&& p) noexcept;
     constexpr auto operator=(const Path& p) -> Path&;
     constexpr auto operator=(Path&& p) -> Path&;
@@ -350,7 +350,7 @@ Path(
 template<typename C>
 constexpr
 Path<C>::
-Path(const Path& p) noexcept
+Path(const Path& p)
     : Base {p.cmp}
     , pthw {p.pthw}
     , pthc {p.pthc}

@@ -52,6 +52,7 @@ namespace graffine::transforms::edge_deletion {
 template<typename G,
          typename PP = void>
 struct Functor
+    : public Applicable<Functor<G, PP>>
 {
     using Trait = edge_deletion::Trait<G>;
     using Graph = Trait::Graph;
@@ -70,7 +71,10 @@ struct Functor
      * Function call operator executing the deletion using edge index.
      * \param[in] ind Graph-wide index of the deleted edge.
      */
-    auto operator()(EgIdG ind) noexcept -> Res;
+    auto apply(EgIdG ind) -> Res;
+
+    /// Checks that edge \p ind can be deleted.
+    auto applicability(EgIdG ind) const -> Applicability;
 
 protected:
 
@@ -100,19 +104,31 @@ Functor(Graph& gr,
 template<typename G,
          typename PP>
 auto Functor<G, PP>::
-operator()(const EgIdG ind) noexcept -> Res
+applicability(const EgIdG ind) const -> Applicability
+{
+    if (!checks::is_valid_edge(gr, ind))
+        return reject("invalid edge index");
+
+    const auto& m = gr.chain(ind);
+    if (!m.is_shrinkable())
+        return reject("chain is not shrinkable");
+
+    return m.length() == 1 && m.has_single_leaf_vertex()
+        ? withChain.applicability(ind)
+        : withoutChain.applicability(ind);
+}
+
+
+template<typename G,
+         typename PP>
+auto Functor<G, PP>::
+apply(const EgIdG ind) -> Res
 {
     const auto& m = gr.chain(ind);
 
-    GRAFFINE_ASSERT_CALLING(m.is_shrinkable(),
-                   m.print("NOT SHRINCABLE"),
-                   "cannot delete edge ", ind, ": chain is not shrinkable");
-
-    return m.length() == 1 &&
-           m.has_single_leaf_vertex()
-
-        ? withChain(ind)
-        : withoutChain(ind);
+    return m.length() == 1 && m.has_single_leaf_vertex()
+        ? withChain.apply(ind)
+        : withoutChain.apply(ind);
 }
 
 

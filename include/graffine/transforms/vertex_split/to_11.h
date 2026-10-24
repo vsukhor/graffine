@@ -57,6 +57,7 @@ namespace graffine::transforms::vertex_split {
 template<typename G,
          typename PP>
 struct To<Deg1, Deg1, G, PP>
+    : public Applicable<To<Deg1, Deg1, G, PP>>
 {
     using Trait = vertex_split::Trait<G>;
     using Graph = Trait::Graph;
@@ -95,7 +96,7 @@ struct To<Deg1, Deg1, G, PP>
      * Divides the graph chain at a vertex of degree 2.
      * \param[in] v Internal chain vertex.
      */
-    auto operator()(Vertex& v) -> Res;
+    auto apply(Vertex& v) -> Res;
 
     /**
      * Divides the graph chain at a vertex of degree 2.
@@ -103,7 +104,13 @@ struct To<Deg1, Deg1, G, PP>
      *              counted from 1 and designates the last edge to remain in the
      *              original chain.
      */
-    auto operator()(const BulkSlot& s) -> Res;
+    auto apply(const BulkSlot& s) -> Res;
+
+    /// Checks that vertex \p v can be split.
+    auto applicability(const Vertex& v) const -> Applicability;
+
+    /// Checks that the vertex at \p s can be split.
+    auto applicability(const BulkSlot& s) const -> Applicability;
 
 protected:
 
@@ -163,7 +170,39 @@ To(Graph& gr,
 template<typename G,
          typename PP>
 auto To<Deg1, Deg1, G, PP>::
-operator()(Vertex& v) -> Res
+applicability(const Vertex& v) const -> Applicability
+{
+    if (!checks::is_in_graph(gr, v))
+        return reject("vertex not in the graph");
+    if (!v.is_bulk())
+        return reject("vertex degree is not 2");
+
+    return applicability(locate::bulk_slot(gr, v));
+}
+
+
+template<typename G,
+         typename PP>
+auto To<Deg1, Deg1, G, PP>::
+applicability(const BulkSlot& s) const -> Applicability
+{
+    const auto [w, a] = s.we();
+    if (!checks::is_valid(gr, w) || a > gr.chain(w).length())
+        return reject("invalid bulk slot");
+
+    // Positions at the chain ends denote the boundary vertex of a cycle.
+    if ((a == 0 || a == gr.chain(w).length()) &&
+        !gr.chain(w).is_unconnected_cycle())
+        return reject("vertex degree is not 2");
+
+    return {};
+}
+
+
+template<typename G,
+         typename PP>
+auto To<Deg1, Deg1, G, PP>::
+apply(Vertex& v) -> Res
 {
     GRAFFINE_ASSERT_CALLING(v.deg() == I1,
                    v.print("INCORRECT DEGREE"),
@@ -178,13 +217,13 @@ operator()(Vertex& v) -> Res
 
         return disconnected_cycle(w);
 
-    return (*this)(cmp.bulk_slot(egd));
+    return apply(cmp.bulk_slot(egd));
 }
 
 template<typename G,
          typename PP>
 auto To<Deg1, Deg1, G, PP>::
-operator()(const BulkSlot& s) -> Res
+apply(const BulkSlot& s) -> Res
 {
     const auto [w, a] = s.we();
     const auto& m = gr.chain(w);

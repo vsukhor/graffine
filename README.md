@@ -96,6 +96,22 @@ A working [example](examples/create_merge_components/main.cpp) of a driver funct
 
 You can find additional usage examples within the extensive set of unit [tests](tests/).
 
+### Applying transformations
+
+Each transformation functor checks its preconditions before it modifies the graph, at a cost independent of the graph size (the checks of pulling from a degree 2 vertex copy the path), and offers three ways of applying it:
+
+```cpp
+graffine::transforms::vertex_merger::From<Deg1, Deg1, G> merge {gr};
+
+merge(s1, s2);                     // throws precondition_error if not applicable
+if (merge.is_applicable(s1, s2))   // only checks
+    ...
+if (auto res = merge.try_apply(s1, s2); !res)  // checks, then applies
+    std::cout << res.error().reason;           // why it was not applicable
+```
+
+A rejected transformation leaves the graph unchanged. `try_apply` reports rejections without throwing, and without allocating: it suits simulations proposing many candidate moves, most of which may be rejected. `apply` performs the transformation without the checks, for arguments already known to be applicable.
+
 ### Error handling
 
 ***graffine*** never terminates the program on its own. Errors are reported by exceptions derived from `graffine::error` (itself a `std::runtime_error`), declared in [errors.h](include/graffine/utils/errors.h):
