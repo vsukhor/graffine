@@ -12,6 +12,7 @@ include(GoogleTest)
 
 list(APPEND cpps
     adjacency.cpp
+    chain.cpp
     edge.cpp
     component.cpp
     graph.cpp
