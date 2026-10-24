@@ -125,9 +125,9 @@ public: // Functions
 
     Component() = delete;
     constexpr Component(const Component& other) = delete;
-    constexpr Component(Component&& other);
+    constexpr Component(Component&& other) noexcept;
     constexpr auto operator=(const Component& other) -> Component& = delete;
-    constexpr auto operator=(Component&& other) -> Component&;
+    constexpr auto operator=(Component&& other) noexcept -> Component&;
     ~Component() = default;
 
     constexpr bool operator==(const Component& other);
@@ -507,25 +507,30 @@ Component(
 
 template <typename Ch>
 constexpr Component<Ch>::
-Component(Component&& other)
+Component(Component&& other) noexcept
     : ind{other.ind}
     , ww{std::move(other.ww)}
     , vv{std::move(other.vv)}
     , chis{std::move(other.chis)}
-    , adj{std::move(other.adj)}
+    , adj{std::move(other.adj), *this}  // must refer to this, not to 'other'
     , cn{other.cn}
     , egl{std::move(other.egl)}
 {}
 
 template <typename Ch>
 constexpr auto Component<Ch>::
-operator=(Component&& other) -> Component&
+operator=(Component&& other) noexcept -> Component&
 {
+    // 'cn' is a reference, and cannot be rebound: components are only moved
+    // within the graph that holds their chains.
+    GRAFFINE_ASSERT(&cn == &other.cn,
+                    "Moving a component between graphs is not supported");
+
     ind = other.ind;
     ww = std::move(other.ww);
     vv = std::move(other.vv);
     chis = std::move(other.chis);
-    cn = other.cn;
+    adj.take_lists(std::move(other.adj));
     egl = std::move(other.egl);
 
     return *this;

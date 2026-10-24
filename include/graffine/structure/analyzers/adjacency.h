@@ -59,6 +59,26 @@ struct Adjacency
         : h {h}
     {}
 
+    /// Takes over the lists of \p other, but refers to the new host \p h.
+    Adjacency(Adjacency&& other, const Host& h) noexcept
+        : lg {std::move(other.lg)}
+        , lev {std::move(other.lev)}
+        , lw {std::move(other.lw)}
+        , lwA {std::move(other.lwA)}
+        , lwB {std::move(other.lwB)}
+        , h {h}
+    {}
+
+    /// Takes over the lists of \p other, keeping the current host.
+    void take_lists(Adjacency&& other) noexcept
+    {
+        lg = std::move(other.lg);
+        lev = std::move(other.lev);
+        lw = std::move(other.lw);
+        lwA = std::move(other.lwA);
+        lwB = std::move(other.lwB);
+    }
+
     void clear();
 
     /**

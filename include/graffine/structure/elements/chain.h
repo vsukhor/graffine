@@ -121,11 +121,13 @@ struct Chain<E>
         CmpId c
     );
 
+    // Defaulted: the moves are then noexcept, so that std containers of
+    // chains move them rather than copying.
     constexpr Chain() = default;
-    constexpr Chain(const Chain& other);
-    constexpr Chain(Chain&& other);
-    constexpr auto operator=(const Chain& other) -> Chain&;
-    constexpr auto operator=(Chain&& other) -> Chain&;
+    constexpr Chain(const Chain& other) = default;
+    constexpr Chain(Chain&& other) noexcept = default;
+    constexpr auto operator=(const Chain& other) -> Chain& = default;
+    constexpr auto operator=(Chain&& other) noexcept -> Chain& = default;
     ~Chain() = default;
 
     constexpr bool operator==(const Chain& other) const noexcept;
@@ -645,60 +647,6 @@ Chain(
     , idc {idc}
     , c {c}
 {}
-
-template<typename E>
-constexpr
-Chain<E>::
-Chain(Chain&& other)
-    : g {std::move(other.g)}
-    , ngs {std::move(other.ngs)}
-    , idw {std::move(other.idw)}
-    , idc {std::move(other.idc)}
-    , c {std::move(other.c)}
-{}
-
-
-template<typename E>
-constexpr
-Chain<E>::
-Chain(const Chain& other)
-    : g {other.g}
-    , ngs {other.ngs}
-    , idw {other.idw}
-    , idc {other.idc}
-    , c {other.c}
-{}
-
-
-template<typename E>
-constexpr
-auto Chain<E>::
-operator=(Chain&& other) -> Chain&
-{
-    g = std::move(other.g);
-    ngs = std::move(other.ngs);
-    idw = std::move(other.idw);
-    idc = std::move(other.idc);
-    c = std::move(other.c);
-
-    return *this;
-}
-
-
-template<typename E>
-constexpr
-auto Chain<E>::
-operator=(const Chain& other) -> Chain&
-{
-    g = other.g;
-    ngs = other.ngs;
-    idw = other.idw;
-    idc = other.idc;
-    c = other.c;
-
-    return *this;
-}
-
 
 template<typename E>
 constexpr
