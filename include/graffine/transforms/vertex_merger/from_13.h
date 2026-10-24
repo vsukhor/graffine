@@ -120,7 +120,7 @@ From(Graph& gr,
     , updateProperties {pp}
     , report {gr, dd}
 {
-    ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
 }
 
 
@@ -132,7 +132,7 @@ operator()(
     const Vertex& v2
 ) noexcept -> Res
 {
-    ASSERT((v1.deg() == I1 && v2.deg() == I2) ||
+    GRAFFINE_ASSERT((v1.deg() == I1 && v2.deg() == I2) ||
            (v1.deg() == I2 && v2.deg() == I1),
            "Incorrect degrees of input vertices");
 
@@ -144,7 +144,7 @@ operator()(
         const auto& eg = gr.cn[w].g[egd.a];
         const auto s = EndSlot{w, eg.outer_endId(egs.e)};
 
-        ASSERT_CALLING(gr.cn[w].template vertex_at_slot<EndSlot>(s)->operator==(v),
+        GRAFFINE_ASSERT_CALLING(gr.cn[w].template vertex_at_slot<EndSlot>(s)->operator==(v),
                        v.print("ERROR"),
                        "Vertex is not at chain end of", w);
 
@@ -171,9 +171,9 @@ operator()(
 
     auto& cn = gr.chains();
 
-    ASSERT(!cn[w1].is_connected_at(e1),
+    GRAFFINE_ASSERT(!cn[w1].is_connected_at(e1),
            "Slot ", s1.str_short(), " is connected." );
-    ASSERT(cn[w2].num_neigs(e2) == I2 - 1,
+    GRAFFINE_ASSERT(cn[w2].num_neigs(e2) == I2 - 1,
            "Slot ", s2.str_short(), " is not a 3-way junction.");
 
     const auto c1 = cn[w1].c;
@@ -260,7 +260,7 @@ struct From1<Deg3, G, PP>
                     std::shared_ptr<PP> pp = nullptr)
         : Base {gr, pp}
     {
-        ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+        GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
     }
 };
 

@@ -148,7 +148,7 @@ On(Graph& gr,
     , vertex_merge_12 {gr, pp}
     , vertex_merge_22 {gr, pp}
 {
-    ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
 }
 
 
@@ -194,7 +194,7 @@ pull(Path& path)
     auto wD = path.d.w;
     auto eD = cn[wD].ind2end(iD, egeD);  // chain end at the driving vertex.
 
-    ASSERT(End::is_defined(eD), "driver of pull<", D, "> is not a chain end.");
+    GRAFFINE_ASSERT(End::is_defined(eD), "driver of pull<", D, "> is not a chain end.");
 
     const auto iS = path.pthw.back();
     auto& cnS = path.cmp->chain(path.s.w);
@@ -203,7 +203,7 @@ pull(Path& path)
     // cn[wD].ngs[eD].num() == D - 1,
     // since it is a connected chain end with nn < D, and the
     // pure loop is excluded by the availability of free ends in the component
-    ASSERT(cn[wD].ngs[eD].num() == 2, "nn != ", 2);
+    GRAFFINE_ASSERT(cn[wD].ngs[eD].num() == 2, "nn != ", 2);
 
     const auto nww = cn[wD].ngs[eD].ww();
     const auto nee = cn[wD].ngs[eD].ee();
@@ -298,18 +298,18 @@ check_path(
     const auto wD = path.d.w;
     [[maybe_unused]] const auto eD = path.d.end_slot(c->chain(wD)).e;
 
-    ASSERT(c->chain(wD).ngs[eD].num() == 2,
+    GRAFFINE_ASSERT(c->chain(wD).ngs[eD].num() == 2,
            "Driver end is not at a three-way junction");
 
     [[maybe_unused]] const auto sourceIsCycle = cn[wS].is_cycle();
 
-    ASSERT(sourceIsCycle ||
+    GRAFFINE_ASSERT(sourceIsCycle ||
            (!sourceIsCycle && c->chain(wS).ngs[eS].num() == 0),
            "Source end is not disconnected");
 
     [[maybe_unused]] const auto lenS = path.length_over_source_chain();
 
-    ASSERT((!sourceIsCycle &&
+    GRAFFINE_ASSERT((!sourceIsCycle &&
             lenS >= static_cast<size_t>(steps)) ||
            (sourceIsCycle &&
             lenS >= Chain::minCycleLength + static_cast<size_t>(steps)),

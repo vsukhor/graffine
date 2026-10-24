@@ -93,7 +93,7 @@ Functor(Graph& gr,
     , withChain {gr, pp}
     , withoutChain {gr, pp}
 {
-    ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
 }
 
 
@@ -104,7 +104,7 @@ operator()(const EgIdG ind) noexcept -> Res
 {
     const auto& m = gr.chain(ind);
 
-    ASSERT_CALLING(m.is_shrinkable(),
+    GRAFFINE_ASSERT_CALLING(m.is_shrinkable(),
                    m.print("NOT SHRINCABLE"),
                    "cannot delete edge ", ind, ": chain is not shrinkable");
 

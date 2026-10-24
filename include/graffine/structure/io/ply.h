@@ -408,7 +408,7 @@ read(
 
 //        print_vector(globalEdgeVidsB, "globalEdgeVidsB");
 
-        ASSERT(globalVertexIds.size() == globalVertexFs.size(),
+        GRAFFINE_ASSERT(globalVertexIds.size() == globalVertexFs.size(),
                "difference in sizes of vertex parameter vectors");
 
         const auto numVertices = globalVertexIds.size();
@@ -430,7 +430,7 @@ read(
             return utils::undefined<size_t>;
         };
 
-        ASSERT(globalEdgeVids.size() == globalEdgeOrients.size(),
+        GRAFFINE_ASSERT(globalEdgeVids.size() == globalEdgeOrients.size(),
                "difference in sizes of edge parameter vectors");
 
         const auto numEdges = globalEdgeVids.size();

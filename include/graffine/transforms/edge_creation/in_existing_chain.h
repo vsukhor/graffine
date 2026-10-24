@@ -117,7 +117,7 @@ InExistingChain(Graph& gr,
     : gr {gr}
     , updateProperties {pp}
 {
-    ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
 }
 
 
@@ -173,7 +173,7 @@ operator()(const S& s) noexcept -> Res
         updateProperties->edgeCreation.on_start(w, a, atChainEnd);
 
     if constexpr (!atChainEnd) {
-        ASSERT(a > 0 && a <= m.length(),
+        GRAFFINE_ASSERT(a > 0 && a <= m.length(),
                "vertex at ", a, " is not in chain interior");
     }
 
@@ -192,7 +192,7 @@ operator()(const S& s) noexcept -> Res
     else
         ep = &cmp.insert_edge_into_chain(std::move(eg), m, a);
 
-    ASSERT(ep == &m.g[a],
+    GRAFFINE_ASSERT(ep == &m.g[a],
            "unsuccessful edge insert at slot ", s.w, " ", s.ea_str());
 
     gr.update();

@@ -187,7 +187,7 @@ before(
         if constexpr (std::is_same_v<S2, EndSlot>)
             if (degs == "13") {
 
-                ASSERT(cn[w2].num_neigs(ea2) == 2, "num neigs is incorrect for 13");
+                GRAFFINE_ASSERT(cn[w2].num_neigs(ea2) == 2, "num neigs is incorrect for 13");
                 const auto ngs = cn[w2].ngs[ea2].as_vector();  // segments connected to w2 at e2
                 for (const auto& ng : ngs)
                     cn[ng.w].print(str3);

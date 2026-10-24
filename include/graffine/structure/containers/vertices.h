@@ -193,7 +193,7 @@ bool Vertices<V, H>::
 move_to(Host& h,
         const Vertex* const v) noexcept
 {
-    ASSERT(v, "Vertex not found");
+    GRAFFINE_ASSERT(v, "Vertex not found");
 
     const auto i = find_container_coord(v);
 
@@ -247,11 +247,11 @@ remove_disconnected(Vertex* vp) noexcept
 {
     const auto vid = vp->id();
 
-    ASSERT(!vp->is_conected(), "Vertex is connected, indc: ", vid);
+    GRAFFINE_ASSERT(!vp->is_conected(), "Vertex is connected, indc: ", vid);
 
     const auto i = find_container_coord(vid);
 
-    ASSERT(utils::is_defined(i), "Vertex not found, indc: ", vid);
+    GRAFFINE_ASSERT(utils::is_defined(i), "Vertex not found, indc: ", vid);
 
     vv.erase(vv.begin() + i);
     vp = nullptr;
@@ -277,7 +277,7 @@ remove(const VIdH indc, Host& hst) noexcept
 {
     const auto i = find_container_coord(indc);
 
-    ASSERT(is_defined(i), "Vertex not found, indc: ", indc);
+    GRAFFINE_ASSERT(is_defined(i), "Vertex not found, indc: ", indc);
 
     for (const auto& ee : vv[i].edges())
         hst.edge(ee.w).disconnect_end(ee.e);

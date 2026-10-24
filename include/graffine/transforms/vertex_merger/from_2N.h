@@ -157,7 +157,7 @@ FromN(Graph& gr,
     , updateProperties {pp}
     , report {gr}
 {
-    ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
 }
 
 
@@ -169,7 +169,7 @@ operator()(
     const Vertex& v2
 ) noexcept -> Res
 {
-    ASSERT(v1.deg() == Deg2 ||
+    GRAFFINE_ASSERT(v1.deg() == Deg2 ||
            v2.deg() == Deg2,
            "Incorrect degrees of input vertices");
 
@@ -228,7 +228,7 @@ operator()(
     const EndSlot& s2
 ) noexcept -> Res
 {
-    ASSERT(cn[w1].is_unconnected_cycle(),
+    GRAFFINE_ASSERT(cn[w1].is_unconnected_cycle(),
            shortName, ": w1 ", w1, " is not an unconnected cycle");
 
     const auto [w2, e2] = s2.we();

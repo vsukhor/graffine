@@ -156,7 +156,7 @@ To(Graph& gr,
     , report {dd, gr}
     , merge {gr, pp, "vm_core called from"s + shortName}
 {
-    ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
 }
 
 
@@ -165,7 +165,7 @@ template<typename G,
 auto To<Deg1, Deg1, G, PP>::
 operator()(Vertex& v) -> Res
 {
-    ASSERT_CALLING(v.deg() == I1,
+    GRAFFINE_ASSERT_CALLING(v.deg() == I1,
                    v.print("INCORRECT DEGREE"),
                    "Vertex must have degree", I1, " actual degree is", v.deg());
 
@@ -212,10 +212,10 @@ disconnected_cycle(const ChIdG w) -> Res
         // Print out summary before the split
         report.before(EndSlot{w, End::undefined}, "_cyc");
 
-    ASSERT(m.is_unconnected_cycle(),
+    GRAFFINE_ASSERT(m.is_unconnected_cycle(),
            "vs11_cyc used with non-cycle chain ", w);
 
-    ASSERT(m.length() >= Chain::minCycleLength,
+    GRAFFINE_ASSERT(m.length() >= Chain::minCycleLength,
            "vs11_cyc: length of chain ", w, " is below minCycleLength");
 
     if constexpr (!std::is_void_v<PP>)
@@ -276,8 +276,8 @@ disconnected_cycle(const BulkSlot& s) -> Res
         // Print out summary before the split
         report.before(s, "_dic");
 
-    ASSERT(m.length() > 1, "vs11_chint: chain ", w, " has less than 2 edges");
-    ASSERT(a > 0 && a < m.length(),
+    GRAFFINE_ASSERT(m.length() > 1, "vs11_chint: chain ", w, " has less than 2 edges");
+    GRAFFINE_ASSERT(a > 0 && a < m.length(),
            "vs11_dic: 'a' ", a, " at the chain end: use cycle() instead");
 
     if constexpr (!std::is_void_v<PP>)
@@ -317,8 +317,8 @@ linear(const BulkSlot& s) -> Res
         // Print out summary before the split
         report.before(s, "_lin");
 
-    ASSERT(mm.length() > 1, "vs11_lin: chain ", w, " has less than 2 edges");
-    ASSERT(a > 0 && a < mm.length(),
+    GRAFFINE_ASSERT(mm.length() > 1, "vs11_lin: chain ", w, " has less than 2 edges");
+    GRAFFINE_ASSERT(a > 0 && a < mm.length(),
            "vs11_lin: 'a' ", a, " at the chain end: use cycle() instead");
 
     const auto c = mm.c;
@@ -425,7 +425,7 @@ struct To1<Deg1, G, PP>
                            std::shared_ptr<PP> pp = nullptr)
         : Base {gr, pp}
     {
-        ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+        GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
     }
 };
 

@@ -158,7 +158,7 @@ InNewChain(Graph& gr,
     , merge_vertices {gr, pp}
     , updateProperties {pp}
 {
-    ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
 }
 
 template<Degree D,
@@ -167,7 +167,7 @@ template<Degree D,
 auto InNewChain<D, G, PP>::
 operator()(Vertex& v) noexcept -> Res
 {
-    ASSERT(v.deg() == D);
+    GRAFFINE_ASSERT(v.deg() == D);
 
     const auto& cmp = gr.compt(v.get_c());
     const auto& egv = *v.edges().begin();  // EdgeInVertex
@@ -239,7 +239,7 @@ operator()(const ChIdG w) noexcept -> Res
         log_before(w, ": unconnected cycle");
 
     // The new edge is attached to a boundary vertex of an unconnected cycle.
-    ASSERT(cn[w].is_unconnected_cycle(),
+    GRAFFINE_ASSERT(cn[w].is_unconnected_cycle(),
            "chain", w, " is not an unconnected cycle.");
 
     if constexpr (!std::is_void_v<PP>)
@@ -315,13 +315,13 @@ check_slot([[maybe_unused]] const Slot& s) const
     if constexpr (D == Deg2)
 
         // The new edge is attached to a three-way junction.
-        ASSERT(s.a()() && s.a()() < cn[s.w].length(),
+        GRAFFINE_ASSERT(s.a()() && s.a()() < cn[s.w].length(),
                "a ", s.a(), " is not internal edge of chain ", s.w);
 
     else if constexpr (D == Deg3)
 
         // The new edge is attached to a four-way junction.
-        ASSERT(gr.ngs_at(s).num() == structure::containers::numNeigs<D>,
+        GRAFFINE_ASSERT(gr.ngs_at(s).num() == structure::containers::numNeigs<D>,
                "num of connections ", gr.ngs_at(s).num(), " at end ",
                s.ea_str(), " of chain ", s.w, " should be ",
                structure::containers::numNeigs<D>);

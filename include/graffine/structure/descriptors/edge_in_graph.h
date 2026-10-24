@@ -77,9 +77,9 @@ struct EdgeInGraph
                const EgIdG ind,
                const EgIdG k) const
     {
-        ENSURE(w == ww, "egl[", k, "].w != eg.w: eg.ind ", ind);
-        ENSURE(a == aa, "egl[", k, "].a != eg.a: eg.ind ", ind);
-        ENSURE(h == hh, "egl[", k, "].h != eg.id: eg.ind ", ind);
+        GRAFFINE_ENSURE(w == ww, "egl[", k, "].w != eg.w: eg.ind ", ind);
+        GRAFFINE_ENSURE(a == aa, "egl[", k, "].a != eg.a: eg.ind ", ind);
+        GRAFFINE_ENSURE(h == hh, "egl[", k, "].h != eg.id: eg.ind ", ind);
     }
 
     void print(const EgIdG j) const noexcept

@@ -92,7 +92,7 @@ set(const Component& cmp)
     for (const auto& w : cmp.ww)
         for (const auto& g : cmp.chain(w).g) {
 
-            ASSERT(g.indc < numEdges, "In component ", cmp.ind,
+            GRAFFINE_ASSERT(g.indc < numEdges, "In component ", cmp.ind,
                    " g.indc ", g.indc, " >= numEdges ", numEdges);
 
             m_data[g.indc()] = EdgeDescr{g};

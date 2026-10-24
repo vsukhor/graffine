@@ -133,8 +133,8 @@ constexpr
 auto ChainIndexes<ES>::
 operator()(const Key& k) const noexcept -> const Slots&
 {
-    ASSERT(k[0] < k[1], "Incorreect order of key elements.");
-//    ASSERT(asymmetric.contains(k), "Degree acsessed is missing.");
+    GRAFFINE_ASSERT(k[0] < k[1], "Incorreect order of key elements.");
+//    GRAFFINE_ASSERT(asymmetric.contains(k), "Degree acsessed is missing.");
 
     return asymmetric.contains(k)
         ? asymmetric.at(k)
@@ -280,7 +280,7 @@ constexpr
 auto ChainIndexes<ES>::
 num(const Key& k) const noexcept -> std::size_t
 {
-    ASSERT(k[0] <= k[1], "Incorreect order of key elements.");
+    GRAFFINE_ASSERT(k[0] <= k[1], "Incorreect order of key elements.");
 
     return k[0] == k[1]
         ? (symmetric.contains(k[0]) ? symmetric.at(k[0]).size() : 0)

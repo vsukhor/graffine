@@ -99,7 +99,7 @@ Functor(Graph& gr,
     , to_1_3 {gr, pp}
     , to_2_2 {gr, pp}
 {
-    ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
 }
 
 
@@ -111,10 +111,10 @@ operator()(Vertex& v,
 {
     const auto d = v.deg();
 
-    ASSERT_CALLING(d == Deg2 || d == Deg3 || d == Deg4,
+    GRAFFINE_ASSERT_CALLING(d == Deg2 || d == Deg3 || d == Deg4,
                    v.print("UNSPLITTABLE"),
                    "Vertex split is not implemented for vertex degree ", d);
-    ASSERT(d == Deg2 ||
+    GRAFFINE_ASSERT(d == Deg2 ||
            (d == Deg3 && ss.size() == 1) ||
            (d == Deg4 && (ss.size() == 1 || ss.size() == 2)),
            "Vertex split: ", ss.size(), " slots passed for vertex degree ", d);

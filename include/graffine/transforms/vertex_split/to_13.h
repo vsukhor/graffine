@@ -126,7 +126,7 @@ To(Graph& gr,
     , updateProperties {pp}
     , report {dd, gr}
 {
-    ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
 }
 
 
@@ -136,11 +136,11 @@ auto To<Deg1, Deg3, G, PP>::
 operator()(Vertex& v,
            const EdgeInVertex& s) -> Res
 {
-    ASSERT_CALLING(v.deg() == I,
+    GRAFFINE_ASSERT_CALLING(v.deg() == I,
                    v.print("INCORRECT DEGREE"),
                    "Vertex must have degree", I, " actual degree is", v.deg());
 
-    ASSERT_CALLING(v.is_conected_to(s),
+    GRAFFINE_ASSERT_CALLING(v.is_conected_to(s),
                    v.print("NOT CONNECTED"),
                    "Vertex is not connected to ", s.str_short());
 
@@ -158,7 +158,7 @@ operator()(const EndSlot& s) -> Res
 {
     const auto [w, e] = s.we();
 
-    ASSERT(gr.ngs_at(s).num() == I - 1,
+    GRAFFINE_ASSERT(gr.ngs_at(s).num() == I - 1,
            shortName, ": number of connections ", gr.ngs_at(s).num(),
            " at slot ", s.w, " ", s.ea_str(), " is not as expected ", I - 1);
 
@@ -218,7 +218,7 @@ operator()(const EndSlot& s) -> Res
     const auto w1 = gr.chid(ind[0]);
     [[maybe_unused]] const auto w2 = gr.chid(ind[1]);
 
-    ASSERT(cn[w1].c == c || cn[w2].c == c,
+    GRAFFINE_ASSERT(cn[w1].c == c || cn[w2].c == c,
            shortName, ": cn[w1].c ", cn[w1].c, " != c && cn[w2].c ",
            cn[w2].c, " != c ", c);
 
@@ -267,7 +267,7 @@ struct To1<Deg3, G, PP>
                            std::shared_ptr<PP> pp = nullptr)
         : Base {gr, pp}
     {
-        ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+        GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
     }
 };
 

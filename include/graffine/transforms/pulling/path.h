@@ -236,11 +236,11 @@ Path(
     , d {d}
     , s {s}
 {
-    ASSERT(cmp->chain(s.w).ngs[s.e].num() == 0,
+    GRAFFINE_ASSERT(cmp->chain(s.w).ngs[s.e].num() == 0,
            "Source end is not disconnected");
-    ASSERT(cmp->chain(s.w).c == cmp->ind,
+    GRAFFINE_ASSERT(cmp->chain(s.w).c == cmp->ind,
            "Source compartment is different from cmp");
-    ASSERT(cmp->chain(d.w).c == cmp->ind,
+    GRAFFINE_ASSERT(cmp->chain(d.w).c == cmp->ind,
            "Driver compartment is different from cmp");
 
     set_shortest();
@@ -261,19 +261,19 @@ Path(
     , s {s}
     , internals {internals}
 {
-//    ASSERT(cmp->chain(s.w).ngs[s.e].num() == 0,
+//    GRAFFINE_ASSERT(cmp->chain(s.w).ngs[s.e].num() == 0,
 //           "Source end is not disconnected");
-    ASSERT(cmp->chain(s.w).c == cmp->ind,
+    GRAFFINE_ASSERT(cmp->chain(s.w).c == cmp->ind,
            "Source compartment is different from cmp");
-    ASSERT(cmp->chain(d.w).c == cmp->ind,
+    GRAFFINE_ASSERT(cmp->chain(d.w).c == cmp->ind,
            "Driver compartment is different from cmp");
 
     if (internals.size()) {
 
-        ASSERT(cmp->chain(internals[0].w).c == cmp->ind,
+        GRAFFINE_ASSERT(cmp->chain(internals[0].w).c == cmp->ind,
                "Compartment of internal 0 is different from cmp");
-        ASSERT(internals[0].ind != d.ind, "Internal 0 is same as driver");
-        ASSERT(internals[0].ind != cmp->chain(s.w).end2ind(s.e),
+        GRAFFINE_ASSERT(internals[0].ind != d.ind, "Internal 0 is same as driver");
+        GRAFFINE_ASSERT(internals[0].ind != cmp->chain(s.w).end2ind(s.e),
                "Internal 0 is same as source");
 
         auto [pc0, pw0] = set_shortest(d, driver2source(internals.front()), cmp);
@@ -281,10 +281,10 @@ Path(
         pthw.insert(pthw.end(), pw0.cbegin(), pw0.cend());
 
         for (std::size_t i {1}; i<internals.size(); i++) {
-            ASSERT(cmp->chain(internals[i].w).c == cmp->ind,
+            GRAFFINE_ASSERT(cmp->chain(internals[i].w).c == cmp->ind,
                    "Compartment of internal ", i, " is different from cmp");
-            ASSERT(internals[i].ind != d.ind, "Internal ", i, " is same as driver");
-            ASSERT(internals[i].ind != cmp->chain(s.w).end2ind(s.e),
+            GRAFFINE_ASSERT(internals[i].ind != d.ind, "Internal ", i, " is same as driver");
+            GRAFFINE_ASSERT(internals[i].ind != cmp->chain(s.w).end2ind(s.e),
                    "Internal ", i, " is same as source");
 
             auto [pc, pw] = set_shortest(internals[i-1], driver2source(internals[i]), cmp);
@@ -316,11 +316,11 @@ Path(
     , d {d}
     , s {s}
 {
-    ASSERT(cmp->chain(s.w).c == cmp->ind,
+    GRAFFINE_ASSERT(cmp->chain(s.w).c == cmp->ind,
            "Source compartment is different from cmp");
-    ASSERT(cmp->chain(d.w).c == cmp->ind,
+    GRAFFINE_ASSERT(cmp->chain(d.w).c == cmp->ind,
            "Driver compartment is different from cmp");
-    ASSERT(d.ind == cmp->get_egl(pthc[0]).i, "Driver ind is not in cmp.egl");
+    GRAFFINE_ASSERT(d.ind == cmp->get_egl(pthc[0]).i, "Driver ind is not in cmp.egl");
 }
 
 template<typename C>
@@ -338,11 +338,11 @@ Path(
     , d {d}
     , s {s}
 {
-    ASSERT(cmp->chain(s.w).c == cmp->ind,
+    GRAFFINE_ASSERT(cmp->chain(s.w).c == cmp->ind,
            "Source compartment is different from cmp");
-    ASSERT(cmp->chain(d.w).c == cmp->ind,
+    GRAFFINE_ASSERT(cmp->chain(d.w).c == cmp->ind,
            "Driver compartment is different from cmp");
-    ASSERT(d.ind == cmp->get_egl(pthc[0]).i, "Driver ind is not in cmp.egl");
+    GRAFFINE_ASSERT(d.ind == cmp->get_egl(pthc[0]).i, "Driver ind is not in cmp.egl");
 }
 
 
@@ -691,7 +691,7 @@ driver_vertex() const noexcept -> const Vertex&
 {
     const auto vp = cmp->edge(pthc[0]).vertex_at_inner(d.egEnd);
 
-    ASSERT(vp, "Driver edge leading end is not connected");
+    GRAFFINE_ASSERT(vp, "Driver edge leading end is not connected");
 
     return *vp;
 }
@@ -703,7 +703,7 @@ driver_vertex() noexcept -> Vertex&
 {
     Vertex* vp = const_cast<Vertex*>(cmp->edge(pthc[0]).vertex_at_inner(d.egEnd));
 
-    ASSERT(vp, "Driver edge leading end is not connected");
+    GRAFFINE_ASSERT(vp, "Driver edge leading end is not connected");
 
     return *vp;
 }
@@ -734,7 +734,7 @@ source_vertex() const noexcept -> const Vertex&
 {
     const auto vp = cmp->edge(pthc.back()).vertex_at_outer(s.e);
 
-    ASSERT(vp, "Driver edge leading end is not connected");
+    GRAFFINE_ASSERT(vp, "Driver edge leading end is not connected");
 
     return *vp;
 }
@@ -746,7 +746,7 @@ source_vertex() noexcept -> Vertex&
 {
     auto vp = const_cast<Vertex*>(cmp->edge(pthc.back()).vertex_at_outer(s.e));
 
-    ASSERT(vp, "Driver edge leading end is not connected");
+    GRAFFINE_ASSERT(vp, "Driver edge leading end is not connected");
 
     return *vp;
 }

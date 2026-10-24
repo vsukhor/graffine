@@ -196,7 +196,7 @@ constexpr
 auto Bond2<V>::
 vid_at(const EndId e) const noexcept -> VIdH
 {
-    ASSERT(End::is_valid(e), "End not valid.");
+    GRAFFINE_ASSERT(End::is_valid(e), "End not valid.");
 
     return vv[e] ? vv[e]->id : VIdH::undefined;
 }
@@ -539,7 +539,7 @@ reverse()
                 const typename Vertex::EgDescr s {id, indc, e};
                 auto v = vertex_at_inner(e);
 
-                ASSERT(v->is_conected_to(s),
+                GRAFFINE_ASSERT(v->is_conected_to(s),
                     "Edge slot ", s.str_short(), " in connected vertex");
 
                 auto& egSs = v->edges();
@@ -580,7 +580,7 @@ constexpr
 auto Edge<V>::
 inner_endId(const EndId outerE) const noexcept -> EndId
 {
-    ASSERT(End::is_valid(outerE), "outerE is not valid.");
+    GRAFFINE_ASSERT(End::is_valid(outerE), "outerE is not valid.");
 
     return points_forwards() ? outerE
                              : End::opp(outerE);
@@ -591,7 +591,7 @@ constexpr
 auto Edge<V>::
 outer_endId(const EndId innerE) const noexcept -> EndId
 {
-    ASSERT(End::is_valid(innerE), "innerE is not valid.");
+    GRAFFINE_ASSERT(End::is_valid(innerE), "innerE is not valid.");
 
     return points_forwards() ? innerE
                              : End::opp(innerE);
@@ -602,7 +602,7 @@ constexpr
 auto Edge<V>::
 opp_end(const EndId e) noexcept -> EndId   // static
 {
-    ASSERT(End::is_valid(e), "End not valid.");
+    GRAFFINE_ASSERT(End::is_valid(e), "End not valid.");
 
     return End::opp(e);
 }
@@ -612,7 +612,7 @@ constexpr
 auto Edge<V>::
 vertex_at_outer(EndId e) const noexcept -> const Vertex*
 {
-    ASSERT(End::is_valid(e), "End not valid.");
+    GRAFFINE_ASSERT(End::is_valid(e), "End not valid.");
 
     return vv[inner_endId(e)];
 }
@@ -622,7 +622,7 @@ constexpr
 auto Edge<V>::
 vertex_at_outer(EndId e) noexcept -> Vertex*
 {
-    ASSERT(End::is_valid(e), "End not valid.");
+    GRAFFINE_ASSERT(End::is_valid(e), "End not valid.");
 
     return vv[inner_endId(e)];
 }
@@ -632,7 +632,7 @@ constexpr
 auto Edge<V>::
 vertex_at_inner(EndId e) const noexcept -> const Vertex*
 {
-    ASSERT(End::is_valid(e), "End not valid.");
+    GRAFFINE_ASSERT(End::is_valid(e), "End not valid.");
 
     return vv[e];
 }
@@ -642,7 +642,7 @@ constexpr
 auto Edge<V>::
 vertex_at_inner(EndId e) noexcept -> Vertex*
 {
-    ASSERT(End::is_valid(e), "End not valid.");
+    GRAFFINE_ASSERT(End::is_valid(e), "End not valid.");
 
     return vv[e];
 }
@@ -652,7 +652,7 @@ constexpr
 auto Edge<V>::
 vertex_opposite_to(Vertex* v) noexcept -> Vertex*
 {
-    ASSERT(vv[End::A]->operator==(*v) ||
+    GRAFFINE_ASSERT(vv[End::A]->operator==(*v) ||
            vv[End::B]->operator==(*v),
           "Vertex is not valid.");
 
@@ -674,7 +674,7 @@ constexpr
 auto Edge<V>::
 vid_at_outer(const EndId e) const noexcept -> VIdH
 {
-    ASSERT(End::is_valid(e), "End not valid.");
+    GRAFFINE_ASSERT(End::is_valid(e), "End not valid.");
 
     const auto eInner = inner_endId(e);
 
@@ -686,7 +686,7 @@ constexpr
 auto Edge<V>::
 vid_at_inner(const EndId e) const noexcept -> VIdH
 {
-    ASSERT(End::is_valid(e), "End not valid.");
+    GRAFFINE_ASSERT(End::is_valid(e), "End not valid.");
 
     return vv[e] ? vv[e]->id : VIdH::undefined;
 }
@@ -699,15 +699,15 @@ connect_to_inner(
     Vertex& v
 ) noexcept
 {
-    ASSERT(End::is_valid(e), "End not valid.");
-    ASSERT(!is_connected_inner(e),
+    GRAFFINE_ASSERT(End::is_valid(e), "End not valid.");
+    GRAFFINE_ASSERT(!is_connected_inner(e),
            "Vertex ", v.id, " cmp ", v.get_c(),
            " is already connected to inner end ", End::str(e),
            " of edge ind ", ind);
 
     typename Vertex::EgDescr s {id, indc, e};
 
-    ASSERT(!v.is_conected_to(s), "EgDescr ", s.str_short(),
+    GRAFFINE_ASSERT(!v.is_conected_to(s), "EgDescr ", s.str_short(),
                                  " already present in vertex ", v.id);
 
     v.insert(std::move(s));
@@ -724,17 +724,17 @@ connect_to_outer(
     Vertex& v
 ) noexcept
 {
-    ASSERT(End::is_valid(e), "End not valid.");
+    GRAFFINE_ASSERT(End::is_valid(e), "End not valid.");
 
     const auto eInner = inner_endId(e);
 
     typename Vertex::EgDescr s {id, indc, eInner};
 
-    ASSERT(!is_connected_outer(e), "Vertex ", v.id, " cmp ", v.get_c(),
+    GRAFFINE_ASSERT(!is_connected_outer(e), "Vertex ", v.id, " cmp ", v.get_c(),
                                     " is already connected to outer slot ",
                                     s.str_short());
 
-    ASSERT(!v.is_conected_to(s),
+    GRAFFINE_ASSERT(!v.is_conected_to(s),
            "EgDescr ", s.str_short(), " already present in vertex ", v.id);
 
     v.insert(std::move(s));
@@ -750,8 +750,8 @@ disconnect_end_outer(
     const EndId e   // outer end id, i.e. in chain coordinates
 ) noexcept
 {
-    ASSERT(End::is_valid(e), "End not valid.");
-    ASSERT(is_connected_outer(e),
+    GRAFFINE_ASSERT(End::is_valid(e), "End not valid.");
+    GRAFFINE_ASSERT(is_connected_outer(e),
            "Edge ", ind, " is not connected to outer end ", End::str(e));
 
     const auto eInner = inner_endId(e);
@@ -760,7 +760,7 @@ disconnect_end_outer(
 
     auto v = vertex_at_outer(e);
 
-    ASSERT_CALLING(v->is_conected_to(s), v->print("ERROR"),
+    GRAFFINE_ASSERT_CALLING(v->is_conected_to(s), v->print("ERROR"),
                    "EgDescr ", s.str_short(), " not found in vertex ", v->id);
 
     v->erase(s);
@@ -776,15 +776,15 @@ disconnect_end_inner(
     const EndId e   // inner end id, i.e. taking into account edge reversal
 ) noexcept
 {
-    ASSERT(End::is_valid(e), "End not valid.");
-    ASSERT(is_connected_inner(e),
+    GRAFFINE_ASSERT(End::is_valid(e), "End not valid.");
+    GRAFFINE_ASSERT(is_connected_inner(e),
            "Edge ", ind, " is not connected at inner end ", End::str(e));
 
     typename Vertex::EgDescr s {id, indc, e};
 
     auto v = vertex_at_inner(e);
 
-    ASSERT(v->is_conected_to(s), "EgDescr ", s.str_short(),
+    GRAFFINE_ASSERT(v->is_conected_to(s), "EgDescr ", s.str_short(),
                               " not found in vertex ", v->id);
 
     v->erase(s);
@@ -799,7 +799,7 @@ is_connected_inner(
     const EndId e   // inner end id, i.e. taking into account edge reversal
 ) const noexcept
 {
-    ASSERT(End::is_valid(e), "End not valid.");
+    GRAFFINE_ASSERT(End::is_valid(e), "End not valid.");
 
     return vv[e];
 }
@@ -811,7 +811,7 @@ is_connected_outer(
     const EndId e   // outer end id, i.e. in chain coordinates
 ) const noexcept
 {
-    ASSERT(End::is_valid(e), "End not valid.");
+    GRAFFINE_ASSERT(End::is_valid(e), "End not valid.");
 
     const auto eInner = inner_endId(e);
 
@@ -944,27 +944,27 @@ check(const std::size_t nInd,
       const ChIdG nCh,
       const CmpId nCmpt) const
 {
-    ENSURE(ind < nInd,
+    GRAFFINE_ENSURE(ind < nInd,
            "Edge.cEdge.ind is out of range: ",
            "ind = ", ind, ", numEdges = ", nInd);
 
-    ENSURE(indc < nIndC,
+    GRAFFINE_ENSURE(indc < nIndC,
            "Edge.indc is out of range for ",
            "ind ", ind, ": ", "indc = ", indc, ", nIndC = ", nIndC);
 
-    ENSURE(indw < nIndW,
+    GRAFFINE_ENSURE(indw < nIndW,
            "EdgEdge.indw is out of range for ",
            "ind ", ind, ": ", "indw = ", indw, ", nIndW = ", nIndW);
 
-    ENSURE(w < nCh,
+    GRAFFINE_ENSURE(w < nCh,
            "Edge.w is out of range for ",
            "ind ", ind, ": ", "w = ", w, ", nCh = ", nCh);
 
-    ENSURE(c < nCmpt,
+    GRAFFINE_ENSURE(c < nCmpt,
            "Edge.c is out of range for ",
            "ind ", ind, ": ", "c = ", c, ", nCmpt = ", nCmpt);
 
-    ENSURE(weight() <= maxWeight,
+    GRAFFINE_ENSURE(weight() <= maxWeight,
            "Edge.weight is out of range for ",
            "ind ", ind, ": ", "weight = ", weight(), ", nWeight = ", maxWeight);
 }

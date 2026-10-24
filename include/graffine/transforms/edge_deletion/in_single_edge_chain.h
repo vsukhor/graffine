@@ -104,7 +104,7 @@ InSingleEdgeChain(Graph& gr,
     , deg3 {gr, pp}
     , deg4 {gr, pp}
 {
-    ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
 }
 
 
@@ -115,9 +115,9 @@ operator()(const EgIdG ind) noexcept -> Res
 {
     const auto& m = gr.chain(ind);
 
-    ASSERT(m.length() == 1, "inncorrect functor for edge deletion: length > 1");
-    ASSERT(m.is_shrinkable(), "chain ", m.idw, " is not shrinkable.");
-    ASSERT(m.has_single_leaf_vertex(),
+    GRAFFINE_ASSERT(m.length() == 1, "inncorrect functor for edge deletion: length > 1");
+    GRAFFINE_ASSERT(m.is_shrinkable(), "chain ", m.idw, " is not shrinkable.");
+    GRAFFINE_ASSERT(m.has_single_leaf_vertex(),
             "chain ", m.idw, " does not a have single connected end");
 
     const auto e = m.get_single_connected_end();

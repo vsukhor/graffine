@@ -124,12 +124,12 @@ struct Neigs
 
     bool erase(const Slot& u)
     {
-        ASSERT(contains(u), "Attempted erase of absent slot ", u.str_short());
+        GRAFFINE_ASSERT(contains(u), "Attempted erase of absent slot ", u.str_short());
 
         for (auto i = ss.cbegin(); i != ss.cend(); ++i)
             if (*i == u) {
                 ss.erase(i);
-                ASSERT(!contains(u), "Failed erase of ", u.str_short());
+                GRAFFINE_ASSERT(!contains(u), "Failed erase of ", u.str_short());
                 return true;
             }
 
@@ -138,7 +138,7 @@ struct Neigs
 
     bool replace(const Slot& f, const Slot& t)
     {
-        ASSERT(contains(f), "Attempted replace of absent slot ",
+        GRAFFINE_ASSERT(contains(f), "Attempted replace of absent slot ",
                f.str_short());
 
         auto node = ss.extract(f);
@@ -167,14 +167,14 @@ struct Neigs
 
     constexpr void insert(const Slot& s)
     {
-        ASSERT_CALLING(!contains(s), s.print(),
+        GRAFFINE_ASSERT_CALLING(!contains(s), s.print(),
                        "inserting the slot already present");
         ss.insert(s);
     }
 
     constexpr void insert(Slot&& s)
     {
-        ASSERT_CALLING(!contains(s), s.print(),
+        GRAFFINE_ASSERT_CALLING(!contains(s), s.print(),
                        "inserting the slot already present");
 
         ss.insert(std::move(s));
@@ -213,7 +213,7 @@ struct Neigs
     template<size_t N>
     constexpr auto as_array() const noexcept -> std::array<value_type, N>
     {
-        ASSERT(N <= num(), "Number of neogbours < N");
+        GRAFFINE_ASSERT(N <= num(), "Number of neogbours < N");
 
         std::array<value_type, N> v;
 

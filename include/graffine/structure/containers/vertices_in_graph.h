@@ -88,7 +88,7 @@ set(const Graph& gr)
     for (const auto& cmp: gr.ct)
         for (const auto& v : cmp.vertices().get()) {
 
-            ASSERT(cmp.ind == v->get_c());
+            GRAFFINE_ASSERT(cmp.ind == v->get_c());
 
             m_data.emplace_back(static_cast<uint>(v->get_c()()),
                                 static_cast<uint>(m_data.size()),
@@ -134,7 +134,7 @@ operator[](const VIdH h) const noexcept -> const VertexDescr&
 {
     const auto i = find(h);
 
-    ASSERT(utils::is_defined(i));
+    GRAFFINE_ASSERT(utils::is_defined(i));
 
     return m_data[i];
 }
@@ -148,7 +148,7 @@ find(const VIdH vid) const noexcept -> std::size_t
         if (m_data[i].idh == static_cast<uint>(vid()))
             return i;
 
-    ASSERT(false, "should not reach here");
+    GRAFFINE_ASSERT(false, "should not reach here");
     return undefined<size_t>;
 }
 
@@ -158,9 +158,9 @@ check(const Graph& gr) const
 {
     for (size_t i {}; i < size(); ++i) {
 
-        ASSERT_CALLING(m_data[i].ci < gr.ct.size(), m_data[i].print(100000),
+        GRAFFINE_ASSERT_CALLING(m_data[i].ci < gr.ct.size(), m_data[i].print(100000),
                        "ved c overflow vs ct size ", gr.ct.size());
-        ASSERT_CALLING(m_data[i].ind < gr.num_vertices(), m_data[i].print(100000),
+        GRAFFINE_ASSERT_CALLING(m_data[i].ind < gr.num_vertices(), m_data[i].print(100000),
                        "ved i overflow vs num_vertices ", gr.num_vertices());
     }
 

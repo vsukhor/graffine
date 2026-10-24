@@ -127,7 +127,7 @@ FunctorBase(Graph& gr,
     , delete_edge_3 {gr, pp}
     , delete_edge_4 {gr, pp}
 {
-    ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
 }
 
 
@@ -146,13 +146,13 @@ pull_leaf_vertex(
         if (steps > 0 && source_was_dissolved) {
             const auto& d = path.drv();
 
-            ENSURE(d.w == path.src().w, "steps > 0 && source_was_dissolved");
+            GRAFFINE_ENSURE(d.w == path.src().w, "steps > 0 && source_was_dissolved");
 
             const auto eS = End::opp(cn[d.w].ind2end(d.ind, d.egEnd));
             path.set_src(EndSlot {d.w, eS});
         }
 
-        ASSERT(!path.cmp->template check<verboseF>(), "Intermediate cmp check.");
+        GRAFFINE_ASSERT(!path.cmp->template check<verboseF>(), "Intermediate cmp check.");
     }
 
     return source_was_dissolved;
@@ -224,7 +224,7 @@ dissolve_single_edge_chain(Path& path)
         jot(colorcodes::GREEN, "------Consuming chain ", colorcodes::YELLOW, wS,
             ":", colorcodes::RESET);
 
-    ASSERT(cn[wS].length() == 1, "trailing chain is too long: ", wS);
+    GRAFFINE_ASSERT(cn[wS].length() == 1, "trailing chain is too long: ", wS);
 
     const auto iS = cn[wS].g[0].ind;  // since cn[wS].length() == 1
     auto& cnS = path.cmp->chain(wS);
@@ -247,7 +247,7 @@ dissolve_single_edge_chain(Path& path)
     const auto& ns = cn[wS].ngs[connectedSlot.e];
     const auto nnS = ns.num();
 
-    ASSERT(nnS == 2 || nnS == 3,
+    GRAFFINE_ASSERT(nnS == 2 || nnS == 3,
            "trailing chain connection degree is not correct: ", nnS);
 
     nnS == 2 ? delete_edge_3(connectedSlot)
@@ -275,11 +275,11 @@ shift_edges_to_target_chain(const Path& path)
     const auto& d = path.d;
     const auto& pthw = path.pthw;
 
-    ASSERT(d.ind == pthw[0],
+    GRAFFINE_ASSERT(d.ind == pthw[0],
            "driver edge is not the first one in the path");
-    ASSERT(End::is_defined(cn[d.w].ind2end(d.ind, path.d.egEnd)),
+    GRAFFINE_ASSERT(End::is_defined(cn[d.w].ind2end(d.ind, path.d.egEnd)),
            "driver is not a chain end");
-    ASSERT(cn[d.w].end2ind(path.driver_chain_end()) == d.ind,
+    GRAFFINE_ASSERT(cn[d.w].end2ind(path.driver_chain_end()) == d.ind,
            "driver chain end ind differs from driver ind ");
 
     // path.front() is a pulling edge which is alwais a free end
@@ -301,7 +301,7 @@ shift_edges_to_target_chain(const Path& path)
 
             const auto [f, t] = gr.inds_to_chain_link(leadingInd, indN);
 
-            ASSERT(f.is_defined(),
+            GRAFFINE_ASSERT(f.is_defined(),
                    "leadingInd = ", leadingInd, " and indN = ", indN,
                    " are not ends of connected chains");
 

@@ -129,7 +129,7 @@ Functor(Graph& gr,
     , remSE {gr, pp}
     , remME {gr, pp}
 {
-    ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
 }
 
 // 'ind1' will be merged into 'ind2' and disappear if chain of 'ind2' has
@@ -146,8 +146,8 @@ operator()(const EgIdG ind1,
     auto& eg2 = gr.edge(ind2);
     auto& m2 = gr.chain(eg2.w);
 
-    ASSERT(eg1.is_neig_of(eg2), "Edges are not mergeable: Edges are not adjacent");
-    ASSERT(m1.is_shrinkable() || m2.is_shrinkable(),
+    GRAFFINE_ASSERT(eg1.is_neig_of(eg2), "Edges are not mergeable: Edges are not adjacent");
+    GRAFFINE_ASSERT(m1.is_shrinkable() || m2.is_shrinkable(),
           "Edges are not mergeable: Hosting chain(s) are not shrinkable.");
 
     if constexpr (verboseF) {

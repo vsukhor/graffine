@@ -569,7 +569,7 @@ merge_components(
     const auto indDon = donor.ind;
     const auto indAcc = acceptor.ind;
 
-    ASSERT(indDon != indAcc, "Merging component ", indAcc, " into itself.");
+    GRAFFINE_ASSERT(indDon != indAcc, "Merging component ", indAcc, " into itself.");
 
     if constexpr (verboseF)
         jot("Merging cmp into ", indAcc , " <-- ", indDon);
@@ -674,7 +674,7 @@ move_edges(
     // Does not update chain connectivity and 'ngs'.
     // Does not remove source chain if it is emptied.
 
-    ASSERT(fr.c == to.c,
+    GRAFFINE_ASSERT(fr.c == to.c,
             "Source chain componenet is different from that of the target");
 
     ct[fr.c].move_edges(fr, posFrBegin, posFrEnd, to, posTo);
@@ -691,7 +691,7 @@ constexpr
 auto Graph<CC>::
 get_egl(const EgIdG ind) const noexcept -> const EdgeDescr&
 {
-    ASSERT(ind < egl.size(), "ind exceeds the number of edges");
+    GRAFFINE_ASSERT(ind < egl.size(), "ind exceeds the number of edges");
 
     return egl[ind];
 }
@@ -701,7 +701,7 @@ constexpr
 auto Graph<CC>::
 get_egl(const EgIdG ind) noexcept -> EdgeDescr&
 {
-    ASSERT(ind < egl.size(), "ind exceeds the number of edges");
+    GRAFFINE_ASSERT(ind < egl.size(), "ind exceeds the number of edges");
 
     return egl[ind];
 }
@@ -711,7 +711,7 @@ constexpr
 auto Graph<CC>::
 get_ved(const VIdG ind) const noexcept -> const VertexDescr&
 {
-    ASSERT(ind < ved.size(), "ind exceeds the number of vertices");
+    GRAFFINE_ASSERT(ind < ved.size(), "ind exceeds the number of vertices");
 
     return ved[ind()];
 }
@@ -721,7 +721,7 @@ constexpr
 auto Graph<CC>::
 get_ved(const VIdG ind) noexcept -> VertexDescr&
 {
-    ASSERT(ind < ved.size(), "ind exceeds the number of vertices");
+    GRAFFINE_ASSERT(ind < ved.size(), "ind exceeds the number of vertices");
 
     return ved[ind()];
 }
@@ -792,7 +792,7 @@ constexpr
 auto Graph<CC>::
 chid(const EgIdG ind) const noexcept -> ChIdG
 {
-    ASSERT(ind < egl.size(), "ind exceeds the number of edges");
+    GRAFFINE_ASSERT(ind < egl.size(), "ind exceeds the number of edges");
 
     return egl[ind].w;
 }
@@ -802,7 +802,7 @@ constexpr
 auto Graph<CC>::
 chain(const EgIdG ind) const noexcept -> const Chain&
 {
-    ASSERT(ind < egl.size(), "ind exceeds the number of edges");
+    GRAFFINE_ASSERT(ind < egl.size(), "ind exceeds the number of edges");
     return cn[egl[ind].w];
 }
 
@@ -887,13 +887,13 @@ remove_slot_from_neigs(const EndSlot& s)
         // Remove oldn from the neig list of its j-th neig
         const auto ngsOK = ngs.erase(s);
 
-        ENSURE(ngsOK, "EndSlot {", s.w, " ", s.e, "} not found among",
+        GRAFFINE_ENSURE(ngsOK, "EndSlot {", s.w, " ", s.e, "} not found among",
                       "ngs of the slot {", ne.w, " ", ne.e, " connected to it");
 
         // Remove the j-th neig from the oldn's list of neigs
         const auto neOK = sr.erase(ne);
 
-        ENSURE(neOK, "EndSlot {", ne.w, " ", ne.e, "} not found among",
+        GRAFFINE_ENSURE(neOK, "EndSlot {", ne.w, " ", ne.e, "} not found among",
                      "ngs of the slot {", s.w, " ", s.e, " connected to it");
     }
 }
@@ -915,7 +915,7 @@ replace_slot_in_neigs(
 
         const auto ok = ne_ngs.replace(old, nov);
 
-        ENSURE(ok, "EndSlot {", old.w, " ", old.e, "} not found among",
+        GRAFFINE_ENSURE(ok, "EndSlot {", old.w, " ", old.e, "} not found among",
                     "ngs of the slot {", ne.w, " ", ne.e, " connected to it");
     }
 }
@@ -1092,9 +1092,9 @@ constexpr
 auto Graph<CC>::
 vertex(const VertexDescr& vd) const noexcept -> const Vertex&
 {
-    ASSERT(vd.ind < ved.size(),
+    GRAFFINE_ASSERT(vd.ind < ved.size(),
            "unexpected vd.i ", vd.ind, ": exceeds ved size ", ved.size());
-    ASSERT(vd.ci < ct.size(),
+    GRAFFINE_ASSERT(vd.ci < ct.size(),
            "unexpected vd.c ", vd.ci, ": exceeds ct size ", ct.size());
 
     return ct[vd.ci].vertex(VIdH{vd.idh});
@@ -1105,9 +1105,9 @@ constexpr
 auto Graph<CC>::
 vertex(const VertexDescr& vd) noexcept -> Vertex&
 {
-    ASSERT(vd.ind < ved.size(),
+    GRAFFINE_ASSERT(vd.ind < ved.size(),
            "unexpected vd.i ", vd.ind, ": exceeds ved size ", ved.size());
-    ASSERT(vd.ci < ct.size(),
+    GRAFFINE_ASSERT(vd.ci < ct.size(),
            "unexpected vd.c ", vd.ci, ": exceeds ct size ", ct.size());
 
     return ct[vd.ci].vertex(VIdH{vd.idh});
@@ -1118,7 +1118,7 @@ constexpr
 auto Graph<CC>::
 vertex(const VIdG ind) const noexcept -> const Vertex&
 {
-    ASSERT(ind < ved.size(),
+    GRAFFINE_ASSERT(ind < ved.size(),
            "unexpected ind ", ind, ": exceeds ved size ", ved.size());
 
     return vertex(ved[ind]);
@@ -1129,7 +1129,7 @@ constexpr
 auto Graph<CC>::
 vertex(const VIdG ind) noexcept -> Vertex&
 {
-    ASSERT(ind < ved.size(),
+    GRAFFINE_ASSERT(ind < ved.size(),
            "unexpected ind ", ind, ": exceeds ved size ", ved.size());
 
     return vertex(ved[ind]);;
@@ -1164,7 +1164,7 @@ constexpr
 auto Graph<CC>::
 vertex(const EndSlot& s) const noexcept -> const Vertex*
 {
-    ASSERT(s.w < num_chains(), "EndSlot is not valid.");
+    GRAFFINE_ASSERT(s.w < num_chains(), "EndSlot is not valid.");
 
     return cn[s.w].vertex_at_end(s.e);
 }
@@ -1174,7 +1174,7 @@ constexpr
 auto Graph<CC>::
 vertex(const EndSlot& s) noexcept -> Vertex*
 {
-    ASSERT(s.w < num_chains(), "EndSlot is not valid.");
+    GRAFFINE_ASSERT(s.w < num_chains(), "EndSlot is not valid.");
 
     return cn[s.w].vertex_at_end(s.e);
 }
@@ -1184,7 +1184,7 @@ constexpr
 auto Graph<CC>::
 vertex(const BulkSlot& s) const noexcept -> const Vertex*
 {
-    ASSERT(s.w < num_chains(), "BulkSlot is not valid.");
+    GRAFFINE_ASSERT(s.w < num_chains(), "BulkSlot is not valid.");
 
     return cn[s.w].vertex_at_bulk(s.a());
 }
@@ -1194,7 +1194,7 @@ constexpr
 auto Graph<CC>::
 vertex(const BulkSlot& s) noexcept -> Vertex*
 {
-    ASSERT(s.w < num_chains(), "BulkSlot is not valid.");
+    GRAFFINE_ASSERT(s.w < num_chains(), "BulkSlot is not valid.");
 
     return cn[s.w].vertex_at_bulk(s.a());
 }

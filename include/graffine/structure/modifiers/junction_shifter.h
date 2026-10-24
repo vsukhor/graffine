@@ -91,9 +91,9 @@ operator()(Host& host,
     auto& mf = host.chain(f.w);
     auto& mt = host.chain(t.w);
 
-    ASSERT(mf.c == mt.c, "Slots belong to differrent components");
+    GRAFFINE_ASSERT(mf.c == mt.c, "Slots belong to differrent components");
 
-    ASSERT(mf.ngs[f.e].contains(t) && mt.ngs[t.e].contains(f),
+    GRAFFINE_ASSERT(mf.ngs[f.e].contains(t) && mt.ngs[t.e].contains(f),
            "Slots {", f.str_short(), "} {", t.str_short(), "} are not incident");
 
     if (f.e == End::B) {
@@ -104,15 +104,15 @@ operator()(Host& host,
         auto v = egf.vertex_at_outer(f.e);
         auto u = egf.vertex_at_outer(End::opp(f.e));
 
-        ASSERT(v, "Slot f ", f.str_short(), " is not connected.");
-        ASSERT_CALLING(v->is_junction(), v->print("v"),
+        GRAFFINE_ASSERT(v, "Slot f ", f.str_short(), " is not connected.");
+        GRAFFINE_ASSERT_CALLING(v->is_junction(), v->print("v"),
                        "Shifting a vertex outside junction");
 
         // reassign vertex connections
         auto& egt = mt.end_edge(t.e);
         const auto st = edge_descriptor(egt, t.e);
 
-        ASSERT_CALLING(
+        GRAFFINE_ASSERT_CALLING(
             v->is_conected_to(st),
             v->print("v_at_slot_f"),
             "Vertex at slot f is not connected to slot t", t.str_short()
@@ -139,8 +139,8 @@ operator()(Host& host,
         auto v = egf.vertex_at_outer(f.e);
         auto u = egf.vertex_at_outer(End::opp(f.e));
 
-        ASSERT(v, "Slot f ", f.str_short(), " is not connected.");
-        ASSERT_CALLING(v->is_junction(), v->print("v"),
+        GRAFFINE_ASSERT(v, "Slot f ", f.str_short(), " is not connected.");
+        GRAFFINE_ASSERT_CALLING(v->is_junction(), v->print("v"),
                        "Shifting a vertex outside junction");
 
         // reassign vertex connections
@@ -148,7 +148,7 @@ operator()(Host& host,
         auto& egt = mt.end_edge(t.e);
         const auto st = edge_descriptor(egt, t.e);
 
-        ASSERT_CALLING(
+        GRAFFINE_ASSERT_CALLING(
             v->is_conected_to(st),
             v->print("v_at_slot_f"),
             "Vertex at slot f is not connected to slot t", t.str_short()

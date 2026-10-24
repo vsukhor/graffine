@@ -132,7 +132,7 @@ From(Graph& gr,
     , updateProperties {pp}
     , report {gr, dd}
 {
-    ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
 }
 
 
@@ -144,7 +144,7 @@ operator()(
     Vertex& v2
 ) noexcept -> Res
 {
-    ASSERT(v1.is_leaf() || v2.is_leaf(), "No leaf vertex found in input.");
+    GRAFFINE_ASSERT(v1.is_leaf() || v2.is_leaf(), "No leaf vertex found in input.");
 
     const auto& egs1 = *v1.edges().begin();
     const auto& egs2 = *v2.edges().begin();
@@ -155,10 +155,10 @@ operator()(
 
     if (v1.is_leaf()) {
 
-        ASSERT(v2.is_bulk(), "Vertex 2 is not BULK");
+        GRAFFINE_ASSERT(v2.is_bulk(), "Vertex 2 is not BULK");
 
         const EndSlot es = gr.cn[egl1.w].end_slot(egl1.a, egs1.e);
-        ASSERT(es.is_defined(), "Vertex 1 is not at chain end of", egl1.w);
+        GRAFFINE_ASSERT(es.is_defined(), "Vertex 1 is not at chain end of", egl1.w);
 
         const BulkSlot bs {egl2.w, egl2.a};
 
@@ -166,10 +166,10 @@ operator()(
     }
     else {  // v2.is_leaf()
 
-        ASSERT(v1.is_bulk(), "Vertex 1 is not BULK");
+        GRAFFINE_ASSERT(v1.is_bulk(), "Vertex 1 is not BULK");
 
         const EndSlot es = gr.cn[egl2.w].end_slot(egl2.a, egs2.e);
-        ASSERT(es.is_defined(), "Vertex 2 is not at chain end of", egl2.w);
+        GRAFFINE_ASSERT(es.is_defined(), "Vertex 2 is not at chain end of", egl2.w);
 
         const BulkSlot bs {egl1.w, egl1.a};
 
@@ -192,10 +192,10 @@ operator()(
 
     // For corresponding vertex merger of unconnected cycles, "From<1, 1, G>"
     // should be used. Therefore,
-    ASSERT(!cn[w1].ngs[e1].num(),
+    GRAFFINE_ASSERT(!cn[w1].ngs[e1].num(),
            shortName, ": end ", s1.ea_str(), " is not a free end of ", w1);
-    ASSERT(a2 > 0, shortName, " at the very beginning of w2 ", w2);
-    ASSERT(a2 < cn[w2].length(), shortName, " at the very end of w2 ", w2);
+    GRAFFINE_ASSERT(a2 > 0, shortName, " at the very beginning of w2 ", w2);
+    GRAFFINE_ASSERT(a2 < cn[w2].length(), shortName, " at the very end of w2 ", w2);
 
     if (cn[w2].is_unconnected_cycle()) {
         gr.rotate_chain(cn[w2], a2());
@@ -344,9 +344,9 @@ operator()(
     if constexpr (verboseF)
         report.before(s1, EndSlot{w2, End::undefined}, {}, {}, "a CYCLE ");
 
-    ASSERT(!gr.chain(w1).ngs[e1].num(), shortName,
+    GRAFFINE_ASSERT(!gr.chain(w1).ngs[e1].num(), shortName,
            ": end ", s1.ea_str(), " of chain ", s1.w, " is not a free end");
-    ASSERT(gr.chain(w2).is_unconnected_cycle(),
+    GRAFFINE_ASSERT(gr.chain(w2).is_unconnected_cycle(),
            shortName, "w2 ", w2, " is not an unconnected cycle");
 
     const EndSlot s2A {w2, End::A};
@@ -419,7 +419,7 @@ struct From1<Deg2, G, PP>
                     std::shared_ptr<PP> pp = nullptr)
         : Base {gr, pp}
     {
-        ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+        GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
     }
 };
 

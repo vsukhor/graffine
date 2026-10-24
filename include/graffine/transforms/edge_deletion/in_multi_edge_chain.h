@@ -112,7 +112,7 @@ InMultiEdgeChain(Graph& gr,
     , deg3 {gr, pp}
     , deg4 {gr, pp}
 {
-    ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
 }
 
 
@@ -124,11 +124,11 @@ operator()(const EgIdG ind) noexcept -> Res
     const auto& m = gr.chain(ind);
     const auto& eg = m.g[gr.get_egl(ind).a];
 
-    ASSERT_CALLING(m.length() > 1,
+    GRAFFINE_ASSERT_CALLING(m.length() > 1,
                    m.print("InMultiEdgeChain"),
                    "incorrect chain for edge deletion in multi-edge chain: ",
                    m.length());
-    ASSERT(m.is_shrinkable(), "chain ", m.idw, " is not shrinkable.");
+    GRAFFINE_ASSERT(m.is_shrinkable(), "chain ", m.idw, " is not shrinkable.");
 
     const auto& vA = *eg.vertex_at_outer(End::A);
     const auto& vB = *eg.vertex_at_outer(End::B);
@@ -136,7 +136,7 @@ operator()(const EgIdG ind) noexcept -> Res
     [[maybe_unused]] const auto bA = m.is_unconnected_cycle_boundary(vA);
     [[maybe_unused]] const auto bB = m.is_unconnected_cycle_boundary(vB);
 
-    ASSERT(not(bA || bB),
+    GRAFFINE_ASSERT(not(bA || bB),
            "edge is not deleatable: boundary of disconnected cycle chain");
 
     const auto d = vA.is_bulk() ? vB.deg() : vA.deg();

@@ -121,7 +121,7 @@ create(
                         ).begin();
                         auto ng = find_edge_by_id(neigEgDescr.idh, globalEdges);
 
-                        ASSERT(ng, "Edge not found by Id");
+                        GRAFFINE_ASSERT(ng, "Edge not found by Id");
 
                         if (!ng->w.is_defined()) {
                             ng->w = w;

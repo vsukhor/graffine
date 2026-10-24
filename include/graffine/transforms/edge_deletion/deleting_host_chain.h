@@ -154,7 +154,7 @@ DeletingHostChain(Graph& gr,
     , clrem {gr, pp}
     , split {gr, pp}
 {
-    ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
 }
 
 
@@ -185,13 +185,13 @@ operator()(const EndSlot& s) noexcept -> Res
         jot("");
     }
 
-    ASSERT(w < gr.num_chains(),
+    GRAFFINE_ASSERT(w < gr.num_chains(),
            "w ", w, " exceeds number of chains ", gr.num_chains());
-    ASSERT(m.length() == 1, "inncorrect functor for edge deletion: length > 1");
-    ASSERT(m.is_shrinkable(), "chain ", w, " is not shrinkable.");
-    ASSERT(m.has_single_leaf_vertex(),
+    GRAFFINE_ASSERT(m.length() == 1, "inncorrect functor for edge deletion: length > 1");
+    GRAFFINE_ASSERT(m.is_shrinkable(), "chain ", w, " is not shrinkable.");
+    GRAFFINE_ASSERT(m.has_single_leaf_vertex(),
             "chain ", w, " does not a have single connected end");
-    ASSERT(ngs.num() == structure::containers::numNeigs<D>, "slot ", s.w, " ",
+    GRAFFINE_ASSERT(ngs.num() == structure::containers::numNeigs<D>, "slot ", s.w, " ",
            s.ea_str(), " has incorrect degree ", ngs.num() + 1, " != D ", D);
 
     if constexpr (!std::is_void_v<PP>)
@@ -212,7 +212,7 @@ operator()(const EndSlot& s) noexcept -> Res
     [[maybe_unused]] const auto vStay = vRemove == v1 ? v2 : v1;
     const auto cr = vRemove->get_c();
 
-    ASSERT(gr.compt(cr).num_edges() == 1, "component to remove is too big");
+    GRAFFINE_ASSERT(gr.compt(cr).num_edges() == 1, "component to remove is too big");
 
     clrem(cr);    // calls gr.update() inside
 
@@ -236,9 +236,9 @@ operator()(const EgIdG ind) noexcept -> Res
 {
     const auto& m = gr.chain(gr.egl[ind].w);
 
-    ASSERT(m.length() == 1, "inncorrect functor for edge deletion: length > 1");
-    ASSERT(m.is_shrinkable(), "chain ", m.idw, " is not shrinkable.");
-    ASSERT(m.has_single_leaf_vertex(),
+    GRAFFINE_ASSERT(m.length() == 1, "inncorrect functor for edge deletion: length > 1");
+    GRAFFINE_ASSERT(m.is_shrinkable(), "chain ", m.idw, " is not shrinkable.");
+    GRAFFINE_ASSERT(m.has_single_leaf_vertex(),
             "chain ", m.idw, " does not a have single connected end");
 
     return (*this)(EndSlot{m.idw, m.get_single_connected_end()});

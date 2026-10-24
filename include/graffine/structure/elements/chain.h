@@ -751,7 +751,7 @@ constexpr
 void Chain<E>::
 connect_bulk_vertex(const EgIdA a, Vertex& v) noexcept
 {
-    ASSERT(a < length(), "End not valid.");
+    GRAFFINE_ASSERT(a < length(), "End not valid.");
 
     g[a-1].connect_to_outer(End::B, v);
     g[a  ].connect_to_outer(End::A, v);
@@ -763,7 +763,7 @@ constexpr
 void Chain<E>::
 connect_end_vertex(const EndId e, Vertex& v) noexcept
 {
-    ASSERT(End::is_valid(e), "End not valid.");
+    GRAFFINE_ASSERT(End::is_valid(e), "End not valid.");
 
     end_edge(e).connect_to_outer(e, v);
 }
@@ -774,7 +774,7 @@ constexpr
 void Chain<E>::
 disconnect_end_vertex(const EndId e) noexcept
 {
-    ASSERT(End::is_valid(e), "End not valid.");
+    GRAFFINE_ASSERT(End::is_valid(e), "End not valid.");
 
     end_edge(e).disconnect_end_outer(e);
 }
@@ -785,7 +785,7 @@ constexpr
 auto Chain<E>::
 vertex_at_end(const EndId e) noexcept -> Vertex*
 {
-    ASSERT(End::is_valid(e), "End not valid.");
+    GRAFFINE_ASSERT(End::is_valid(e), "End not valid.");
 
     return end_edge(e).vertex_at_outer(e);
 }
@@ -796,7 +796,7 @@ constexpr
 auto Chain<E>::
 vertex_at_end(const EndId e) const noexcept -> const Vertex*
 {
-    ASSERT(End::is_valid(e), "End not valid.");
+    GRAFFINE_ASSERT(End::is_valid(e), "End not valid.");
 
     return end_edge(e).vertex_at_outer(e);
 }
@@ -807,7 +807,7 @@ constexpr
 auto Chain<E>::
 vertex_at_bulk(const EgIdA a) const noexcept -> const Vertex*
 {
-    ASSERT(a > 0 , a, " is not a bulk position");
+    GRAFFINE_ASSERT(a > 0 , a, " is not a bulk position");
 
     return g[a].vertex_at_outer(End::A);
 }
@@ -817,7 +817,7 @@ constexpr
 auto Chain<E>::
 vertex_at_bulk(const EgIdA a) noexcept -> Vertex*
 {
-    ASSERT(a > 0, a, " is not a bulk position");
+    GRAFFINE_ASSERT(a > 0, a, " is not a bulk position");
 
     return g[a].vertex_at_outer(End::A);
 }
@@ -831,11 +831,11 @@ vertex_at_bulk(const EgIdG ind1,
 {
     const auto eg1 = ind2eg(ind1);
 
-    ASSERT(eg1, "Edge ind ", ind1, " not found in chain ", idw);
+    GRAFFINE_ASSERT(eg1, "Edge ind ", ind1, " not found in chain ", idw);
 
     const auto eg2 = ind2eg(ind2);
 
-    ASSERT(eg2, "Edge ind ", ind2, " not found in chain ", idw);
+    GRAFFINE_ASSERT(eg2, "Edge ind ", ind2, " not found in chain ", idw);
 
     return vertex_at_bulk(eg1, eg2);
 }
@@ -846,9 +846,9 @@ auto Chain<E>::
 vertex_at_bulk(const Edge& eg1,
                const Edge& eg2) const noexcept -> const Vertex*
 {
-    ASSERT(eg1.ind != eg2.ind, "Identical inds: ", eg1.ind);
+    GRAFFINE_ASSERT(eg1.ind != eg2.ind, "Identical inds: ", eg1.ind);
 
-    ASSERT(eg1->indw == eg2->indw + 1 || eg2->indw == eg1->indw + 1,
+    GRAFFINE_ASSERT(eg1->indw == eg2->indw + 1 || eg2->indw == eg1->indw + 1,
            "Edges at a1 ", eg1->indw, " a2 ", eg2->indw, " are expected ",
            "to have a common bulk vertex");
 
@@ -908,7 +908,7 @@ constexpr
 auto Chain<E>::
 end_edge(const EndId e) const noexcept -> const Edge&
 {
-    ASSERT(End::is_valid(e), "End not valid.");
+    GRAFFINE_ASSERT(End::is_valid(e), "End not valid.");
 
     return e == endA ? g.front()
                      : g.back();
@@ -920,7 +920,7 @@ constexpr
 auto Chain<E>::
 end_edge(const EndId e) noexcept -> Edge&
 {
-    ASSERT(End::is_valid(e), "End not valid.");
+    GRAFFINE_ASSERT(End::is_valid(e), "End not valid.");
 
     return e == endA ? g.front()
                      : g.back();
@@ -933,7 +933,7 @@ constexpr
 auto Chain<E>::
 edge_internal_end(const EgIdA a, const EndId e) const noexcept -> EndId
 {
-    ASSERT(End::is_valid(e), "End not valid.");
+    GRAFFINE_ASSERT(End::is_valid(e), "End not valid.");
 
     return g[a].inner_endId(e);
 }
@@ -945,7 +945,7 @@ constexpr
 auto Chain<E>::
 edge_internal_end_at_end(const EndId e) const noexcept -> EndId
 {
-    ASSERT(End::is_valid(e), "End not valid.");
+    GRAFFINE_ASSERT(End::is_valid(e), "End not valid.");
 
     return end_edge(e).inner_endId(e);
 }
@@ -957,7 +957,7 @@ bool Chain<E>::
 egEnd_is_head(const EgIdG ind,
               const EndId egEnd) const noexcept
 {
-    ASSERT(End::is_valid(egEnd), "Edge end not valid.");
+    GRAFFINE_ASSERT(End::is_valid(egEnd), "Edge end not valid.");
 
     return is_headind(ind) &&
         (( head().points_forwards() && egEnd == End::B) ||
@@ -971,7 +971,7 @@ bool Chain<E>::
 egEnd_is_tail(const EgIdG ind,
               const EndId egEnd) const noexcept
 {
-    ASSERT(End::is_valid(egEnd), "Edge end not valid.");
+    GRAFFINE_ASSERT(End::is_valid(egEnd), "Edge end not valid.");
 
     return is_tailind(ind) &&
         (( tail().points_forwards() && egEnd == End::A) ||
@@ -987,9 +987,9 @@ connected_edge(
     const EndId ege
 ) const noexcept -> const Edge*
 {
-    ASSERT(!egEnd_is_tail(g[a].ind, ege),
+    GRAFFINE_ASSERT(!egEnd_is_tail(g[a].ind, ege),
            "Edge end ", End::str(ege), " at ", a, ", w ", idw, " is chain tail");
-    ASSERT(!egEnd_is_head(g[a].ind, ege),
+    GRAFFINE_ASSERT(!egEnd_is_head(g[a].ind, ege),
            "Edge end ", End::str(ege), " at ", a, ", w ", idw, " is chain head");
 
 
@@ -1114,9 +1114,9 @@ internal_egEnd(
     const EgIdA b    // chain position of the 2nd edge
 ) const noexcept -> EndId
 {
-    ASSERT(a.is_defined() && b.is_defined(),
+    GRAFFINE_ASSERT(a.is_defined() && b.is_defined(),
            "a = ", a, ", b = ", b, " are not chain-wide edge indexes");
-    ASSERT(a == b + 1 || b == a + 1,
+    GRAFFINE_ASSERT(a == b + 1 || b == a + 1,
            "a = ", a, ", b = ", b, " do not share a vertex");
 
     return g[b].points_forwards() ? (a > b ? endB : endA)
@@ -1141,7 +1141,7 @@ auto Chain<E>::
 end(const EgId indc,
     const EndId egEnd) const noexcept -> EndId
 {
-    ASSERT(g.front().indc == indc || g.back().indc == indc,
+    GRAFFINE_ASSERT(g.front().indc == indc || g.back().indc == indc,
            "edge having component index ", indc, " is not an at chain end");
 
     const auto a = g[0].indc == indc
@@ -1171,8 +1171,8 @@ constexpr
 auto Chain<E>::
 a2end(const EgIdA a) const noexcept -> EndId
 {
-    ASSERT(a < length(), " a = ", a, " exceeds chain length ", length());
-    ASSERT(a == 0 || a == length() - 1, "a = ", a, " is not an end edge.");
+    GRAFFINE_ASSERT(a < length(), " a = ", a, " exceeds chain length ", length());
+    GRAFFINE_ASSERT(a == 0 || a == length() - 1, "a = ", a, " is not an end edge.");
 
     return length() == 1
         ? endUndef            // end is undefined for single-edge chains
@@ -1188,7 +1188,7 @@ auto Chain<E>::
 egEnd_to_bulkslot(const EndId egE,
                   const EgIdA a) const noexcept -> BulkSlot
 {
-    ASSERT(a < length(), " a = ", a, " exceeds chain length ", length());
+    GRAFFINE_ASSERT(a < length(), " a = ", a, " exceeds chain length ", length());
 
     const auto frw = g[a].points_forwards();
 
@@ -1377,7 +1377,7 @@ constexpr
 auto Chain<E>::
 the_only_leaf_end() const noexcept -> EndId
 {
-    ASSERT(has_single_leaf_vertex(),
+    GRAFFINE_ASSERT(has_single_leaf_vertex(),
             "chain ", idw, " does not have single leaf vertex");
 
     if (!is_connected_at(endA) &&  is_connected_at(endB)) return endA;
@@ -1409,7 +1409,7 @@ constexpr
 auto Chain<E>::
 opp_end(const EndId e) noexcept -> EndId   // static
 {
-    ASSERT(End::is_valid(e), "End ", e, " is not valid");
+    GRAFFINE_ASSERT(End::is_valid(e), "End ", e, " is not valid");
 
     return End::opp(e);
 }
@@ -1420,7 +1420,7 @@ constexpr
 bool Chain<E>::
 edge_points_forwards(const EgIdA a) const noexcept
 {
-    ASSERT(a < length(),
+    GRAFFINE_ASSERT(a < length(),
            "a ", a, " is not valid for length: ", length(), " of chain ", idw);
 
     return g[a].points_forwards();
@@ -1434,12 +1434,12 @@ end_slot(const EgIdA a,
          const EndId internalEgEnd) const noexcept -> EndSlot
 {
 
-    ASSERT(a < length(),
+    GRAFFINE_ASSERT(a < length(),
            "a ", a, " is not valid for length: ", length(), " of chain ", idw);
 
     const auto is_valid = is_head(a) || is_tail(a);
 
-    ASSERT(is_valid, "Edge pos ", a, " is not at chain end");
+    GRAFFINE_ASSERT(is_valid, "Edge pos ", a, " is not at chain end");
 
     return is_valid ? EndSlot{idw, g[a].outer_endId(internalEgEnd)}
                     : EndSlot{};
@@ -1452,7 +1452,7 @@ constexpr
 bool Chain<E>::
 is_connected_at(const EndId e) const noexcept
 {
-    ASSERT(End::is_valid(e), "End ", e, " is not valid, chain ", idw);
+    GRAFFINE_ASSERT(End::is_valid(e), "End ", e, " is not valid, chain ", idw);
 
     return ngs[e].num() > 0;
 }
@@ -1488,7 +1488,7 @@ is_unconnected_cycle() const noexcept
 //           ngs[endA][0] ==
 //           ngs[endB][0].opp();
 
-//    ASSERT(A == B, " B ", B, " vA->deg() ", vA->deg(),  " Addr vA ", vA, " addr vB ", vB);
+//    GRAFFINE_ASSERT(A == B, " B ", B, " vA->deg() ", vA->deg(),  " Addr vA ", vA, " addr vB ", vB);
 //    const auto vA = vertex_at_end(endA);
 //    const auto vB = vertex_at_end(endB);
 
@@ -1565,7 +1565,7 @@ bool Chain<E>::
 has_such_neig(const EndId e,
               const ChIdG n) const noexcept
 {
-    ASSERT(End::is_valid(e), "End ", e, " is not valid, chain ", idw);
+    GRAFFINE_ASSERT(End::is_valid(e), "End ", e, " is not valid, chain ", idw);
 
     for (const auto& s : ngs[e]())
         if (s.w == n)
@@ -1580,7 +1580,7 @@ constexpr
 auto Chain<E>::
 num_neigs(const EndId e) const noexcept -> std::size_t
 {
-    ASSERT(End::is_valid(e), "End ", e, " is not valid, chain ", idw);
+    GRAFFINE_ASSERT(End::is_valid(e), "End ", e, " is not valid, chain ", idw);
 
     return ngs[e].num();
 }
@@ -1591,7 +1591,7 @@ constexpr
 auto Chain<E>::
 num_vertices(const Degree d) const noexcept -> std::size_t
 {
-    ASSERT(is_implemented_degree(d), "Degree ", d, " is not implemented");
+    GRAFFINE_ASSERT(is_implemented_degree(d), "Degree ", d, " is not implemented");
 
     if (d == Deg1) {  // count vertices of degree 1
 
@@ -1804,7 +1804,7 @@ ensure(
 {
     if (!cond) {
         print(tag);
-        ABORT(cond, message...);
+        GRAFFINE_ABORT(cond, message...);
     }
 }
 

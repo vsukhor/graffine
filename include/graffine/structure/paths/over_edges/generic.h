@@ -189,7 +189,7 @@ Generic<Component>::
 Generic(const Component* const cmp) noexcept
     : cmp {cmp}
 {
-    ASSERT(cmp, "Pointer to Component is null");
+    GRAFFINE_ASSERT(cmp, "Pointer to Component is null");
 }
 
 

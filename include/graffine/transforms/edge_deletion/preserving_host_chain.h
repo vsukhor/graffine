@@ -149,7 +149,7 @@ PreservingHostChain(Graph& gr,
     : gr {gr}
     , updateProperties {pp}
 {
-    ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
 }
 
 
@@ -175,11 +175,11 @@ operator()(const BulkSlot& s) noexcept -> Res
         jot("");
     }
 
-    ASSERT(w < gr.num_chains(),
+    GRAFFINE_ASSERT(w < gr.num_chains(),
            shortName, ": w ", w, "exceeds number of chains ", gr.num_chains());
-    ASSERT(a < m.length(), shortName,
+    GRAFFINE_ASSERT(a < m.length(), shortName,
            ": a ", a, " exceeds chain length ", m.length(), "of chain ", w);
-    ASSERT(m.is_shrinkable(), shortName, ": chain ", w, "is not shrinkable");
+    GRAFFINE_ASSERT(m.is_shrinkable(), shortName, ": chain ", w, "is not shrinkable");
 
     const auto c = m.c;
 

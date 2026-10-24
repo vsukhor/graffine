@@ -70,16 +70,16 @@ struct EdgeInComponent
                const CmpId ic,
                const auto k) const
     {
-        ENSURE(w == eg.w,
+        GRAFFINE_ENSURE(w == eg.w,
            "egl[", k, "].w != eg.w in component ", ic, " eg.ind ", eg.ind);
 
-        ENSURE(a == eg.indw,
+        GRAFFINE_ENSURE(a == eg.indw,
            "egl[", k, "].a != eg.a in component ", ic, " eg.ind ", eg.ind);
 
-        ENSURE(i == eg.ind,
+        GRAFFINE_ENSURE(i == eg.ind,
            "egl[", k, "].i != eg.i in component ", ic, " eg.ind ", eg.ind);
 
-        ENSURE(h == eg.id,
+        GRAFFINE_ENSURE(h == eg.id,
            "egl[", k, "].h != eg.id in component ", ic, " eg.ind ", eg.ind);
     }
 

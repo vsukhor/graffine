@@ -87,7 +87,7 @@ struct Facet<core::Edge::Vertex,
 
     constexpr bool operator==(const Facet& other) const noexcept
     {
-    //    ASSERT(eg == other.eg);
+    //    GRAFFINE_ASSERT(eg == other.eg);
         return eg == other.eg;
     }
 
@@ -99,13 +99,13 @@ protected:
     ) noexcept -> Edges
     {
         const auto e01 = vv[0].common_edge(vv[1]);
-        ASSERT(e01.is_defined(), "No common edge vv0 <-> vv1.");
+        GRAFFINE_ASSERT(e01.is_defined(), "No common edge vv0 <-> vv1.");
 
         const auto e12 = vv[1].common_edge(vv[2]);
-        ASSERT(e12.is_defined(), "No common edge vv1 <-> vv2.");
+        GRAFFINE_ASSERT(e12.is_defined(), "No common edge vv1 <-> vv2.");
 
         const auto e20 = vv[2].common_edge(vv[0]);
-        ASSERT(e20.is_defined(), "No common edge vv2 <-> vv0.");
+        GRAFFINE_ASSERT(e20.is_defined(), "No common edge vv2 <-> vv0.");
 
         return {&e01, &e12, &e20};
     }

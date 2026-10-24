@@ -95,7 +95,7 @@ Functor(Graph& gr,
     , from13 {gr, pp}
     , from22 {gr, pp}
 {
-    ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
 }
 
 
@@ -109,12 +109,12 @@ operator()(
 {
     const auto d1 = v1.deg();
 
-    ASSERT(is_implemented_degree(d1),
+    GRAFFINE_ASSERT(is_implemented_degree(d1),
            "Vertex degree ", d1, " is not implemented: vertex ", v1.id);
 
     const auto d2 = v2.deg();
 
-    ASSERT(is_implemented_degree(d2),
+    GRAFFINE_ASSERT(is_implemented_degree(d2),
            "Vertex degree ", d2, " is not implemented: vertex ", v2.id);
 
     if (d1 == Deg1 && d2 == Deg1)

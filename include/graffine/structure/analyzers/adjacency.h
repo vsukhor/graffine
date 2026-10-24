@@ -212,11 +212,11 @@ are_adjacent(
     const EgIdA a2
 ) const noexcept
 {
-    ASSERT(a1 > 0, "ea or ee should be applied: a1 == 0");
-    ASSERT(a1 < h.chain(w1).length(),
+    GRAFFINE_ASSERT(a1 > 0, "ea or ee should be applied: a1 == 0");
+    GRAFFINE_ASSERT(a1 < h.chain(w1).length(),
            "ea or ee should be applied: a1 == cn[w1].length() = ", a1);
-    ASSERT(a2 > 0, "ea or ee should be applied: a2 == 0");
-    ASSERT(a2 < h.chain(w2).length(),
+    GRAFFINE_ASSERT(a2 > 0, "ea or ee should be applied: a2 == 0");
+    GRAFFINE_ASSERT(a2 < h.chain(w2).length(),
            "ea or ee should be applied: a2 == cn[w2].length() = ", a2);
 
     if (w1 == w2) {
@@ -296,8 +296,8 @@ are_adjacent(
     const auto& m1 = h.chain(w1);
     const auto& m2 = h.chain(w2);
 
-    ASSERT(a2 > 0, "ea or ee should be applied: a2 == 0");
-    ASSERT(a2 < m2.length(),
+    GRAFFINE_ASSERT(a2 > 0, "ea or ee should be applied: a2 == 0");
+    GRAFFINE_ASSERT(a2 < m2.length(),
            "ea or ee should be applied: a2 == cn[w2].length() = ", a2);
 
     if (w1 == w2)
@@ -358,7 +358,7 @@ print_list_chains(std::string_view tag,
         const auto q = std::find_if(h.chains().begin(),
                                     h.chains().end(),
                                     [&](const ChId w){return h.chain(w).idc == j; });
-        ASSERT(q != h.chains().end(), " idc ", j, " not found in component ", h.ind);
+        GRAFFINE_ASSERT(q != h.chains().end(), " idc ", j, " not found in component ", h.ind);
         jot<false>(tag, h.ind, ' ', *q, " : ");
         for (const auto k : a[j])
             jot<false>(k, ' ');

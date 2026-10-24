@@ -156,7 +156,7 @@ Core(
     , shortName {shortName}
     , report {gr, dd}
 {
-    ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
 }
 
 
@@ -191,15 +191,15 @@ antiparallel(
     if constexpr (verboseF)
         report.before(s1, s2, "a");
 
-    ASSERT(w1 != w2, shortName, " antiparallel: same chain ", w1, " w1 == w2 ",
+    GRAFFINE_ASSERT(w1 != w2, shortName, " antiparallel: same chain ", w1, " w1 == w2 ",
            "merge_to_cycle should be used instead");
-    ASSERT(!m1.is_connected_at(end), shortName,
+    GRAFFINE_ASSERT(!m1.is_connected_at(end), shortName,
            " antiparallel: end ", end, " of w1 ", w1, " is not free");
-    ASSERT(!m2.is_connected_at(end),
+    GRAFFINE_ASSERT(!m2.is_connected_at(end),
            " antiparallel: end ", end, " of w2 ", w2, " is not free");
-    ASSERT(m1.length(), shortName,
+    GRAFFINE_ASSERT(m1.length(), shortName,
            " antiparallel: chain w1 ", w1, " has no edges");
-    ASSERT(m2.length(), shortName,
+    GRAFFINE_ASSERT(m2.length(), shortName,
            " antiparallel: chain w2 ", w2, " has no edges");
 
     if constexpr (!std::is_void_v<PP>)
@@ -307,23 +307,23 @@ parallel(
 
     auto v2 = eg2.vertex_at_outer(e2);
 
-    ASSERT(v2, "end B of ", eg2.indw, " is not connected.");
+    GRAFFINE_ASSERT(v2, "end B of ", eg2.indw, " is not connected.");
 
     // Print out summary before the operation.
 
     if constexpr (verboseF)
         report.before(s2, s1, "p");
 
-    ASSERT(w1 != w2,
+    GRAFFINE_ASSERT(w1 != w2,
            shortName, " parallel: w1 == w2 == ", w1, ": ",
             "merge_to_cycle should be used instead");
-    ASSERT(!cn[w1].is_connected_at(End::A),
+    GRAFFINE_ASSERT(!cn[w1].is_connected_at(End::A),
             shortName, " parallel: end A of w1 ", w1, " is not free");
-    ASSERT(!cn[w2].is_connected_at(End::B),
+    GRAFFINE_ASSERT(!cn[w2].is_connected_at(End::B),
             shortName, " parallel: end B of w2 ", w2, " is not free");
-    ASSERT(cn[w1].length(),
+    GRAFFINE_ASSERT(cn[w1].length(),
             shortName, " parallel: chain w1 ", w1, " has no edges");
-    ASSERT(cn[w2].length(),
+    GRAFFINE_ASSERT(cn[w2].length(),
             shortName, " parallel: chain w2 ", w2, " has no edges");
 
     if constexpr(!std::is_void_v<PP>)
@@ -374,7 +374,7 @@ parallel(
 
     const auto w = w1 == gr.num_chains() ? w2 : w1;
 
-    ASSERT(gr.chain(w).c == cmp.ind, "cmp is not correct");
+    GRAFFINE_ASSERT(gr.chain(w).c == cmp.ind, "cmp is not correct");
 
     if constexpr (verboseF)
         report.after(v2, w);
@@ -403,12 +403,12 @@ template<typename G,
 auto Core<G, PP>::
 to_cycle(const ChIdG w) noexcept -> Res
 {
-    ASSERT(!cn[w].is_unconnected_cycle(),
+    GRAFFINE_ASSERT(!cn[w].is_unconnected_cycle(),
            shortName, ": attempt to merge_to_cycle a separate cycle chain ", w);
-    ASSERT(!cn[w].is_connected_at(End::A) &&
+    GRAFFINE_ASSERT(!cn[w].is_connected_at(End::A) &&
            !cn[w].is_connected_at(End::B),
            shortName, ": attempt to merge_to_cycle a not separate chain ", w);
-    ASSERT(cn[w].length() >= Chain::minCycleLength,
+    GRAFFINE_ASSERT(cn[w].length() >= Chain::minCycleLength,
            shortName, " cycle: chain w ", w, "length < minCycleLength");
 
     const EndSlot sA {w, End::A};

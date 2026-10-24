@@ -162,7 +162,7 @@ To(Graph& gr,
     , updateProperties {pp}
     , report {dd, gr}
 {
-    ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
 }
 
 
@@ -172,17 +172,17 @@ auto To<Deg2, Deg2, G, PP>::
 operator()(Vertex& v,
            const std::vector<EdgeInVertex>& s) -> Res
 {
-    ASSERT_CALLING(v.deg() == I,
+    GRAFFINE_ASSERT_CALLING(v.deg() == I,
                    v.print("INCORRECT DEGREE"),
                    "Vertex must have degree", I, " actual degree is", v.deg());
 
-    ASSERT(s.size() == J1,
+    GRAFFINE_ASSERT(s.size() == J1,
            "Incorrect number of incident slots for ", shortName);
 
-    ASSERT_CALLING(v.is_conected_to(s[0]),
+    GRAFFINE_ASSERT_CALLING(v.is_conected_to(s[0]),
                    v.print("NOT CONNECTED"),
                    "Vertex is not connected to ", s[0].str_short());
-    ASSERT_CALLING(v.is_conected_to(s[1]),
+    GRAFFINE_ASSERT_CALLING(v.is_conected_to(s[1]),
                    v.print("NOT CONNECTED"),
                    "Vertex is not connected to ", s[1].str_short());
 
@@ -250,16 +250,16 @@ operator()(const EndSlot& _s1,
 
     [[maybe_unused]] auto [va, vb] = split_to_13(s1);
 
-    ASSERT(!gr.compt(va->get_c()).template check<verboseF>(),
+    GRAFFINE_ASSERT(!gr.compt(va->get_c()).template check<verboseF>(),
            "split_to_13 failed on component ", va->get_c());
-    ASSERT(!gr.compt(vb->get_c()).template check<verboseF>(),
+    GRAFFINE_ASSERT(!gr.compt(vb->get_c()).template check<verboseF>(),
            "split_to_13 failed on component ", vb->get_c());
 
     auto [vc, v2] = split_to_12(s2);
 
-    ASSERT(!gr.compt(vc->get_c()).template check<verboseF>(),
+    GRAFFINE_ASSERT(!gr.compt(vc->get_c()).template check<verboseF>(),
            "split_to_12 failed on component ", vc->get_c());
-    ASSERT(!gr.compt(v2->get_c()).template check<verboseF>(),
+    GRAFFINE_ASSERT(!gr.compt(v2->get_c()).template check<verboseF>(),
            "split_to_12 failed on component ", v2->get_c());
 
     const auto ww0 = gr.chid(ind[0]);
@@ -312,36 +312,36 @@ check_validity(
         return gr.is_same_cycle(*other.begin(), *other.rbegin());
     };
 
-    ASSERT(s1 != s2, shortName,
+    GRAFFINE_ASSERT(s1 != s2, shortName,
            ": slots s1 and s2 are identical:", s1.str_short());
 
     using namespace structure::containers;
-    ASSERT(ngs1.num() == numNeigs<I>,
+    GRAFFINE_ASSERT(ngs1.num() == numNeigs<I>,
            shortName, ": ngs1.num ", ngs1.num(), " != numNeigs ", numNeigs<I>);
-    ASSERT(ngs2.num() == I - 1,
+    GRAFFINE_ASSERT(ngs2.num() == I - 1,
            shortName, ": ngs2.num ", ngs2.num(), " != numNeigs ", numNeigs<I>);
 
-    ASSERT(ngs1.contains(s2),
+    GRAFFINE_ASSERT(ngs1.contains(s2),
            shortName, ": s2 ", s2.str_short(),
            "not found among connections at s1 ", s1.str_short());
-    ASSERT(ngs2.contains(s1),
+    GRAFFINE_ASSERT(ngs2.contains(s1),
            shortName, ": s1 ", s1.str_short(),
            "not found among connections at s2 ", s2.str_short());
 
     if constexpr (!toDisconnectedCycle1 && !toDisconnectedCycle2) {
-        ASSERT(!gr.is_same_cycle(s1, s2),
+        GRAFFINE_ASSERT(!gr.is_same_cycle(s1, s2),
                shortName,  ": disconnecting a cycle chain");
     }
 
     else if constexpr (toDisconnectedCycle1 && toDisconnectedCycle2) {
-        ASSERT(cycle_is_selected() && cycle_is_excluded(),
+        GRAFFINE_ASSERT(cycle_is_selected() && cycle_is_excluded(),
                shortName, ": both selected and excluded ",
                "pairs of slots should belong to a cycle chain");
     }
 
     else if constexpr ((toDisconnectedCycle1 && !toDisconnectedCycle2) ||
                        (!toDisconnectedCycle1 && toDisconnectedCycle2)) {
-        ASSERT(( cycle_is_selected() && !cycle_is_excluded()) ||
+        GRAFFINE_ASSERT(( cycle_is_selected() && !cycle_is_excluded()) ||
                (!cycle_is_selected() &&  cycle_is_excluded()),
                shortName,  ": only either selected ",
                "or excluded pair of slots may belong to a cycle chain");
@@ -383,7 +383,7 @@ struct To2<Deg2, G, PP>
                            std::shared_ptr<PP> pp = nullptr)
         : Base {gr, pp}
     {
-        ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+        GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
     }
 };
 

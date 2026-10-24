@@ -213,13 +213,13 @@ components(const itT it) const
 
     const auto maxv = *std::max_element(cids.begin(), cids.end());
 
-    ENSURE(maxv == gr.ind_last_cmpt(),
+    GRAFFINE_ENSURE(maxv == gr.ind_last_cmpt(),
            "at iteration ", it,
            ": max cn.c = ", maxv, " != number of components = ", gr.num_compts());
 
     const auto minv = *std::min_element(cids.begin(), cids.end());
 
-    ENSURE(minv == 0, "at iteration ", it, " min cn.c ", minv, " is not 0");
+    GRAFFINE_ENSURE(minv == 0, "at iteration ", it, " min cn.c ", minv, " is not 0");
 
 
 //    using BaseEdgeType = utils::graph::EdgeType<real,
@@ -277,7 +277,7 @@ components(const itT it) const
     for (const auto& c : ct) {
         for (const auto& w : c.ww) {
 
-            ENSURE(cn[w].c == c.ind,
+            GRAFFINE_ENSURE(cn[w].c == c.ind,
                    "at iter ", it, " in c.ww for w ", w, ", c.ind ", c.ind);
 
            for (const auto e : End::Ids)
@@ -309,7 +309,7 @@ components(const itT it) const
 
     for (std::size_t w {}; w<gr.num_chains(); ++w)
         for (const auto& o : cn[w].g) {
-            ENSURE(o.c == cn[w].c,
+            GRAFFINE_ENSURE(o.c == cn[w].c,
                    "at iteration ", it, " in g.c != cn.c for cn: ", w);
         }
 
@@ -323,20 +323,20 @@ components(const itT it) const
 
     for (std::size_t w {}; w < gr.num_chains(); ++w)
         for (const auto& o : cn[w].g) {
-            ENSURE(o.c == cn[w].c,
+            GRAFFINE_ENSURE(o.c == cn[w].c,
                    "at iteration ", it, " cn[w].g[i].c != cn[w].c for w: ", w);
         }
 
     for (std::size_t ic {}; ic < gr.num_compts(); ++ic) {
         const auto& c = cc[ic];
 
-        ENSURE(std::accumulate(c.begin(), c.end(), 0U) == ct[ic].num_edges(),
+        GRAFFINE_ENSURE(std::accumulate(c.begin(), c.end(), 0U) == ct[ic].num_edges(),
                "at iteration ", it, " sum(c) != cmp num edges for ic: ", ic);
 
-        ENSURE(*std::min_element(c.begin(), c.end()) == 1,
+        GRAFFINE_ENSURE(*std::min_element(c.begin(), c.end()) == 1,
                "at iteration ", it, " minval(c) != 1 for ic: ", ic);
 
-        ENSURE(*std::max_element(c.begin(), c.end()) == 1,
+        GRAFFINE_ENSURE(*std::max_element(c.begin(), c.end()) == 1,
                "at iteration ", it, " maxval(c) != 1 for ic: ", ic);
     }
 
@@ -351,13 +351,13 @@ components(const itT it) const
         const auto c = cc[ic];
         const auto numeg = ct[ic].num_edges();
 
-        ENSURE(c.size() == numeg,
+        GRAFFINE_ENSURE(c.size() == numeg,
                "at iteration ", it, " c.size() != cmp number of edges for ic: ", ic);
 
-        ENSURE(*std::min_element(c.begin(), c.end()) == 0,
+        GRAFFINE_ENSURE(*std::min_element(c.begin(), c.end()) == 0,
                "at iteration ", it, " minval(c) != 0 for ic: ", ic);
 
-        ENSURE(*std::max_element(c.begin(), c.end()) == ct[ic].egId_last()(),
+        GRAFFINE_ENSURE(*std::max_element(c.begin(), c.end()) == ct[ic].egId_last()(),
                "at iteration ", it,
                " maxval(c) != cmp number of edges - 1", " for ic: ", ic);
     }
@@ -408,22 +408,22 @@ vertex_numbers([[maybe_unused]] itT it) const
         return n;
     };
 
-    ENSURE(nvct.template operator()<1>() == gr.num_vertices(Deg1),
+    GRAFFINE_ENSURE(nvct.template operator()<1>() == gr.num_vertices(Deg1),
            "vertex_numbers by cmpts test faled for D = ", 1,"  -- ",
            "expected: ", gr.num_vertices(Deg1),
            ", actual: ", nvct.template operator()<1>());
 
-    ENSURE(nvct.template operator()<2>() == gr.num_vertices(Deg2),
+    GRAFFINE_ENSURE(nvct.template operator()<2>() == gr.num_vertices(Deg2),
            "vertex_numbers by cmpts test faled for D = ", 2,"  -- ",
            "expected: ", gr.num_vertices(Deg2),
            ", actual: ", nvct.template operator()<2>());
 
-    ENSURE(nvct.template operator()<3>() == gr.num_vertices(Deg3),
+    GRAFFINE_ENSURE(nvct.template operator()<3>() == gr.num_vertices(Deg3),
            "vertex_numbers by cmpts test faled for D = ", 3,"  -- ",
            "expected: ", gr.num_vertices(Deg3),
            ", actual: ", nvct.template operator()<3>());
 
-    ENSURE(nvct.template operator()<4>() == gr.num_vertices(Deg4),
+    GRAFFINE_ENSURE(nvct.template operator()<4>() == gr.num_vertices(Deg4),
            "vertex_numbers by cmpts test faled for D = ", 4,"  -- ",
            "expected: ", gr.num_vertices(Deg4),
            ", actual: ", nvct.template operator()<4>());
@@ -438,22 +438,22 @@ vertex_numbers([[maybe_unused]] itT it) const
                D == Deg4 ? k/4 : k;
     };
 
-    ENSURE(nvcn.template operator()<1>() == gr.num_vertices(Deg1),
+    GRAFFINE_ENSURE(nvcn.template operator()<1>() == gr.num_vertices(Deg1),
            "vertex_numbers by chains test faled for D = ", 1,"  -- ",
            "expected: ", gr.num_vertices(Deg1),
            ", actual: ", nvcn.template operator()<1>());
 
-    ENSURE(nvcn.template operator()<2>() == gr.num_vertices(Deg2),
+    GRAFFINE_ENSURE(nvcn.template operator()<2>() == gr.num_vertices(Deg2),
            "vertex_numbers by chains test faled for D = ", 2,"  -- ",
             "expected: ", gr.num_vertices(Deg2),
             ", actual: ", nvcn.template operator()<2>());
 
-    ENSURE(nvcn.template operator()<3>() == gr.num_vertices(Deg3),
+    GRAFFINE_ENSURE(nvcn.template operator()<3>() == gr.num_vertices(Deg3),
            "vertex_numbers by chains test faled for D = ", 3,"  -- ",
            "expected: ", gr.num_vertices(Deg3),
            ", actual: ", nvcn.template operator()<3>());
 
-    ENSURE(nvcn.template operator()<4>() == gr.num_vertices(Deg4),
+    GRAFFINE_ENSURE(nvcn.template operator()<4>() == gr.num_vertices(Deg4),
            "vertex_numbers by chains test faled for D = ", 4,"  -- ",
            "expected: ", gr.num_vertices(Deg4),
            ", actual: ", nvcn.template operator()<4>());
@@ -514,7 +514,7 @@ consistency(const itT it) const
     }
 
     for (std::size_t j=0; j<gr.num_edges(); ++j)
-        ENSURE(cn.edge(egl[j]).ind == j,
+        GRAFFINE_ENSURE(cn.edge(egl[j]).ind == j,
                "Error by checking indma at ind: ", j);
 }
 
@@ -542,7 +542,7 @@ edges(const itT it) const
     for (const auto& m : cn) {
         egn += m.length();
         for (EgIdA a {}; const auto& o : m.g) {
-            ENSURE(o.w == m.idw,
+            GRAFFINE_ENSURE(o.w == m.idw,
                    "Error 1: at iteration ", it,
                     " check.edges faied at w ", m.idw, " edge ind ", o.ind);
             if (o.indw != a++) {
@@ -556,7 +556,7 @@ edges(const itT it) const
                     gr.num_chains(), gr.num_compts());
         }
     }
-    ASSERT(egn == gr.num_edges(), "incorrect total number of edges");
+    GRAFFINE_ASSERT(egn == gr.num_edges(), "incorrect total number of edges");
 }
 
 
@@ -580,7 +580,7 @@ chain_g(const itT it) const
                               " check.chain_g faied at ind ", cn[i].g[r].ind);
         }
     }
-    ENSURE(egn == gr.num_edges(),
+    GRAFFINE_ENSURE(egn == gr.num_edges(),
            "Error 5: at iter ", it, " check.chain_g faied at egn ", egn);
 }
 

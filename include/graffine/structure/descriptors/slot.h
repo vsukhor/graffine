@@ -80,7 +80,7 @@ struct _Slot
         , e {e}
     {
         if constexpr (isEnd) {
-            ASSERT(e < Location::num || e == Location::undefined,
+            GRAFFINE_ASSERT(e < Location::num || e == Location::undefined,
                    "wrong end index e: ", ea_str());
         }
     }

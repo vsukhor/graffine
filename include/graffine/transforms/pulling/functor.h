@@ -100,7 +100,7 @@ Functor(Graph& gr,
     , on_2f {gr, pp}
     , on_3f {gr, pp}
 {
-    ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
 }
 
 

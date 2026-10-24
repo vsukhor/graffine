@@ -156,7 +156,7 @@ ensure(
 {
     if (!cond) {
         print(tag);
-        ABORT(message...);
+        GRAFFINE_ABORT(message...);
     }
 }
 

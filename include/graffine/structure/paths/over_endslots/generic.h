@@ -223,7 +223,7 @@ update(
     const EndSlot& v
 )
 {
-    ASSERT(cmp.chain(ud.prev.w).idw == cmp.chain(v.w).idw,
+    GRAFFINE_ASSERT(cmp.chain(ud.prev.w).idw == cmp.chain(v.w).idw,
            "not the same chain ends: ",
            cmp.chain(ud.prev.w).idw, " ",  cmp.chain(v.w).idw);
 
@@ -314,7 +314,7 @@ classify_chains_by_connectivity(
 
         const ChIdG w = element(i).w;
 
-        ASSERT(
+        GRAFFINE_ASSERT(
                w != s.w ||
                distances[i].is_finite() == distances[i+1].is_finite(),
                "chain ", w, " has opposing connectivity on its ends");

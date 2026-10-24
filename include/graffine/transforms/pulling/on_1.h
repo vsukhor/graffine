@@ -130,7 +130,7 @@ On(Graph& gr,
    std::shared_ptr<PP> pp)
     : Base {gr, pp}
 {
-    ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
 }
 
 
@@ -176,17 +176,17 @@ check_path(
     const auto wD = path.d.w;
     [[maybe_unused]] const auto eD = path.d.end_slot(c->chain(wD)).e;
 
-    ASSERT(c->chain(wD).ngs[eD].num() == 0, "Driver end is not disconnected");
+    GRAFFINE_ASSERT(c->chain(wD).ngs[eD].num() == 0, "Driver end is not disconnected");
 
     [[maybe_unused]] const auto sourceIsCycle = cn[wS].is_cycle();
 
-    ASSERT(sourceIsCycle ||
+    GRAFFINE_ASSERT(sourceIsCycle ||
            (!sourceIsCycle && c->chain(wS).ngs[eS].num() == 0),
            "Source end is not disconnected");
 
     [[maybe_unused]] const auto lenS = path.length_over_source_chain();
 
-    ASSERT((!sourceIsCycle &&
+    GRAFFINE_ASSERT((!sourceIsCycle &&
             lenS >= static_cast<size_t>(steps)) ||
            (sourceIsCycle &&
             lenS >= Chain::minCycleLength + static_cast<size_t>(steps)),

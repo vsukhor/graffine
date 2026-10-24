@@ -121,7 +121,7 @@ FromN(Graph& gr,
     , updateProperties {pp}
     , report {gr}
 {
-    ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
 }
 
 
@@ -133,7 +133,7 @@ operator()(
     const Vertex& v2
 ) noexcept -> Res
 {
-    ASSERT(v1.deg() == Deg1 ||
+    GRAFFINE_ASSERT(v1.deg() == Deg1 ||
            v2.deg() == Deg1,
            "Incorrect degrees of input vertices");
 
@@ -146,8 +146,8 @@ operator()(
     const EndSlot s1 = gr.cn[egl1.w].end_slot(egl1.a, egs1.e);
     const EndSlot s2 = gr.cn[egl2.w].end_slot(egl2.a, egs2.e);
 
-    ASSERT(s1.is_defined(), "Vertex 1 is not at chain end of", egl1.w);
-    ASSERT(s2.is_defined(), "Vertex 2 is not at chain end of", egl2.w);
+    GRAFFINE_ASSERT(s1.is_defined(), "Vertex 1 is not at chain end of", egl1.w);
+    GRAFFINE_ASSERT(s2.is_defined(), "Vertex 2 is not at chain end of", egl2.w);
 
     return (v1.deg() == Deg1)   ? (*this)(s1, s2)
          /*(v1.deg() == Deg3)*/ : (*this)(s2, s1);
@@ -166,7 +166,7 @@ operator()(
 
     auto& cn = gr.chains();
 
-    ASSERT(!cn[w1].is_connected_at(e1),
+    GRAFFINE_ASSERT(!cn[w1].is_connected_at(e1),
            "Slot ", s1.str_short(), " is connected." );
 
     I2 = cn[w2].num_neigs(e2) + 1;
@@ -174,7 +174,7 @@ operator()(
     shortName = make_name(Trait::shortName, dd);
     fullName  = make_name(Trait::fullName, dd);
 
-    ASSERT(I2 > 3, "For degrees < 4 specific implementations should be called.");
+    GRAFFINE_ASSERT(I2 > 3, "For degrees < 4 specific implementations should be called.");
 
     const auto c1 = cn[w1].c;
     const auto c2 = cn[w2].c;

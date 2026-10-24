@@ -339,7 +339,7 @@ erase(const EgDescr& g) noexcept -> EgDescrors::size_type
 {
     const auto num_erased = egDescrors.erase(g);
 
-    ASSERT(num_erased, "Attempt to erase missing egDescr ", g.str_short());
+    GRAFFINE_ASSERT(num_erased, "Attempt to erase missing egDescr ", g.str_short());
 
     return num_erased;
 }
@@ -348,7 +348,7 @@ constexpr
 void Vertex<ED>::
 insert(const EgDescr& s) noexcept
 {
-    ASSERT(!egDescrors.contains(s),
+    GRAFFINE_ASSERT(!egDescrors.contains(s),
             "Attempt to insert repeting egDescr ", s.str_short());
 
     egDescrors.insert(s);
@@ -358,7 +358,7 @@ constexpr
 void Vertex<ED>::
 insert(EgDescr&& s) noexcept
 {
-    ASSERT(!egDescrors.contains(s),
+    GRAFFINE_ASSERT(!egDescrors.contains(s),
            "Attempt to insert repeting egDescr ", s.str_short());
 
     egDescrors.insert(std::move(s));
@@ -384,7 +384,7 @@ edges_connected_to(const EgDescr& s) const noexcept -> const EgDescrors
 {
     if (is_leaf()) {
 
-        ASSERT(egDescrors.contains(s),
+        GRAFFINE_ASSERT(egDescrors.contains(s),
                "Seeking neigbours of a missing LEAF edge slot", s.str_short());
 
         warn("Seeking neigbours of a LEAF edge end.");
@@ -394,7 +394,7 @@ edges_connected_to(const EgDescr& s) const noexcept -> const EgDescrors
     else {
         auto ss = egDescrors;  // copy
 
-        ASSERT(ss.contains(s),
+        GRAFFINE_ASSERT(ss.contains(s),
                "Seeking neigbours of a missing edge slot ", s.str_short());
         ss.erase(s);
 
@@ -408,7 +408,7 @@ edges_connected_to(
     const std::array<EgDescr, 2>& aa
 ) const noexcept -> const EgDescrors
 {
-    ASSERT(deg() >= 2, "egDescrors.size() < 2");
+    GRAFFINE_ASSERT(deg() >= 2, "egDescrors.size() < 2");
 
     if (deg() == 2) {
         warn("Neigbours of the slot pair is empty set.");
@@ -419,7 +419,7 @@ edges_connected_to(
         auto ss = egDescrors;  // copy
         for (const auto& u : aa) {
 
-            ASSERT(ss.contains(u),
+            GRAFFINE_ASSERT(ss.contains(u),
                    "Seeking neigbours of a missing edge slot ", u.str_short());
             ss.erase(u);
         }
@@ -431,7 +431,7 @@ inline
 auto Vertex<ED>::
 edges_connected_to(const EgDescrors& s) const noexcept -> const EgDescrors
 {
-    ASSERT(egDescrors.size() >= s.size(), "egDescrors.size() < s.size()");
+    GRAFFINE_ASSERT(egDescrors.size() >= s.size(), "egDescrors.size() < s.size()");
 
     if (egDescrors.size() == s.size()) {
         warn("Edge neigbours is empty set.");
@@ -442,7 +442,7 @@ edges_connected_to(const EgDescrors& s) const noexcept -> const EgDescrors
         auto ss = egDescrors;  // copy
         for (const auto& u : s) {
 
-            ASSERT(ss.contains(u),
+            GRAFFINE_ASSERT(ss.contains(u),
                    "Seeking neigbours of a missing edge slot ", u.str_short());
 
             ss.erase(u);
@@ -494,13 +494,13 @@ inline
 auto Vertex<ED>::
 common_edge(const Vertex& v) const noexcept -> EgIdC
 {
-    ASSERT(id != v.id, "Called on itself.");
+    GRAFFINE_ASSERT(id != v.id, "Called on itself.");
 
     for (const auto& e1 : egDescrors)
         for (const auto& e2 : v.egDescrors)
             if (e1.idh == e2.idh) {
 
-                ASSERT(e1.e == descriptors::End::opp(e2.e),
+                GRAFFINE_ASSERT(e1.e == descriptors::End::opp(e2.e),
                        "not e1.e == End::opp(e2.e)");
 
                 return e1.w;

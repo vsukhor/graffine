@@ -165,7 +165,7 @@ On(Graph& gr,
     , vertex_merge_11 {gr, pp}
     , vertex_merge_12 {gr, pp}
 {
-    ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
 }
 
 
@@ -221,9 +221,9 @@ pull_N(Path& path)
     // BulkSlot to split for creating the branching vertex
     auto bsDe = cnD.egEnd_to_bulkslot(egeD, aD);
 
-    ASSERT(bsDe.a()() && bsDe.a()() < cnD.length(),
+    GRAFFINE_ASSERT(bsDe.a()() && bsDe.a()() < cnD.length(),
            "pulling deg 2 from a chain end");
-    ASSERT(!cnD.is_unconnected_cycle() || !omitUnconnectedCycles,
+    GRAFFINE_ASSERT(!cnD.is_unconnected_cycle() || !omitUnconnectedCycles,
            "pulling deg 2 from an unconnected cycle chain");
 
     // source
@@ -235,7 +235,7 @@ pull_N(Path& path)
     // because driver end is at degree 2, there should be at least one such edge
     auto aQ = cnD.neig_a_of_egEnd(aD, egeD);
 
-    ASSERT(aQ.is_defined(), "Vertex degree at the pulled edge is not 2.");
+    GRAFFINE_ASSERT(aQ.is_defined(), "Vertex degree at the pulled edge is not 2.");
 
     const auto egeQ = cnD.internal_egEnd(aD, aQ);
     const auto icQ = cnD.g[aQ].indc;
@@ -265,7 +265,7 @@ pull_N(Path& path)
 
     wS = egl[iS].w;
 
-    ASSERT(source_was_dissolved || (!source_was_dissolved &&
+    GRAFFINE_ASSERT(source_was_dissolved || (!source_was_dissolved &&
            (cn[wS].is_headind(iS) || cn[wS].is_tailind(iS))),
            "Source is not a chain end");
 
@@ -286,7 +286,7 @@ template<Orientation Dir,
 void On<Deg2, Dir, G, PP>::
 pull_1(Path& path)
 {
-    ASSERT(path.length() == 1, "Path is longer than 1 edge.");
+    GRAFFINE_ASSERT(path.length() == 1, "Path is longer than 1 edge.");
 
     const auto& pc = path.pthc;  // path over component-wide edge indexes (indc)
 
@@ -296,7 +296,7 @@ pull_1(Path& path)
     const auto aD = path.cmp->get_egl(icD).a;
     auto& egD = cnD.g[aD];
 
-    ASSERT(!cnD.is_unconnected_cycle() || !omitUnconnectedCycles,
+    GRAFFINE_ASSERT(!cnD.is_unconnected_cycle() || !omitUnconnectedCycles,
            "pulling deg 2 from an unconnected cycle chain");
 
     egD.template reverse<true>();
@@ -312,17 +312,17 @@ template<Orientation Dir,
 void On<Deg2, Dir, G, PP>::
 correct_driver(Path& path) const noexcept
 {
-    ASSERT(path.length() > 1,
+    GRAFFINE_ASSERT(path.length() > 1,
            "Attempting to correct driver in a single-edge path.");
-    ASSERT(!cn[path.d.w].egEnd_is_head(path.d.ind, path.d.egEnd),
+    GRAFFINE_ASSERT(!cn[path.d.w].egEnd_is_head(path.d.ind, path.d.egEnd),
            "Driver in pull 2 is at chain head end.");
-    ASSERT(!cn[path.d.w].egEnd_is_tail(path.d.ind, path.d.egEnd),
+    GRAFFINE_ASSERT(!cn[path.d.w].egEnd_is_tail(path.d.ind, path.d.egEnd),
            "Driver in pull 2 is at chain tail end.");
 
     const auto a0 = path.cmp->get_egl(path.pthc[0]).a;
 
     const auto ce = cn[path.d.w].connected_edge(a0, path.d.egEnd);
-    ASSERT(ce, "Driver in pull 2 multi-edge path is at chain end.");
+    GRAFFINE_ASSERT(ce, "Driver in pull 2 multi-edge path is at chain end.");
 
     if (ce->ind == path.pthw[1]) {
 
@@ -369,13 +369,13 @@ check_path(
         const auto& g0 = c->get_egl(pc[0]);
         const auto& g1 = c->get_egl(pc[1]);
         if (g0.w == g1.w) {
-            ASSERT(End::opp(cn[wD].internal_egEnd(g1.a, g0.a)) == path.d.egEnd,
+            GRAFFINE_ASSERT(End::opp(cn[wD].internal_egEnd(g1.a, g0.a)) == path.d.egEnd,
                    "opp of driver's internal_egEnd is not d.egEnd");
         }
         const auto gS = c->get_egl(pc.back());
         const auto gT = c->get_egl(pc[pc.size()-2]);
         if (gS.w == gT.w) {
-            ASSERT(End::opp(cn[wS].internal_egEnd(gT.a, gS.a)) ==
+            GRAFFINE_ASSERT(End::opp(cn[wS].internal_egEnd(gT.a, gS.a)) ==
                    cn[wS].g[gS.a].inner_endId(eS),
                    "opp of source's internal_egEnd is not its inner_endId");
         }
@@ -383,13 +383,13 @@ check_path(
 
     [[maybe_unused]] const auto sourceIsCycle = cn[wS].is_cycle();
 
-    ASSERT(sourceIsCycle ||
+    GRAFFINE_ASSERT(sourceIsCycle ||
            (!sourceIsCycle && cn[wS].ngs[eS].num() == 0),
            "Source end is not disconnected");
 
     [[maybe_unused]] const auto lenS = path.length_over_source_chain();
 
-    ASSERT(path.drv().w == path.src().w ||
+    GRAFFINE_ASSERT(path.drv().w == path.src().w ||
            (!sourceIsCycle &&
             lenS >= static_cast<size_t>(steps)) ||
            (sourceIsCycle &&

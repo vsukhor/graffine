@@ -129,7 +129,7 @@ From(Graph& gr,
     , merge {gr, pp, shortName}
     , report {gr, dd}
 {
-    ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
 }
 
 
@@ -141,8 +141,8 @@ operator()(
     Vertex& v2
 ) noexcept -> Res
 {
-    ASSERT(v1.is_leaf(), "Vertex 1 is not Leaf");
-    ASSERT(v2.is_leaf(), "Vertex 2 is not Leaf");
+    GRAFFINE_ASSERT(v1.is_leaf(), "Vertex 1 is not Leaf");
+    GRAFFINE_ASSERT(v2.is_leaf(), "Vertex 2 is not Leaf");
 
     const auto& egs1 = *v1.edges().begin();
     const auto& egs2 = *v2.edges().begin();
@@ -153,8 +153,8 @@ operator()(
     const EndSlot s1 = gr.chain(egl1.w).end_slot(egl1.a, egs1.e);
     const EndSlot s2 = gr.chain(egl2.w).end_slot(egl2.a, egs2.e);
 
-    ASSERT(s1.is_defined(), "Vertex 1 is not at chain end of", egl1.w);
-    ASSERT(s2.is_defined(), "Vertex 2 is not at chain end of", egl2.w);
+    GRAFFINE_ASSERT(s1.is_defined(), "Vertex 1 is not at chain end of", egl1.w);
+    GRAFFINE_ASSERT(s2.is_defined(), "Vertex 2 is not at chain end of", egl2.w);
 
     return (*this)(s1, s2);
 }
@@ -211,7 +211,7 @@ struct From1<Deg1, G, PP>
                     std::shared_ptr<PP> pp = nullptr)
         : Base {gr, pp}
     {
-        ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+        GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
     }
 };
 
