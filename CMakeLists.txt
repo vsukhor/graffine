@@ -9,7 +9,14 @@ add_compile_options("-std=c++23" "-Wall" "-Wextra" "-fexceptions")
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_compile_options("-O0;-g3;-ggdb")
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
-    add_compile_options("-O3;-march=native")
+    add_compile_options("-O3")
+endif()
+
+# Opt-in for build machine architecture.
+option(GRAFFINE_NATIVE_ARCH
+       "Optimize for the CPU of the build machine (-march=native)" OFF)
+if(GRAFFINE_NATIVE_ARCH)
+    add_compile_options("-march=native")
 endif()
 
 if(POLICY CMP0135)
