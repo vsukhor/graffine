@@ -34,6 +34,7 @@ limitations under the License.
 #include <cstdint>  // uint8_t, int8_t, uint16_t, int16_t, etc
 #include <ostream>
 #include <string>
+#include <type_traits>
 
 /// Defines identificators for graph structural elements
 namespace graffine::structure::descriptors::ids {
@@ -68,10 +69,12 @@ struct Id
     static constexpr Id undefined {utils::undefined<value_type>};
 
     constexpr Id() : v {} {}
-    constexpr Id(const Id& q) : v{q.v} {}
+    // Defaulted to keep Id trivially copyable and nothrow movable, so that
+    // elements holding ids are moved rather than copied by std containers.
+    constexpr Id(const Id&) = default;
     constexpr Id(const value_type v) : v{v} {}
 
-    constexpr auto operator=(const Id& id) noexcept -> Id& { v = id.v; return *this; }
+    constexpr auto operator=(const Id&) -> Id& = default;
     constexpr auto operator()() noexcept -> value_type& { return v; }
     constexpr auto operator()() const noexcept -> value_type { return v; }
     constexpr bool operator==(const Id& id) const noexcept { return v == id.v; }
@@ -104,7 +107,7 @@ struct Id
         return *this;
     }
 
-    constexpr auto operator--(const int) const noexcept -> Id // postfix
+    constexpr auto operator--(const int) noexcept -> Id // postfix
     {
         auto result = *this;
         operator--();
@@ -184,6 +187,10 @@ using VIdC = Id<ElementType::VERTEX, IdScope::COMPONENT>; ///< Vertex ids: compo
 
 using CmpId = Id<ElementType::COMPONENT, IdScope::GRAPH>;  ///< Component ids.
 using FId   = Id<ElementType::FACET, IdScope::GRAPH>;      ///< Facet ids.
+
+static_assert(std::is_trivially_copyable_v<EgIdG> &&
+              std::is_nothrow_move_constructible_v<EgIdG>,
+              "Id must stay trivially copyable");
 
 using ChIdGs = std::vector<ChIdG>;  ///< Container for graph chain ids.
 using ChIdCs = std::vector<ChIdC>;  ///< Container for component chain ids.
