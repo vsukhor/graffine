@@ -653,10 +653,11 @@ reconnect_edges(Vertex* f, Vertex* t)
     auto& ss = f->edges();
     while (ss.size()) {
 
-        auto s = ss.begin();
-        auto& eg = edge(s->w);
-        eg.disconnect_end_inner(s->e);
-        eg.connect_to_inner(s->e, *t);
+        // Copy: disconnecting erases the descriptor from 'ss'.
+        const auto s = *ss.begin();
+        auto& eg = edge(s.w);
+        eg.disconnect_end_inner(s.e);
+        eg.connect_to_inner(s.e, *t);
     }
 }
 
@@ -700,20 +701,20 @@ remove_edge(Chain& m, // chain modified by the edge removal
     auto& g = m.g;
     auto& h = g[a]; // edge to be removed
 
-    ASSERT_CALLING(a < m.length(),
+    GRAFFINE_ASSERT_CALLING(a < m.length(),
                    m.print("FAIL"),
                    "Erasing an edge at ", a, " is beyond chain length.");
-    ASSERT(m.length(), "Erasing an edge in empty chain.");
+    GRAFFINE_ASSERT(m.length(), "Erasing an edge in empty chain.");
 
     // If the chain is to get empty after removal, it needs to be intentional.
-     ASSERT( //! preserveTopology ||
+     GRAFFINE_ASSERT( //! preserveTopology ||
         m.length() > 1,
         "Erasing an edge in single-edge chain.");
 
     auto vA = h.vertex_at_outer(End::A);
     auto vB = h.vertex_at_outer(End::B); // to be preserved
 
-    ASSERT(!preserveTopology ||
+    GRAFFINE_ASSERT(!preserveTopology ||
            is_implemented_degree(vA->deg() + vB->deg() - Deg2),
            "Erasing edge produces vertex above max implemented degre.");
 
@@ -776,13 +777,13 @@ insert_edge_into_chain(
     Chain& m,
     const EgIdA a) -> Edge&
 {
-    ASSERT_CALLING(!eg.is_connected(), eg.print("FAIL"),
+    GRAFFINE_ASSERT_CALLING(!eg.is_connected(), eg.print("FAIL"),
                    "Passing a connected edge for insertion.");
-    ASSERT_CALLING(!contains(eg), eg.print("FAIL"),
+    GRAFFINE_ASSERT_CALLING(!contains(eg), eg.print("FAIL"),
                    "Appending edge which is already included");
-    ASSERT_CALLING(a <= m.length(), m.print("FAIL"),
+    GRAFFINE_ASSERT_CALLING(a <= m.length(), m.print("FAIL"),
                    "Inserting edge to pos ", a, " is beyond chain length");
-    ASSERT(m.length() || (!m.ngs[End::A].num() && !m.ngs[End::B].num()),
+    GRAFFINE_ASSERT(m.length() || (!m.ngs[End::A].num() && !m.ngs[End::B].num()),
            "Edge cannot be insetred into an empty connected chain");
     warn_if(eg.indw.is_defined(), " indw will be overwriten!");
     warn_if(eg.indc.is_defined(), " indc will be overwriten!");
@@ -823,15 +824,15 @@ insert_edge_inside_chain(
     Chain& m,
     const EgIdA a) -> Edge&
 {
-    ASSERT_CALLING(!eg.is_connected(), eg.print("FAIL"),
+    GRAFFINE_ASSERT_CALLING(!eg.is_connected(), eg.print("FAIL"),
                    "Passing a connected edge for insertion.");
-    ASSERT_CALLING(!contains(eg), eg.print("FAIL"),
+    GRAFFINE_ASSERT_CALLING(!contains(eg), eg.print("FAIL"),
                    "Appending edge which is already included");
-    ASSERT_CALLING(a > 0, m.print("FAIL"),
+    GRAFFINE_ASSERT_CALLING(a > 0, m.print("FAIL"),
                    "Inserting edge at chain tail");
-    ASSERT_CALLING(a < m.length(), m.print("FAIL"),
+    GRAFFINE_ASSERT_CALLING(a < m.length(), m.print("FAIL"),
                    "Inserting edge to pos ", a, " is beyond chain length");
-    ASSERT(m.length(), "Inserting edge inside an empty chain");
+    GRAFFINE_ASSERT(m.length(), "Inserting edge inside an empty chain");
     warn_if(eg.indw.is_defined(), " indw will be overwriten!");
     warn_if(eg.indc.is_defined(), " indc will be overwriten!");
 
@@ -850,7 +851,7 @@ insert_edge_inside_chain(
     //  A new BULK vertex will be created to join end B egA to end A of 'eg'.
 
     auto gvB = egA.vertex_at_outer(End::B);
-    ASSERT(gvB, "end B of ", egA.indw, " is not connected.");
+    GRAFFINE_ASSERT(gvB, "end B of ", egA.indw, " is not connected.");
     egA.disconnect_end_outer(End::B);
     p.connect_to_outer(End::B, *gvB);
 
@@ -877,19 +878,19 @@ auto Component<Ch>::
 insert_first_edge_into_chain(Edge&& eg,
                              Chain& m) -> Edge&
 {
-    ASSERT_CALLING(!eg.is_connected(),
+    GRAFFINE_ASSERT_CALLING(!eg.is_connected(),
                    eg.print("FAIL"),
                    "Passing a connected edge for insertion.");
-    ASSERT_CALLING(!contains(eg),
+    GRAFFINE_ASSERT_CALLING(!contains(eg),
                    eg.print("FAIL"),
                    "Appending edge which is already included");
     warn_if(eg.indw.is_defined(), " indw will be overwriten!");
     warn_if(eg.indc.is_defined(), " indc will be overwriten!");
 
-    ASSERT_CALLING(!m.length(),
+    GRAFFINE_ASSERT_CALLING(!m.length(),
                    m.print("FAIL"),
                    "Inserting 1st edge into chain which is not empty.");
-    ASSERT_CALLING(!m.is_connected(),
+    GRAFFINE_ASSERT_CALLING(!m.is_connected(),
                    m.print("FAIL"),
                    "Chain is connected.");
 
@@ -926,10 +927,10 @@ append_edge_to_chain(Edge&& eg,
                      Chain& m) -> Edge&
 {
 
-    ASSERT_CALLING(!eg.is_connected(),
+    GRAFFINE_ASSERT_CALLING(!eg.is_connected(),
                    eg.print("FAIL"),
                    "Passing a connected edge for appending.");
-    ASSERT_CALLING(!contains(eg),
+    GRAFFINE_ASSERT_CALLING(!contains(eg),
                    eg.print("FAIL"),
                    "Appending edge which is already included");
     warn_if(eg.indc.is_defined(), "indc will be overwriten!");
@@ -952,7 +953,7 @@ append_edge_to_chain(Edge&& eg,
     // A new BULK vertex will be created to join end B egA to end A of 'eg'.
 
     auto gvB = egA.vertex_at_outer(End::B);
-    ASSERT(gvB, "end B of ", egA.indw, " is not connected.");
+    GRAFFINE_ASSERT(gvB, "end B of ", egA.indw, " is not connected.");
     egA.disconnect_end_outer(End::B);
     p.connect_to_outer(End::B, *gvB);
 
@@ -978,7 +979,7 @@ auto Component<Ch>::
 prepend_edge_to_chain(Edge&& eg,
                       Chain& m) -> Edge&
 {
-    ASSERT(!eg.is_connected(), "Passing a connected edge for appending.");
+    GRAFFINE_ASSERT(!eg.is_connected(), "Passing a connected edge for appending.");
     warn_if(eg.indc.is_defined(), "indc will be overwriten!");
 
     if (!m.length())
@@ -1000,7 +1001,7 @@ prepend_edge_to_chain(Edge&& eg,
     // A new BULK vertex will be created to join end A of egB to end B of 'eg'.
 
     auto gvA = egB.vertex_at_outer(End::A);
-    ASSERT(gvA, "end A of ", egB.indw, " is not connected.");
+    GRAFFINE_ASSERT(gvA, "end A of ", egB.indw, " is not connected.");
     egB.disconnect_end_outer(End::A);
     p.connect_to_outer(End::A, *gvA);
 
@@ -1020,7 +1021,7 @@ create_chain() noexcept -> Chain&
     cn.emplace_back(cn.num(), num_chains(), ind);
     auto& m = cn.back();
 
-    ASSERT(!contains(m), "Appending chain which is already included");
+    GRAFFINE_ASSERT(!contains(m), "Appending chain which is already included");
     ww.push_back(m.idw);
 
     chis.include(m);
@@ -1037,7 +1038,7 @@ create_chain(
     EgIdG& indIni // ref
 ) noexcept -> Chain&
 {
-    ASSERT(!num_chains(), "Component is not empty");
+    GRAFFINE_ASSERT(!num_chains(), "Component is not empty");
 
     auto& m = create_chain();
 
@@ -1070,7 +1071,7 @@ move_edges(
     // Does not update chain connectivity and 'ngs'.
     // Does not remove source chain if it is emptied.
 
-    ASSERT(fr.c == to.c,
+    GRAFFINE_ASSERT(fr.c == to.c,
            "Source chain componenet is different from that of the target");
 
     to.g.insert(to.g.begin() + posTo,
@@ -1287,7 +1288,7 @@ vertex(const VIdH vi) const noexcept -> const Vertex&
 {
     const auto vp = vv.find(vi);
 
-    ASSERT(vp, "Accessing non-existing vertex idh ", vi, " in component ", ind);
+    GRAFFINE_ASSERT(vp, "Accessing non-existing vertex idh ", vi, " in component ", ind);
 
     return *vp;
 }
@@ -1298,7 +1299,7 @@ vertex(const VIdH vi) noexcept -> Vertex&
 {
     const auto vp = vv.find(vi);
 
-    ASSERT(vp, "Accessing non-existing vertex idh ", vi, " in component ", ind);
+    GRAFFINE_ASSERT(vp, "Accessing non-existing vertex idh ", vi, " in component ", ind);
 
     return *vp;
 }
@@ -1308,11 +1309,11 @@ constexpr auto Component<Ch>::
 common_vertex(const EgIdC e1,
               const EgIdC e2) noexcept -> Vertex*
 {
-    ASSERT(e1 < num_edges(),
+    GRAFFINE_ASSERT(e1 < num_edges(),
            "Accessing non-existing edge idc ", e1, " in component ", ind);
-    ASSERT(e2 < num_edges(),
+    GRAFFINE_ASSERT(e2 < num_edges(),
            "Accessing non-existing edge idc ", e2, " in component ", ind);
-    ASSERT(e1 != e2, "Equal edge ids");
+    GRAFFINE_ASSERT(e1 != e2, "Equal edge ids");
 
     const auto& v1 = edge_vertices(e1);
     const auto& v2 = edge_vertices(e2);
@@ -1345,9 +1346,9 @@ rem_unconnected_cycle_boindary_vetrex() noexcept
 {
     const auto w = ww[0];
 
-    ASSERT(num_chains() == 1,
+    GRAFFINE_ASSERT(num_chains() == 1,
            "component ", ind, " is supposed to hold un unconnected cycle");
-    ASSERT(cn[w].is_unconnected_cycle(),
+    GRAFFINE_ASSERT(cn[w].is_unconnected_cycle(),
            "chain ", w, " is supposed to be un unconnected cycle");
 
     constexpr auto eA = End::A;
@@ -1371,13 +1372,13 @@ constexpr auto Component<Ch>::
 rem_chain_internal_vetrex(const ChIdG w,
                           const EgIdA a) noexcept -> std::array<Edge*, 2>
 {
-    ASSERT(contains_chain(w), "chain ", w, " is not part of copmonent ", ind);
+    GRAFFINE_ASSERT(contains_chain(w), "chain ", w, " is not part of copmonent ", ind);
 
     auto& m = cn[w];
 
-    ASSERT(m.length() > 1, "Chain does not contain bulk vertices.");
-    ASSERT(a > 0, "Not a bulk vertex at a: ", a, " in chain ", w);
-    ASSERT(a < m.length(),
+    GRAFFINE_ASSERT(m.length() > 1, "Chain does not contain bulk vertices.");
+    GRAFFINE_ASSERT(a > 0, "Not a bulk vertex at a: ", a, " in chain ", w);
+    GRAFFINE_ASSERT(a < m.length(),
            "indw ", a, " not valid for chain ", w, " of length ", m.length());
 
     auto& eg1 = m.g[a - 1];
@@ -1400,7 +1401,7 @@ append(Component&& other)
     EgIdC indc{num_edges()};
     ChIdC idc{num_chains()};
 
-    ASSERT(other.ind != ind, "Appending identical component");
+    GRAFFINE_ASSERT(other.ind != ind, "Appending identical component");
 
     for (const auto w : other.ww)
         set_chain(cn[w], idc++, indc);
@@ -1420,7 +1421,7 @@ append(Component& other)
     EgIdC indc{num_edges()};
     ChIdC idc{num_chains()};
 
-    ASSERT(other.ind != ind, "appending identical component");
+    GRAFFINE_ASSERT(other.ind != ind, "appending identical component");
 
     for (const auto w : other.ww)
         set_chain(cn[w], idc++, indc);
@@ -1459,7 +1460,7 @@ append(Chain& m)
     EgIdC indc{num_edges()};
     const ChIdC idc{num_chains()};
 
-    ASSERT(!contains(m), "appending chain which is already included");
+    GRAFFINE_ASSERT(!contains(m), "appending chain which is already included");
 
     set_chain(m, idc, indc);
 
@@ -1482,7 +1483,7 @@ template <typename Ch>
 void Component<Ch>::
 append(Edge& eg)
 {
-    ASSERT(!contains(eg), "appending edge which is already included");
+    GRAFFINE_ASSERT(!contains(eg), "appending edge which is already included");
 
     eg.set_cmp(ind, num_edges());
     set_egl();
@@ -1504,9 +1505,9 @@ remove(const Edge& eg)
     if constexpr (verboseF)
         jot("-removing edge ", eg.ind, " of chain ", eg.w, " cmp ", ind, ":");
 
-    ASSERT(contains(eg),
+    GRAFFINE_ASSERT(contains(eg),
            "attempt to remove a missing edge ", eg.ind, " from cmpt ", ind);
-    ASSERT(cn[eg.w].length(), "removing an edge from empty chain ", eg.w);
+    GRAFFINE_ASSERT(cn[eg.w].length(), "removing an edge from empty chain ", eg.w);
 
     egl.remove(eg, cn, vv);
 }
@@ -1518,7 +1519,7 @@ remove(const Chain& m)
     if constexpr (verboseF)
         jot("removing chain ", m.idw, " from component ", ind);
 
-    ASSERT(contains(m),
+    GRAFFINE_ASSERT(contains(m),
            "attempt to remove a missing chain ", m.idw, " from cmpt ", ind);
 
     Edges g = m.g; // copy
@@ -1555,7 +1556,7 @@ remove(const Chains& mm)
     std::ranges::sort(g, [](Edge& a, Edge& b)
                       { return a.indc > b.indc; });
 
-    ASSERT(std::adjacent_find(g.begin(), g.end()) == g.end(),
+    GRAFFINE_ASSERT(std::adjacent_find(g.begin(), g.end()) == g.end(),
            "edges having identical indc found");
 
     for (const auto& eg : g)
@@ -1676,7 +1677,7 @@ update_edge_descriptors() noexcept
             [[maybe_unused]] EgIdC i{};
             for (const auto& g : m.g) {
 
-                ASSERT(i++ == g.indc,
+                GRAFFINE_ASSERT(i++ == g.indc,
                        "i =", i, " != g.indc = ", g.indc, " in chain ", m.idw);
 
                 egl.emplace_back(g.w, g.indw, g.ind);
@@ -1718,7 +1719,7 @@ template <typename Ch>
 constexpr auto Component<Ch>::
 edge(const EgIdC indc) const noexcept -> const Edge&
 {
-    ASSERT(indc < num_edges(),
+    GRAFFINE_ASSERT(indc < num_edges(),
            "Incorrect indc ", indc,
            " for component ", ind, " having ", num_edges(), " edges");
 
@@ -1731,7 +1732,7 @@ template <typename Ch>
 constexpr auto Component<Ch>::
 edge(const EgIdC indc) noexcept -> Edge&
 {
-    ASSERT(indc < num_edges(),
+    GRAFFINE_ASSERT(indc < num_edges(),
            "Incorrect indc ", indc,
            " for component ", ind, " having ", num_edges(), " edges");
 
@@ -1779,7 +1780,7 @@ edge(const EgIdG i) const noexcept -> const Edge&
             break;
         }
 
-    ASSERT(h.is_defined(),
+    GRAFFINE_ASSERT(h.is_defined(),
            "Error: Edge ind", i, " is not part of component ", ind);
 
     return &cn[h.w].g[h.a];
@@ -1822,7 +1823,7 @@ template <typename Ch>
 constexpr auto Component<Ch>::
 chain(const ChIdG w) const noexcept -> const Chain&
 {
-    ASSERT(std::find(ww.begin(), ww.end(), w) != ww.end(),
+    GRAFFINE_ASSERT(std::find(ww.begin(), ww.end(), w) != ww.end(),
            "Chain ", w, " is not part of component ", ind);
 
     return cn[w];
@@ -1832,7 +1833,7 @@ template <typename Ch>
 constexpr auto Component<Ch>::
 chain(const ChIdG w) noexcept -> Chain&
 {
-    ASSERT(std::find(ww.begin(), ww.end(), w) != ww.end(),
+    GRAFFINE_ASSERT(std::find(ww.begin(), ww.end(), w) != ww.end(),
            "Chain ", w, " is not part of component ", ind);
 
     return cn[w];
@@ -1882,7 +1883,7 @@ constexpr auto Component<Ch>::
 ngs_of(const Edge& eg,
       const EndId eInner) const noexcept -> std::vector<Edge*>
 {
-    ASSERT_CALLING(edges().contains(eg), eg.print("ERROR"),
+    GRAFFINE_ASSERT_CALLING(edges().contains(eg), eg.print("ERROR"),
                    "Vertex is not part of component ", ind);
 
     std::vector<Edge*> gg;
@@ -1901,7 +1902,7 @@ template <typename Ch>
 constexpr auto Component<Ch>::
 ngs_of(const Vertex& v) const noexcept -> std::vector<Vertex*>
 {
-    ASSERT_CALLING(vv.contains(v), v.print("ERROR"),
+    GRAFFINE_ASSERT_CALLING(vv.contains(v), v.print("ERROR"),
                    "Vertex is not part of component ", ind);
 
     std::vector<Vertex*> vv;
@@ -1915,7 +1916,7 @@ template <typename Ch>
 constexpr auto Component<Ch>::
 ngs_of(const Chain& m, const EndId e) const noexcept -> std::vector<Chain*>
 {
-    ASSERT_CALLING(std::find(ww.begin(), ww.end(), m.idw) != ww.end(),
+    GRAFFINE_ASSERT_CALLING(std::find(ww.begin(), ww.end(), m.idw) != ww.end(),
                    m.print("ERROR"), "Vertex is not part of component ", ind);
 
     std::vector<Chain*> mm;
@@ -1954,7 +1955,7 @@ replace_slot_in_neigs(
         auto& ne_ngs = ngs_at(ne);
         const auto ok = ne_ngs.replace(old, nov);
 
-        ENSURE(ok, "EndSlot {", old.w, " ", old.e, "} not found among",
+        GRAFFINE_ENSURE(ok, "EndSlot {", old.w, " ", old.e, "} not found among",
                "ngs of the slot {", ne.w, " ", ne.e, " connected to it");
     }
 }
@@ -1973,13 +1974,13 @@ remove_slot_from_neigs(const EndSlot& s)
         // Remove oldn from the neig list of its j-th neig
         const auto ngsOK = ngs.remove(s);
 
-        ENSURE(ngsOK, "EndSlot {", s.w, " ", s.e, "} not found among",
+        GRAFFINE_ENSURE(ngsOK, "EndSlot {", s.w, " ", s.e, "} not found among",
                "ngs of the slot {", ne.w, " ", ne.e, " connected to it");
 
         // Remove the j-th neig from the oldn's list of neigs
         const auto neOK = sr.remove(ne);
 
-        ENSURE(neOK, "EndSlot {", ne.w, " ", ne.e, "} not found among",
+        GRAFFINE_ENSURE(neOK, "EndSlot {", ne.w, " ", ne.e, "} not found among",
                "ngs of the slot {", s.w, " ", s.e, " connected to it");
     }
 }
@@ -1993,7 +1994,7 @@ shift_chain_junction(const EndSlot& f,
     auto& g0 = cn[f.w].g;
     auto& g1 = cn[t.w].g;
 
-    ASSERT(cn[f.w].c == cn[t.w].c, "Slots belong to differrent components");
+    GRAFFINE_ASSERT(cn[f.w].c == cn[t.w].c, "Slots belong to differrent components");
 
     if (f.e == End::B) {
 
@@ -2025,7 +2026,7 @@ ensure(
 
         print(tag);
 
-        ABORT(cond, message...);
+        GRAFFINE_ABORT(cond, message...);
     }
 }
 
@@ -2044,9 +2045,9 @@ check_connectivity_vetrex_edge() const -> Vertex*
     for (const auto& v : vv.get())
         for (const auto& s : v->edges()) {
 
-            ASSERT(s.w < num_edges(),
+            GRAFFINE_ASSERT(s.w < num_edges(),
                    "EgDescr.w", s.w, " >= num_edges", num_edges());
-            ASSERT(End::is_valid(s.e), "End is not valid: ", s.e);
+            GRAFFINE_ASSERT(End::is_valid(s.e), "End is not valid: ", s.e);
 
             if (edge(s.w).vertex_at_inner(s.e) != v.get()) {
 
@@ -2086,7 +2087,7 @@ check_chain_idc() const
                 break;
             }
 
-        ASSERT(found, "idc ", i, " not found in component ", ind);
+        GRAFFINE_ASSERT(found, "idc ", i, " not found in component ", ind);
     }
 
     // Check max idc.
@@ -2096,7 +2097,7 @@ check_chain_idc() const
         if (cn[w].idc > maxval)
             maxval = cn[w].idc;
 
-    ASSERT(!num_chains() || maxval < num_chains(),
+    GRAFFINE_ASSERT(!num_chains() || maxval < num_chains(),
            "Max idc ", maxval, " >= num_chains ", num_chains());
 
     return false;
@@ -2125,7 +2126,7 @@ check_edge_indc() const
                     found = true;
                     break;
                 }
-        ENSURE(found, "indc ", i, " not found in component ", ind);
+        GRAFFINE_ENSURE(found, "indc ", i, " not found in component ", ind);
     }
 
     // Check max indc.
@@ -2136,7 +2137,7 @@ check_edge_indc() const
             if (eg.indc() > maxval())
                 maxval = cn[w].idc;
 
-    ENSURE(!num_edges() || maxval < num_edges(),
+    GRAFFINE_ENSURE(!num_edges() || maxval < num_edges(),
            "Max indc ", maxval, " >= num_edges ", num_edges());
 
     return false;
@@ -2150,7 +2151,7 @@ check_egl() const
     if constexpr (beLoud)
         jot<false>("egl ... ");
 
-    ASSERT(egl.size() == num_edges(),
+    GRAFFINE_ASSERT(egl.size() == num_edges(),
            "egl size is incorrect for component ", ind);
 
     for (EgIdC k{}; k < egl.size(); ++k)
@@ -2159,7 +2160,7 @@ check_egl() const
     for (const auto& w : ww)
         for (const auto& eg : cn[w].g) {
 
-            ASSERT(egl.size() > eg.indc(),
+            GRAFFINE_ASSERT(egl.size() > eg.indc(),
                    "egl size", egl.size(), " is <= for component ", eg.indc);
 
             egl[eg.indc].check(eg, ind, eg.indc);
@@ -2188,7 +2189,7 @@ check_chis() const
     if (chis.num({1, 1})) {
         [[maybe_unused]] const auto u = chis.cn_11()[0];
         // allow several unconnected chains to handle irregular components
-        ASSERT(cn[u].is_unconnected_linear(),
+        GRAFFINE_ASSERT(cn[u].is_unconnected_linear(),
                "Error 11 for w ", u);
     }
 
@@ -2198,27 +2199,27 @@ check_chis() const
     if (chis.num({2, 2})) {
         [[maybe_unused]] const auto u = chis.cn_22()[0];
         // allow several unconnected chains to handle irregular components
-        ASSERT(cn[u].is_unconnected_cycle(),
+        GRAFFINE_ASSERT(cn[u].is_unconnected_cycle(),
                "Error 22 for w ", u);
     }
     for ([[maybe_unused]] const auto& u : chis.cn_33())
-        ASSERT(cn[u].ngs[End::A].num() == 2 && cn[u].ngs[End::B].num() == 2,
+        GRAFFINE_ASSERT(cn[u].ngs[End::A].num() == 2 && cn[u].ngs[End::B].num() == 2,
                "Error 33 for w ", u);
 
     for ([[maybe_unused]] const auto& u : chis.cn_44())
-        ASSERT(cn[u].ngs[End::A].num() == 3 && cn[u].ngs[End::B].num() == 3,
+        GRAFFINE_ASSERT(cn[u].ngs[End::A].num() == 3 && cn[u].ngs[End::B].num() == 3,
                "Error 44 for w ", u);
 
     for ([[maybe_unused]] const auto& u : chis.cn_13())
-        ASSERT(!cn[u.w].ngs[u.e].num() && cn[u.w].ngs[End::opp(u.e)].num() == 2,
+        GRAFFINE_ASSERT(!cn[u.w].ngs[u.e].num() && cn[u.w].ngs[End::opp(u.e)].num() == 2,
                "Error 13 for w ", u.str_short());
 
     for ([[maybe_unused]] const auto& u : chis.cn_14())
-        ASSERT(!cn[u.w].ngs[u.e].num() && cn[u.w].ngs[End::opp(u.e)].num() == 3,
+        GRAFFINE_ASSERT(!cn[u.w].ngs[u.e].num() && cn[u.w].ngs[End::opp(u.e)].num() == 3,
                "Error 14 for w ", u.str_short());
 
     for ([[maybe_unused]] const auto& u : chis.cn_34())
-        ASSERT(cn[u.w].ngs[u.e].num() == 2 &&
+        GRAFFINE_ASSERT(cn[u.w].ngs[u.e].num() == 2 &&
                    cn[u.w].ngs[End::opp(u.e)].num() == 3,
                "Error 34 for w ", u.str_short());
 
@@ -2233,8 +2234,8 @@ check_vertex_data() const
     if constexpr (beLoud)
         jot<false>("vertex_c ... ");
 
-    ASSERT(!vv.check_c(ind));
-    ASSERT(!check_connectivity_vetrex_edge<beLoud>());
+    GRAFFINE_ASSERT(!vv.check_c(ind));
+    GRAFFINE_ASSERT(!check_connectivity_vetrex_edge<beLoud>());
 
     return false;
 }
@@ -2283,7 +2284,7 @@ print_classification(const ChIdGs& accessible,
 
     const std::size_t i = std::distance(ww.begin(),
                                             std::find(ww.begin(), ww.end(), a));
-         ASSERT(i < ww.size(), "element of 'accessible' is not in component");
+         GRAFFINE_ASSERT(i < ww.size(), "element of 'accessible' is not in component");
         all[i] = a;
     }
     constexpr auto colorAccessible = colorcodes::GREEN;
