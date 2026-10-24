@@ -90,6 +90,18 @@ Library configuration is passed through the following CMake variables, which are
 
 These defaults apply only when ***graffine*** is the top-level CMake project. As a subproject, the variables default to `OFF`; set them before adding ***graffine*** to enable them. An installed package keeps the values it was configured with.
 
+### Benchmarks
+
+Benchmarks of graph construction, transformations and lookups use [Google Benchmark](https://github.com/google/benchmark), fetched at configuration:
+
+```sh
+cmake -S . -B build-bench -DCMAKE_BUILD_TYPE=Release -DBUILD_BENCHMARKS=ON -DBUILD_TESTS=OFF
+cmake --build build-bench
+build-bench/benchmarks/benchmarks
+```
+
+With `BUILD_BENCHMARKS=ON`, the reporting options `GRAFFINE_FUNCTORS_VERBOSE`, `GRAFFINE_PRINT_EDGES` and `GRAFFINE_PRINT_VERTICES` default to `OFF`, so that the benchmarks time the transformations rather than their console output. The benchmarks of single transformations keep the graph size constant, and report how their cost scales with it.
+
 ### Examples
 
 A working [example](examples/create_merge_components/main.cpp) of a driver function using ***graffine*** creates a graph consisting of four linear components and subsequently merges two of them into one via a chosen pair of end vertices.

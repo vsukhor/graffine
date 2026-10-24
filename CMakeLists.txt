@@ -46,14 +46,23 @@ set(INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include/graffine")
 
 # Whether functors should report verbosely.
 if(PROJECT_IS_TOP_LEVEL)
+    option(BUILD_BENCHMARKS "Build performance benchmarks" OFF)
+
+    # Benchmarks time the transformations, not their reports.
+    if(BUILD_BENCHMARKS)
+        set(GRAFFINE_REPORT_DEFAULT OFF)
+    else()
+        set(GRAFFINE_REPORT_DEFAULT ON)
+    endif()
+
     if(NOT DEFINED GRAFFINE_FUNCTORS_VERBOSE)
-        set(GRAFFINE_FUNCTORS_VERBOSE ON)  # ON/OFF
+        set(GRAFFINE_FUNCTORS_VERBOSE ${GRAFFINE_REPORT_DEFAULT})  # ON/OFF
     endif()
     if(NOT DEFINED GRAFFINE_PRINT_EDGES)
-        set(GRAFFINE_PRINT_EDGES ON)  # ON/OFF
+        set(GRAFFINE_PRINT_EDGES ${GRAFFINE_REPORT_DEFAULT})  # ON/OFF
     endif()
     if(NOT DEFINED GRAFFINE_PRINT_VERTICES)
-        set(GRAFFINE_PRINT_VERTICES ON)  # ON/OFF
+        set(GRAFFINE_PRINT_VERTICES ${GRAFFINE_REPORT_DEFAULT})  # ON/OFF
     endif()
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         if(NOT DEFINED GRAFFINE_DO_INTEGRAL_TESTS)
@@ -155,5 +164,9 @@ if(PROJECT_IS_TOP_LEVEL)
     option(BUILD_EXAMPLES "Build examples illustrating basic library usage" ON)
     if(BUILD_EXAMPLES)
         add_subdirectory(examples)
+    endif()
+
+    if(BUILD_BENCHMARKS)
+        add_subdirectory(benchmarks)
     endif()
 endif()

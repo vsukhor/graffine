@@ -77,3 +77,29 @@ jobs:
         run: cmake --build build --parallel
       - name: Test
         run: ctest --test-dir build --output-on-failure
+
+  benchmarks:
+    name: gcc-${{ matrix.version }} benchmarks (smoke run)
+    runs-on: ubuntu-24.04
+    container: gcc:${{ matrix.version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [16]
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install CMake and Ninja
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends cmake ninja-build
+      - name: Configure
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_COMPILER=g++ \
+            -DBUILD_BENCHMARKS=ON -DBUILD_TESTS=OFF -DBUILD_EXAMPLES=OFF
+      - name: Build
+        run: cmake --build build --parallel
+      # Shared runners are too noisy for timings: only check that they run.
+      - name: Run
+        run: build/benchmarks/benchmarks --benchmark_min_time=0.01s

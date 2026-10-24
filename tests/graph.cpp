@@ -923,4 +923,42 @@ TEST_F(GraphTest, MoveOnReallocation)
 }
 
 
+/// Lookup of vertices by identifier, and the vertex descriptors, after
+/// transformations of the graph.
+TEST_F(GraphTest, VertexLookupAfterTransformations)
+{
+    ++testCount;
+
+    if constexpr (verboseT)
+        print_description(
+            "Tests the lookup of vertices by identifier, and the vertex ",
+            "descriptors, after transformations of the graph");
+
+    G gr;
+    const IntegrityCheck integrityCheck {gr};
+    gr.add_single_chain_component(4);
+    gr.add_single_chain_component(3);
+
+    auto expect_consistent = [&gr]() {
+        // The descriptors are rebuilt lazily: they must match the graph.
+        ASSERT_EQ(gr.get_ved().size(), gr.num_vertices());
+        for (CmpId c {}; c < gr.num_compts(); ++c)
+            for (const auto& v : gr.compt(c).vertices().get()) {
+                EXPECT_EQ(gr.vertex(v->get_id()), v.get());
+                EXPECT_EQ(gr.get_ved(v->get_id()).d, v->deg());
+            }
+        EXPECT_EQ(gr.vertices(Deg3).size(), gr.num_vertices(Deg3));
+    };
+
+    expect_consistent();
+    EXPECT_EQ(gr.vertex(VIdH {1'000'000}), nullptr);
+
+    // Attaching w1 to the bulk of w0 creates a vertex of degree 3.
+    VertexMerger<Deg1, Deg2, G> {gr}(ESlot{ChIdG {1}, End::A},
+                                     BSlot{ChIdG {0}, 2});
+    expect_consistent();
+    EXPECT_EQ(gr.vertices(Deg3).size(), 1);
+}
+
+
 }  // namespace graffine::tests::graph

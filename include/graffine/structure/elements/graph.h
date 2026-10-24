@@ -48,6 +48,7 @@ limitations under the License.
 #include <concepts>
 #include <cstdint>  // uint8_t, int8_t, uint16_t, int16_t, etc
 #include <filesystem>
+#include <initializer_list>
 #include <memory>
 #include <ostream>
 #include <ranges>
@@ -124,8 +125,13 @@ protected:
     /// Map of graph-wide edge indexes to chain indexes and in-chain positions.
     EdgeDescriptors egl;
 
-    /// Graph-wide collection of vertex data.
-    VertexDescriptors ved;
+    /**
+     * Graph-wide collection of vertex data.
+     * \details Rebuilt lazily, on first access after a change of the graph:
+     * transformations only mark it stale, see update_vertex_descriptors().
+     */
+    mutable VertexDescriptors ved;
+    mutable bool vedStale {true};  ///< Whether ved needs a rebuild.
 
 // METHODS ---------------------------------------------------------------------
 
@@ -259,13 +265,13 @@ public:
     constexpr auto edge_last() const noexcept -> const Edge& { return edge(numEdges-1); };
     constexpr auto edge_last()       noexcept ->       Edge& { return edge(numEdges-1); };
 
-    constexpr auto vertices(Degree d) const noexcept -> VertexDescriptors;
+    auto vertices(Degree d) const -> VertexDescriptors;
     constexpr auto vertex(const VertexDescr& vd) const noexcept -> const Vertex&;
     constexpr auto vertex(const VertexDescr& vd)       noexcept ->       Vertex&;
-    constexpr auto vertex(VIdG ind) const noexcept -> const Vertex&;
-    constexpr auto vertex(VIdG ind)       noexcept ->       Vertex&;
-    constexpr auto vertex(VIdH h) const noexcept -> const Vertex*;
-    constexpr auto vertex(VIdH h)       noexcept ->       Vertex*;
+    auto vertex(VIdG ind) const -> const Vertex&;
+    auto vertex(VIdG ind)       ->       Vertex&;
+    auto vertex(VIdH h) const -> const Vertex*;
+    auto vertex(VIdH h)       ->       Vertex*;
     constexpr auto vertex(const EndSlot& s) const noexcept -> const Vertex*;
     constexpr auto vertex(const EndSlot& s)       noexcept ->       Vertex*;
     constexpr auto vertex(const BulkSlot& s) const noexcept -> const Vertex*;
@@ -276,12 +282,13 @@ public:
     constexpr auto get_egl(EgIdG ind) const noexcept -> const EdgeDescr&;
     constexpr auto get_egl(EgIdG ind)       noexcept ->       EdgeDescr&;
 
-    constexpr auto get_ved() const noexcept -> const VertexDescriptors& { return ved; }
-    constexpr auto get_ved()       noexcept ->       VertexDescriptors& { return ved; }
-    constexpr auto get_ved(VIdG ind) const noexcept -> const VertexDescr&;
-    constexpr auto get_ved(VIdG ind)       noexcept ->       VertexDescr&;
-    constexpr auto get_ved(VIdH h) const noexcept -> const VertexDescr& { return ved[h]; }
-    constexpr auto get_ved(VIdH h)       noexcept ->       VertexDescr& { return ved[h]; }
+    // The vertex descriptors are refreshed if stale, see update_vertex_descriptors().
+    auto get_ved() const -> const VertexDescriptors& { refresh_vertex_descriptors(); return ved; }
+    auto get_ved()       ->       VertexDescriptors& { refresh_vertex_descriptors(); return ved; }
+    auto get_ved(VIdG ind) const -> const VertexDescr&;
+    auto get_ved(VIdG ind)       ->       VertexDescr&;
+    auto get_ved(VIdH h) const -> const VertexDescr& { refresh_vertex_descriptors(); return ved[h]; }
+    auto get_ved(VIdH h)       ->       VertexDescr& { refresh_vertex_descriptors(); return ved[ved.find(h)]; }
 
     constexpr void rotate_chain(Chain& m, std::size_t n);
 
@@ -323,14 +330,40 @@ public:
     void update();
 
     /**
+     * Updates internal vectors after changes limited to chains \p ww.
+     * \details Like update(), but updates only the descriptors of the edges
+     * of chains \p ww: these must comprise every chain whose edges changed
+     * position, chain or index. Chains no longer in the graph are skipped.
+     */
+    template<bool withVertices = true>
+    void update(std::initializer_list<ChIdG> ww);
+
+    /**
      * Initializes or updates vector of graph-wide edge descriptors.
      */
     void update_edge_descriptors();
 
     /**
-     * Initializes or updates vector of graph-wide vertex descriptors.
+     * Updates the graph-wide edge descriptors of the edges of chains \p ww.
+     * \details In DEBUG builds, the result is checked against a full update.
      */
-    void update_vertex_descriptors();
+    void update_edge_descriptors(std::initializer_list<ChIdG> ww);
+
+    /**
+     * Marks the graph-wide vertex descriptors as stale.
+     * \details Called by the transformations: the descriptors are rebuilt,
+     * at linear cost, on their first access after a change, rather than
+     * after every transformation.
+     */
+    void update_vertex_descriptors() noexcept;
+
+    /**
+     * Rebuilds the graph-wide vertex descriptors if they are stale.
+     * \note The accessors of the descriptors call it, so that reading them
+     * from a const graph may modify this cache: call it beforehand to read
+     * the descriptors of a graph from several threads.
+     */
+    void refresh_vertex_descriptors() const;
 
     /**
      * Initializes or updates adjacency list.
@@ -482,6 +515,7 @@ Graph(Graph&& gr) noexcept
     , numEdges {gr.numEdges}
     , egl {std::move(gr.egl)}
     , ved {std::move(gr.ved)}
+    , vedStale {gr.vedStale}
 {}
 
 template<typename CC>
@@ -517,7 +551,7 @@ add_single_chain_component(const std::size_t len)
     ct.back().create_chain(len, indIni);
     numEdges += len;
 
-    update();
+    update({ind_last_chain()});
 }
 
 
@@ -636,14 +670,15 @@ void Graph<CC>::
 remove_edge(EgIdG ind)
 {
     const auto& eg = edge(ind);
-    [[maybe_unused]] const auto w = eg.w;
+    const auto w = eg.w;
     [[maybe_unused]] const auto a = eg.indw;
 
     ct[eg.c].remove_edge(eg.indc);
 
     const auto indLast = numEdges - 1;
+    auto wLast = w;  // chain of the renumbered last edge
     if (ind < indLast) {
-        const auto wLast = egl[indLast].w;
+        wLast = egl[indLast].w;
         const auto aLast =
             (wLast == w && egl[indLast].a > a) ? egl[indLast].a - 1
                                                : egl[indLast].a;
@@ -652,7 +687,7 @@ remove_edge(EgIdG ind)
         ct[egLast.c].get_egl(egLast.indc).i = ind;
     }
     numEdges--;
-    update();
+    update({w, wLast});
 }
 
 
@@ -733,20 +768,22 @@ get_egl(const EgIdG ind) noexcept -> EdgeDescr&
 }
 
 template<typename CC>
-constexpr
 auto Graph<CC>::
-get_ved(const VIdG ind) const noexcept -> const VertexDescr&
+get_ved(const VIdG ind) const -> const VertexDescr&
 {
+    refresh_vertex_descriptors();
+
     GRAFFINE_ASSERT(ind < ved.size(), "ind exceeds the number of vertices");
 
     return ved[ind()];
 }
 
 template<typename CC>
-constexpr
 auto Graph<CC>::
-get_ved(const VIdG ind) noexcept -> VertexDescr&
+get_ved(const VIdG ind) -> VertexDescr&
 {
+    refresh_vertex_descriptors();
+
     GRAFFINE_ASSERT(ind < ved.size(), "ind exceeds the number of vertices");
 
     return ved[ind()];
@@ -968,6 +1005,19 @@ update_adjacency() noexcept
 template<typename CC>
 template<bool withVertices>
 void Graph<CC>::
+update(const std::initializer_list<ChIdG> ww)
+{
+    update_edge_descriptors(ww);
+    if constexpr (useAgl)
+        update_adjacency();
+    if constexpr (withVertices)
+        update_vertex_descriptors();
+}
+
+
+template<typename CC>
+template<bool withVertices>
+void Graph<CC>::
 update()
 {
     update_edge_descriptors();
@@ -988,9 +1038,40 @@ update_edge_descriptors()
 
 template<typename CC>
 void Graph<CC>::
-update_vertex_descriptors()
+update_edge_descriptors(const std::initializer_list<ChIdG> ww)
 {
-    ved.set(*this);
+    egl.set(*this, ww);
+
+#ifdef DEBUG
+    // An incremental update must agree with a full one.
+    EdgeDescriptors full;
+    full.set(*this);
+    GRAFFINE_ASSERT(full.size() == egl.size(), "incremental egl: size differs");
+    for (std::size_t i {}; i < full.size(); ++i)
+        GRAFFINE_ASSERT(full[i].w == egl[i].w && full[i].a == egl[i].a &&
+                        full[i].h == egl[i].h,
+                        "incremental egl: stale descriptor of edge ", i,
+                        ": chain ", egl[i].w, " vs ", full[i].w);
+#endif
+}
+
+
+template<typename CC>
+void Graph<CC>::
+update_vertex_descriptors() noexcept
+{
+    vedStale = true;
+}
+
+
+template<typename CC>
+void Graph<CC>::
+refresh_vertex_descriptors() const
+{
+    if (vedStale) {
+        ved.set(*this);
+        vedStale = false;
+    }
 }
 
 
@@ -1100,10 +1181,11 @@ max_degree() const noexcept -> Degree
 }
 
 template<typename CC>
-constexpr
 auto Graph<CC>::
-vertices(const Degree d) const noexcept -> VertexDescriptors
+vertices(const Degree d) const -> VertexDescriptors
 {
+    refresh_vertex_descriptors();
+
     VertexDescriptors vds;
 
     for (const auto& vd : ved)
@@ -1140,10 +1222,11 @@ vertex(const VertexDescr& vd) noexcept -> Vertex&
 }
 
 template<typename CC>
-constexpr
 auto Graph<CC>::
-vertex(const VIdG ind) const noexcept -> const Vertex&
+vertex(const VIdG ind) const -> const Vertex&
 {
+    refresh_vertex_descriptors();
+
     GRAFFINE_ASSERT(ind < ved.size(),
            "unexpected ind ", ind, ": exceeds ved size ", ved.size());
 
@@ -1151,10 +1234,11 @@ vertex(const VIdG ind) const noexcept -> const Vertex&
 }
 
 template<typename CC>
-constexpr
 auto Graph<CC>::
-vertex(const VIdG ind) noexcept -> Vertex&
+vertex(const VIdG ind) -> Vertex&
 {
+    refresh_vertex_descriptors();
+
     GRAFFINE_ASSERT(ind < ved.size(),
            "unexpected ind ", ind, ": exceeds ved size ", ved.size());
 
@@ -1162,27 +1246,25 @@ vertex(const VIdG ind) noexcept -> Vertex&
 }
 
 template<typename CC>
-constexpr
 auto Graph<CC>::
-vertex(const VIdH h) const noexcept -> const Vertex*
+vertex(const VIdH h) const -> const Vertex*
 {
-    for (const auto& vd : ved)
-        if (h == vd.h)
-            return &vertex(vd);
+    refresh_vertex_descriptors();
 
-    return nullptr;
+    const auto i = ved.find(h);  // constant time
+
+    return utils::is_defined(i) ? &vertex(ved[i]) : nullptr;
 }
 
 template<typename CC>
-constexpr
 auto Graph<CC>::
-vertex(const VIdH h) noexcept -> Vertex*
+vertex(const VIdH h) -> Vertex*
 {
-    for (const auto& vd : ved)
-        if (h == vd.h)
-            return &vertex(vd);
+    refresh_vertex_descriptors();
 
-    return nullptr;
+    const auto i = ved.find(h);  // constant time
+
+    return utils::is_defined(i) ? &vertex(ved[i]) : nullptr;
 }
 
 template<typename CC>

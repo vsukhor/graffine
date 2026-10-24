@@ -35,8 +35,10 @@ limitations under the License.
 #include "graffine/structure/descriptors/end.h"
 #include "graffine/structure/descriptors/vertex_in_graph.h"
 
+#include <cstdint>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <vector>
 
 
@@ -63,7 +65,9 @@ struct VertexDescriptorsInGraph
     constexpr auto operator[](const std::size_t i) const noexcept -> const VertexDescr& { return m_data[i]; }
 
     constexpr void set(const Graph& gr);
-    constexpr void clear() { m_data.clear(); }
+    constexpr void clear() { m_data.clear(); index.clear(); }
+
+    /// Position of the descriptor of vertex \p vid: constant time.
     constexpr auto find(const VIdH vid) const noexcept -> std::size_t;
     constexpr auto push_back(const VertexDescr& vd);
 
@@ -73,6 +77,9 @@ struct VertexDescriptorsInGraph
 private:
 
     using Base::m_data;
+
+    /// Positions in m_data by vertex id.
+    std::unordered_map<std::uint32_t, std::size_t> index;
 };
 
 // IMPLEMENTATION ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -84,12 +91,16 @@ set(const Graph& gr)
 {
     m_data.clear();
     m_data.reserve(gr.num_vertices());
+    index.clear();
+    index.reserve(gr.num_vertices());
 
     for (const auto& cmp: gr.ct)
         for (const auto& v : cmp.vertices().get()) {
 
             GRAFFINE_ASSERT(cmp.ind == v->get_c());
 
+            index.emplace(static_cast<std::uint32_t>(v->get_id()()),
+                          m_data.size());
             m_data.emplace_back(static_cast<uint>(v->get_c()()),
                                 static_cast<uint>(m_data.size()),
                                 static_cast<uint>(v->get_id()()),
@@ -124,6 +135,7 @@ push_back(const VertexDescr& vd)
 {
     auto v = vd; // copy
     v.ind = static_cast<uint>(m_data.size());
+    index.insert_or_assign(v.idh, m_data.size());
     m_data.push_back(std::move(v));
 }
 
@@ -144,11 +156,18 @@ constexpr
 auto VertexDescriptorsInGraph<G>::
 find(const VIdH vid) const noexcept -> std::size_t
 {
+    const auto h = static_cast<std::uint32_t>(vid());
+
+    // The index is kept in sync by set(), push_back() and clear(); the hit is
+    // confirmed in case the data was changed through the Sequence interface.
+    if (const auto it = index.find(h);
+        it != index.end() && it->second < size() && m_data[it->second].idh == h)
+        return it->second;
+
     for (size_t i {}; i < size(); ++i)
-        if (m_data[i].idh == static_cast<uint>(vid()))
+        if (m_data[i].idh == h)
             return i;
 
-    GRAFFINE_ASSERT(false, "should not reach here");
     return undefined<size_t>;
 }
 

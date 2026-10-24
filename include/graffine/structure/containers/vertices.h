@@ -292,10 +292,12 @@ void Vertices<V, H>::
 reind_edge(const Edge& from,
            const EgIdC to) noexcept
 {
-    for (auto& v : vv) {
-        v->reind_edge(typename Vertex::EgDescr{from.id, from.indc, End::A}, to);
-        v->reind_edge(typename Vertex::EgDescr{from.id, from.indc, End::B}, to);
-    }
+    // Only the vertices at the ends of the edge refer to it. They are owned,
+    // non-const, by this container.
+    for (const auto e : End::Ids)
+        if (const auto v = from.vertex_at_inner(e))
+            const_cast<Vertex*>(v)->reind_edge(
+                typename Vertex::EgDescr {from.id, from.indc, e}, to);
 }
 
 

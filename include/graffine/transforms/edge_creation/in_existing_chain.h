@@ -237,7 +237,7 @@ apply(const S& s) -> Res
     GRAFFINE_ASSERT(ep == &m.g[a],
            "unsuccessful edge insert at slot ", s.w, " ", s.ea_str());
 
-    gr.update();
+    gr.update({w});  // the new edge, and the edges after it, are in w
 
     if constexpr (!std::is_void_v<PP>)
         updateProperties->edgeCreation.template on_end<isNewChain>(*ep);

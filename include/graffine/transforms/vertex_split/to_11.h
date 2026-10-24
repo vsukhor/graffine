@@ -278,7 +278,7 @@ disconnected_cycle(const ChIdG w) -> Res
     cmp.chis.insert(Deg1, w);
     cmp.chis.clear(Deg2);
 
-    gr.update_edge_descriptors();
+    gr.update_edge_descriptors({w});  // opening the cycle moves no edges
     if constexpr (Graph::useAgl) {
         gr.update_adjacency_edges(ind1);
         gr.update_adjacency_edges(ind2);
@@ -374,6 +374,7 @@ linear(const BulkSlot& s) -> Res
     eg2.connect_to_outer(End::A, *vA);
 
     auto& n = gr.compt(c).create_chain();
+    const auto wn = n.idw;
     // reset the chain ref after possible reallocation by the container holding
     // the chains
     auto& m = gr.chain(w);
@@ -407,7 +408,7 @@ linear(const BulkSlot& s) -> Res
     else
         gr.split_component(gr.compt(c), n);
 
-    gr.update_edge_descriptors();
+    gr.update_edge_descriptors({w, wn});  // the head of w moved to wn
     gr.update_vertex_descriptors();
 
     Res res {vA, vB};

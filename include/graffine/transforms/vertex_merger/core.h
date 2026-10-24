@@ -255,8 +255,10 @@ antiparallel(
 
     // Update internal records.
     // Vertex data is not yet ready, so withVertices is false.
+    // The edges moved to the merged chain, now at w1 or w2, and the last
+    // chain, renamed to w2.
 
-    gr.template update<false>();
+    gr.template update<false>({w1, w2});
 
     // Connect to opposite of 'end' if 'end' == A because in this case reversal
     // of 'm1' did not swap vertices in edge connectivity. If if end == B, it
@@ -264,7 +266,8 @@ antiparallel(
     const auto activeE = end == End::A ? End::opp(end) : end;
     gr.edge(ind1).connect_to_outer(activeE, *v2);
 
-    gr.update();  // final update
+    // Connecting a vertex moves no edges.
+    gr.update_vertex_descriptors();  // final update
 
     const auto w = w1 == gr.num_chains() ? w2 : w1;
 
@@ -358,16 +361,18 @@ parallel(
         : gr.merge_components(c1, c2);
 
     // Update internal records.
-    // Vertex data is not yet ready, so withVertices is false:
+    // Vertex data is not yet ready, so withVertices is false.
+    // The edges moved to the merged chain, now at w1 or w2, and the last
+    // chain, renamed to w2:
 
-    gr.template update<false>();
+    gr.template update<false>({w1, w2});
 
     // Connect edge to vertex.
     // This does not disrupt graph internal records.
 
     gr.edge(ind1).connect_to_outer(e1, *v2);
 
-    gr.update();  // final update
+    gr.update_vertex_descriptors();  // final update
 
     if constexpr(!std::is_void_v<PP>)
         updateProperties->vertexMerger.on_end(*v2);
@@ -446,9 +451,9 @@ to_cycle(const ChIdG w) -> Res
     auto vA = cn[w].vertex_at_end(End::A);
     egB.connect_to_outer(End::B, *vA);
 
-    // Update internal records:
+    // Update internal records: closing the cycle moves no edges.
 
-    gr.update();
+    gr.update({w});
 
     if constexpr(!std::is_void_v<PP>)
         updateProperties->vertexMerger.on_end(*vA);

@@ -36,6 +36,7 @@ limitations under the License.
 #include "graffine/structure/descriptors/end.h"
 #include "graffine/structure/descriptors/slot.h"
 
+#include <initializer_list>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -63,6 +64,14 @@ struct EdgeDescriptorsInGraph
     constexpr auto operator[](const std::size_t i) const -> const EdgeDescr& { return m_data[i]; }
 
     void set(const Graph& gr);
+
+    /**
+     * Updates the descriptors of the edges of chains \p ww only.
+     * \details The descriptors of the other edges must be up to date.
+     * Chains not in the graph are skipped.
+     */
+    void set(const Graph& gr,
+             std::initializer_list<ChIdG> ww);
     void append(const Edge& g);
     void append(const Chain& m);
     void append(EdgeDescriptorsInGraph&& egl) noexcept;
@@ -87,6 +96,21 @@ set(const Graph& gr)
             m_data[g.ind()].set(m.idw, g.indw, g.id);
 
 }
+template<typename G>
+void EdgeDescriptorsInGraph<G>::
+set(
+    const Graph& gr,
+    const std::initializer_list<ChIdG> ww
+)
+{
+    m_data.resize(gr.num_edges());
+    for (const auto w : ww)
+        if (w < gr.num_chains())
+            for (const auto& g : gr.cn[w].g)
+                m_data[g.ind()].set(w, g.indw, g.id);
+}
+
+
 template<typename G>
 void EdgeDescriptorsInGraph<G>::
 append(EdgeDescriptorsInGraph&& egl) noexcept
