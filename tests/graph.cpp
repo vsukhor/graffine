@@ -27,6 +27,7 @@ limitations under the License.
 #include "graffine/transforms/vertex_merger/from_11.h"
 #include "graffine/transforms/vertex_merger/from_12.h"
 #include "graffine/structure/analyzers/integral_tests.h"
+#include "graffine/structure/modifiers/graph_factory.h"
 
 
 #include <array>
@@ -958,6 +959,55 @@ TEST_F(GraphTest, VertexLookupAfterTransformations)
                                      BSlot{ChIdG {0}, 2});
     expect_consistent();
     EXPECT_EQ(gr.vertices(Deg3).size(), 1);
+}
+
+
+/// Assembly of a graph in place by the graph factory.
+TEST_F(GraphTest, FactoryInPlace)
+{
+    ++testCount;
+
+    if constexpr (verboseT)
+        print_description(
+            "Tests the in-place assembly of a graph from vertices and edges ",
+            "of mixed orientations, and its rejection for a non-empty graph");
+
+    using Vertex = G::Vertex;
+    using Factory = structure::modifiers::GraphFactory<G>;
+
+    // A linear chain v0 - v1 - v2 - v3 with a reversed middle edge.
+    auto make = []() {
+        std::vector<std::unique_ptr<Vertex>> vv;
+        for (uint i {}; i < 4; ++i)
+            vv.push_back(std::make_unique<Vertex>(VIdH {i}, false));
+
+        constexpr std::array oo {Orientation::Forwards,
+                                 Orientation::Backwards,
+                                 Orientation::Forwards};
+        std::vector<Edge> egs;
+        for (std::size_t i {}; i < oo.size(); ++i) {
+            auto& eg = egs.emplace_back(EgIdG {i}, oo[i], Edge::weight_t {1});
+            eg.connect_to_outer(End::A, *vv[i]);
+            eg.connect_to_outer(End::B, *vv[i+1]);
+        }
+        return std::pair {std::move(vv), std::move(egs)};
+    };
+
+    auto [vv1, egs1] = make();
+    const auto byValue = Factory {}.create(std::move(vv1), std::move(egs1));
+
+    G gr;
+    const IntegrityCheck integrityCheck {gr};
+    auto [vv2, egs2] = make();
+    Factory {}.create(gr, std::move(vv2), std::move(egs2));
+
+    EXPECT_EQ(gr.num_chains(), 1);
+    EXPECT_EQ(gr.chain(ChIdG {0}).length(), 3);
+    EXPECT_TRUE(Snapshot {gr} == Snapshot {byValue});
+
+    auto [vv3, egs3] = make();
+    EXPECT_THROW(Factory {}.create(gr, std::move(vv3), std::move(egs3)),
+                 precondition_error);
 }
 
 

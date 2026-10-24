@@ -423,63 +423,37 @@ template<typename G,
 void IntegralTests<G, beLoud>::
 vertex_numbers([[maybe_unused]] itT it) const
 {
-    auto nvct = [&]<Degree D>() -> std::size_t
+    // Plain lambdas over a runtime degree: nvcc mistranslates templated
+    // lambdas in member functions of class templates.
+    auto nvct = [&](const Degree d) -> std::size_t
     {
         std::size_t n {};
         for (const auto& c : gr.compts())
-            n += c.num_vertices(D);
+            n += c.num_vertices(d);
         return n;
     };
 
-    GRAFFINE_ENSURE(nvct.template operator()<1>() == gr.num_vertices(Deg1),
-           "vertex_numbers by cmpts test faled for D = ", 1,"  -- ",
-           "expected: ", gr.num_vertices(Deg1),
-           ", actual: ", nvct.template operator()<1>());
-
-    GRAFFINE_ENSURE(nvct.template operator()<2>() == gr.num_vertices(Deg2),
-           "vertex_numbers by cmpts test faled for D = ", 2,"  -- ",
-           "expected: ", gr.num_vertices(Deg2),
-           ", actual: ", nvct.template operator()<2>());
-
-    GRAFFINE_ENSURE(nvct.template operator()<3>() == gr.num_vertices(Deg3),
-           "vertex_numbers by cmpts test faled for D = ", 3,"  -- ",
-           "expected: ", gr.num_vertices(Deg3),
-           ", actual: ", nvct.template operator()<3>());
-
-    GRAFFINE_ENSURE(nvct.template operator()<4>() == gr.num_vertices(Deg4),
-           "vertex_numbers by cmpts test faled for D = ", 4,"  -- ",
-           "expected: ", gr.num_vertices(Deg4),
-           ", actual: ", nvct.template operator()<4>());
-
-    auto nvcn = [&]<Degree D>() noexcept -> std::size_t
+    auto nvcn = [&](const Degree d) noexcept -> std::size_t
     {
         std::size_t k {};
         for (const auto& m : cn)
-            k += m.num_vertices(D);
+            k += m.num_vertices(d);
 
-        return D == Deg3 ? k/3 :
-               D == Deg4 ? k/4 : k;
+        return d == Deg3 ? k/3 :
+               d == Deg4 ? k/4 : k;
     };
 
-    GRAFFINE_ENSURE(nvcn.template operator()<1>() == gr.num_vertices(Deg1),
-           "vertex_numbers by chains test faled for D = ", 1,"  -- ",
-           "expected: ", gr.num_vertices(Deg1),
-           ", actual: ", nvcn.template operator()<1>());
+    for (const auto d : degrees) {
+        GRAFFINE_ENSURE(nvct(d) == gr.num_vertices(d),
+               "vertex_numbers by cmpts test faled for D = ", d, "  -- ",
+               "expected: ", gr.num_vertices(d),
+               ", actual: ", nvct(d));
 
-    GRAFFINE_ENSURE(nvcn.template operator()<2>() == gr.num_vertices(Deg2),
-           "vertex_numbers by chains test faled for D = ", 2,"  -- ",
-            "expected: ", gr.num_vertices(Deg2),
-            ", actual: ", nvcn.template operator()<2>());
-
-    GRAFFINE_ENSURE(nvcn.template operator()<3>() == gr.num_vertices(Deg3),
-           "vertex_numbers by chains test faled for D = ", 3,"  -- ",
-           "expected: ", gr.num_vertices(Deg3),
-           ", actual: ", nvcn.template operator()<3>());
-
-    GRAFFINE_ENSURE(nvcn.template operator()<4>() == gr.num_vertices(Deg4),
-           "vertex_numbers by chains test faled for D = ", 4,"  -- ",
-           "expected: ", gr.num_vertices(Deg4),
-           ", actual: ", nvcn.template operator()<4>());
+        GRAFFINE_ENSURE(nvcn(d) == gr.num_vertices(d),
+               "vertex_numbers by chains test faled for D = ", d, "  -- ",
+               "expected: ", gr.num_vertices(d),
+               ", actual: ", nvcn(d));
+    }
 }
 
 

@@ -32,9 +32,11 @@ limitations under the License.
 
 #include "graffine/definitions.h"
 #include "graffine/structure/analyzers/connectivity.h"
+#include "graffine/utils/errors.h"
 
 #include <list>
 #include <memory>
+#include <source_location>
 #include <vector>
 
 /// Handlers of large-scale structural modification of the graph
@@ -57,6 +59,20 @@ struct GraphFactory
         std::vector<std::unique_ptr<Vertex>>&& globalVertices,
         std::vector<Edge>&& globalEdges
     ) -> Graph;
+
+    /**
+     * Assembles the graph in place, in the existing empty graph \p gr.
+     * \details Suits graphs referred to by other objects, which therefore
+     * cannot be replaced by a newly created one.
+     * \param[out] gr Empty graph to be filled.
+     * \throws precondition_error If \p gr is not empty.
+     */
+    template<bool beLoud = false>
+    void create(
+        Graph& gr,
+        std::vector<std::unique_ptr<Vertex>>&& globalVertices,
+        std::vector<Edge>&& globalEdges
+    );
 };
 
 // IMPLEMENTATION ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -70,7 +86,27 @@ create(
     std::vector<Edge>&& globalEdges
 ) -> Graph
 {
+    Graph gr;  //  Graph to be created.
+    create<beLoud>(gr, std::move(globalVertices), std::move(globalEdges));
+    return gr;
+}
+
+
+template<typename G>
+template<bool beLoud>
+void GraphFactory<G>::
+create(
+    Graph& gr,
+    std::vector<std::unique_ptr<Vertex>>&& globalVertices,
+    std::vector<Edge>&& globalEdges
+)
+{
     using namespace descriptors;
+
+        if (gr.num_compts() || gr.num_chains())
+            utils::raise<precondition_error>(
+                nullptr, std::source_location::current(),
+                "Graph Factory: the graph to be filled is not empty");
 
         auto find_unassigned_edges = [](std::vector<Edge>& g) -> Edge*
         {
@@ -145,11 +181,9 @@ create(
             ++w;
         } while (true);
 
-        Graph gr;  //  Graph to be created.
-
         if (!ll.size()) {
             warn("No edges imported. Produced an empty graph.");
-            return gr;
+            return;
         }
         else {
             if constexpr (beLoud)
@@ -269,8 +303,6 @@ create(
         gr.set_num_edges();
         gr.update_edge_descriptors();
         gr.update_vertex_descriptors();
-
-        return gr;
 }
 
 
