@@ -20,6 +20,15 @@ int main()
     for (const auto u : len)
         gr.add_single_chain_component(u);
 
+    // Topological transformation: yields a chain of edges of opposite
+    // orientations.
+    graffine::transforms::vertex_merger::Core<G> core {gr, nullptr, "vm_core"};
+    core.antiparallel(G::End::A, graffine::ChIdG{0}, graffine::ChIdG{1});
+
+    const bool okMerge = gr.num_compts() == 1 &&
+                         gr.num_chains() == 1 &&
+                         gr.num_edges() == len[0] + len[1];
+
     // PLY round trip, using the tinyply implementation from ply_io.cpp.
     const auto file = std::filesystem::temp_directory_path()
                     / "graffine_package_test.ply";
@@ -37,15 +46,7 @@ int main()
                       grNew.num_edges() == gr.num_edges() &&
                       grNew.num_vertices() == gr.num_vertices();
 
-    // Topological transformation.
-    graffine::transforms::vertex_merger::Core<G> core {gr, nullptr, "vm_core"};
-    core.antiparallel(G::End::A, graffine::ChIdG{0}, graffine::ChIdG{1});
-
-    const bool okMerge = gr.num_compts() == 1 &&
-                         gr.num_chains() == 1 &&
-                         gr.num_edges() == len[0] + len[1];
-
-    const bool ok = okIO && okMerge;
+    const bool ok = okMerge && okIO;
 
     std::cout << (ok ? "package test passed" : "package test FAILED") << '\n';
 

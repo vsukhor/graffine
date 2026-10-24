@@ -107,17 +107,20 @@ create(
             auto eg = find_unassigned_edges(globalEdges);
             if (!eg) break;
 
-            auto current = eg;
             std::list<Edge*> l;
-            current->w = w;
-            l.emplace_back(current);
-            for (const auto e : End::Ids)
+            eg->w = w;
+            l.emplace_back(eg);
+            for (const auto e : End::Ids) {
+                // Walk from the initial edge towards chain end 'e'.
+                auto current = eg;
                 do {
                     const auto vA = current->vertex_at_outer(e);
                     if (vA->deg() == 2) {
+                        // Vertices refer to edges by edge inner ends, while
+                        // 'e' is an outer end, i.e. in chain coordinates.
                         const auto neigEgDescr = *vA->edges_connected_to(
-                            current->descriptor_for_vertex_at(e)
-//                            EdgeInVertex{current->id, current->indc, e}
+                            current->descriptor_for_vertex_at(
+                                current->inner_endId(e))
                         ).begin();
                         auto ng = find_edge_by_id(neigEgDescr.idh, globalEdges);
 
@@ -133,6 +136,7 @@ create(
                     }
                     else break;
                 } while (true);
+            }
 
             for (EgIdA a {}; const auto z : l)
                 z->indw = a++;

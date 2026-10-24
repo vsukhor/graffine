@@ -19,6 +19,7 @@ limitations under the License.
 */
 #include "common.h"
 #include "sample_graph.h"
+#include "vertex_merger_common.h"
 
 #include "graffine/definitions.h"
 #include "graffine/structure/elements/chain.h"
@@ -28,6 +29,7 @@ limitations under the License.
 #include "graffine/structure/io/ply.h"
 #include "graffine/structure/analyzers/integral_tests.h"
 
+#include <algorithm>
 #include <array>
 #include <cstring>
 #include <iostream>
@@ -48,6 +50,73 @@ using G = elements::Graph<
 using IOTest = Test;
 
 using namespace elements::io;
+
+/**
+ * Topology of a graph independent of the order of chains and components.
+ * \details Chain and component indexes are not preserved by write and read,
+ * but the edge indexes and orientations are.
+ */
+struct Topology {
+
+    /// Chain length and the numbers of chains connected at its ends.
+    using ChainShape = std::array<std::size_t, 3>;
+
+    std::size_t numCompts {};
+    std::size_t numChains {};
+    std::size_t numEdges {};
+    std::array<std::size_t, 4> numVertices {};  ///< Per degree 1 to 4.
+    std::vector<ChainShape> chains;             ///< Sorted.
+    std::vector<Orientation> orientations;      ///< Per edge index.
+
+    explicit Topology(const G& gr)
+        : numCompts {gr.num_compts()}
+        , numChains {gr.num_chains()}
+        , numEdges {gr.num_edges()}
+        , numVertices {gr.num_vertices(Deg1), gr.num_vertices(Deg2),
+                       gr.num_vertices(Deg3), gr.num_vertices(Deg4)}
+    {
+        for (ChIdG w {}; w < gr.num_chains(); ++w) {
+            const auto& m = gr.chain(w);
+            const auto nA = m.ngs[End::A].num();
+            const auto nB = m.ngs[End::B].num();
+            chains.push_back({m.length(), std::min(nA, nB), std::max(nA, nB)});
+        }
+        std::ranges::sort(chains);
+
+        for (std::size_t i {}; i < gr.num_edges(); ++i)
+            orientations.push_back(gr.edge(i).orientation());
+    }
+
+    bool operator==(const Topology&) const = default;
+};
+
+
+/// Writes \p gr to \p file, reads it back and compares the topologies.
+void expect_circular_write_read(
+    const G& gr,
+    const std::filesystem::path& file
+)
+{
+    Ply<G> ply;
+    for (const bool asBinary : {false, true}) {
+
+        ply.template write<profuse>(gr, file, asBinary);
+
+        for (const bool preload : {false, true}) {
+
+            auto grNew = ply.template read<profuse>(file, preload);
+            const IntegrityCheck integrityCheckNew {grNew};
+
+            if constexpr (profuse)
+                grNew.print_components("AFTER");
+
+            EXPECT_TRUE(Topology {grNew} == Topology {gr})
+                << (asBinary ? "binary" : "ascii")
+                << (preload ? ", preloaded" : "");
+        }
+    }
+}
+
 
 /// Creation of single-edge and multi-edge components.
 TEST_F(IOTest, PlyCircularWriteRead)
@@ -80,6 +149,86 @@ TEST_F(IOTest, PlyCircularWriteRead)
 
     if constexpr (profuse)
         grNew.print_components(tagAfter);
+
+    expect_circular_write_read(gr, workingDir/"testPlyCircularWriteRead");
+}
+
+
+/// Circular write and read of chains formed by edges of opposite orientations.
+TEST_F(IOTest, PlyCircularWriteReadMixedOrientations)
+{
+    ++testCount;
+
+    if constexpr (verboseT)
+        print_description(
+            "Tests circular write and read using .PLY file format of chains ",
+            "formed by edges of opposite orientations"
+        );
+
+    using vertex_merger::VertexMerger;
+    using vertex_merger::VertexMerger1;
+    using vertex_merger::VertexMergerCore;
+
+    const auto file = std::filesystem::current_path()/"testPlyMixedOrientations";
+
+    const auto [w0, w1] = id_sequence<ChIdG, 2>();
+
+    {
+        print_description_subtest('A', "Linear chain from merger at ends A");
+
+        G gr;
+        const IntegrityCheck integrityCheck {gr};
+        gr.add_single_chain_component(4);
+        gr.add_single_chain_component(2);
+
+        VertexMergerCore {gr}.antiparallel(End::A, w0, w1);  // < < < < > >
+        ASSERT_EQ(gr.num_chains(), 1);
+
+        expect_circular_write_read(gr, file);
+    }
+    {
+        print_description_subtest('B', "Linear chain from merger at ends B");
+
+        G gr;
+        const IntegrityCheck integrityCheck {gr};
+        gr.add_single_chain_component(2);
+        gr.add_single_chain_component(4);
+
+        VertexMergerCore {gr}.antiparallel(End::B, w0, w1);  // > > < < < <
+        ASSERT_EQ(gr.num_chains(), 1);
+
+        expect_circular_write_read(gr, file);
+    }
+    {
+        print_description_subtest('C', "Cycle closed from a mixed chain");
+
+        G gr;
+        const IntegrityCheck integrityCheck {gr};
+        gr.add_single_chain_component(4);
+        gr.add_single_chain_component(2);
+
+        VertexMergerCore {gr}.antiparallel(End::A, w0, w1);
+        VertexMerger<Deg1, Deg1, G> {gr}(ESlot{w0, End::A}, ESlot{w0, End::B});
+        ASSERT_TRUE(gr.chain(w0).is_unconnected_cycle());
+
+        expect_circular_write_read(gr, file);
+    }
+    {
+        print_description_subtest('D', "Mixed chains at a 3-way junction");
+
+        G gr;
+        const IntegrityCheck integrityCheck {gr};
+        gr.add_single_chain_component(4);
+        gr.add_single_chain_component(2);
+
+        VertexMergerCore {gr}.antiparallel(End::A, w0, w1);
+        gr.add_single_chain_component(3);  // becomes w1
+        VertexMerger1<Deg2, G> {gr}(ESlot{w1, End::A}, BSlot{w0, 3});
+        ASSERT_EQ(gr.num_chains(), 3);
+        ASSERT_EQ(gr.num_vertices(Deg3), 1);
+
+        expect_circular_write_read(gr, file);
+    }
 }
 
 
