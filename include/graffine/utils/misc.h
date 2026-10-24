@@ -46,30 +46,29 @@
 #include <string>
 #include <vector>
 
-#undef ASSERT
+// Assertion macros carry the GRAFFINE_ prefix so as not to collide with
+// macros of the same name defined by client code or other libraries.
+
 #ifdef DEBUG
-    #define ASSERT(EX, ...) \
-        (void)((EX) || (utils::failure_message(#EX, std::source_location::current()  __VA_OPT__(,) __VA_ARGS__), 0))
+    #define GRAFFINE_ASSERT(EX, ...) \
+        (void)((EX) || (::graffine::utils::failure_message(#EX, std::source_location::current()  __VA_OPT__(,) __VA_ARGS__), 0))
 #else
-    #define ASSERT(EX, ...)
+    #define GRAFFINE_ASSERT(EX, ...)
 #endif
 
-#undef ASSERT_CALLING
 #ifdef DEBUG
-    #define ASSERT_CALLING(EX, FUN, ...) \
-        (void)((EX) || (FUN, 0) || (utils::failure_message(#EX, std::source_location::current() __VA_OPT__(,) __VA_ARGS__), 0))
+    #define GRAFFINE_ASSERT_CALLING(EX, FUN, ...) \
+        (void)((EX) || (FUN, 0) || (::graffine::utils::failure_message(#EX, std::source_location::current() __VA_OPT__(,) __VA_ARGS__), 0))
 #else
-    #define ASSERT_CALLING(EX, ...)
+    #define GRAFFINE_ASSERT_CALLING(EX, ...)
 #endif
 
-#undef ENSURE
-#define ENSURE(EX, ...) \
-    (void)((EX) || (utils::failure_message(#EX, std::source_location::current()  __VA_OPT__(,) __VA_ARGS__), 0))
+#define GRAFFINE_ENSURE(EX, ...) \
+    (void)((EX) || (::graffine::utils::failure_message(#EX, std::source_location::current()  __VA_OPT__(,) __VA_ARGS__), 0))
 
-#undef ABORT
 /// \note Here, condition \p EX is only used for printing it as text.
-#define ABORT(EX, ...) \
-    (void)(utils::failure_message(#EX, std::source_location::current()  __VA_OPT__(,) __VA_ARGS__), 0)
+#define GRAFFINE_ABORT(EX, ...) \
+    (void)(::graffine::utils::failure_message(#EX, std::source_location::current()  __VA_OPT__(,) __VA_ARGS__), 0)
 
 /// General stuff.
 namespace graffine::utils {
@@ -146,7 +145,7 @@ void remove_vector_element( std::vector<T>& v,
             v.erase(i);
             return;
         }
-    ASSERT(false, "element not found");
+    GRAFFINE_ASSERT(false, "element not found");
 }
 
 // array from std::integer_sequence, based on
