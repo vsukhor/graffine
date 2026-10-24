@@ -122,7 +122,7 @@ struct DeletingHostChain
      * Dletion using edge position.
      * \param[in] s End slot connecting the deleted edge.
      */
-    auto operator()(const EndSlot& s) noexcept -> Res;
+    auto operator()(const EndSlot& s) -> Res;
 
 protected:
 
@@ -162,7 +162,7 @@ template<Degree D,
          typename G,
          typename PP>
 auto DeletingHostChain<D, G, PP>::
-operator()(const EndSlot& s) noexcept -> Res
+operator()(const EndSlot& s) -> Res
 {
     const auto [w, e] = s.we();
 

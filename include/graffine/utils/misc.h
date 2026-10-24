@@ -33,6 +33,7 @@
 #define GRAFFINE_UTILS_MISC_H
 
 #include "graffine/utils/constants.h"
+#include "graffine/utils/errors.h"
 #include "graffine/utils/msgr.h"
 
 #include <array>
@@ -48,6 +49,16 @@
 
 // Assertion macros carry the GRAFFINE_ prefix so as not to collide with
 // macros of the same name defined by client code or other libraries.
+//
+// GRAFFINE_ASSERT and GRAFFINE_ASSERT_CALLING are compiled in DEBUG builds
+// only. They guard hot paths, and a failure aborts the process: it reveals
+// a defect, and the abort stops in a debugger or leaves a core dump.
+//
+// The checks below are always compiled in, and throw:
+// GRAFFINE_ENSURE  -- graffine::invariant_error, if EX is false;
+// GRAFFINE_ABORT   -- graffine::invariant_error, unconditionally;
+// GRAFFINE_REQUIRE -- graffine::precondition_error, if EX is false.
+// The message arguments are only evaluated when the check fails.
 
 #ifdef DEBUG
     #define GRAFFINE_ASSERT(EX, ...) \
@@ -64,11 +75,14 @@
 #endif
 
 #define GRAFFINE_ENSURE(EX, ...) \
-    (void)((EX) || (::graffine::utils::failure_message(#EX, std::source_location::current()  __VA_OPT__(,) __VA_ARGS__), 0))
+    (void)((EX) || (::graffine::utils::raise<::graffine::invariant_error>(#EX, std::source_location::current()  __VA_OPT__(,) __VA_ARGS__), 0))
 
 /// \note Here, condition \p EX is only used for printing it as text.
 #define GRAFFINE_ABORT(EX, ...) \
-    (void)(::graffine::utils::failure_message(#EX, std::source_location::current()  __VA_OPT__(,) __VA_ARGS__), 0)
+    ::graffine::utils::raise<::graffine::invariant_error>(#EX, std::source_location::current()  __VA_OPT__(,) __VA_ARGS__)
+
+#define GRAFFINE_REQUIRE(EX, ...) \
+    (void)((EX) || (::graffine::utils::raise<::graffine::precondition_error>(#EX, std::source_location::current()  __VA_OPT__(,) __VA_ARGS__), 0))
 
 /// General stuff.
 namespace graffine::utils {
@@ -82,38 +96,6 @@ struct Adder
     int operator()(const T& i, const Q& o) const
     {
         return (o.*P)() + i;
-    }
-};
-
-
-template<auto E=EXIT_FAILURE>
-void exit(const std::string& s)
-{
-    std::cerr << s << std::endl;
-    std::exit(E);
-};
-
-/// Uncomplicated process termination with exception.
-struct Exception
-    : public std::exception
-{
-    /// Default constructor.
-    Exception() = default;
-
-    /**
-     * Constructor for printing to a log record.
-     * \details Outputs message \p msg to \a Msgr for standard
-     * output (if \p msgr is nullptr).
-     * \param msg Message to output.
-     * \param msgr Output message processor.
-     */
-    explicit Exception(const std::string& msg,
-                       Msgr* msgr)
-    {
-        if (msgr != nullptr)
-            msgr->print(msg);
-        else
-            std::cerr << msg << std::endl;
     }
 };
 

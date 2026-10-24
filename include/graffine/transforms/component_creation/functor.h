@@ -95,7 +95,7 @@ struct Functor
      * Function call operator executing the transformation.
      * \param[in] s Length (in edges) of the chain forming the new component.
      */
-    auto operator()(std::size_t s = 1) noexcept -> Res;
+    auto operator()(std::size_t s = 1) -> Res;
 
 protected:
 
@@ -123,7 +123,7 @@ Functor(Graph& gr,
 template<typename G,
          typename PP>
 auto Functor<G, PP>::
-operator()(const std::size_t s) noexcept -> Res
+operator()(const std::size_t s) -> Res
 {
    if constexpr (verboseF) {
         jot(colorcodes::GREEN, "Component creation: ",

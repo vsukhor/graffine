@@ -384,8 +384,8 @@ public:  // functions
     /// Return index of the edge end opposite to 'e'.
     static constexpr auto opp_end(EndId e) noexcept -> EndId;
 
-    constexpr void connect_to_inner(EndId e, Vertex& v) noexcept;
-    constexpr void connect_to_outer(EndId e, Vertex& v) noexcept;
+    constexpr void connect_to_inner(EndId e, Vertex& v);
+    constexpr void connect_to_outer(EndId e, Vertex& v);
     constexpr void disconnect_end_inner(EndId e) noexcept;
     constexpr void disconnect_end_outer(EndId e) noexcept;
     constexpr bool is_connected_inner(EndId e) const noexcept;
@@ -697,7 +697,7 @@ void Edge<V>::
 connect_to_inner(
     const EndId e,   // inner end id, i.e. taking into account edge reversal
     Vertex& v
-) noexcept
+)
 {
     GRAFFINE_ASSERT(End::is_valid(e), "End not valid.");
     GRAFFINE_ASSERT(!is_connected_inner(e),
@@ -722,7 +722,7 @@ void Edge<V>::
 connect_to_outer(
     const EndId e,   // outer end id, i.e. in chain coordinates
     Vertex& v
-) noexcept
+)
 {
     GRAFFINE_ASSERT(End::is_valid(e), "End not valid.");
 

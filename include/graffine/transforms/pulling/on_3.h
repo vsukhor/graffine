@@ -103,7 +103,7 @@ struct On<Deg3, Dir, G, PP>
     auto operator()(
         Path& path,
         int steps
-    ) noexcept -> Res;
+    ) -> Res;
 
 protected:
 
@@ -114,7 +114,7 @@ protected:
     void check_path(
         const Path& path,
         const int steps
-    ) const noexcept;
+    ) const;
 
 private:
 
@@ -159,7 +159,7 @@ auto On<Deg3, Dir, G, PP>::
 operator()(
     Path& path,
     const int steps
-) noexcept -> Res
+) -> Res
 {
     if constexpr (verboseF)
         report.before(path, steps);
@@ -289,7 +289,7 @@ void On<Deg3, Dir, G, PP>::
 check_path(
     const Path& path,
     [[maybe_unused]] const int steps
-) const noexcept
+) const
 {
     const auto c = path.cmp;
     const auto pc = path.pthc;

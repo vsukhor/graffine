@@ -65,7 +65,7 @@ constexpr
 auto make_name(
     const char* nameTrait,
     const std::string& dd = ""
-) noexcept -> std::string
+) -> std::string
 {
     return std::string(nameTrait) + dd;
 }

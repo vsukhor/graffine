@@ -103,7 +103,7 @@ struct Functor
      * \param[in] ind2 Graph_wide index of the 2nd edge merged.
      */
     auto operator()(const EgIdG ind1,
-                    const EgIdG ind2) noexcept -> Res;
+                    const EgIdG ind2) -> Res;
 
 protected:
 
@@ -139,7 +139,7 @@ template<typename G,
          typename PP>
 auto Functor<G, PP>::
 operator()(const EgIdG ind1,
-           const EgIdG ind2) noexcept -> Res
+           const EgIdG ind2) -> Res
 {
     auto& eg1 = gr.edge(ind1);
     auto& m1 = gr.chain(eg1.w);

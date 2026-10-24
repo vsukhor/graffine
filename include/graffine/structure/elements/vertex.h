@@ -195,8 +195,8 @@ public:  // Functions
      * @{
      */
 
-    auto edges_connected_to(const EgDescr& s) const noexcept -> const EgDescrors;
-    auto edges_connected_to(const std::array<EgDescr, 2>& ss) const noexcept
+    auto edges_connected_to(const EgDescr& s) const -> const EgDescrors;
+    auto edges_connected_to(const std::array<EgDescr, 2>& ss) const
         -> const EgDescrors;
     auto edges_connected_to(const EgDescrors& s) const noexcept -> const EgDescrors;
 
@@ -209,7 +209,7 @@ public:  // Functions
     auto erase(const EgDescr& g) noexcept -> EgDescrors::size_type;
 
     constexpr void insert(const EgDescr& s) noexcept;
-    constexpr void insert(EgDescr&& s) noexcept;
+    constexpr void insert(EgDescr&& s);
 
     constexpr bool is_conected_to(const EgDescr& s) const noexcept;
     constexpr bool is_conected() const noexcept;
@@ -356,7 +356,7 @@ insert(const EgDescr& s) noexcept
 
 constexpr
 void Vertex<ED>::
-insert(EgDescr&& s) noexcept
+insert(EgDescr&& s)
 {
     GRAFFINE_ASSERT(!egDescrors.contains(s),
            "Attempt to insert repeting egDescr ", s.str_short());
@@ -380,7 +380,7 @@ is_conected() const noexcept
 
 inline
 auto Vertex<ED>::
-edges_connected_to(const EgDescr& s) const noexcept -> const EgDescrors
+edges_connected_to(const EgDescr& s) const -> const EgDescrors
 {
     if (is_leaf()) {
 
@@ -406,7 +406,7 @@ inline
 auto Vertex<ED>::
 edges_connected_to(
     const std::array<EgDescr, 2>& aa
-) const noexcept -> const EgDescrors
+) const -> const EgDescrors
 {
     GRAFFINE_ASSERT(deg() >= 2, "egDescrors.size() < 2");
 

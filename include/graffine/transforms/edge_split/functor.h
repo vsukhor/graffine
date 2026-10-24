@@ -102,7 +102,7 @@ struct Functor
      * Function call operator executing the transformation.
      * \param[in] ind Graph-wide index of the source edge.
      */
-    auto operator()(const EgIdG ind) noexcept -> Res;
+    auto operator()(const EgIdG ind) -> Res;
 
 protected:
 
@@ -129,7 +129,7 @@ Functor(Graph& gr,
 template<typename G,
          typename PP>
 auto Functor<G, PP>::
-operator()(const EgIdG ind) noexcept -> Res
+operator()(const EgIdG ind) -> Res
 {
     const auto& eg0 = gr.edge(ind);
     const auto w = eg0.w;

@@ -86,7 +86,7 @@ struct Adjacency
      */
     void list_edges() noexcept;
 
-    static auto list_edges(const Host& h) noexcept -> vec2<EgId>;
+    static auto list_edges(const Host& h) -> vec2<EgId>;
 
     /**
      * Initializes adjacency list of chains of this component.
@@ -138,7 +138,7 @@ clear()
 
 template<typename H>
 auto Adjacency<H>::
-list_edges(const Host& h) noexcept -> vec2<EgId>
+list_edges(const Host& h) -> vec2<EgId>
 {
     vec2<EgId> a(h.num_edges());
     const auto& ww = h.chids();

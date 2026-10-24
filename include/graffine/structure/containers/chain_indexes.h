@@ -74,25 +74,25 @@ public:
 
     bool operator==(const ChainIndexes& other) const noexcept = default;
 
-    constexpr auto operator()(Degree d) const noexcept -> const ChIds&;
-    constexpr auto operator()(const Key& k) const noexcept -> const Slots&;
+    constexpr auto operator()(Degree d) const -> const ChIds&;
+    constexpr auto operator()(const Key& k) const -> const Slots&;
 
-    constexpr auto cn_11() const noexcept -> const ChIds& { return (*this)(Deg1); }
-    constexpr auto cn_22() const noexcept -> const ChIds& { return (*this)(Deg2); }
-    constexpr auto cn_33() const noexcept -> const ChIds& { return (*this)(Deg3); }
-    constexpr auto cn_44() const noexcept -> const ChIds& { return (*this)(Deg4); }
-    constexpr auto cn_13() const noexcept -> const Slots& { return (*this)({Deg1, Deg3}); }
-    constexpr auto cn_14() const noexcept -> const Slots& { return (*this)({Deg1, Deg4}); }
-    constexpr auto cn_34() const noexcept -> const Slots& { return (*this)({Deg3, Deg4}); }
+    constexpr auto cn_11() const -> const ChIds& { return (*this)(Deg1); }
+    constexpr auto cn_22() const -> const ChIds& { return (*this)(Deg2); }
+    constexpr auto cn_33() const -> const ChIds& { return (*this)(Deg3); }
+    constexpr auto cn_44() const -> const ChIds& { return (*this)(Deg4); }
+    constexpr auto cn_13() const -> const Slots& { return (*this)({Deg1, Deg3}); }
+    constexpr auto cn_14() const -> const Slots& { return (*this)({Deg1, Deg4}); }
+    constexpr auto cn_34() const -> const Slots& { return (*this)({Deg3, Deg4}); }
 
-    constexpr void insert(Degree k, ChId v) noexcept;
+    constexpr void insert(Degree k, ChId v);
     constexpr void insert(const Key& k, EndSlot&& v) noexcept;
 
-    constexpr auto num(const Key& k) const noexcept -> std::size_t;
+    constexpr auto num(const Key& k) const -> std::size_t;
 
     constexpr auto num_chains() const noexcept -> std::size_t;
 
-    constexpr void clear(Degree k) noexcept;
+    constexpr void clear(Degree k);
     constexpr void clear(const Key& k) noexcept;
     constexpr void clear() noexcept;
 
@@ -121,7 +121,7 @@ public:
 template<typename ES>
 constexpr
 auto ChainIndexes<ES>::
-operator()(const Degree d) const noexcept -> const ChIds&
+operator()(const Degree d) const -> const ChIds&
 {
     return symmetric.contains(d)
         ? symmetric.at(d)
@@ -131,7 +131,7 @@ operator()(const Degree d) const noexcept -> const ChIds&
 template<typename ES>
 constexpr
 auto ChainIndexes<ES>::
-operator()(const Key& k) const noexcept -> const Slots&
+operator()(const Key& k) const -> const Slots&
 {
     GRAFFINE_ASSERT(k[0] < k[1], "Incorreect order of key elements.");
 //    GRAFFINE_ASSERT(asymmetric.contains(k), "Degree acsessed is missing.");
@@ -168,7 +168,7 @@ clear(const Key& k) noexcept
 template<typename ES>
 constexpr
 void ChainIndexes<ES>::
-clear(const Degree d) noexcept
+clear(const Degree d)
 {
     if (symmetric.contains(d))
         symmetric.at(d).clear();
@@ -195,7 +195,7 @@ append(ChainIndexes&& other)
 template<typename ES>
 constexpr
 void ChainIndexes<ES>::
-insert(const Degree k, const ChId v) noexcept
+insert(const Degree k, const ChId v)
 {
     symmetric[k].push_back(v);
 }
@@ -278,7 +278,7 @@ num_chains() const noexcept -> std::size_t
 template<typename ES>
 constexpr
 auto ChainIndexes<ES>::
-num(const Key& k) const noexcept -> std::size_t
+num(const Key& k) const -> std::size_t
 {
     GRAFFINE_ASSERT(k[0] <= k[1], "Incorreect order of key elements.");
 

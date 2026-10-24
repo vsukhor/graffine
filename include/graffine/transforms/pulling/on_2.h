@@ -97,7 +97,7 @@ struct On<Deg2, Dir, G, PP>
     auto operator()(
         Path& path,
         int steps
-    ) noexcept -> Res;
+    ) -> Res;
 
 protected:
 
@@ -136,7 +136,7 @@ protected:
     void check_path(
         const Path& path,
         const int steps
-    ) const noexcept;
+    ) const;
 
 private:
 
@@ -148,7 +148,7 @@ private:
     /// Pretty-printer of the initial and final configurations.
     Reporter<On<D, Dir, G, PP>> report {*this};
 
-    void correct_driver(Path& path) const noexcept;
+    void correct_driver(Path& path) const;
 };
 
 
@@ -176,7 +176,7 @@ auto On<Deg2, Dir, G, PP>::
 operator()(
     Path& path,
     const int steps
-) noexcept -> Res
+) -> Res
 {
     if constexpr (verboseF)
         report.before(path, steps);
@@ -310,7 +310,7 @@ template<Orientation Dir,
          typename G,
          typename PP>
 void On<Deg2, Dir, G, PP>::
-correct_driver(Path& path) const noexcept
+correct_driver(Path& path) const
 {
     GRAFFINE_ASSERT(path.length() > 1,
            "Attempting to correct driver in a single-edge path.");
@@ -354,7 +354,7 @@ void On<Deg2, Dir, G, PP>::
 check_path(
     const Path& path,
     [[maybe_unused]] const int steps
-) const noexcept
+) const
 {
     const auto c = path.cmp;
     const auto pc = path.pthc;

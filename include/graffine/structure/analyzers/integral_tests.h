@@ -54,8 +54,18 @@ struct IntegralTests
      * Runs consecutively all the specific tests implemented here.
      * \param[in] it Index of the current iteration if used in a multi-step
      * sequence of transformations.
+     * \throws invariant_error Describing the first inconsistency found.
      */
     void operator()(itT it = 0) const;
+
+    /**
+     * Runs the tests like operator(), but reports the outcome instead of
+     * throwing.
+     * \param[in] it Index of the current iteration if used in a multi-step
+     * sequence of transformations.
+     * \return Success, or the first inconsistency found.
+     */
+    auto validate(itT it = 0) const -> Validation;
 
     /**
      * Tests component attributes and inter-component arrangement.
@@ -149,6 +159,26 @@ operator()(const itT it) const
     edges(it);
     chain_g(it);
     vertex_numbers(it);
+}
+
+
+template<typename G,
+         bool beLoud>
+auto IntegralTests<G, beLoud>::
+validate(const itT it) const -> Validation
+{
+    try {
+        (*this)(it);
+    }
+    catch (const invariant_error& e) {
+        return std::unexpected(Violation {e.what()});
+    }
+    catch (const precondition_error& e) {
+        // Raised by the lookups the tests rely on, if the graph is corrupt.
+        return std::unexpected(Violation {e.what()});
+    }
+
+    return {};
 }
 
 /*
@@ -282,13 +312,10 @@ components(const itT it) const
 
            for (const auto e : End::Ids)
                 for (const auto& ng : cn[w].ngs[e]())
-                    if (cn[ng.w].c != c.ind) {
-                        cn[w].print(" wrong ng c ");
-                        cn[ng.w].print(" wrong ng c ");
-                        abort("at iteration ", it, " errorN in c.ww for w ", w,
-                              ", c.ind ", c.ind, " in ng {", ng.w, " ",
-                              End::str(ng.e), "} c is wrong: ", cn[ng.w].c);
-                    }
+                    GRAFFINE_ENSURE(cn[ng.w].c == c.ind,
+                        "at iteration ", it, " errorN in c.ww for w ", w,
+                        ", c.ind ", c.ind, " in ng {", ng.w, " ",
+                        End::str(ng.e), "} c is wrong: ", cn[ng.w].c);
         }
         for (std::size_t idc {}; idc < c.num_chains(); ++idc) {
             bool found {};
@@ -487,12 +514,9 @@ consistency(const itT it) const
 
                 const auto cnei = s.w;
 
-                if (cnei >= gr.num_chains()) {
-                    gr.print_chains("TEST FAILED ");
-                    jot("");
-                    abort("At iteration ", it, ": Consistency test failed ",
-                          "for cn = ", i, ", cnei = ", cnei);
-                }
+                GRAFFINE_ENSURE(cnei < gr.num_chains(),
+                    "At iteration ", it, ": Consistency test failed ",
+                    "for cn = ", i, ", cnei = ", cnei);
 
                 const auto ce = s.e;
                 const auto& ss = cn[cnei].ngs[ce]();
@@ -502,13 +526,10 @@ consistency(const itT it) const
                     std::end(ss),
                     [&](const EndSlot& v){ return v == ij; }
                 );
-                if (ss.end() == itr) {
-                    gr.print_chains("TEST FAILED ");
-                    jot("");
-                    abort("At iteration ", it, ": Consistency test ",
-                          "failed for cn = ", i, ", end = ", j,
-                          " cnei = ", cnei, " ce = ", ce);
-                }
+                GRAFFINE_ENSURE(itr != ss.end(),
+                    "At iteration ", it, ": Consistency test ",
+                    "failed for cn = ", i, ", end = ", j,
+                    " cnei = ", cnei, " ce = ", ce);
             }
         }
     }
@@ -545,18 +566,17 @@ edges(const itT it) const
             GRAFFINE_ENSURE(o.w == m.idw,
                    "Error 1: at iteration ", it,
                     " check.edges faied at w ", m.idw, " edge ind ", o.ind);
-            if (o.indw != a++) {
-                m.print("wrong indw ");
-                abort("Error 2: at iteration ", it,
-                      " check.edges faied at w ", m.idw, ": at a ", a-1,
-                      "indw ", o.indw, " is incorrect; ", " edge ind ", o.ind);
-            }
+            GRAFFINE_ENSURE(o.indw == a,
+                "Error 2: at iteration ", it,
+                " check.edges faied at w ", m.idw, ": at a ", a,
+                "indw ", o.indw, " is incorrect; ", " edge ind ", o.ind);
+            ++a;
 
             o.check(gr.num_edges(), ct[m.c].num_edges(), m.length(),
                     gr.num_chains(), gr.num_compts());
         }
     }
-    GRAFFINE_ASSERT(egn == gr.num_edges(), "incorrect total number of edges");
+    GRAFFINE_ENSURE(egn == gr.num_edges(), "incorrect total number of edges");
 }
 
 
@@ -569,15 +589,15 @@ chain_g(const itT it) const
     for (std::size_t i {}; i < gr.num_chains(); ++i) {
         egn += cn[i].length();
         for (std::size_t r {}; r < cn[i].length(); ++r) {
-            if (cn[i].g[r].ind >= gr.num_edges())
-                abort("Error 1: at iteration ", it,
-                      " check.chain_g faied at ind ", cn[i].g[r].ind);
+            GRAFFINE_ENSURE(cn[i].g[r].ind < gr.num_edges(),
+                "Error 1: at iteration ", it,
+                " check.chain_g faied at ind ", cn[i].g[r].ind);
             for (ChIdG i1=i; i1<gr.num_chains(); ++i1)
                 for (std::size_t r1 {}; r1 < cn[i1].length(); ++r1)
-                    if (!(i == i1 && r == r1) &&
-                        cn[i].g[r].ind == cn[i1].g[r1].ind)
-                        abort("Error 4: at iteration ", it,
-                              " check.chain_g faied at ind ", cn[i].g[r].ind);
+                    GRAFFINE_ENSURE((i == i1 && r == r1) ||
+                                    cn[i].g[r].ind != cn[i1].g[r1].ind,
+                        "Error 4: at iteration ", it,
+                        " check.chain_g faied at ind ", cn[i].g[r].ind);
         }
     }
     GRAFFINE_ENSURE(egn == gr.num_edges(),

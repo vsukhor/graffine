@@ -93,14 +93,14 @@ public:  // Functions
     constexpr auto num() const noexcept -> std::size_t;
     constexpr auto num(Degree d) const noexcept -> std::size_t;
 
-    constexpr auto create_vertex(CmpId c = CmpId::undefined) noexcept -> Vertex&;
+    constexpr auto create_vertex(CmpId c = CmpId::undefined) -> Vertex&;
 
-    constexpr auto move_to(Host& h, const Chain& m) noexcept -> VIdH;
-    constexpr bool move_to(Host& h, const Vertex* const v) noexcept;
+    constexpr auto move_to(Host& h, const Chain& m) -> VIdH;
+    constexpr bool move_to(Host& h, const Vertex* const v);
 
     void insert(std::unique_ptr<Vertex>&& v);
 
-    constexpr void append(Container& other) noexcept;
+    constexpr void append(Container& other);
 
     constexpr void remove_disconnected(Vertex* vp) noexcept;
     constexpr void remove_connected_to_outer(Edge& eg,
@@ -191,7 +191,7 @@ template<typename V,
 constexpr
 bool Vertices<V, H>::
 move_to(Host& h,
-        const Vertex* const v) noexcept
+        const Vertex* const v)
 {
     GRAFFINE_ASSERT(v, "Vertex not found");
 
@@ -213,7 +213,7 @@ template<typename V,
 constexpr
 auto Vertices<V, H>::
 move_to(Host& h,
-        const Chain& m) noexcept -> VIdH
+        const Chain& m) -> VIdH
 {
     VIdH n {};
 
@@ -232,7 +232,7 @@ template<typename V,
          typename H>
 constexpr
 auto Vertices<V, H>::
-create_vertex(const CmpId c) noexcept -> Vertex&
+create_vertex(const CmpId c) -> Vertex&
 {
     vv.push_back(std::move(std::make_unique<Vertex>(c)));
 
@@ -412,7 +412,7 @@ template<typename V,
          typename H>
 constexpr
 void Vertices<V, H>::
-append(Container& other) noexcept
+append(Container& other)
 {
     std::move(other.begin(), other.end(), std::back_inserter(vv));
     other.clear();

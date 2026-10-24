@@ -120,13 +120,13 @@ struct PreservingHostChain
      * Function call operator executing the deletion using edge index.
      * \param[in] ind Graph-wide index of the deleted edge.
      */
-    auto operator()(EgIdG ind) noexcept -> Res;
+    auto operator()(EgIdG ind) -> Res;
 
     /**
      * Delete edge using its position.
      * \param[in] s Slot incident to a chain internal vertex.
      */
-    auto operator()(const BulkSlot& s) noexcept -> Res;
+    auto operator()(const BulkSlot& s) -> Res;
 
 protected:  // Data
 
@@ -157,7 +157,7 @@ template<Degree D,
          typename G,
          typename PP>
 auto PreservingHostChain<D, G, PP>::
-operator()(const BulkSlot& s) noexcept -> Res
+operator()(const BulkSlot& s) -> Res
 {
     const auto [w, a] = s.we();
 
@@ -211,7 +211,7 @@ template<Degree D,
          typename G,
          typename PP>
 auto PreservingHostChain<D, G, PP>::
-operator()(const EgIdG ind) noexcept -> Res
+operator()(const EgIdG ind) -> Res
 {
     return (*this)(gr.ind2bslot(ind));
 }

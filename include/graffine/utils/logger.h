@@ -5,7 +5,6 @@
 #include "graffine/utils/colorcodes.h"
 
 #include <ostream>  // std::cerr
-#include <cstdlib>  // std::exit
 
 namespace graffine {
 
@@ -26,17 +25,6 @@ static void jot(Args... args)
 }
 
 template<typename ...Args>
-static void abort(Args... args)
-{
-    if (msgr)
-        msgr->print(args...);
-    else
-        std::cerr << "Error: msgr is NULL" << std::endl;
-
-    std::exit(EXIT_FAILURE);
-}
-
-template<typename ...Args>
 static void warn(Args... args)
 {
     jot(graffine::utils::colorcodes::RED, "WARNING: ",
@@ -49,14 +37,6 @@ static void warn_if(const bool condition,
 {
     if (condition)
         warn(args...);
-}
-
-template<typename ...Args>
-static void abort_if(const bool condition,
-                     Args... args)
-{
-    if (condition)
-        abort(args...);
 }
 
 template<typename ...Args>

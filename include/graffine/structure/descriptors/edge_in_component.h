@@ -83,7 +83,7 @@ struct EdgeInComponent
            "egl[", k, "].h != eg.id in component ", ic, " eg.ind ", eg.ind);
     }
 
-    void print(const EgIdC j) const noexcept
+    void print(const EgIdC j) const
     {
         jot(j, "     ", w, "  ", a, "  ", i, "  ", h);
     }

@@ -35,6 +35,7 @@
 #include "graffine/utils/colorcodes.h"
 
 #include <array>
+#include <cstdlib>  // std::abort
 #include <fstream>
 #include <iostream>
 #include <ostream>
@@ -51,7 +52,7 @@ namespace graffine::utils {
 
 
 template<typename ...Args>
-constexpr
+[[noreturn, gnu::cold]]
 void failure_message(
     const char* CND,
     const std::source_location location,
@@ -75,7 +76,8 @@ void failure_message(
               << cc::YELLOW << "    function: " << cc::RESET
               << location.function_name() << std::endl;
 
-    std::exit(EXIT_FAILURE);
+    // A failed assertion reveals a defect: stop where it is detected.
+    std::abort();
 }
 
 // /////////////////////////////////////////////////////////////////////////////
@@ -154,15 +156,6 @@ public:
     void print(T... values) const;
 
     /**
-     * \brief Print an data series of of various types and exit the process.
-     * \details Based on proposition stackoverflow.com proposition by geza:
-     * https://stackoverflow.com/questions/51647834/printf-like-utility-in-c-without-format-specifier/51648068#51648068
-     * \param values Values to print.
-     */
-    template<typename... T>
-    void exit(T... values);
-
-    /**
      * \brief ostream operator with the same functionaluty as the print method.
      * \note The oputput is not terminated by a \a newline .
      */
@@ -187,7 +180,7 @@ private:
     /**
      * \brief Removes color codes from the stream directed to a file.
      */
-    auto rm_colorcode(std::string&& v) const noexcept -> std::string;
+    auto rm_colorcode(std::string&& v) const -> std::string;
 
     /**
      * \brief Print to a stream \p io.
@@ -201,7 +194,7 @@ private:
         IO* io,
         std::string&& v,
         bool endline
-    ) const noexcept;
+    ) const;
 };
 
 
@@ -247,7 +240,7 @@ is_valid_stream() noexcept
 
 inline
 auto Msgr::
-rm_colorcode(std::string&& s) const noexcept -> std::string
+rm_colorcode(std::string&& s) const -> std::string
 {
     for (const auto& p : colorcodes::sall) {
         auto n = p.length();
@@ -265,7 +258,7 @@ prn(
     IO* io,
     std::string&& v,
     const bool endline
-) const noexcept
+) const
 {
     static_assert(is_valid_stream<IO>(),
                   "Stream type used in Msgr is not valid");
@@ -333,14 +326,6 @@ print(T... values) const
 }
 
 
-template<typename... T>
-void Msgr::
-exit(T... values)
-{
-    print(values...);
-
-    ::exit(EXIT_FAILURE);
-}
 
 
 template<typename... T>

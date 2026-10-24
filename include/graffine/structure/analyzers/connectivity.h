@@ -53,8 +53,8 @@ struct Connectivity
 
     explicit constexpr Connectivity(const Chains& cn);
 
-    auto find_connected_chains(const EndSlot& source) noexcept -> ChIdGs;
-    auto find_connected_chains(ChIdG seed) noexcept -> ChIdGs;
+    auto find_connected_chains(const EndSlot& source) -> ChIdGs;
+    auto find_connected_chains(ChIdG seed) -> ChIdGs;
 
 
     /**
@@ -78,7 +78,7 @@ protected:
 
     ChIdGs visited;  ///< Auxiliary: IDs of chains visited during a search.
 
-    void reset_search(std::size_t s) noexcept;
+    void reset_search(std::size_t s);
 
     /**
      * Depth-first search over the component edges.
@@ -108,7 +108,7 @@ Connectivity(const Chains& cn)
 
 template<typename Ch>
 auto Connectivity<Ch>::
-find_connected_chains(const EndSlot& source) noexcept -> ChIdGs
+find_connected_chains(const EndSlot& source) -> ChIdGs
 {
     reset_search(cn.size());
 
@@ -129,7 +129,7 @@ find_connected_chains(const EndSlot& source) noexcept -> ChIdGs
 
 template<typename Ch>
 auto Connectivity<Ch>::
-find_connected_chains(const ChIdG seed) noexcept -> ChIdGs
+find_connected_chains(const ChIdG seed) -> ChIdGs
 {
     auto r1 = find_connected_chains(EndSlot{seed, End::A});
     auto r2 = find_connected_chains(EndSlot{seed, End::B});
@@ -229,7 +229,7 @@ dfs_(const EndSlot& source,
 
 template<typename Ch>
 void Connectivity<Ch>::
-reset_search(const std::size_t n) noexcept
+reset_search(const std::size_t n)
 {
     visited.resize(n);
     std::fill(visited.begin(),

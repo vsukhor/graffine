@@ -95,7 +95,7 @@ struct Functor
      * Function call operator executing the transformation.
      * \param[in] c Index of the connected component to be deleted.
      */
-    auto operator()(CmpId c) noexcept -> Res;
+    auto operator()(CmpId c) -> Res;
 
 protected:
 
@@ -122,7 +122,7 @@ Functor(Graph& gr,
 template<typename G,
          typename PP>
 auto Functor<G, PP>::
-operator()(const CmpId c) noexcept -> Res
+operator()(const CmpId c) -> Res
 {
     auto& cn = gr.chains();
     auto& ct = gr.compts();

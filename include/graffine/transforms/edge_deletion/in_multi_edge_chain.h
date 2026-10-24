@@ -85,7 +85,7 @@ struct InMultiEdgeChain
      * Function call operator executing the deletion using edge index.
      * \param[in] ind Graph-wide index of the deleted edge.
      */
-    auto operator()(EgIdG ind) noexcept -> Res;
+    auto operator()(EgIdG ind) -> Res;
 
 protected:
 
@@ -119,7 +119,7 @@ InMultiEdgeChain(Graph& gr,
 template<typename G,
          typename PP>
 auto InMultiEdgeChain<G, PP>::
-operator()(const EgIdG ind) noexcept -> Res
+operator()(const EgIdG ind) -> Res
 {
     const auto& m = gr.chain(ind);
     const auto& eg = m.g[gr.get_egl(ind).a];

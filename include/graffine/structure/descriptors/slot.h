@@ -109,7 +109,7 @@ struct _Slot
 
     constexpr auto a() const noexcept -> LocId { return e; }
 
-    constexpr auto ea_str() const noexcept -> std::string
+    constexpr auto ea_str() const -> std::string
     {
         return Location::str(e);
     }

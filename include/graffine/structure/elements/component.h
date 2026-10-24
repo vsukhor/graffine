@@ -146,7 +146,7 @@ public: // Functions
                       EgIdC indc) noexcept;
 
     template <bool updateChis = true>
-    void rename_chain(ChIdG f, ChIdG t) noexcept;
+    void rename_chain(ChIdG f, ChIdG t);
 
     /**
      * Change component index in internal records of all edges
@@ -161,7 +161,7 @@ public: // Functions
     ) noexcept;
     void set_vertices() noexcept;
 
-    constexpr void set_egl() noexcept { egl.set(*this); };
+    constexpr void set_egl() { egl.set(*this); };
     constexpr auto get_egl() const noexcept -> const EdgeDescriptors & { return egl; };
     constexpr auto get_egl() noexcept -> EdgeDescriptors && { return std::move(egl); };
     constexpr auto get_egl(const EgIdC i) const noexcept -> const EdgeDescr&  { return egl[i]; };
@@ -171,7 +171,7 @@ public: // Functions
     void clear_egl() noexcept { egl.clear(); };
     void update_edge_descriptors() noexcept;
 
-    auto set_chis() noexcept -> Component&;
+    auto set_chis() -> Component&;
     auto get_chis() noexcept -> Chis&&;
     void clear_chis() noexcept { chis.clear(); }
 
@@ -189,18 +189,18 @@ public: // Functions
     constexpr auto num_vertices(Degree d) const noexcept -> std::size_t;
     constexpr auto num_vertices() const noexcept -> std::size_t;
 
-    constexpr bool is_single_unconnected_chain() const noexcept;
-    constexpr bool is_unconnected_cycle() const noexcept;
+    constexpr bool is_single_unconnected_chain() const;
+    constexpr bool is_unconnected_cycle() const;
 
     constexpr bool is_complete() const noexcept;
 
     constexpr auto max_degree() const noexcept -> Degree;
 
-    constexpr auto create_chain() noexcept -> Chain&;
+    constexpr auto create_chain() -> Chain&;
     constexpr auto create_chain(
         std::size_t len,
         EgIdG& indIni // ref
-    ) noexcept -> Chain&;
+    ) -> Chain&;
 
     /**
      * Removes an edge having component ind \p indc .
@@ -483,10 +483,10 @@ public: // Functions
 
     void print_vertices_deg(const Degree d, std::string_view s = " ") const;
 
-    void print_egl() const noexcept;
+    void print_egl() const;
 
     template <bool with_top = true>
-    void print_ww() const noexcept;
+    void print_ww() const;
 
     ///@}  // Printing.
 };
@@ -638,14 +638,14 @@ is_complete() const noexcept
 
 template <typename Ch>
 constexpr bool Component<Ch>::
-is_single_unconnected_chain() const noexcept
+is_single_unconnected_chain() const
 {
     return chis.num({1, 1});
 }
 
 template <typename Ch>
 constexpr bool Component<Ch>::
-is_unconnected_cycle() const noexcept
+is_unconnected_cycle() const
 {
     return chis.num({2, 2});
 }
@@ -1021,7 +1021,7 @@ prepend_edge_to_chain(Edge&& eg,
 // Result:  an unconnected chain as a part of the component..
 template <typename Ch>
 constexpr auto Component<Ch>::
-create_chain() noexcept -> Chain&
+create_chain() -> Chain&
 {
     cn.emplace_back(cn.num(), num_chains(), ind);
     auto& m = cn.back();
@@ -1041,7 +1041,7 @@ constexpr auto Component<Ch>::
 create_chain(
     const std::size_t len,
     EgIdG& indIni // ref
-) noexcept -> Chain&
+) -> Chain&
 {
     GRAFFINE_ASSERT(!num_chains(), "Component is not empty");
 
@@ -1200,7 +1200,7 @@ template <typename Ch>
 template <bool updateChis>
 void Component<Ch>::
 rename_chain(const ChIdG f,
-             const ChIdG t) noexcept
+             const ChIdG t)
 {
     if (std::find(ww.begin(), ww.end(), f) != ww.end())
         std::replace(ww.begin(), ww.end(), f, t);
@@ -1647,7 +1647,7 @@ move_to(Component& c, ChIdGs&& uu)
 
 template <typename Ch>
 auto Component<Ch>::
-set_chis() noexcept -> Component&
+set_chis() -> Component&
 {
     chis.populate(cn, ww);
 
@@ -2024,15 +2024,12 @@ template <typename... T>
 void Component<Ch>::
 ensure(
     bool cond,
-    const std::string_view tag,
+    [[maybe_unused]] const std::string_view tag,
     T&&... message) const
 {
-    if (!cond) {
-
-        print(tag);
-
-        GRAFFINE_ABORT(cond, message...);
-    }
+    if (!cond) [[unlikely]]
+        utils::raise<invariant_error>(nullptr, std::source_location::current(),
+                                      message...);
 }
 
 // -----------------------------------------------------------------------------
@@ -2182,8 +2179,9 @@ check_chis() const
     if constexpr (beLoud)
         jot<false>("chis ... ");
 
-    abort_if(chis.num_chains() != num_chains(), "Incorrect number of chains: ",
-             chis.num_chains(), " != ", num_chains());
+    GRAFFINE_ENSURE(chis.num_chains() == num_chains(),
+                    "Incorrect number of chains: ",
+                    chis.num_chains(), " != ", num_chains());
 
     if (!num_chains())
         return false;
@@ -2368,7 +2366,7 @@ print_vertices_deg(
 
 template <typename Ch>
 void Component<Ch>::
-print_egl() const noexcept
+print_egl() const
 {
     jot("egl ", ind, ": w a ind id");
     for (std::size_t i {}; i < egl.size(); ++i)
@@ -2378,7 +2376,7 @@ print_egl() const noexcept
 template <typename Ch>
 template <bool with_top>
 void Component<Ch>::
-print_ww() const noexcept
+print_ww() const
 {
     if constexpr (with_top)
         jot<false>("cmpt ", ind, " ");

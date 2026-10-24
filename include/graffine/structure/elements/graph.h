@@ -182,7 +182,7 @@ public:
     auto merge_components(
         Compt& acceptor,
         Compt& donor
-    ) noexcept -> Compt&;
+    ) -> Compt&;
 
     /**
      * Appends \p donor component to \p acceptor component.
@@ -195,7 +195,7 @@ public:
     auto merge_components(
         CmpId acceptor,
         CmpId donor
-    ) noexcept -> Compt&;
+    ) -> Compt&;
 
     auto split_component(
         Compt& cmp,
@@ -307,17 +307,17 @@ public:
      * and update_adjacency().
      */
     template<bool withVertices = true>
-    void update() noexcept;
+    void update();
 
     /**
      * Initializes or updates vector of graph-wide edge descriptors.
      */
-    void update_edge_descriptors() noexcept;
+    void update_edge_descriptors();
 
     /**
      * Initializes or updates vector of graph-wide vertex descriptors.
      */
-    void update_vertex_descriptors() noexcept;
+    void update_vertex_descriptors();
 
     /**
      * Initializes or updates adjacency list.
@@ -356,7 +356,7 @@ public:
     constexpr auto ind_last_chain() const noexcept -> ChIdG;
 
     constexpr void connect(const EndSlot& s1,
-                           const EndSlot& s2) noexcept;
+                           const EndSlot& s2);
 
     constexpr auto ngs_at(const EndSlot& s) noexcept -> Chain::Neigs&;
     constexpr auto ngs_at(const EndSlot& s) const noexcept -> const Chain::Neigs&;
@@ -553,7 +553,7 @@ auto Graph<CC>::
 merge_components(
     const CmpId acceptor,
     const CmpId donor
-) noexcept -> Compt&
+) -> Compt&
 {
     return merge_components(ct[acceptor], ct[donor]);
 }
@@ -564,7 +564,7 @@ auto Graph<CC>::
 merge_components(
     Compt& acceptor,
     Compt& donor
-) noexcept -> Compt&
+) -> Compt&
 {
     const auto indDon = donor.ind;
     const auto indAcc = acceptor.ind;
@@ -942,7 +942,7 @@ update_adjacency() noexcept
 template<typename CC>
 template<bool withVertices>
 void Graph<CC>::
-update() noexcept
+update()
 {
     update_edge_descriptors();
     if constexpr (useAgl)
@@ -954,7 +954,7 @@ update() noexcept
 
 template<typename CC>
 void Graph<CC>::
-update_edge_descriptors() noexcept
+update_edge_descriptors()
 {
     egl.set(*this);
 }
@@ -962,7 +962,7 @@ update_edge_descriptors() noexcept
 
 template<typename CC>
 void Graph<CC>::
-update_vertex_descriptors() noexcept
+update_vertex_descriptors()
 {
     ved.set(*this);
 }
@@ -1020,7 +1020,7 @@ template<typename CC>
 constexpr
 void Graph<CC>::
 connect(const EndSlot& s1,
-        const EndSlot& s2) noexcept
+        const EndSlot& s2)
 {
     cn[s1.w].ngs[s1.e].insert(s2);
     cn[s2.w].ngs[s2.e].insert(s1);

@@ -94,7 +94,7 @@ struct Path
                    egEnd == d.egEnd;
         }
 
-        constexpr auto end_slot(const Chain& m) const noexcept -> EndSlot
+        constexpr auto end_slot(const Chain& m) const -> EndSlot
         {
             const auto e = m.ind2end(ind, egEnd);
 
@@ -166,7 +166,7 @@ struct Path
     constexpr auto driver_chid() const noexcept -> ChIdG;
 
     /// Id of the chain boundary at the leading path end.
-    constexpr auto driver_chain_end() const noexcept -> End::Id;
+    constexpr auto driver_chain_end() const -> End::Id;
 
     /// Vertex at the leading path end.
     constexpr auto driver_vertex() const noexcept -> const Vertex&;
@@ -182,7 +182,7 @@ struct Path
     constexpr auto source_vertex() const noexcept -> const Vertex&;
     constexpr auto source_vertex()       noexcept ->       Vertex&;
 
-    auto driver2source(const Driver& dr) const noexcept -> Source;
+    auto driver2source(const Driver& dr) const -> Source;
 
     void set_cmp(Component& cc) noexcept;
 
@@ -473,7 +473,7 @@ set_driver_end(const End::Id e)
 
 template<typename C>
 auto Path<C>::
-driver2source(const Driver& dr) const noexcept -> Source
+driver2source(const Driver& dr) const -> Source
 {
     return Source {dr.w, cmp->chain(dr.w).ind2end(dr.ind, dr.egEnd)};
 }
@@ -675,7 +675,7 @@ driver_chid() const noexcept -> ChIdG
 template<typename C>
 constexpr
 auto Path<C>::
-driver_chain_end() const noexcept -> End::Id
+driver_chain_end() const -> End::Id
 {
     const auto m = cmp->chain(d.w);
 

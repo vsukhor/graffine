@@ -103,7 +103,7 @@ struct End
         return 'X';
     }
 
-    static constexpr auto str(const Id e) noexcept -> std::string
+    static constexpr auto str(const Id e) -> std::string
     {
         return e == A ? "A" : e == B ? "B" : "Undefined";
     }

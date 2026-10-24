@@ -150,14 +150,13 @@ template<typename... T>
 void Edges<Eg>::
 ensure(
     const bool cond,
-    const std::string_view tag,
+    [[maybe_unused]] const std::string_view tag,
     T&&... message
 ) const
 {
-    if (!cond) {
-        print(tag);
-        GRAFFINE_ABORT(message...);
-    }
+    if (!cond) [[unlikely]]
+        utils::raise<invariant_error>(nullptr, std::source_location::current(),
+                                      message...);
 }
 
 

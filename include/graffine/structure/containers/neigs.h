@@ -91,7 +91,7 @@ struct Neigs
         : ss {std::move(ss)}
     {}
 
-    constexpr Neigs(std::initializer_list<Slot> init) noexcept
+    constexpr Neigs(std::initializer_list<Slot> init)
         : ss {init}
     {}
 
@@ -199,7 +199,7 @@ struct Neigs
         return ss.size();
     }
 
-    constexpr auto as_vector() const noexcept -> std::vector<value_type>
+    constexpr auto as_vector() const -> std::vector<value_type>
     {
         std::vector<value_type> v;
         v.reserve(num());
@@ -223,7 +223,7 @@ struct Neigs
         return v;
     }
 
-    constexpr auto ww() const noexcept -> Ws
+    constexpr auto ww() const -> Ws
     {
         Ws res {};
         for (const auto& s : ss)
@@ -232,7 +232,7 @@ struct Neigs
         return res;
     }
 
-    constexpr auto ee() const noexcept -> Es
+    constexpr auto ee() const -> Es
     {
         Es res {};
         for (const auto& s : ss)

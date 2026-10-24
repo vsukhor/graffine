@@ -95,7 +95,7 @@ struct From<Deg1, Deg3, G, PP>
      * \param[in] s2 Slot on degree 3 input vertex.
      */
     auto operator()(const EndSlot& s1,
-                    const EndSlot& s2) noexcept -> Res;
+                    const EndSlot& s2) -> Res;
 
 protected:
 
@@ -164,7 +164,7 @@ auto From<Deg1, Deg3, G, PP>::
 operator()(
     const EndSlot& s1,
     const EndSlot& s2
-) noexcept -> Res
+) -> Res
 {
     const auto [w1, e1] = s1.we();
     const auto [w2, e2] = s2.we();

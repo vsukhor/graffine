@@ -31,11 +31,14 @@
 #ifndef GRAFFINE_UTILS_IO_H
 #define GRAFFINE_UTILS_IO_H
 
+#include "graffine/utils/errors.h"
+
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <optional>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 /// Input/output
@@ -47,23 +50,24 @@ auto read_file_binary(const std::filesystem::path& file)
 {
     std::ifstream ifs(file, std::ios::binary);
 
-    if (ifs.fail()) {
+    if (ifs.fail())
+        throw io_error("could not open binary ifstream to path " + file.string());
 
-        throw std::runtime_error("could not open binary ifstream to path " + file.string());
-        return std::nullopt;
-    }
-    else {
-        if constexpr (beLoud)
-            jot("Reading into binary stream from file: ", file.string());
+    if constexpr (beLoud)
+        jot("Reading into binary stream from file: ", file.string());
 
-        ifs.seekg(0, std::ios::end);
-        const auto sizeBytes = ifs.tellg();
-        ifs.seekg(0, std::ios::beg);
-        std::vector<uint8_t> fileBufferBytes(sizeBytes);
-        ifs.read(reinterpret_cast<char*>(fileBufferBytes.data()), sizeBytes);
+    ifs.seekg(0, std::ios::end);
+    const auto sizeBytes = ifs.tellg();
+    ifs.seekg(0, std::ios::beg);
+    if (sizeBytes < 0)
+        throw io_error("could not determine the size of " + file.string());
 
-        return std::optional<std::vector<uint8_t>>{fileBufferBytes};
-    }
+    std::vector<uint8_t> fileBufferBytes(static_cast<std::size_t>(sizeBytes));
+    ifs.read(reinterpret_cast<char*>(fileBufferBytes.data()), sizeBytes);
+    if (!ifs)
+        throw io_error("could not read " + file.string());
+
+    return std::optional<std::vector<uint8_t>> {std::move(fileBufferBytes)};
 }
 
 

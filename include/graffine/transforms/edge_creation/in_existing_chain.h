@@ -96,7 +96,7 @@ struct InExistingChain
      * \param[in] s Slot inside a chain where the new edge is placed.
      */
     template<structure::descriptors::slot S>
-    auto operator()(const S& s) noexcept -> Res;
+    auto operator()(const S& s) -> Res;
 
 protected:
 
@@ -145,7 +145,7 @@ template<typename G,
          typename PP>
 template<structure::descriptors::slot S>
 auto InExistingChain<G, PP>::
-operator()(const S& s) noexcept -> Res
+operator()(const S& s) -> Res
 {
     constexpr auto atChainEnd = std::is_same_v<S, EndSlot>;
 

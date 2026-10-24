@@ -110,7 +110,7 @@ struct InNewChain
      *    EndSlot: at branching vertex (D == Deg3).
      * \param[in] s Slot at the source vertex.
      */
-    auto operator()(const Slot& s) noexcept -> Res;
+    auto operator()(const Slot& s) -> Res;
 
     /**
      * Creates a new edge packed into a single-edge chain.
@@ -118,7 +118,7 @@ struct InNewChain
      * \overload
      * \param[in] w Id of the an unconnected cycle chain .
      */
-    auto operator()(ChIdG w) noexcept -> Res;
+    auto operator()(ChIdG w) -> Res;
 
 protected:
 
@@ -198,7 +198,7 @@ template<Degree D,
          typename G,
          typename PP>
 auto InNewChain<D, G, PP>::
-operator()(const Slot& s) noexcept -> Res
+operator()(const Slot& s) -> Res
 {
     if constexpr (verboseF)
         log_before(s, pos_str(s));
@@ -233,7 +233,7 @@ template<Degree D,
          typename G,
          typename PP>
 auto InNewChain<D, G, PP>::
-operator()(const ChIdG w) noexcept -> Res
+operator()(const ChIdG w) -> Res
 {
     if constexpr (verboseF)
         log_before(w, ": unconnected cycle");

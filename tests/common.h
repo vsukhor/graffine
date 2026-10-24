@@ -101,7 +101,7 @@ struct Snapshot {
  * just before the graph, so that the final graph state of every test gets
  * validated. The check is skipped if the test has already failed, or if
  * skip() was called by a test leaving the graph inconsistent on purpose.
- * \note The integral tests terminate the test executable on failure.
+ * An inconsistency is reported as a failure of the current test.
  * \tparam Gr Graph type.
  */
 template<typename Gr>
@@ -114,8 +114,13 @@ struct IntegrityCheck {
 
     ~IntegrityCheck()
     {
-        if (!skipped && !testing::Test::HasFailure())
-            structure::IntegralTests<Gr, profuse> {gr}();
+        if (skipped || testing::Test::HasFailure())
+            return;
+
+        const auto res = structure::IntegralTests<Gr, profuse> {gr}.validate();
+        if (!res)
+            ADD_FAILURE() << "Graph integrity check failed: "
+                          << res.error().message;
     }
 
     /// Disables the check.

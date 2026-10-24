@@ -37,6 +37,7 @@ limitations under the License.
 
 #include "graffine/utils/io.h"
 
+#include <cmath>    // isfinite
 #include <cstddef>  // byte
 #include <cstdint>  // uint8_t, int8_t, uint16_t, int16_t, etc
 #include <cstring>  // memcpy
@@ -45,10 +46,13 @@ limitations under the License.
 #include <istream>
 #include <list>
 #include <memory>
+#include <new>      // bad_alloc
 #include <optional>
+#include <sstream>
 #include <stdexcept>
-#include <vector>
 #include <type_traits>  // is_same_v, conditional_t
+#include <unordered_map>
+#include <vector>
 
 /// Format-specific input/output to files
 namespace graffine::structure::io {
@@ -98,7 +102,7 @@ struct Ply
 
         if (dd.t == ownType) {
             if (dd.buffer.size_bytes() != res.size() * sizeof(T))
-                throw std::runtime_error(
+                throw io_error(
                     "ply: unexpected size of property data buffer");
             std::memcpy(res.data(), dd.buffer.get(), dd.buffer.size_bytes());
             return res;
@@ -106,7 +110,7 @@ struct Ply
 
         auto cast_from = [&]<typename U>() {
             if (dd.buffer.size_bytes() != dd.count * n * sizeof(U))
-                throw std::runtime_error(
+                throw io_error(
                     "ply: unexpected size of property data buffer");
             const auto* src = dd.buffer.get();
             auto* dst = reinterpret_cast<std::byte*>(res.data());
@@ -127,7 +131,7 @@ struct Ply
             case Type::UINT32:  cast_from.template operator()<ply::type<Type::UINT32>>();  break;
             case Type::FLOAT32: cast_from.template operator()<ply::type<Type::FLOAT32>>(); break;
             case Type::FLOAT64: cast_from.template operator()<ply::type<Type::FLOAT64>>(); break;
-            case Type::INVALID: throw std::runtime_error("ply: invalid property type");
+            case Type::INVALID: throw io_error("ply: invalid property type");
         }
 
         return res;
@@ -136,11 +140,21 @@ struct Ply
     Ply() {}
     explicit Ply(const Graph* gr) {}
 
+    /**
+     * Writes graph \p gr to \p file.
+     * \throws io_error If the file cannot be written.
+     */
     template<bool beLoud = false>
     void write(const G& gr,
                const std::filesystem::path& file,
                const bool asBinary) const;
 
+    /**
+     * Reads a graph from \p file.
+     * \details The file content is validated before the graph is built.
+     * \throws io_error If the file cannot be read, or does not describe
+     * a valid graph.
+     */
     template<bool beLoud = false>
     auto read(const std::filesystem::path& file,
               const bool preloadIntoMemory) -> Graph;
@@ -273,12 +287,23 @@ write(
     std::ofstream ofs(file, asBinary ? std::ios::out | std::ios::binary
                                      : std::ios::out);
     if (ofs.fail())
-        throw std::runtime_error("failed to open " + file.string());
+        throw io_error("ply: failed to open " + file.string());
 
     if constexpr (beLoud)
         jot("writing to ", file.string());
 
-    writer.write(ofs, asBinary);
+    try {
+        writer.write(ofs, asBinary);
+        ofs.flush();
+    }
+    catch (const std::bad_alloc&) {
+        throw;
+    }
+    catch (const std::exception& e) {
+        throw io_error("ply: failed to write " + file.string() + ": " + e.what());
+    }
+    if (!ofs)
+        throw io_error("ply: failed to write " + file.string());
 }
 
 
@@ -373,7 +398,7 @@ read(
             ifs.reset(new std::ifstream(file, std::ios::binary));
 
         if (!ifs || ifs->fail())
-            throw std::runtime_error("file_stream failed to open " + file.string());
+            throw io_error("ply: failed to open " + file.string());
 
         ply::FileIn reader;
         reader.parse_header(*ifs);
@@ -402,38 +427,64 @@ read(
         const auto globalEdgeOrients = convert_from_data<TypeOrnt>(*edgeOrients);
         const auto globalEdgeWeights = convert_from_data<TypeWeight>(*edgeWeights);
 
-        std::vector<TypeVId>globalEdgeVidsB;
-        for (const auto& v : globalEdgeVids)
-            globalEdgeVidsB.push_back(v[1]);
+        // Validate the file content: the graph factory relies on it.
 
-//        print_vector(globalEdgeVidsB, "globalEdgeVidsB");
-
-        GRAFFINE_ASSERT(globalVertexIds.size() == globalVertexFs.size(),
-               "difference in sizes of vertex parameter vectors");
+        auto invalid = [&file](const auto&... msg) -> io_error
+        {
+            std::ostringstream os;
+            os << "ply: invalid graph in " << file.string() << ": ";
+            (os << ... << msg);
+            return io_error(os.str());
+        };
 
         const auto numVertices = globalVertexIds.size();
+        const auto numEdges = globalEdgeVids.size();
+
+        if (globalVertexFs.size() != numVertices)
+            throw invalid("vertex properties differ in size");
+        if (globalEdgeOrients.size() != numEdges ||
+            globalEdgeWeights.size() != numEdges)
+            throw invalid("edge properties differ in size");
+
+        std::unordered_map<TypeVId, std::size_t> vertexIndex;  // by vertex id
+        vertexIndex.reserve(numVertices);
+        for (std::size_t i {}; i < numVertices; ++i)
+            if (!vertexIndex.emplace(globalVertexIds[i], i).second)
+                throw invalid("duplicate vertex id ", globalVertexIds[i]);
+
+        std::vector<std::size_t> degrees(numVertices);
+        for (std::size_t i {}; i < numEdges; ++i) {
+            for (const auto e : End::Ids) {
+                const auto it = vertexIndex.find(globalEdgeVids[i][e]);
+                if (it == vertexIndex.end())
+                    throw invalid("edge ", i, " refers to missing vertex ",
+                                  globalEdgeVids[i][e]);
+                ++degrees[it->second];
+            }
+            if (globalEdgeVids[i][End::A] == globalEdgeVids[i][End::B])
+                throw invalid("edge ", i, " connects vertex ",
+                              globalEdgeVids[i][End::A], " to itself");
+            if (globalEdgeOrients[i] != Orientation::Forwards &&
+                globalEdgeOrients[i] != Orientation::Backwards)
+                throw invalid("edge ", i, " has orientation ",
+                              static_cast<int>(globalEdgeOrients[i]));
+            const auto w = static_cast<Edge::weight_t>(globalEdgeWeights[i]);
+            if (!std::isfinite(w) || !(w <= Edge::maxWeight))
+                throw invalid("edge ", i, " has weight ", w);
+        }
+        for (std::size_t i {}; i < numVertices; ++i)
+            if (degrees[i] < Deg1 || degrees[i] > maxDegree)
+                throw invalid("vertex ", globalVertexIds[i], " has degree ",
+                              degrees[i]);
+
+        // Build the graph.
+
         std::vector<std::unique_ptr<Vertex>> globalVertices;
         globalVertices.reserve(numVertices);
         for (std::size_t i {}; i < numVertices; ++i)
             globalVertices.push_back(std::make_unique<Vertex>(globalVertexIds[i],
                                                               globalVertexFs[i]));
 
-//        for (const auto& v : globalVertices)
-//            v->print("b_0");
-
-        auto find_verex_by_id = [&globalVertices](const VIdH vid) -> std::size_t
-        {
-            for (std::size_t i {}; i < globalVertices.size(); ++i)
-                if (globalVertices[i]->id == vid)
-                    return i;
-
-            return utils::undefined<size_t>;
-        };
-
-        GRAFFINE_ASSERT(globalEdgeVids.size() == globalEdgeOrients.size(),
-               "difference in sizes of edge parameter vectors");
-
-        const auto numEdges = globalEdgeVids.size();
         std::vector<Edge> globalEdges;
         globalEdges.reserve(numEdges);
         for (std::size_t i {}; i < numEdges; ++i) {
@@ -443,20 +494,10 @@ read(
                 static_cast<Edge::weight_t>(globalEdgeWeights[i])
             );
             for (const auto& e : End::Ids) {
-                const auto j = find_verex_by_id(globalEdgeVids[i][e]);
-                if (!utils::is_defined(j))
-                    throw std::runtime_error(
-                        "Cannot connect edge: vertex index not found: "s +
-                        std::to_string(globalEdgeVids[i][e])
-                    );
+                const auto j = vertexIndex.at(globalEdgeVids[i][e]);
                 globalEdges.back().connect_to_outer(e, *globalVertices[j]);
             }
         }
-
-//        for (const auto& v : globalVertices)
-//            v->print("b_1");
-//        for (const auto& eg : globalEdges)
-//            eg.print("r_1");
 
         modifiers::GraphFactory<Graph> factory;
 
@@ -464,11 +505,16 @@ read(
                                                    std::move(globalEdges));
         return gr;
     }
-    catch (const std::exception& e) {
-        jot("Caught exception while reading ply: ", e.what());
+    catch (const io_error&) {
+        throw;
     }
-
-    return {};
+    catch (const std::bad_alloc&) {
+        throw;
+    }
+    catch (const std::exception& e) {
+        // Parsing errors, and graph checks failing on the file content.
+        throw io_error("ply: cannot read " + file.string() + ": " + e.what());
+    }
 }
 
 }  // namespace graffine::structure::io

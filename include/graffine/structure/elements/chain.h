@@ -168,7 +168,7 @@ struct Chain<E>
      */
     constexpr auto vertices() const noexcept -> std::vector<const Vertex*>;
 
-    constexpr void connect_end_vertex(EndId e, Vertex& v) noexcept;
+    constexpr void connect_end_vertex(EndId e, Vertex& v);
     constexpr void connect_bulk_vertex(EgIdA a, Vertex& v) noexcept;
     constexpr void disconnect_end_vertex(EndId e) noexcept;
 
@@ -358,7 +358,7 @@ struct Chain<E>
                  const EndSlot& nb) const -> EndId;
 
     constexpr auto indc2end(EgIdC indc,
-                            EndId egEnd) const noexcept -> EndId;
+                            EndId egEnd) const -> EndId;
 
     /**
      * Determines if the chain is connected at its end 'e' to chain 'n'.
@@ -709,7 +709,7 @@ connect_bulk_vertex(const EgIdA a, Vertex& v) noexcept
 template<typename E>
 constexpr
 void Chain<E>::
-connect_end_vertex(const EndId e, Vertex& v) noexcept
+connect_end_vertex(const EndId e, Vertex& v)
 {
     GRAFFINE_ASSERT(End::is_valid(e), "End not valid.");
 
@@ -1165,10 +1165,9 @@ ind2end(const EgIdG ind,                  // graph-wide edge index
         if (ind == g[0].ind)
             return g[0].outer_endId(ege);
 
-        print("ABORTED");
-        abort(ind, " is not an end edge ind of chain ", idw);
-
-        return endUndef;  // unreachable
+        utils::raise<precondition_error>(
+            nullptr, std::source_location::current(),
+            ind, " is not an end edge ind of chain ", idw);
     }
 
     if (ind == g.front().ind)
@@ -1177,10 +1176,9 @@ ind2end(const EgIdG ind,                  // graph-wide edge index
     if (ind == g.back().ind)
         return endB;
 
-    print("ABORTED");
-    abort(ind, " is not an end edge ind of chain ", idw);
-
-    return endUndef;  // unreachable
+    utils::raise<precondition_error>(
+        nullptr, std::source_location::current(),
+        ind, " is not an end edge ind of chain ", idw);
 }
 
 
@@ -1195,10 +1193,9 @@ ind2end(const EgIdG ind,                    // graph-wide edge index
         else if (ind == g.back().ind && ngs[endB].contains(nb))
             return endB;
 
-        print("ABORTED");
-        abort(ind, " is not an end edge ind of chain ", idw);
-
-        return endUndef;  // unreachable
+        utils::raise<precondition_error>(
+            nullptr, std::source_location::current(),
+            ind, " is not an end edge ind of chain ", idw);
     }
 
     if (ind == g.front().ind)
@@ -1207,10 +1204,9 @@ ind2end(const EgIdG ind,                    // graph-wide edge index
     if (ind == g.back().ind)
         return endB;
 
-    print("ABORTED");
-    abort(ind, " is not an end edge ind of chain ", idw);
-
-    return endUndef;  // unreachable
+    utils::raise<precondition_error>(
+        nullptr, std::source_location::current(),
+        ind, " is not an end edge ind of chain ", idw);
 }
 
 
@@ -1218,16 +1214,15 @@ template<typename E>
 constexpr
 auto Chain<E>::
 indc2end(const EgIdC indc,
-         const EndId ege) const noexcept -> EndId
+         const EndId ege) const -> EndId
 {
     if (length() == 1) {
         if (indc == g[0].indc)
             return g[0].outer_endId(ege);
 
-        print("ABORTED");
-        abort(indc, " is not an end edge indc of chain ", idw);
-
-        return endUndef;  // unreachable
+        utils::raise<precondition_error>(
+            nullptr, std::source_location::current(),
+            indc, " is not an end edge indc of chain ", idw);
     }
 
     if (indc == g.front().indc)
@@ -1236,10 +1231,9 @@ indc2end(const EgIdC indc,
     if (indc == g.back().indc)
         return endB;
 
-    print("ABORTED");
-    abort(indc, " is not an end edge indc of chain ", idw);
-
-    return endUndef;  // unreachable
+    utils::raise<precondition_error>(
+        nullptr, std::source_location::current(),
+        indc, " is not an end edge indc of chain ", idw);
 }
 
 
@@ -1251,11 +1245,9 @@ get_single_connected_end() const -> EndId
     if ( is_connected_at(endA) && !is_connected_at(endB)) return endA;
     if (!is_connected_at(endA) &&  is_connected_at(endB)) return endB;
 
-    print("ABORTED");
-    abort("Error in Chain::get_single_connected_end(): ",
-          "the connected end is not single!");
-
-    return endUndef;  // unreachable
+    utils::raise<precondition_error>(
+        nullptr, std::source_location::current(),
+        "Error in Chain::get_single_connected_end(): ", "the connected end is not single!");
 }
 
 template<typename E>
@@ -1266,11 +1258,9 @@ get_single_leaf_end() const -> EndId
     if (!is_connected_at(endA) &&  is_connected_at(endB)) return endA;
     if ( is_connected_at(endA) && !is_connected_at(endB)) return endB;
 
-    print("ABORTED");
-    abort("Error in Chain::get_single_leaf_end(): ",
-          "the free end is not single!");
-
-    return endUndef;  // unreachable
+    utils::raise<precondition_error>(
+        nullptr, std::source_location::current(),
+        "Error in Chain::get_single_leaf_end(): ", "the free end is not single!");
 }
 
 
@@ -1282,11 +1272,9 @@ get_single_3way_end() const -> EndId
     if (ngs[endA].num() == 2 && ngs[endB].num() != 2) return endA;
     if (ngs[endA].num() != 2 && ngs[endB].num() == 2) return endB;
 
-    print("ABORTED");
-    abort("Error in Chain::get_single_3way_end(): ",
-          "the 3-way end is not single!");
-
-    return endUndef;  // unreachable
+    utils::raise<precondition_error>(
+        nullptr, std::source_location::current(),
+        "Error in Chain::get_single_3way_end(): ", "the 3-way end is not single!");
 }
 
 
@@ -1298,11 +1286,9 @@ get_single_4way_end() const -> EndId
     if (ngs[endA].num() == 3 && ngs[endB].num() != 3) return endA;
     if (ngs[endA].num() != 3 && ngs[endB].num() == 3) return endB;
 
-    print("ABORTED");
-    abort("Error in Chain::get_single_4way_end(): ",
-          "the 4-way end is not single!");
-
-    return endUndef;  // unreachable
+    utils::raise<precondition_error>(
+        nullptr, std::source_location::current(),
+        "Error in Chain::get_single_4way_end(): ", "the 4-way end is not single!");
 }
 
 
@@ -1746,14 +1732,13 @@ template<typename... T>
 void Chain<E>::
 ensure(
     const bool cond,
-    const std::string_view tag,
+    [[maybe_unused]] const std::string_view tag,
     T&&... message
 ) const
 {
-    if (!cond) {
-        print(tag);
-        GRAFFINE_ABORT(cond, message...);
-    }
+    if (!cond) [[unlikely]]
+        utils::raise<invariant_error>(nullptr, std::source_location::current(),
+                                      message...);
 }
 
 

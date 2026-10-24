@@ -102,7 +102,7 @@ struct From<Deg2, Deg2, G, PP>
      * \param[in] s2 Slot on the 2nd input vertex.
      */
     auto operator()(const BulkSlot& s1,
-                    const BulkSlot& s2) noexcept -> Res;
+                    const BulkSlot& s2) -> Res;
 
     /**
      * Merges a chain internal vertex to a boundary vertex on a cycle chain.
@@ -110,7 +110,7 @@ struct From<Deg2, Deg2, G, PP>
      * \param[in] w2 Chain index of the cycle chain.
      */
     auto operator()(const BulkSlot& b1,
-                    ChIdG w2) noexcept -> Res;
+                    ChIdG w2) -> Res;
 
     /**
      * Merges two unconnected cycles on their boundary vertices.
@@ -118,7 +118,7 @@ struct From<Deg2, Deg2, G, PP>
      * \param[in] w2 Chain index of the 2nd cycle chain.
      */
     auto operator()(ChIdG w1,
-                    ChIdG w2) noexcept -> Res;
+                    ChIdG w2) -> Res;
 
 private:
 
@@ -142,12 +142,12 @@ private:
         const EndSlot& s,
         const EndSlot& p,
         const EndSlot& q
-    ) noexcept -> Vertex*;
+    ) -> Vertex*;
 
     constexpr void join_ends(const EndSlot& s1,
                              const EndSlot& s2,
                              const EndSlot& s3,
-                             const EndSlot& s4) noexcept;
+                             const EndSlot& s4);
 };
 
 
@@ -217,7 +217,7 @@ auto From<Deg2, Deg2, G, PP>::
 operator()(
     const BulkSlot& b1,
     const BulkSlot& b2
-) noexcept -> Res
+) -> Res
 {
     const auto [w1, a1] = b1.we();
     const auto [w2, a2] = b2.we();
@@ -481,7 +481,7 @@ auto From<Deg2, Deg2, G, PP>::
 operator()(
     const BulkSlot& b1,
     const ChIdG w2
-) noexcept -> Res
+) -> Res
 {
     const auto [w1, a1] = b1.we();
 
@@ -613,7 +613,7 @@ auto From<Deg2, Deg2, G, PP>::
 operator()(
     const ChIdG w1,
     const ChIdG w2
-) noexcept -> Res
+) -> Res
 {
     // Indexes of the participating components:
 
@@ -680,7 +680,7 @@ void From<Deg2, Deg2, G, PP>::
 join_ends(const EndSlot& s1,
           const EndSlot& s2,
           const EndSlot& s3,
-          const EndSlot& s4) noexcept
+          const EndSlot& s4)
 {
     gr.ngs_at(s1) = Neigs{s2, s3, s4};
     gr.ngs_at(s2) = Neigs{s1, s3, s4};
@@ -715,7 +715,7 @@ deg4_vertex(
     const EndSlot& s,
     const EndSlot& p,
     const EndSlot& q
-) noexcept -> Vertex*
+) -> Vertex*
 {
     auto v = cn[s.w].vertex_at_end(s.e);  // will become junction
 

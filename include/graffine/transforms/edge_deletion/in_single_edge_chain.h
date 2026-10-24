@@ -81,7 +81,7 @@ struct InSingleEdgeChain
      * Function call operator executing the deletion using edge index.
      * \param[in] ind Graph-wide index of the deleted edge.
      */
-    auto operator()(EgIdG ind) noexcept -> Res;
+    auto operator()(EgIdG ind) -> Res;
 
 protected:
 
@@ -111,7 +111,7 @@ InSingleEdgeChain(Graph& gr,
 template<typename G,
          typename PP>
 auto InSingleEdgeChain<G, PP>::
-operator()(const EgIdG ind) noexcept -> Res
+operator()(const EgIdG ind) -> Res
 {
     const auto& m = gr.chain(ind);
 

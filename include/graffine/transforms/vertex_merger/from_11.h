@@ -104,7 +104,7 @@ struct From<Deg1, Deg1, G, PP>
      * \param[in] s2 Chain boundary slot on the 2nd parent vertex.
      */
     auto operator()(const EndSlot& s1,
-                    const EndSlot& s2) noexcept -> Res;
+                    const EndSlot& s2) -> Res;
 
 private:
 
@@ -168,7 +168,7 @@ auto From<Deg1, Deg1, G, PP>::
 operator()(
     const EndSlot& s1,
     const EndSlot& s2
-) noexcept -> Res
+) -> Res
 {
     // Use low-level vertex merging functions directly
     // gr.update() is called in each of these:

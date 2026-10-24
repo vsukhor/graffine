@@ -97,7 +97,7 @@ struct From<Deg1, Deg2, G, PP>
      * \param[in] s2 Slot on the parent degree 2 vertex.
      */
     auto operator()(const EndSlot& s1,
-                    const BulkSlot& s2) noexcept -> Res;
+                    const BulkSlot& s2) -> Res;
 
     /**
      * Merges a vertex of degree 1 to a boundary vertex in an unconnected cycle.
@@ -105,7 +105,7 @@ struct From<Deg1, Deg2, G, PP>
      * \param[in] w2 Chain index of the cycle chain.
      */
     auto operator()(const EndSlot& s1,
-                    ChIdG w2) noexcept -> Res;
+                    ChIdG w2) -> Res;
 
 private:
 
@@ -185,7 +185,7 @@ auto From<Deg1, Deg2, G, PP>::
 operator()(
     const EndSlot& s1,
     const BulkSlot& s2
-) noexcept -> Res
+) -> Res
 {
     const auto [w1, e1] = s1.we();
     const auto [w2, a2] = s2.we();
@@ -330,7 +330,7 @@ auto From<Deg1, Deg2, G, PP>::
 operator()(
     const EndSlot& s1,
     const ChIdG w2
-) noexcept -> Res
+) -> Res
 {
     const auto [w1, e1] = s1.we();
 

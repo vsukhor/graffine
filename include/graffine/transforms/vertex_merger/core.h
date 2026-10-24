@@ -95,7 +95,7 @@ struct Core
         Chain::EndId end,
         ChIdG w1,
         ChIdG w2
-    ) noexcept -> Res;
+    ) -> Res;
 
     /**
      * Performs merger of free ends of two parallel oriented chains.
@@ -106,7 +106,7 @@ struct Core
      * \param[in] w1 Index of the 1st chain.
      * \param[in] w2 Index of the 2nd chain.
      */
-    auto parallel(ChIdG w1, ChIdG w2) noexcept -> Res;
+    auto parallel(ChIdG w1, ChIdG w2) -> Res;
 
     /**
      * Merges end vertices to form a linear chain.
@@ -116,13 +116,13 @@ struct Core
     auto to_linear(
         const EndSlot& s1,
         const EndSlot& s2
-    ) noexcept -> Res;
+    ) -> Res;
 
     /**
      * Merges end vertices an unconnected chain to form a cycle.
      * \param[in] w Chain index.
      */
-    auto to_cycle(ChIdG w) noexcept -> Res;
+    auto to_cycle(ChIdG w) -> Res;
 
 protected:
 
@@ -171,7 +171,7 @@ antiparallel(
     const Chain::EndId end,
     const ChIdG w1,
     const ChIdG w2
-) noexcept -> Res
+) -> Res
 {
     auto& m1 = cn[w1];
     auto& m2 = cn[w2];
@@ -284,7 +284,7 @@ auto Core<G, PP>::
 parallel(
     const ChIdG w1,
     const ChIdG w2
-) noexcept -> Res
+) -> Res
 {
     // connects A_w2_B-A_w1_B  -->  A_w1_B
 
@@ -388,7 +388,7 @@ auto Core<G, PP>::
 to_linear(
     const EndSlot& s1,
     const EndSlot& s2
-) noexcept -> Res
+) -> Res
 {
     const auto [w1, e1] = s1.we();
     const auto [w2, e2] = s2.we();
@@ -401,7 +401,7 @@ to_linear(
 template<typename G,
          typename PP>
 auto Core<G, PP>::
-to_cycle(const ChIdG w) noexcept -> Res
+to_cycle(const ChIdG w) -> Res
 {
     GRAFFINE_ASSERT(!cn[w].is_unconnected_cycle(),
            shortName, ": attempt to merge_to_cycle a separate cycle chain ", w);

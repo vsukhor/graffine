@@ -152,7 +152,7 @@ struct Id
         return stream;
     }
 
-    auto as_string() const noexcept -> std::string
+    auto as_string() const -> std::string
     {
         return std::to_string(v);
     }
