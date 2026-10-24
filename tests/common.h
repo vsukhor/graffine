@@ -34,6 +34,7 @@ limitations under the License.
 #include <array>
 #include <cstddef>
 #include <memory>
+#include <type_traits>
 #include <vector>
 
 namespace graffine::tests {
@@ -51,6 +52,17 @@ using Edge = Chain::Edge;
 using End = Chain::End;
 using ESlot = Chain::EndSlot;
 using BSlot = Chain::BulkSlot;
+
+// Nothrow moves let std containers move the graph elements instead of
+// copying them on reallocation.
+static_assert(std::is_nothrow_move_constructible_v<Edge> &&
+              std::is_nothrow_move_assignable_v<Edge>);
+static_assert(std::is_nothrow_move_constructible_v<Edge::Vertex> &&
+              std::is_nothrow_move_assignable_v<Edge::Vertex>);
+static_assert(std::is_nothrow_move_constructible_v<Chain> &&
+              std::is_nothrow_move_assignable_v<Chain>);
+static_assert(std::is_nothrow_move_constructible_v<G::Component> &&
+              std::is_nothrow_move_assignable_v<G::Component>);
 
 inline constexpr auto profuse = verboseT && false;
 
