@@ -1,0 +1,7 @@
+# Text files use LF line endings, in the repository and in working trees,
+# whatever the platform or the local core.autocrlf setting.
+* text=auto eol=lf
+
+# Windows batch files keep CRLF: cmd.exe can misparse labels and goto in
+# batch files with LF line endings.
+*.bat text eol=crlf
