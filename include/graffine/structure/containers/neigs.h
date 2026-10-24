@@ -122,25 +122,15 @@ struct Neigs
         return ss.contains(u);
     }
 
+    /// \return Whether \p u was present: the callers check it.
     bool erase(const Slot& u)
     {
-        GRAFFINE_ASSERT(contains(u), "Attempted erase of absent slot ", u.str_short());
-
-        for (auto i = ss.cbegin(); i != ss.cend(); ++i)
-            if (*i == u) {
-                ss.erase(i);
-                GRAFFINE_ASSERT(!contains(u), "Failed erase of ", u.str_short());
-                return true;
-            }
-
-        return false;
+        return ss.erase(u) > 0;
     }
 
+    /// \return Whether \p f was present: the callers check it.
     bool replace(const Slot& f, const Slot& t)
     {
-        GRAFFINE_ASSERT(contains(f), "Attempted replace of absent slot ",
-               f.str_short());
-
         auto node = ss.extract(f);
         if (node) {
         node.value() = t;

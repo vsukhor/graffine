@@ -51,7 +51,7 @@ auto read_file_binary(const std::filesystem::path& file)
     std::ifstream ifs(file, std::ios::binary);
 
     if (ifs.fail())
-        throw io_error("could not open binary ifstream to path " + file.string());
+        throw io_error("failed to open " + file.string());
 
     if constexpr (beLoud)
         jot("Reading into binary stream from file: ", file.string());

@@ -15,6 +15,7 @@ list(APPEND cpps
     adjacency.cpp
     chain.cpp
     edge.cpp
+    errors.cpp
     component.cpp
     graph.cpp
     io.cpp

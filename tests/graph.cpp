@@ -24,13 +24,18 @@ limitations under the License.
 #include "graffine/structure/elements/edge.h"
 #include "graffine/structure/elements/graph.h"
 #include "graffine/structure/descriptors/vertex_degrees.h"
+#include "graffine/transforms/vertex_merger/from_11.h"
 #include "graffine/transforms/vertex_merger/from_12.h"
+#include "graffine/structure/analyzers/integral_tests.h"
 
 
 #include <array>
 #include <iostream>
+#include <memory>
 #include <numeric>  // accumulate
 #include <string>
+#include <type_traits>
+#include <vector>
 
 
 namespace graffine::tests::graph {
@@ -842,6 +847,79 @@ TEST_F(GraphTest, ReplaceSlotInNeigs)
     ASSERT_EQ(gr.num_vertices(Deg2), 7);
     ASSERT_EQ(gr.num_vertices(Deg3), 1);
     ASSERT_EQ(gr.num_vertices(Deg4), 0);
+}
+
+
+/// Move construction of a graph.
+TEST_F(GraphTest, MoveConstruction)
+{
+    ++testCount;
+
+    if constexpr (verboseT)
+        print_description(
+            "Tests that a moved graph stays consistent and usable after ",
+            "the moved-from graph is destroyed");
+
+    constexpr ChIdG w0 {0};
+    constexpr ChIdG w1 {1};
+    constexpr ChIdG w2 {2};
+
+    // The source lives on the heap: once it is destroyed, any reference
+    // still pointing into it is a use after free.
+    auto src = std::make_unique<G>();
+    src->add_single_chain_component(4);
+    src->add_single_chain_component(3);
+    src->add_single_chain_component(2);
+    VertexMerger<Deg1, Deg2, G> {*src}(ESlot{w1, End::A}, BSlot{w0, 2});
+
+    const Snapshot before {*src};
+    const auto adjacent = src->adj.are_adjacent(ESlot{w1, End::A}, w0, 1);
+
+    G gr {std::move(*src)};
+    src.reset();
+    const IntegrityCheck integrityCheck {gr};
+
+    EXPECT_TRUE(Snapshot {gr} == before);
+    EXPECT_EQ(gr.adj.are_adjacent(ESlot{w1, End::A}, w0, 1), adjacent);
+
+    // Transformations of the moved graph reach its components and chains:
+    // close the unconnected 2-edge chain into a cycle.
+    const auto numChains = gr.num_chains();
+    VertexMerger<Deg1, Deg1, G> {gr}(ESlot{w2, End::A}, ESlot{w2, End::B});
+    EXPECT_EQ(gr.num_chains(), numChains);
+    EXPECT_TRUE(gr.chain(w2).is_unconnected_cycle());
+}
+
+
+/// Graphs held in a growing std::vector.
+TEST_F(GraphTest, MoveOnReallocation)
+{
+    ++testCount;
+
+    if constexpr (verboseT)
+        print_description(
+            "Tests that graphs stay consistent when a std::vector holding ",
+            "them reallocates");
+
+    static_assert(std::is_nothrow_move_constructible_v<G>);
+
+    std::vector<G> grs;
+    for (std::size_t k {}; k < 9; ++k) {  // several reallocations
+        auto& gr = grs.emplace_back();
+        gr.add_single_chain_component(2 + k);
+        gr.add_single_chain_component(3);
+    }
+
+    for (std::size_t k {}; k < grs.size(); ++k) {
+        auto& gr = grs[k];
+        VertexMerger<Deg1, Deg1, G> {gr}(ESlot{ChIdG{0}, End::B},
+                                         ESlot{ChIdG{1}, End::A});
+        EXPECT_EQ(gr.num_compts(), 1);
+        EXPECT_EQ(gr.num_edges(), 2 + k + 3);
+
+        const auto res = structure::IntegralTests<G, profuse> {gr}.validate();
+        EXPECT_TRUE(res.has_value()) << k << ": " << res.error().message;
+    }
 }
 
 

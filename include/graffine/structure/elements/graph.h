@@ -112,8 +112,12 @@ struct Graph<CC>
 
 protected:
 
-    Chains     cn;  ///< The collection of chains.
-    Components ct;  ///< The collection of components.
+    /// Owns the chains. Kept on the heap, so that the chains do not move
+    /// when the graph is moved: the components refer to them.
+    std::unique_ptr<Chains> cnStorage {std::make_unique<Chains>()};
+
+    Chains&    cn {*cnStorage};  ///< The collection of chains.
+    Components ct;               ///< The collection of components.
 
     std::size_t numEdges {};  ///< Current number of edges.
 
@@ -130,8 +134,17 @@ public:
     constexpr Graph() = default;
     constexpr ~Graph() = default;
 
-    constexpr Graph(Graph&& gr) = default;
-    constexpr auto operator=(Graph&& gr) -> Graph& = default;
+    /**
+     * Moves the graph.
+     * \details The chains, components and vertices keep their addresses, so
+     * references to them remain valid. Objects referring to the graph itself,
+     * such as transformation functors, keep referring to the moved-from
+     * graph, which may only be destroyed.
+     */
+    constexpr Graph(Graph&& gr) noexcept;
+
+    // Not assignable: the reference to the chains cannot be rebound.
+    constexpr auto operator=(Graph&& gr) -> Graph& = delete;
 
     // Non-copiable because vertices are owned by std::unique_ptr;
     // state this explicitely for clarity.
@@ -461,8 +474,21 @@ public:
 template<typename CC>
 constexpr
 Graph<CC>::
-Graph(Chains&& cn)
-    : cn {std::move(cn)}
+Graph(Graph&& gr) noexcept
+    : adj {std::move(gr.adj), *this}  // must refer to this, not to 'gr'
+    , cnStorage {std::move(gr.cnStorage)}
+    , cn {*cnStorage}
+    , ct {std::move(gr.ct)}
+    , numEdges {gr.numEdges}
+    , egl {std::move(gr.egl)}
+    , ved {std::move(gr.ved)}
+{}
+
+template<typename CC>
+constexpr
+Graph<CC>::
+Graph(Chains&& chains)
+    : cnStorage {std::make_unique<Chains>(std::move(chains))}
 {}
 
 template<typename CC>

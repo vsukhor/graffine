@@ -96,6 +96,20 @@ A working [example](examples/create_merge_components/main.cpp) of a driver funct
 
 You can find additional usage examples within the extensive set of unit [tests](tests/).
 
+### Error handling
+
+***graffine*** never terminates the program on its own. Errors are reported by exceptions derived from `graffine::error` (itself a `std::runtime_error`), declared in [errors.h](include/graffine/utils/errors.h):
+
+| Exception | Meaning |
+| --- | --- |
+| `graffine::io_error` | A graph file cannot be read or written, or does not describe a valid graph. |
+| `graffine::precondition_error` | An operation was requested for graph elements that do not meet its requirements. |
+| `graffine::invariant_error` | The internal bookkeeping of a graph was found inconsistent. The graph is left in an unspecified state and can only be destroyed. |
+
+The consistency of a graph can be checked with `graffine::structure::IntegralTests`: its `validate()` returns a `std::expected` holding the first violation found, if any, while its call operator throws `invariant_error`.
+
+In addition, Debug builds (those defining `DEBUG`) check many internal assumptions on hot paths. A failed check of this kind reveals a defect: it prints a diagnostic and calls `std::abort()`.
+
 ## License
 
 Unless otherwise specified, the content of this repository is licensed under

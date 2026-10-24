@@ -315,8 +315,20 @@ register_for_import(
     Reader& reader
 ) -> std::shared_ptr<Reader::Data>
 {
-    // Throws if the element or any of the properties are absent in the file.
-    return reader.request_properties_from_element(elementName, properties);
+    // The reader throws if the element or any of the properties are absent.
+    try {
+        return reader.request_properties_from_element(elementName, properties);
+    }
+    catch (const std::bad_alloc&) {
+        throw;
+    }
+    catch (const std::exception& e) {
+        std::string names;
+        for (const auto& p : properties)
+            names += (names.empty() ? "" : ", ") + p;
+        throw io_error("ply: missing element '" + elementName +
+                       "' or its properties {" + names + "}: " + e.what());
+    }
 }
 
 

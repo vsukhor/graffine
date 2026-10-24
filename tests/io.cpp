@@ -33,6 +33,7 @@ limitations under the License.
 #include <array>
 #include <cstring>
 #include <iostream>
+#include <limits>
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -342,6 +343,90 @@ TEST_F(IOTest, PlyReadWeightsOfOtherPrecision)
 }
 
 
+/// Content of a graph PLY file, written bypassing the checks of Ply<G>.
+struct RawPly {
+
+    std::vector<uint32_t> vIds;
+    std::vector<int8_t> vFxd;
+    std::vector<uint32_t> eVidA;
+    std::vector<uint32_t> eVidB;
+    std::vector<int8_t> eOrnt;
+    std::vector<real> eW;
+    bool withWeights {true};
+    bool asBinary {};
+
+    /// A valid file: a single edge between vertices 0 and 1.
+    static auto single_edge() -> RawPly
+    {
+        return {{0, 1}, {0, 0}, {0}, {1}, {1}, {1}};
+    }
+
+    void write(const std::filesystem::path& file) const
+    {
+        using Type = tinyply::Type;
+
+        tinyply::FileOut writer;
+        auto add = [&writer](const std::string& el, const std::string& prop,
+                             const Type t, const auto& v) {
+            writer.add_properties_to_element(
+                el, {prop}, t, v.size(),
+                reinterpret_cast<const uint8_t*>(v.data()), Type::INVALID, 0);
+        };
+        add("vertex", "id", Type::UINT32, vIds);
+        add("vertex", "isFixed", Type::INT8, vFxd);
+        add("edge", "vertex_index_at_outer_end_A", Type::UINT32, eVidA);
+        add("edge", "vertex_index_at_outer_end_B", Type::UINT32, eVidB);
+        add("edge", "orientation", Type::INT8, eOrnt);
+        if (withWeights)
+            add("edge", "weight",
+                std::is_same_v<real, float> ? Type::FLOAT32 : Type::FLOAT64, eW);
+
+        std::ofstream ofs {file, std::ios::binary};
+        writer.write(ofs, asBinary);
+    }
+};
+
+
+/// Expects reading \p file to throw io_error mentioning \p what.
+void expect_read_error(
+    const std::filesystem::path& file,
+    const std::string& what
+)
+{
+    Ply<G> ply;
+    for (const bool preload : {false, true}) {
+        try {
+            ply.template read<profuse>(file, preload);
+            ADD_FAILURE() << "no io_error reading " << file
+                          << (preload ? " preloaded" : "");
+        }
+        catch (const graffine::io_error& e) {
+            EXPECT_NE(std::string {e.what()}.find(what), std::string::npos)
+                << "message: " << e.what();
+        }
+    }
+}
+
+
+/// Reading of a valid file written bypassing Ply<G>.
+TEST_F(IOTest, PlyReadRawFile)
+{
+    ++testCount;
+
+    if constexpr (verboseT)
+        print_description("Tests reading of a minimal valid .PLY file");
+
+    const auto file = std::filesystem::current_path()/"testPlyRawFile";
+    RawPly::single_edge().write(file);
+
+    Ply<G> ply;
+    const auto grNew = ply.template read<profuse>(file, false);
+    const IntegrityCheck integrityCheck {grNew};
+    EXPECT_EQ(grNew.num_edges(), 1);
+    EXPECT_EQ(grNew.num_vertices(), 2);
+}
+
+
 /// Reading of a file lacking a property required by the importer.
 TEST_F(IOTest, PlyReadMissingProperty)
 {
@@ -350,42 +435,93 @@ TEST_F(IOTest, PlyReadMissingProperty)
     if constexpr (verboseT)
         print_description(
             "Tests that reading of a .PLY file lacking a required property ",
-            "returns an empty graph"
+            "throws io_error"
         );
 
-    using Type = tinyply::Type;
-
-    const std::vector<uint32_t> vIds {0, 1};
-    const std::vector<int8_t> vFxd {0, 0};
-    const std::vector<uint32_t> eVidA {0};
-    const std::vector<uint32_t> eVidB {1};
-    const std::vector<int8_t> eOrnt {1};
-
-    // Same as written by Ply<G>, but without edge weights.
-    tinyply::FileOut writer;
-    auto add = [&writer](const std::string& el, const std::string& prop,
-                         const Type t, const auto& v) {
-        writer.add_properties_to_element(
-            el, {prop}, t, v.size(),
-            reinterpret_cast<const uint8_t*>(v.data()), Type::INVALID, 0);
-    };
-    add("vertex", "id", Type::UINT32, vIds);
-    add("vertex", "isFixed", Type::INT8, vFxd);
-    add("edge", "vertex_index_at_outer_end_A", Type::UINT32, eVidA);
-    add("edge", "vertex_index_at_outer_end_B", Type::UINT32, eVidB);
-    add("edge", "orientation", Type::INT8, eOrnt);
-
+    auto raw = RawPly::single_edge();
+    raw.withWeights = false;
     const auto file = std::filesystem::current_path()/"testPlyMissingProperty";
-    {
-        std::ofstream ofs {file, std::ios::binary};
-        writer.write(ofs, false);
-    }
+    raw.write(file);
 
+    expect_read_error(file, "weight");
+}
+
+
+/// Reading and writing of files that cannot be accessed.
+TEST_F(IOTest, PlyInaccessibleFile)
+{
+    ++testCount;
+
+    if constexpr (verboseT)
+        print_description(
+            "Tests that reading a missing file, and writing to a missing ",
+            "directory, throw io_error"
+        );
+
+    const auto missing = std::filesystem::current_path()/"no_such_dir"/"graph";
+
+    expect_read_error(missing, "failed to open");
+
+    G gr;
+    gr.add_single_chain_component(2);
     Ply<G> ply;
-    for (const bool preload : {false, true}) {
-        const auto grNew = ply.template read<profuse>(file, preload);
-        EXPECT_EQ(grNew.num_vertices(), 0);
-        EXPECT_EQ(grNew.num_edges(), 0);
+    EXPECT_THROW(ply.template write<profuse>(gr, missing, false),
+                 graffine::io_error);
+}
+
+
+/// Reading of files whose content does not describe a valid graph.
+TEST_F(IOTest, PlyReadInvalidContent)
+{
+    ++testCount;
+
+    if constexpr (verboseT)
+        print_description(
+            "Tests that reading of a .PLY file not describing a valid graph ",
+            "throws io_error"
+        );
+
+    const auto file = std::filesystem::current_path()/"testPlyInvalidContent";
+
+    struct Case {
+        const char* name;
+        void (*corrupt)(RawPly&);
+        const char* what;
+    };
+    const Case cases[] {
+        {"duplicate vertex id",
+         [](RawPly& r) { r.vIds[1] = 0; }, "duplicate vertex id"},
+        {"edge to a missing vertex",
+         [](RawPly& r) { r.eVidB[0] = 7; }, "missing vertex"},
+        {"edge to itself",
+         [](RawPly& r) { r.eVidB[0] = 0; }, "to itself"},
+        {"invalid orientation",
+         [](RawPly& r) { r.eOrnt[0] = 0; }, "orientation"},
+        {"non-finite weight",
+         [](RawPly& r) {
+             r.eW[0] = std::numeric_limits<real>::quiet_NaN();
+             r.asBinary = true;  // NaN does not survive in ASCII
+         },
+         "weight"},
+        {"isolated vertex",
+         [](RawPly& r) { r.vIds.push_back(2); r.vFxd.push_back(0); },
+         "degree 0"},
+        {"vertex of degree 5",
+         [](RawPly& r) {
+             // A star of five edges around vertex 0.
+             r = {{0, 1, 2, 3, 4, 5}, {0, 0, 0, 0, 0, 0},
+                  {0, 0, 0, 0, 0}, {1, 2, 3, 4, 5},
+                  {1, 1, 1, 1, 1}, {1, 1, 1, 1, 1}};
+         },
+         "degree 5"},
+    };
+
+    for (const auto& c : cases) {
+        SCOPED_TRACE(c.name);
+        auto raw = RawPly::single_edge();
+        c.corrupt(raw);
+        raw.write(file);
+        expect_read_error(file, c.what);
     }
 }
 
