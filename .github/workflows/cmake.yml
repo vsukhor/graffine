@@ -37,6 +37,16 @@ jobs:
         run: cmake --build build --parallel
       - name: Test
         run: ctest --test-dir build --output-on-failure
+      - name: Install
+        run: cmake --install build --prefix "$PWD/install"
+      - name: Test installed package
+        run: |
+          cmake -S tests/package -B build-package -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DCMAKE_CXX_COMPILER=g++ \
+            -DCMAKE_PREFIX_PATH="$PWD/install"
+          cmake --build build-package
+          ctest --test-dir build-package --output-on-failure
 
   sanitizers:
     name: gcc-${{ matrix.version }} Debug ASan+UBSan

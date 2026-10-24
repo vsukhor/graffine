@@ -3,9 +3,7 @@ set(appcpp main)
 
 add_executable(${execname} ${execname}/${appcpp}.cpp)
 
-target_include_directories(${execname} PUBLIC
-    ${PROJECT_SOURCE_DIR}/include
-)
+target_link_libraries(${execname} PRIVATE graffine::graffine)
 
 target_compile_definitions(${execname} PRIVATE
     # If the debug configuration pass the DEBUG define to the compiler

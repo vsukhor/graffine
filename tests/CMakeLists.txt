@@ -6,6 +6,7 @@ FetchContent_Declare(
     URL_HASH SHA256=63b9c77751a5b8f492486005f67533fdc58682b67476fcb91650be5958d5195a
 )
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)  # keep gtest out of graffine install
 FetchContent_MakeAvailable(googletest)
 
 include(GoogleTest)
@@ -41,17 +42,16 @@ set(bindir ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 
 set(alltests "unittests")
 add_executable(${alltests} ${cpps})
-add_compile_definitions(-DTINYPLY_AS_LIBRARY)
 
+# tinyply implementation is compiled in io.cpp, the only file including it.
+set_source_files_properties(io.cpp PROPERTIES
+    COMPILE_DEFINITIONS TINYPLY_AS_LIBRARY
+)
 target_compile_definitions(${alltests} PRIVATE
     # If the debug configuration pass the DEBUG define to the compiler
     $<$<CONFIG:Debug>: -DDEBUG>
 )
-target_include_directories(${alltests} PUBLIC
-    ${PROJECT_SOURCE_DIR}/include
-    ${PROJECT_SOURCE_DIR}/external/tinyply
-)
-target_link_libraries(${alltests} PRIVATE gtest_main)
+target_link_libraries(${alltests} PRIVATE graffine::graffine gtest_main)
 gtest_discover_tests(${alltests})
 
 add_custom_command(
