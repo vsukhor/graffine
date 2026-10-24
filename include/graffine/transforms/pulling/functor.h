@@ -47,6 +47,11 @@ namespace graffine::transforms::pulling {
  */
 template<typename G,
          typename PP = void>
+    requires pulling::Processor<PP, G> &&
+             edge_creation::Processor<PP, G> &&
+             edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 struct Functor
     : public Applicable<Functor<G, PP>>
 {
@@ -99,6 +104,11 @@ protected:
 
 template<typename G,
          typename PP>
+    requires pulling::Processor<PP, G> &&
+             edge_creation::Processor<PP, G> &&
+             edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 constexpr
 Functor<G, PP>::
 Functor(Graph& gr,
@@ -114,6 +124,11 @@ Functor(Graph& gr,
 
 template<typename G,
          typename PP>
+    requires pulling::Processor<PP, G> &&
+             edge_creation::Processor<PP, G> &&
+             edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 auto Functor<G, PP>::
 applicability(
     const Path<Compt>& path,
@@ -137,6 +152,11 @@ applicability(
 
 template<typename G,
          typename PP>
+    requires pulling::Processor<PP, G> &&
+             edge_creation::Processor<PP, G> &&
+             edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 auto Functor<G, PP>::
 apply(
     Path<Compt>& path,

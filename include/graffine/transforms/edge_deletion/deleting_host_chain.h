@@ -56,6 +56,9 @@ namespace graffine::transforms::edge_deletion {
 template<Degree D,
          typename G,
          typename PP = void>
+    requires edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 struct DeletingHostChain
     : public Applicable<DeletingHostChain<D, G, PP>>
 {
@@ -152,6 +155,9 @@ protected:
 template<Degree D,
          typename G,
          typename PP>
+    requires edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 constexpr
 DeletingHostChain<D, G, PP>::
 DeletingHostChain(Graph& gr,
@@ -168,6 +174,9 @@ DeletingHostChain(Graph& gr,
 template<Degree D,
          typename G,
          typename PP>
+    requires edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 auto DeletingHostChain<D, G, PP>::
 applicability(const EgIdG ind) const -> Applicability
 {
@@ -185,6 +194,9 @@ applicability(const EgIdG ind) const -> Applicability
 template<Degree D,
          typename G,
          typename PP>
+    requires edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 auto DeletingHostChain<D, G, PP>::
 applicability(const EndSlot& s) const -> Applicability
 {
@@ -206,6 +218,9 @@ applicability(const EndSlot& s) const -> Applicability
 template<Degree D,
          typename G,
          typename PP>
+    requires edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 auto DeletingHostChain<D, G, PP>::
 apply(const EndSlot& s) -> Res
 {
@@ -276,6 +291,9 @@ apply(const EndSlot& s) -> Res
 template<Degree D,
          typename G,
          typename PP>
+    requires edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 auto DeletingHostChain<D, G, PP>::
 apply(const EgIdG ind) -> Res
 {

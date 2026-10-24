@@ -58,6 +58,9 @@ namespace graffine::transforms::edge_deletion {
  */
 template<typename G,
          typename PP = void>
+    requires edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 struct InMultiEdgeChain
     : public Applicable<InMultiEdgeChain<G, PP>>
 {
@@ -111,6 +114,9 @@ protected:
 
 template<typename G,
          typename PP>
+    requires edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 constexpr
 InMultiEdgeChain<G, PP>::
 InMultiEdgeChain(Graph& gr,
@@ -127,6 +133,9 @@ InMultiEdgeChain(Graph& gr,
 
 template<typename G,
          typename PP>
+    requires edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 auto InMultiEdgeChain<G, PP>::
 end_degree(const EgIdG ind) const -> Degree
 {
@@ -140,6 +149,9 @@ end_degree(const EgIdG ind) const -> Degree
 
 template<typename G,
          typename PP>
+    requires edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 auto InMultiEdgeChain<G, PP>::
 applicability(const EgIdG ind) const -> Applicability
 {
@@ -166,6 +178,9 @@ applicability(const EgIdG ind) const -> Applicability
 
 template<typename G,
          typename PP>
+    requires edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 auto InMultiEdgeChain<G, PP>::
 apply(const EgIdG ind) -> Res
 {

@@ -32,6 +32,10 @@ limitations under the License.
 #include "graffine/definitions.h"
 #include "graffine/structure/elements/graph.h"
 #include "graffine/transforms/common.h"
+#include "graffine/transforms/vertex_merger/common.h"
+#include "graffine/transforms/vertex_split/common.h"
+
+#include <type_traits>
 
 #include <array>
 #include <utility>
@@ -58,6 +62,29 @@ struct Trait<TransformType::EdgeDeletion, G>
  * vertex degrees.
  */
 namespace edge_deletion {
+
+/**
+ * Processor of non-topological properties usable by the edge deletions.
+ * \details Either void, for no processing, or a type providing the hooks
+ * called by the edge deletions: on_start<isChainDeleted> with the edge to
+ * delete, and on_end<isChainDeleted> with a vertex at its former position.
+ * \tparam PP Property processor type.
+ * \tparam G Graph type.
+ */
+template<typename PP,
+         typename G>
+concept Processor =
+    std::is_void_v<PP> ||
+    requires (PP& pp,
+              typename G::Edge& eg,
+              typename G::Vertex& v)
+    {
+        pp.edgeDeletion.template on_start<true>(eg);
+        pp.edgeDeletion.template on_start<false>(eg);
+        pp.edgeDeletion.template on_end<true>(v);
+        pp.edgeDeletion.template on_end<false>(v);
+    };
+
 
 template<typename G>
 using Trait = transforms::Trait<TransformType::EdgeDeletion, G>;

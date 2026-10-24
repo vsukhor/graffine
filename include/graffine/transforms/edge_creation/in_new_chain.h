@@ -59,6 +59,8 @@ namespace graffine::transforms::edge_creation {
 template<Degree D,
          typename G,
          typename PP = void>
+    requires edge_creation::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 struct InNewChain
     : public Applicable<InNewChain<D, G, PP>>
 {
@@ -161,6 +163,8 @@ private:
 template<Degree D,
          typename G,
          typename PP>
+    requires edge_creation::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 InNewChain<D, G, PP>::
 InNewChain(Graph& gr,
            std::shared_ptr<PP> pp)
@@ -175,6 +179,8 @@ InNewChain(Graph& gr,
 template<Degree D,
          typename G,
          typename PP>
+    requires edge_creation::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 auto InNewChain<D, G, PP>::
 applicability(const Vertex& v) const -> Applicability
 {
@@ -196,6 +202,8 @@ applicability(const Vertex& v) const -> Applicability
 template<Degree D,
          typename G,
          typename PP>
+    requires edge_creation::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 auto InNewChain<D, G, PP>::
 applicability(const Slot& s) const -> Applicability
 {
@@ -213,6 +221,8 @@ applicability(const Slot& s) const -> Applicability
 template<Degree D,
          typename G,
          typename PP>
+    requires edge_creation::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 auto InNewChain<D, G, PP>::
 applicability(const ChIdG w) const -> Applicability
 {
@@ -232,6 +242,8 @@ applicability(const ChIdG w) const -> Applicability
 template<Degree D,
          typename G,
          typename PP>
+    requires edge_creation::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 auto InNewChain<D, G, PP>::
 apply(Vertex& v) -> Res
 {
@@ -248,6 +260,8 @@ apply(Vertex& v) -> Res
 template<Degree D,
          typename G,
          typename PP>
+    requires edge_creation::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 auto InNewChain<D, G, PP>::
 apply(const Slot& s) -> Res
 {
@@ -283,6 +297,8 @@ apply(const Slot& s) -> Res
 template<Degree D,
          typename G,
          typename PP>
+    requires edge_creation::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 auto InNewChain<D, G, PP>::
 apply(const ChIdG w) -> Res
 {
@@ -318,6 +334,8 @@ apply(const ChIdG w) -> Res
 template<Degree D,
          typename G,
          typename PP>
+    requires edge_creation::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 template<typename S>
 void InNewChain<D, G, PP>::
 log_before(const S& s, std::string&& at) const
@@ -345,6 +363,8 @@ log_before(const S& s, std::string&& at) const
 template<Degree D,
          typename G,
          typename PP>
+    requires edge_creation::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 void InNewChain<D, G, PP>::
 log_after(const EndSlot& ue) const
 {
@@ -360,6 +380,8 @@ log_after(const EndSlot& ue) const
 template<Degree D,
          typename G,
          typename PP>
+    requires edge_creation::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 void InNewChain<D, G, PP>::
 check_slot([[maybe_unused]] const Slot& s) const
 {
@@ -387,6 +409,8 @@ check_slot([[maybe_unused]] const Slot& s) const
 template<Degree D,
          typename G,
          typename PP>
+    requires edge_creation::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 auto InNewChain<D, G, PP>::
 pos_str(const Slot& s) const noexcept -> std::string
 {

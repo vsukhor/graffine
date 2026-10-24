@@ -31,6 +31,9 @@ limitations under the License.
 
 #include "graffine/definitions.h"
 #include "graffine/transforms/common.h"
+#include "graffine/transforms/vertex_merger/common.h"
+
+#include <type_traits>
 
 #include <array>
 
@@ -60,8 +63,35 @@ struct Trait<TransformType::VertexSplit, G>
 /// Enables split of a graph vertex into two daughter ones.
 namespace vertex_split {
 
+
 template<typename G>
 using Trait = transforms::Trait<TransformType::VertexSplit, G>;
+
+/**
+ * Processor of non-topological properties usable by the vertex splits.
+ * \details Either void, for no processing, or a type providing the hooks
+ * called by the splits: with the split chain or slots before a split, and
+ * with the resulting vertices after it.
+ * \tparam PP Property processor type.
+ * \tparam G Graph type.
+ */
+template<typename PP,
+         typename G>
+concept Processor =
+    std::is_void_v<PP> ||
+    requires (PP& pp,
+              const ChIdG w,
+              const typename G::EndSlot& es,
+              const typename G::BulkSlot& bs,
+              const typename Trait<G>::Res& res)
+    {
+        pp.vertexSplit.on_start(w);
+        pp.vertexSplit.on_start(es);
+        pp.vertexSplit.on_start(bs);
+        pp.vertexSplit.on_start(es, es);
+        pp.vertexSplit.on_end(res);
+    };
+
 
 /**
  * Template for functors performing vertex split.
@@ -76,6 +106,8 @@ template<Degree D1,
          Degree D2,
          typename G,
          typename PP = void>
+    requires vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 struct To
 {};
 
@@ -90,6 +122,8 @@ struct To
 template<Degree D,
          typename G,
          typename PP = void>
+    requires vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 struct To1
 {};
 
@@ -104,6 +138,8 @@ struct To1
 template<Degree D,
          typename G,
          typename PP = void>
+    requires vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 struct To2
 {};
 

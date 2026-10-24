@@ -126,7 +126,7 @@ TEST_F(ErrorsTest, InvariantErrorFromMutation)
     catch (const graffine::invariant_error& e) {
         const std::string what {e.what()};
         EXPECT_NE(what.find("not found among"), std::string::npos) << what;
-        EXPECT_NE(what.find("graph.h:"), std::string::npos) << what;
+        EXPECT_NE(what.find("graph/neighbours.h:"), std::string::npos) << what;
     }
 }
 

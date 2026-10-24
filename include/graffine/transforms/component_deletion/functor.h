@@ -67,8 +67,27 @@ using Trait = transforms::Trait<TransformType::ComponentDeletion, G>;
  * Functor class deleting specific graph component.
  * \tparam G Graph to which the transformation is applied.
  */
+/**
+ * Processor of non-topological properties usable by the component deletions.
+ * \details Either void, for no processing, or a type providing the hooks
+ * called before and after the transformation.
+ * \tparam PP Property processor type.
+ * \tparam G Graph type.
+ */
+template<typename PP,
+         typename G>
+concept Processor =
+    std::is_void_v<PP> ||
+    requires (PP& pp)
+    {
+        pp.componentDeletion.on_start();
+        pp.componentDeletion.on_end();
+    };
+
+
 template<typename G,
          typename PP = void>
+    requires component_deletion::Processor<PP, G>
 struct Functor
     : public Applicable<Functor<G, PP>>
 {
@@ -114,6 +133,7 @@ protected:
 
 template<typename G,
          typename PP>
+    requires component_deletion::Processor<PP, G>
 Functor<G, PP>::
 Functor(Graph& gr,
         std::shared_ptr<PP> pp)
@@ -125,6 +145,7 @@ Functor(Graph& gr,
 
 template<typename G,
          typename PP>
+    requires component_deletion::Processor<PP, G>
 auto Functor<G, PP>::
 applicability(const CmpId c) const -> Applicability
 {
@@ -137,6 +158,7 @@ applicability(const CmpId c) const -> Applicability
 
 template<typename G,
          typename PP>
+    requires component_deletion::Processor<PP, G>
 auto Functor<G, PP>::
 apply(const CmpId c) -> Res
 {

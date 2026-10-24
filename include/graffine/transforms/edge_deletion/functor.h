@@ -51,6 +51,9 @@ namespace graffine::transforms::edge_deletion {
  */
 template<typename G,
          typename PP = void>
+    requires edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 struct Functor
     : public Applicable<Functor<G, PP>>
 {
@@ -89,6 +92,9 @@ protected:
 
 template<typename G,
          typename PP>
+    requires edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 constexpr
 Functor<G, PP>::
 Functor(Graph& gr,
@@ -103,6 +109,9 @@ Functor(Graph& gr,
 
 template<typename G,
          typename PP>
+    requires edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 auto Functor<G, PP>::
 applicability(const EgIdG ind) const -> Applicability
 {
@@ -121,6 +130,9 @@ applicability(const EgIdG ind) const -> Applicability
 
 template<typename G,
          typename PP>
+    requires edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 auto Functor<G, PP>::
 apply(const EgIdG ind) -> Res
 {

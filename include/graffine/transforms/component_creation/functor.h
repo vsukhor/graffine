@@ -68,8 +68,27 @@ using Trait = transforms::Trait<TransformType::ComponentCreation, G>;
  * \details The component is created as a single chain.
  * \tparam G Graph to which the transformation is applied.
  */
+/**
+ * Processor of non-topological properties usable by the component creations.
+ * \details Either void, for no processing, or a type providing the hooks
+ * called before and after the transformation.
+ * \tparam PP Property processor type.
+ * \tparam G Graph type.
+ */
+template<typename PP,
+         typename G>
+concept Processor =
+    std::is_void_v<PP> ||
+    requires (PP& pp)
+    {
+        pp.componentCreation.on_start();
+        pp.componentCreation.on_end();
+    };
+
+
 template<typename G,
          typename PP = void>
+    requires component_creation::Processor<PP, G>
 struct Functor
     : public Applicable<Functor<G, PP>>
 {
@@ -114,6 +133,7 @@ protected:
 
 template<typename G,
          typename PP>
+    requires component_creation::Processor<PP, G>
 Functor<G, PP>::
 Functor(Graph& gr,
         std::shared_ptr<PP> pp)
@@ -126,6 +146,7 @@ Functor(Graph& gr,
 
 template<typename G,
          typename PP>
+    requires component_creation::Processor<PP, G>
 auto Functor<G, PP>::
 applicability(const std::size_t s) const -> Applicability
 {
@@ -138,6 +159,7 @@ applicability(const std::size_t s) const -> Applicability
 
 template<typename G,
          typename PP>
+    requires component_creation::Processor<PP, G>
 auto Functor<G, PP>::
 apply(const std::size_t s) -> Res
 {

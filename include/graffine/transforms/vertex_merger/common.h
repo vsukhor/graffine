@@ -33,6 +33,8 @@ limitations under the License.
 #include "graffine/structure/descriptors/end.h"
 #include "graffine/transforms/common.h"
 
+#include <type_traits>
+
 #include <array>
 
 namespace graffine::transforms {
@@ -57,6 +59,30 @@ struct Trait<TransformType::VertexMerger, G>
 
 namespace vertex_merger {
 
+/**
+ * Processor of non-topological properties usable by the vertex mergers.
+ * \details Either void, for no processing, or a type providing the hooks
+ * called by the mergers: with the slots of the preserved and the removed
+ * vertex before a merger, and with the resulting vertex after it.
+ * \tparam PP Property processor type.
+ * \tparam G Graph type.
+ */
+template<typename PP,
+         typename G>
+concept Processor =
+    std::is_void_v<PP> ||
+    requires (PP& pp,
+              const typename G::EndSlot& es,
+              const typename G::BulkSlot& bs,
+              typename G::Vertex& v)
+    {
+        pp.vertexMerger.on_start(es, es);
+        pp.vertexMerger.on_start(bs, es);
+        pp.vertexMerger.on_start(bs, bs);
+        pp.vertexMerger.on_end(v);
+    };
+
+
 template<typename G>
 using Trait = transforms::Trait<TransformType::VertexMerger, G>;
 
@@ -69,7 +95,9 @@ using Trait = transforms::Trait<TransformType::VertexMerger, G>;
 template<Degree D1,
          Degree D2,
          typename G,
-         typename PP = void> requires areCompatibleDegrees<D1, D2>
+         typename PP = void>
+    requires areCompatibleDegrees<D1, D2> &&
+             vertex_merger::Processor<PP, G>
 struct From {};
 
 /**
@@ -80,11 +108,13 @@ struct From {};
 template<Degree D,
          typename G,
          typename PP = void>
+    requires vertex_merger::Processor<PP, G>
 struct From1 {};
 
 template<Degree D,
          typename G,
          typename PP = void>
+    requires vertex_merger::Processor<PP, G>
 struct FromN {};
 
 inline constexpr auto UnconnectedCycleEnd = structure::descriptors::End::A;

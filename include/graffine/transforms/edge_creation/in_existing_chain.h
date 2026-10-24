@@ -53,6 +53,8 @@ namespace graffine::transforms::edge_creation {
  */
 template<typename G,
          typename PP = void>
+    requires edge_creation::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 struct InExistingChain
     : public Applicable<InExistingChain<G, PP>>
 {
@@ -119,6 +121,8 @@ protected:
 
 template<typename G,
          typename PP>
+    requires edge_creation::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 InExistingChain<G, PP>::
 InExistingChain(Graph& gr,
                 std::shared_ptr<PP> pp)
@@ -131,6 +135,8 @@ InExistingChain(Graph& gr,
 
 template<typename G,
          typename PP>
+    requires edge_creation::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 auto InExistingChain<G, PP>::
 applicability(const Vertex& v) const -> Applicability
 {
@@ -149,6 +155,8 @@ applicability(const Vertex& v) const -> Applicability
 
 template<typename G,
          typename PP>
+    requires edge_creation::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 template<structure::descriptors::slot S>
 auto InExistingChain<G, PP>::
 applicability(const S& s) const -> Applicability
@@ -169,6 +177,8 @@ applicability(const S& s) const -> Applicability
 
 template<typename G,
          typename PP>
+    requires edge_creation::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 auto InExistingChain<G, PP>::
 apply(Vertex& v) -> Res
 {
@@ -185,6 +195,8 @@ apply(Vertex& v) -> Res
 
 template<typename G,
          typename PP>
+    requires edge_creation::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 template<structure::descriptors::slot S>
 auto InExistingChain<G, PP>::
 apply(const S& s) -> Res

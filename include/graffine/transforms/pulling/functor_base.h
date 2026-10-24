@@ -46,6 +46,11 @@ namespace graffine::transforms::pulling {
  */
 template<typename G,
          typename PP = void>
+    requires pulling::Processor<PP, G> &&
+             edge_creation::Processor<PP, G> &&
+             edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 struct FunctorBase
 {
     using Trait = pulling::Trait<G>;
@@ -131,6 +136,11 @@ private:
 
 template<typename G,
          typename PP>
+    requires pulling::Processor<PP, G> &&
+             edge_creation::Processor<PP, G> &&
+             edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 auto FunctorBase<G, PP>::
 check_path_basics(
     const Path& path,
@@ -152,6 +162,11 @@ check_path_basics(
 
 template<typename G,
          typename PP>
+    requires pulling::Processor<PP, G> &&
+             edge_creation::Processor<PP, G> &&
+             edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 auto FunctorBase<G, PP>::
 check_source(
     const Path& path,
@@ -174,6 +189,11 @@ check_source(
 
 template<typename G,
          typename PP>
+    requires pulling::Processor<PP, G> &&
+             edge_creation::Processor<PP, G> &&
+             edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 FunctorBase<G, PP>::
 FunctorBase(Graph& gr,
             std::shared_ptr<PP> pp)
@@ -191,6 +211,11 @@ FunctorBase(Graph& gr,
 
 template<typename G,
          typename PP>
+    requires pulling::Processor<PP, G> &&
+             edge_creation::Processor<PP, G> &&
+             edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 bool FunctorBase<G, PP>::
 pull_leaf_vertex(
     Path& path,
@@ -219,6 +244,11 @@ pull_leaf_vertex(
 // Pull one step.
 template<typename G,
          typename PP>
+    requires pulling::Processor<PP, G> &&
+             edge_creation::Processor<PP, G> &&
+             edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 bool FunctorBase<G, PP>::
 pull_leaf_vertex(Path& path)
 {
@@ -270,6 +300,11 @@ pull_leaf_vertex(Path& path)
 
 template<typename G,
          typename PP>
+    requires pulling::Processor<PP, G> &&
+             edge_creation::Processor<PP, G> &&
+             edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 void FunctorBase<G, PP>::
 dissolve_single_edge_chain(Path& path)
 {
@@ -327,6 +362,11 @@ dissolve_single_edge_chain(Path& path)
 
 template<typename G,
          typename PP>
+    requires pulling::Processor<PP, G> &&
+             edge_creation::Processor<PP, G> &&
+             edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 void FunctorBase<G, PP>::
 shift_edges_to_target_chain(const Path& path)
 {
@@ -375,6 +415,11 @@ shift_edges_to_target_chain(const Path& path)
 /// on return, \p rit points to the last edge of the current chain in \p path
 template<typename G,
          typename PP>
+    requires pulling::Processor<PP, G> &&
+             edge_creation::Processor<PP, G> &&
+             edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 bool FunctorBase<G, PP>::
 chain_exit_path(
     PathW::const_reverse_iterator& rit,

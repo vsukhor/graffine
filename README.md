@@ -124,6 +124,12 @@ if (auto res = merge.try_apply(s1, s2); !res)  // checks, then applies
 
 A rejected transformation leaves the graph unchanged. `try_apply` reports rejections without throwing, and without allocating: it suits simulations proposing many candidate moves, most of which may be rejected. `apply` performs the transformation without the checks, for arguments already known to be applicable.
 
+### Processing non-topological properties
+
+Transformations take an optional processor of non-topological properties (positions, weights...) as their last template parameter, `PP`, together with a `std::shared_ptr<PP>` at construction, and call its hooks before and after they change the graph. `PP` is `void` by default, for no processing.
+
+The hooks are grouped by transformation family in members of the processor: `vertexMerger`, `vertexSplit`, `edgeCreation`, `edgeDeletion`, `edgeMerger`, `componentCreation`, `componentDeletion` and `pulling`, each with `on_start` and `on_end` overloads. Each family specifies the hooks it requires, with their arguments, as a concept `Processor` in its namespace, e.g. `graffine::transforms::vertex_merger::Processor<PP, G>`; [property_processor.h](include/graffine/transforms/property_processor.h) defines the concept `graffine::transforms::PropertyProcessor<PP, G>` of a processor usable by all transformations. A transformation instantiated with an unsuitable processor fails to compile with a report of the unsatisfied requirement. A processor implementing all the hooks is in [tests/property_processor.cpp](tests/property_processor.cpp).
+
 ### Error handling
 
 ***graffine*** never terminates the program on its own. Errors are reported by exceptions derived from `graffine::error` (itself a `std::runtime_error`), declared in [errors.h](include/graffine/utils/errors.h):

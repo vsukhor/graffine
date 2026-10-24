@@ -52,6 +52,7 @@ namespace graffine::transforms::vertex_merger {
  */
 template<typename G,
          typename PP = void>
+    requires vertex_merger::Processor<PP, G>
 struct Core
 {
     using Trait = vertex_merger::Trait<G>;
@@ -143,6 +144,7 @@ protected:
 
 template<typename G,
          typename PP>
+    requires vertex_merger::Processor<PP, G>
 constexpr
 Core<G, PP>::
 Core(
@@ -166,6 +168,7 @@ Core(
 // end == B: 456 + 0123 -> 4563210 (>>> + >>>> -> >>><<<<)
 template<typename G,
          typename PP>
+    requires vertex_merger::Processor<PP, G>
 auto Core<G, PP>::
 antiparallel(
     const Chain::EndId end,
@@ -286,6 +289,7 @@ antiparallel(
 // Example: 2345 + 01-> 234501 (>>>> + >> -> >>>>>>)
 template<typename G,
          typename PP>
+    requires vertex_merger::Processor<PP, G>
 auto Core<G, PP>::
 parallel(
     const ChIdG w1,
@@ -391,6 +395,7 @@ parallel(
 
 template<typename G,
          typename PP>
+    requires vertex_merger::Processor<PP, G>
 auto Core<G, PP>::
 to_linear(
     const EndSlot& s1,
@@ -410,6 +415,7 @@ to_linear(
 
 template<typename G,
          typename PP>
+    requires vertex_merger::Processor<PP, G>
 auto Core<G, PP>::
 to_cycle(const ChIdG w) -> Res
 {

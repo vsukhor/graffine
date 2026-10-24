@@ -50,6 +50,8 @@ namespace graffine::transforms::vertex_split {
  */
 template<typename G,
          typename PP = void>
+    requires vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 struct Functor
     : public Applicable<Functor<G, PP>>
 {
@@ -97,6 +99,8 @@ protected:
 
 template<typename G,
          typename PP>
+    requires vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 constexpr
 Functor<G, PP>::
 Functor(Graph& gr,
@@ -113,6 +117,8 @@ Functor(Graph& gr,
 
 template<typename G,
          typename PP>
+    requires vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 auto Functor<G, PP>::
 applicability(
     const Vertex& v,
@@ -138,6 +144,8 @@ applicability(
 
 template<typename G,
          typename PP>
+    requires vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 auto Functor<G, PP>::
 apply(Vertex& v,
       const std::vector<typename Vertex::EgDescr>& ss) -> Res

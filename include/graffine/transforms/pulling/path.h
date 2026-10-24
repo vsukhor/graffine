@@ -108,12 +108,25 @@ struct Path
         }
     };
 
-    template<typename, typename> friend struct FunctorBase;
+    template<typename G,
+             typename PP>
+        requires pulling::Processor<PP, G> &&
+                 edge_creation::Processor<PP, G> &&
+                 edge_deletion::Processor<PP, G> &&
+                 vertex_split::Processor<PP, G> &&
+                 vertex_merger::Processor<PP, G>
+    friend struct FunctorBase;
 
     template<Degree D,
              Orientation Dir,
              typename G,
-             typename PP> requires pullable_degree<D>
+             typename PP>
+        requires pullable_degree<D> &&
+                 pulling::Processor<PP, G> &&
+                 edge_creation::Processor<PP, G> &&
+                 edge_deletion::Processor<PP, G> &&
+                 vertex_split::Processor<PP, G> &&
+                 vertex_merger::Processor<PP, G>
     friend struct On;
 
     using Base::cmp;

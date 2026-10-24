@@ -57,6 +57,9 @@ namespace graffine::transforms::edge_deletion {
 template<Degree D,
          typename G,
          typename PP = void>
+    requires edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 struct PreservingHostChain
     : public Applicable<PreservingHostChain<D, G, PP>>
 {
@@ -150,6 +153,9 @@ protected:  // Data
 template<Degree D,
          typename G,
          typename PP>
+    requires edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 constexpr
 PreservingHostChain<D, G, PP>::
 PreservingHostChain(Graph& gr,
@@ -164,6 +170,9 @@ PreservingHostChain(Graph& gr,
 template<Degree D,
          typename G,
          typename PP>
+    requires edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 auto PreservingHostChain<D, G, PP>::
 applicability(const EgIdG ind) const -> Applicability
 {
@@ -177,6 +186,9 @@ applicability(const EgIdG ind) const -> Applicability
 template<Degree D,
          typename G,
          typename PP>
+    requires edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 auto PreservingHostChain<D, G, PP>::
 applicability(const BulkSlot& s) const -> Applicability
 {
@@ -204,6 +216,9 @@ applicability(const BulkSlot& s) const -> Applicability
 template<Degree D,
          typename G,
          typename PP>
+    requires edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 auto PreservingHostChain<D, G, PP>::
 apply(const BulkSlot& s) -> Res
 {
@@ -258,6 +273,9 @@ apply(const BulkSlot& s) -> Res
 template<Degree D,
          typename G,
          typename PP>
+    requires edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 auto PreservingHostChain<D, G, PP>::
 apply(const EgIdG ind) -> Res
 {

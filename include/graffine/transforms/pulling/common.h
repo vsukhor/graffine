@@ -32,6 +32,12 @@ limitations under the License.
 #include "graffine/definitions.h"
 #include "graffine/structure/elements/graph.h"
 #include "graffine/transforms/common.h"
+#include "graffine/transforms/vertex_merger/common.h"
+#include "graffine/transforms/vertex_split/common.h"
+#include "graffine/transforms/edge_deletion/common.h"
+#include "graffine/transforms/edge_creation/common.h"
+
+#include <type_traits>
 
 #include <algorithm>  // find
 #include <array>
@@ -53,6 +59,29 @@ struct Trait<TransformType::Pulling, G>
 
 /// Enables pulling of a graph edge holding it at specific end.
 namespace pulling {
+
+template<typename C>
+struct Path;
+
+/**
+ * Processor of non-topological properties usable by the pullings.
+ * \details Either void, for no processing, or a type providing the hooks
+ * called with the path: on_start once before pulling along it, and on_end
+ * after each of the steps of the pull.
+ * \tparam PP Property processor type.
+ * \tparam G Graph type.
+ */
+template<typename PP,
+         typename G>
+concept Processor =
+    std::is_void_v<PP> ||
+    requires (PP& pp,
+              Path<typename G::Compt>& path)
+    {
+        pp.pulling.on_start(path);
+        pp.pulling.on_end(path);
+    };
+
 
 template<typename G>
 using Trait = transforms::Trait<TransformType::Pulling, G>;
@@ -83,7 +112,13 @@ inline constexpr bool omitUnconnectedCycles = true;
 template<Degree D,
          Orientation Dir,
          typename G,
-         typename PP = void> requires pullable_degree<D>
+         typename PP = void>
+    requires pullable_degree<D> &&
+             pulling::Processor<PP, G> &&
+             edge_creation::Processor<PP, G> &&
+             edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 struct On {};
 
 

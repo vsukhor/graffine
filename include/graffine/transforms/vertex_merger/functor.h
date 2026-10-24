@@ -53,6 +53,7 @@ namespace graffine::transforms::vertex_merger {
  */
 template<typename G,
          typename PP = void>
+    requires vertex_merger::Processor<PP, G>
 struct Functor
     : public Applicable<Functor<G, PP>>
 {
@@ -93,6 +94,7 @@ struct Functor
 
 template<typename G,
          typename PP>
+    requires vertex_merger::Processor<PP, G>
 Functor<G, PP>::
 Functor(Graph& gr,
         std::shared_ptr<PP> pp)
@@ -107,6 +109,7 @@ Functor(Graph& gr,
 
 template<typename G,
          typename PP>
+    requires vertex_merger::Processor<PP, G>
 auto Functor<G, PP>::
 applicability(
     const Vertex& v1,
@@ -136,6 +139,7 @@ applicability(
 
 template<typename G,
          typename PP>
+    requires vertex_merger::Processor<PP, G>
 auto Functor<G, PP>::
 apply(
     Vertex& v1,

@@ -32,6 +32,9 @@ limitations under the License.
 #include "graffine/definitions.h"
 #include "graffine/structure/elements/graph.h"
 #include "graffine/transforms/common.h"
+#include "graffine/transforms/vertex_merger/common.h"
+#include "graffine/transforms/vertex_split/common.h"
+#include "graffine/transforms/edge_deletion/common.h"
 #include "graffine/transforms/edge_deletion/in_multi_edge_chain.h"
 #include "graffine/transforms/edge_deletion/in_single_edge_chain.h"
 
@@ -68,8 +71,32 @@ template<typename G>
 using Trait = transforms::Trait<TransformType::EdgeMerger, G>;
 
 /// Performs merger of two incident edges.
+/**
+ * Processor of non-topological properties usable by the edge mergers.
+ * \details Either void, for no processing, or a type providing the hooks
+ * called with the two edges before a merger, and with the resulting edge
+ * after it.
+ * \tparam PP Property processor type.
+ * \tparam G Graph type.
+ */
+template<typename PP,
+         typename G>
+concept Processor =
+    std::is_void_v<PP> ||
+    requires (PP& pp,
+              typename G::Edge& eg)
+    {
+        pp.edgeMerger.on_start(eg, eg);
+        pp.edgeMerger.on_end(eg);
+    };
+
+
 template<typename G,
          typename PP = void>
+    requires edge_merger::Processor<PP, G> &&
+             edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 struct Functor
     : public Applicable<Functor<G, PP>>
 {
@@ -126,6 +153,10 @@ protected:
 
 template<typename G,
          typename PP>
+    requires edge_merger::Processor<PP, G> &&
+             edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 Functor<G, PP>::
 Functor(Graph& gr,
         std::shared_ptr<PP> pp)
@@ -142,6 +173,10 @@ Functor(Graph& gr,
 // and disappear.
 template<typename G,
          typename PP>
+    requires edge_merger::Processor<PP, G> &&
+             edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 auto Functor<G, PP>::
 applicability(
     const EgIdG ind1,
@@ -171,6 +206,10 @@ applicability(
 
 template<typename G,
          typename PP>
+    requires edge_merger::Processor<PP, G> &&
+             edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
 auto Functor<G, PP>::
 apply(const EgIdG ind1,
            const EgIdG ind2) -> Res
@@ -195,7 +234,7 @@ apply(const EgIdG ind1,
     }
 
     if constexpr (!std::is_void_v<PP>)
-    gr.template on_transform<Trait>.at_start({eg1, eg2});
+        updateProperties->edgeMerger.on_start(eg1, eg2);
 
     const auto remove = [this](const EgIdG ind)
     {
@@ -220,7 +259,7 @@ apply(const EgIdG ind1,
     Res res {eg};
 
     if constexpr (!std::is_void_v<PP>)
-    gr.template on_transform<Trait>.at_end(eg);
+        updateProperties->edgeMerger.on_end(*eg);
 
     if constexpr (verboseF) {
         gr.chain(eg->w).print(shortName, "  produces ");
