@@ -59,7 +59,7 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ```
 
-The CMake options `BUILD_TESTS` (default `ON`), `BUILD_EXAMPLES` (default `ON`) and `BUILD_DOCS` (default `OFF`) control which targets are built.
+The CMake options `BUILD_TESTS` (default `ON`), `BUILD_EXAMPLES` (default `ON`) and `BUILD_DOCS` (default `OFF`) control which targets are built. Setting `GRAFFINE_NATIVE_ARCH=ON` (default `OFF`) compiles with `-march=native`, which tunes the binaries for the build machine at the cost of portability.
 
 Library configuration is passed through the following CMake variables, which are written into the generated `config_cmake.h`:
 
