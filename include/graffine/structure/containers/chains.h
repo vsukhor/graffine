@@ -80,19 +80,16 @@ struct Chains
     void print(std::string_view tag) const;
 
     /**
-     * Checks that \p cond is satisfied, else terminates program.
-     * \details Prints out the component using \p tag before terminating the
-     * program if \p cond is false. \p message is printed at termination.
+     * Checks that \p cond is satisfied.
      * \tparam T Types of the message arguments.
      * \param[in] cond Condition to be checked.
-     * \param[in] tag Tag to the component data to be printed if \p cond is false.
-     * \param[in] message Arguments bound to form the message printed at
-     *                    termination if the condition does not hold.
+     * \param[in] message Arguments forming the message of the exception
+     *                    thrown if the condition does not hold.
+     * \throws invariant_error If \p cond is false.
      */
     template<typename... T>
     void ensure(
         bool cond,
-        const std::string_view tag,
         T&&... message
     ) const;
 
@@ -204,7 +201,6 @@ template<typename... T>
 void Chains<Ch>::
 ensure(
     bool cond,
-    [[maybe_unused]] const std::string_view tag,
     T&&... message
 ) const
 {

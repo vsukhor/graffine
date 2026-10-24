@@ -414,19 +414,16 @@ public: // Functions
                               const EndSlot& t);
 
     /**
-     * Checks that \p cond is satisfied; if it is not, terminates the program.
-     * \details Prints out the component using \p tag before terminating the
-     * program if \p cond is false. \p message is printed at termination.
+     * Checks that \p cond is satisfied.
      * \tparam T Types of the message arguments.
      * \param[in] cond Condition to be checked.
-     * \param[in] tag Prepend the data to be printed with it if \p cond is false.
-     * \param[in] message Arguments bound to form the message printed at
-     *                    termination if the condition does not hold.
+     * \param[in] message Arguments forming the message of the exception
+     *                    thrown if the condition does not hold.
+     * \throws invariant_error If \p cond is false.
      */
     template <typename... T>
     void ensure(
         bool cond,
-        std::string_view tag,
         T &&...message) const;
 
     /**
@@ -2024,7 +2021,6 @@ template <typename... T>
 void Component<Ch>::
 ensure(
     bool cond,
-    [[maybe_unused]] const std::string_view tag,
     T&&... message) const
 {
     if (!cond) [[unlikely]]

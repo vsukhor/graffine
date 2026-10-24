@@ -326,7 +326,6 @@ components(const itT it) const
                 }
             c.ensure(
                 found,
-                "err_2",
                 "at iter ", it, " idc ", idc, " not found, ind ", c.ind
             );
         }
@@ -393,7 +392,6 @@ components(const itT it) const
 
         cmp.ensure(
             cmp.get_egl().size() == cmp.num_edges(),
-            "ERR",
             "at iteration ", it,
             " cmp.egl.size() ", cmp.get_egl().size(), " != cmp.num_edges()",
             " for ic: ", cmp.ind
@@ -405,7 +403,6 @@ components(const itT it) const
 
             cmp.ensure(
                 eg.indc == i,
-                "ERR",
                 "at iteration ", it,
                 " eg.indc ", eg.indc, " != i ", i,
                 " for ic: ", cmp.ind, " w ", o.w, " a ", o.a
@@ -413,7 +410,6 @@ components(const itT it) const
             ++i;
             cmp.ensure(
                 eg.ind == o.i,
-                "ERR",
                 "at iteration ", it,
                 " eg.ind ", eg.ind, " != o.i ", o.i, " for ic: ", cmp.ind
             );
@@ -496,8 +492,7 @@ loops() const
         m.ensure(
             !(m.is_cycle() &&
               m.length() < Chain::minCycleLength),
-            " L ",
-            "Forbidden loop found ","in chain ", m.idw, " printed above"
+            "Forbidden loop found in chain ", m.idw, " of length ", m.length()
         );
 }
 
@@ -548,7 +543,7 @@ chain_id(const itT it) const
     for (ChIdG i {}; i < gr.num_chains(); ++i)
         cn[i].ensure(
             cn[i].idw == i,
-            "should have idw ", "Iteration ", it,
+            "should have idw: iteration ", it,
             " check.chain_id faied at i ", i, " != idw ", cn[i].idw
         );
 }
