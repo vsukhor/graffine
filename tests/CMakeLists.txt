@@ -17,6 +17,7 @@ list(APPEND cpps
     edge.cpp
     errors.cpp
     component.cpp
+    connectivity.cpp
     graph.cpp
     io.cpp
     paths.cpp

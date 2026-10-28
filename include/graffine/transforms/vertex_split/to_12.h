@@ -33,7 +33,6 @@ limitations under the License.
 
 #include "graffine/definitions.h"
 #include "graffine/structure/containers/neigs.h"
-#include "graffine/structure/analyzers/connectivity.h"
 #include "graffine/structure/elements/graph.h"
 #include "graffine/transforms/vertex_merger/core.h"
 #include "graffine/transforms/vertex_split/common.h"
@@ -302,22 +301,14 @@ apply(const EndSlot& s) -> Res
             gr.remove_slot_from_neigs(ng0);
             gr.compt(c).set_chis();
 
+            // 'pp' was computed while ng0 and ng1 were still adjacent, so
+            // both chains land in the same component and merge within it.
             if (isSeparable)
                 gr.split_component(gr.compt(c), pp, s);
             else {
                 gr.compt(c).set_egl();
                 gr.compt(c).set_chis();
             }
-
-            auto& cmp = gr.compt(cn[ng0.w].c);
-
-            structure::Connectivity conty {cn};
-
-            const auto sideIsSeparable =
-                not conty.dfs(ng0, ng1, cmp.num_chains());
-
-            if (sideIsSeparable)
-                gr.split_component(cmp, conty.find_connected_chains(ng1));
 
             if (isSeparable)
                 gr.compt_last().set_chis();

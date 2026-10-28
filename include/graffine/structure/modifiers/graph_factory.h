@@ -250,18 +250,7 @@ create(
             if (!current) break;
 
             auto& cmp = ct.emplace_back(gr.num_compts(), cn);
-            for (const auto& w : conty.find_connected_chains(current->idw))
-                cmp.ww.push_back(w);
-
-            // Complete the component with the chains connected to those
-            // found: the search does not proceed beyond the chains connected
-            // at both ends, e.g. a chain between two different junctions.
-            for (std::size_t k {}; k < cmp.ww.size(); ++k)
-                for (const auto e : End::Ids)
-                    for (const auto& s : cn[cmp.ww[k]].ngs[e]())
-                        if (std::find(cmp.ww.begin(), cmp.ww.end(), s.w) ==
-                            cmp.ww.end())
-                            cmp.ww.push_back(s.w);
+            cmp.ww = conty.find_connected_chains(current->idw);
 
             ChIdC ic {};
             EgIdC indc {};

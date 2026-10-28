@@ -36,6 +36,7 @@ limitations under the License.
 
 #include <algorithm>  // remove, ranges::sort
 #include <array>
+#include <cstdint>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -53,46 +54,59 @@ struct Connectivity
 
     explicit constexpr Connectivity(const Chains& cn);
 
+    /**
+     * Chains reachable from the junction at \p source.
+     * \details Chain \p source.w is not entered through \p source itself,
+     * but is always included in the result.
+     */
     auto find_connected_chains(const EndSlot& source) -> ChIdGs;
+
+    /// Chains of the connected set containing chain \p seed, sorted.
     auto find_connected_chains(ChIdG seed) -> ChIdGs;
 
-
     /**
-     * Depth-first search of the component edges.
-     * \note Performs necessary initializations of the auxiliary variables
-     * before lanching the search.
+     * Depth-first search over the chains reachable from the junction at
+     * \p source.
+     * \details Chain \p source.w is not entered through \p source itself,
+     * but may be reached from its opposite end along another path.
      * \param[in] source Initial slot.
      * \param[in] target Target slot.
-     * \param[in] n size of the chain set to parce
-     * \return True if there is a connection between \p source and \p target.
+     * \return True if \p target is reachable from \p source.
      */
     bool dfs(
         const EndSlot& source,
-        const EndSlot& target,
-        std::size_t n);
+        const EndSlot& target);
 
 
 protected:
 
     const Chains& cn;
 
-    ChIdGs visited;  ///< Auxiliary: IDs of chains visited during a search.
+    /// Auxiliary: search epoch at which each chain was last visited.
+    std::vector<std::uint32_t> mark;
+    std::uint32_t epoch {};
 
-    void reset_search(std::size_t s);
+    ChIdGs reached;           ///< Auxiliary: chains visited by a search.
+    std::vector<EndSlot> todo;  ///< Auxiliary: slots awaiting expansion.
+
+    /// Starts a new search in O(1), unless the chain set has grown.
+    void reset_search();
+
+    /// Marks chain \p w visited; returns false if it already was.
+    bool visit(ChIdG w);
 
     /**
-     * Depth-first search over the component edges.
-     * \note Assumes that initialization of the auxiliary variables is
-     * already done.
+     * Iterative depth-first search over the chains.
+     * \note Continues the current search: chains visited by preceding
+     * calls since the last reset_search() are not entered again.
      * \param[in] source Search starting slot.
-     * \param[in] target Search target slot.
-     * \param[in] overComponent true if enumerates over single component
-     * \return True iff there is a connection between \p source and \p target.
+     * \param[in] target Search target slot; undefined to visit everything
+     * reachable.
+     * \return True iff \p target is reachable from \p source.
      */
-   bool dfs_(
+    bool dfs_(
         const EndSlot& source,
-        const EndSlot& target,
-        bool overComponent);
+        const EndSlot& target);
 };
 
 
@@ -110,20 +124,12 @@ template<typename Ch>
 auto Connectivity<Ch>::
 find_connected_chains(const EndSlot& source) -> ChIdGs
 {
-    reset_search(cn.size());
+    reset_search();
 
-    dfs_(source, EndSlot{}, false);
+    visit(source.w);
+    dfs_(source, EndSlot{});
 
-    ChIdGs vv {};
-
-    std::copy_if(visited.begin(), visited.end(),
-                 std::back_inserter(vv),
-                 [&](ChIdG v) { return v.is_defined(); });
-
-    if (std::find(vv.begin(), vv.end(), source.w) == vv.end())
-        vv.push_back(source.w);
-
-   return vv;
+    return reached;
 }
 
 
@@ -131,95 +137,60 @@ template<typename Ch>
 auto Connectivity<Ch>::
 find_connected_chains(const ChIdG seed) -> ChIdGs
 {
-    auto r1 = find_connected_chains(EndSlot{seed, End::A});
-    auto r2 = find_connected_chains(EndSlot{seed, End::B});
+    reset_search();
 
-    std::sort(r1.begin(), r1.end());
-    std::sort(r2.begin(), r2.end());
+    visit(seed);
+    dfs_(EndSlot{seed, End::A}, EndSlot{});
+    dfs_(EndSlot{seed, End::B}, EndSlot{});
 
-    ChIdGs res {};
+    std::sort(reached.begin(), reached.end());
 
-    auto append = [&res](auto&& r)
-    {
-        for (auto& rr : r)
-            if (std::find(res.begin(), res.end(), rr) == res.end())
-                res.push_back(rr);
-    };
-
-    append(r1);
-    append(r2);
-
-    return res;
+    return reached;
 }
 
 
 template<typename Ch>
 bool Connectivity<Ch>::
 dfs(const EndSlot& source,
-    const EndSlot& target,
-    const std::size_t n)
+    const EndSlot& target)
 {
-    // Nothing is visited in the beginning of the search.
-    reset_search(n);
+    if (source == target)
+        return true;
 
-    // This is true iff there is a connection to s2 via a path outgoing from s1.
-    return dfs_(source,
-                target,
-                n == cn.size() ? false : true);
+    reset_search();
+
+    visit(source.w);
+
+    return dfs_(source, target);
 }
 
 
 template<typename Ch>
 bool Connectivity<Ch>::
 dfs_(const EndSlot& source,
-     const EndSlot& target,
-     const bool overComponent)
+     const EndSlot& target)
 {
-    auto j = [&](const ChIdG& w)
-    {
-        return overComponent ? cn[w].idc()
-                             : w();
-    };
+    todo.clear();
+    todo.push_back(source);
 
-    if (source == target) {
+    while (!todo.empty()) {
 
-        // Target found: mark current source as visited and finish:
-        visited[j(source.w)] = source.w;
-        return true;
-    }
+        const auto s = todo.back();
+        todo.pop_back();
 
-    // Else process neigs of the source slot:
-    for (const auto& s : cn[source.w].ngs[source.e]()) {
+        if (s == target)
+            return true;
 
-        if (!cn[s.w].is_connected_at(End::opp(s.e))) {
-            // If neig chain is not connected on its opposite end:
+        // Cross the junction at s, then traverse each newly reached chain
+        // to its opposite end. A chain entered at either end is complete,
+        // so visiting chains rather than slots suffices.
+        for (const auto& n : cn[s.w].ngs[s.e]()) {
 
-            if (s.w == target.w) {
-                if (s.e == target.e) {
-                    // If its connected slot is a target, finish
-                    return true;
-                }
-            }
-            else {
-                // if neig chain is not a target chain:
-                auto& v = visited[j(s.w)];  // ref
-                if (!v.is_defined()) {
-                    // If it was not yet visited, mark it
-                    // and proceed starting from its opposite end
-                    v = s.w;
-                    if (dfs_(s.opp(), target, overComponent))
-                        return true;
-                }
-            }
-        }
-        else if (cn[s.w].is_connected_cycle()) {
-
-            // If neig chain is connected cycle, it has no neigs on its
-            // opposite end which are not on the path to parce, so mark it
-            // If it is a target chain, finish, else let the for loop proceed:
-            visited[j(s.w)] = s.w;
-            if (s.w == target.w)
+            if (n == target)
                 return true;
+
+            if (visit(n.w))
+                todo.push_back(n.opp());
         }
     }
 
@@ -228,13 +199,34 @@ dfs_(const EndSlot& source,
 
 
 template<typename Ch>
-void Connectivity<Ch>::
-reset_search(const std::size_t n)
+bool Connectivity<Ch>::
+visit(const ChIdG w)
 {
-    visited.resize(n);
-    std::fill(visited.begin(),
-              visited.begin() + static_cast<long>(n),
-              ChIdG::undefined);
+    auto& m = mark[w()];
+
+    if (m == epoch)
+        return false;
+
+    m = epoch;
+    reached.push_back(w);
+
+    return true;
+}
+
+
+template<typename Ch>
+void Connectivity<Ch>::
+reset_search()
+{
+    if (mark.size() < cn.size())
+        mark.resize(cn.size(), 0);
+
+    if (++epoch == 0) {  // wrapped around: stale marks would alias
+        std::fill(mark.begin(), mark.end(), 0);
+        epoch = 1;
+    }
+
+    reached.clear();
 }
 
 
