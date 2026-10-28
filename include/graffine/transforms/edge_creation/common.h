@@ -66,11 +66,14 @@ namespace edge_creation {
 /**
  * Processor of non-topological properties usable by the edge creations.
  * \details Either void, for no processing, or a type providing the hooks
- * called by the edge creations. on_start receives the slot of the vertex
- * receiving the edge, or the position of the edge in an existing chain;
- * on_end<isNewChain> receives the new edge. When the edge is created in a
- * new chain, on_start is called after that chain is added to the graph, as
- * its last chain, but before it is connected.
+ * called by the edge creations. on_start receives the vertex receiving the
+ * edge, or the position of the edge in an existing chain; on_end<isNewChain>
+ * receives the new edge. In a new chain, the vertex is given by its slot to
+ * on_start<Slot>, or, for the boundary vertex of an unconnected cycle, which
+ * has no slot of its own degree, by the cycle to on_start(ChIdG); on_start is
+ * called after the new chain is added to the graph, as its last chain, but
+ * before it is connected. In an existing chain, it is called with the chain,
+ * the position of the edge and whether it extends the chain at an end.
  * \tparam PP Property processor type.
  * \tparam G Graph type.
  */
@@ -86,8 +89,7 @@ concept Processor =
               const bool atChainEnd,
               typename G::Edge& eg)
     {
-        pp.edgeCreation.on_start(es);
-        pp.edgeCreation.on_start(bs);
+        pp.edgeCreation.on_start(w);
         pp.edgeCreation.template on_start<typename G::EndSlot>(es);
         pp.edgeCreation.template on_start<typename G::BulkSlot>(bs);
         pp.edgeCreation.on_start(w, a, atChainEnd);

@@ -313,7 +313,7 @@ apply(const ChIdG w) -> Res
 
     // As in the slot overload, the hook sees the new chain already added.
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->edgeCreation.on_start(EndSlot{w, End::A});
+        updateProperties->edgeCreation.on_start(w);
 
     constexpr auto e = End::A;
 

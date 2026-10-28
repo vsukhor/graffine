@@ -72,6 +72,7 @@ struct Recorder {
     } vertexSplit;
 
     struct : Hooks {
+        void on_start(ChIdG) { ++starts; }
         template<typename S> void on_start(const S&) { ++starts; }
         void on_start(ChIdG, EgIdA, bool) { ++starts; }
         template<bool isNewChain> void on_end(Edge&) { ++ends; }
@@ -106,7 +107,8 @@ static_assert(trs::PropertyProcessor<void, G>);
  * \details A processor assigning properties to the new chain at on_start,
  * e.g. the positions of its vertices next to the source vertex, finds it
  * as the last chain of the graph and its edge as the last edge. Records what
- * on_start sees, and what the new edge is at on_end.
+ * on_start sees, whether it was called for a cycle, and what the new edge is
+ * at on_end.
  */
 struct NewChainObserver
     : public Recorder {
@@ -116,10 +118,13 @@ struct NewChainObserver
         ChIdG lastChain {ChIdG::undefined};  ///< Last chain seen at on_start.
         std::size_t numEdges {};             ///< Number of edges at on_start.
         bool isLastChainFree {};  ///< Last chain is single-edge and unconnected.
+        bool atCycle {};          ///< on_start was called for a cycle.
         ChIdG newChain {ChIdG::undefined};   ///< Host chain of the new edge.
         EgIdG newEdge {EgIdG::undefined};    ///< The new edge.
 
-        template<typename S> void on_start(const S&) { observe(); }
+        void on_start(ChIdG) { atCycle = true; observe(); }
+        template<structure::descriptors::slot S>
+        void on_start(const S&) { atCycle = false; observe(); }
         void on_start(ChIdG, EgIdA, bool) { observe(); }
         template<bool isNewChain> void on_end(Edge& eg)
         {
@@ -154,6 +159,16 @@ static_assert(trs::component_creation::Processor<WithoutVertexMerger, G>);
 static_assert(!trs::vertex_merger::Processor<WithoutVertexMerger, G>);
 static_assert(!trs::PropertyProcessor<WithoutVertexMerger, G>);
 static_assert(!trs::PropertyProcessor<int, G>);
+
+/// An edge creation processor lacking the hook for the cycles.
+struct WithoutCycleHook {
+    struct {
+        template<structure::descriptors::slot S> void on_start(const S&) {}
+        void on_start(ChIdG, EgIdA, bool) {}
+        template<bool isNewChain> void on_end(Edge&) {}
+    } edgeCreation;
+};
+static_assert(!trs::edge_creation::Processor<WithoutCycleHook, G>);
 
 
 class PropertyProcessorTest
@@ -278,7 +293,8 @@ TEST_F(PropertyProcessorTest, ComponentsAndPulling)
  * \details Branching a new chain from a bulk vertex, from a junction and from
  * the boundary vertex of an unconnected cycle, by slot, by chain and by
  * vertex. In each case, on_start sees the new chain already added, unconnected,
- * as the last chain, and its edge as the last edge. The cycle is followed by
+ * as the last chain, and its edge as the last edge. The boundary vertex of
+ * the cycle reaches the cycle hook, the other vertices the slot hook. The cycle is followed by
  * an unrelated line, which a hook would otherwise take for the new chain.
  */
 TEST_F(PropertyProcessorTest, NewChainHooksSeeTheNewChain)
@@ -294,10 +310,12 @@ TEST_F(PropertyProcessorTest, NewChainHooksSeeTheNewChain)
 
     /// Expects the hooks to have seen the new chain from on_start.
     const auto expect_seen = [](const NewChainObserver& obs,
-                                const Edge* const eg)
+                                const Edge* const eg,
+                                const bool atCycle)
     {
         const auto& h = obs.edgeCreation;
         ASSERT_TRUE(eg);
+        EXPECT_EQ(h.atCycle, atCycle);
         EXPECT_EQ(h.newChain, eg->w);
         EXPECT_EQ(h.newEdge, eg->ind);
         EXPECT_EQ(h.lastChain, h.newChain);
@@ -324,7 +342,7 @@ TEST_F(PropertyProcessorTest, NewChainHooksSeeTheNewChain)
         make_graph(gr);
         const auto obs = std::make_shared<NewChainObserver>(gr);
         Branch2 branch {gr, obs};
-        expect_seen(*obs, branch(BSlot {line, 1})[0]);
+        expect_seen(*obs, branch(BSlot {line, 1})[0], false);
     }
     {   // junction, by slot
         G gr;
@@ -333,7 +351,7 @@ TEST_F(PropertyProcessorTest, NewChainHooksSeeTheNewChain)
         trs::edge_creation::InNewChain<Deg2, G> {gr}(BSlot {line, 1});
         const auto obs = std::make_shared<NewChainObserver>(gr);
         Branch3 branch {gr, obs};
-        expect_seen(*obs, branch(ESlot {line, End::B})[0]);
+        expect_seen(*obs, branch(ESlot {line, End::B})[0], false);
     }
     {   // cycle boundary vertex, by chain
         G gr;
@@ -341,7 +359,7 @@ TEST_F(PropertyProcessorTest, NewChainHooksSeeTheNewChain)
         make_graph(gr);
         const auto obs = std::make_shared<NewChainObserver>(gr);
         Branch2 branch {gr, obs};
-        expect_seen(*obs, branch(cycle)[0]);
+        expect_seen(*obs, branch(cycle)[0], true);
     }
     {   // cycle boundary vertex, by vertex
         G gr;
@@ -350,7 +368,7 @@ TEST_F(PropertyProcessorTest, NewChainHooksSeeTheNewChain)
         const auto obs = std::make_shared<NewChainObserver>(gr);
         Branch2 branch {gr, obs};
         auto& v = *gr.chain(cycle).vertex_at_end(End::A);
-        expect_seen(*obs, branch(v)[0]);
+        expect_seen(*obs, branch(v)[0], true);
     }
 }
 
