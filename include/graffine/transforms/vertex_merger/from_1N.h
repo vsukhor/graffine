@@ -213,6 +213,7 @@ operator()(
     else {
         auto& cmp = gr.merge_components(c1, c2);
         cmp.set_chains();
+        cmp.set_egl();  // set_chains() renumbers the edges
     }
 
     auto v2 = cn[w2].vertex_at_end(e2);

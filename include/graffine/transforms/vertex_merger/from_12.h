@@ -384,6 +384,7 @@ apply(
             gr.compt(c2).set_chis();
             auto& cmp = gr.merge_components(c1, c2);
             cmp.set_chains();
+            cmp.set_egl();  // set_chains() renumbers the edges
         }
         else
             gr.compt(c1).set_chis();
