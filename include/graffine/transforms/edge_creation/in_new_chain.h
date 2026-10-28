@@ -309,10 +309,11 @@ apply(const ChIdG w) -> Res
     GRAFFINE_ASSERT(cn[w].is_unconnected_cycle(),
            "chain", w, " is not an unconnected cycle.");
 
+    gr.add_single_chain_component(1);
+
+    // As in the slot overload, the hook sees the new chain already added.
     if constexpr (!std::is_void_v<PP>)
         updateProperties->edgeCreation.on_start(EndSlot{w, End::A});
-
-    gr.add_single_chain_component(1);
 
     constexpr auto e = End::A;
 

@@ -68,7 +68,9 @@ namespace edge_creation {
  * \details Either void, for no processing, or a type providing the hooks
  * called by the edge creations. on_start receives the slot of the vertex
  * receiving the edge, or the position of the edge in an existing chain;
- * on_end<isNewChain> receives the new edge.
+ * on_end<isNewChain> receives the new edge. When the edge is created in a
+ * new chain, on_start is called after that chain is added to the graph, as
+ * its last chain, but before it is connected.
  * \tparam PP Property processor type.
  * \tparam G Graph type.
  */

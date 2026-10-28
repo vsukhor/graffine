@@ -101,6 +101,48 @@ struct Recorder {
 static_assert(trs::PropertyProcessor<Recorder, G>);
 static_assert(trs::PropertyProcessor<void, G>);
 
+/**
+ * Property processor observing the graph from the edge creation hooks.
+ * \details A processor assigning properties to the new chain at on_start,
+ * e.g. the positions of its vertices next to the source vertex, finds it
+ * as the last chain of the graph and its edge as the last edge. Records what
+ * on_start sees, and what the new edge is at on_end.
+ */
+struct NewChainObserver
+    : public Recorder {
+
+    struct {
+        const G* gr {};
+        ChIdG lastChain {ChIdG::undefined};  ///< Last chain seen at on_start.
+        std::size_t numEdges {};             ///< Number of edges at on_start.
+        bool isLastChainFree {};  ///< Last chain is single-edge and unconnected.
+        ChIdG newChain {ChIdG::undefined};   ///< Host chain of the new edge.
+        EgIdG newEdge {EgIdG::undefined};    ///< The new edge.
+
+        template<typename S> void on_start(const S&) { observe(); }
+        void on_start(ChIdG, EgIdA, bool) { observe(); }
+        template<bool isNewChain> void on_end(Edge& eg)
+        {
+            newChain = eg.w;
+            newEdge = eg.ind;
+        }
+
+        void observe()
+        {
+            lastChain = gr->ind_last_chain();
+            numEdges = gr->num_edges();
+            const auto& m = gr->chain(lastChain);
+            isLastChainFree = m.length() == 1 &&
+                              !m.is_connected_at(End::A) &&
+                              !m.is_connected_at(End::B);
+        }
+    } edgeCreation;
+
+    explicit NewChainObserver(const G& gr) { edgeCreation.gr = &gr; }
+};
+
+static_assert(trs::PropertyProcessor<NewChainObserver, G>);
+
 /// A processor lacking the hooks of the vertex mergers.
 struct WithoutVertexMerger {
     struct {
@@ -229,6 +271,87 @@ TEST_F(PropertyProcessorTest, ComponentsAndPulling)
     pull(path, steps);
     EXPECT_EQ(pp->pulling.starts, 1);      // once per pull
     EXPECT_EQ(pp->pulling.ends, steps);    // once per step
+}
+
+/**
+ * The graph seen by the hooks of InNewChain.
+ * \details Branching a new chain from a bulk vertex, from a junction and from
+ * the boundary vertex of an unconnected cycle, by slot, by chain and by
+ * vertex. In each case, on_start sees the new chain already added, unconnected,
+ * as the last chain, and its edge as the last edge. The cycle is followed by
+ * an unrelated line, which a hook would otherwise take for the new chain.
+ */
+TEST_F(PropertyProcessorTest, NewChainHooksSeeTheNewChain)
+{
+    ++testCount;
+
+    if constexpr (verboseT)
+        print_description(
+            "Tests that the hooks of InNewChain see the new chain from on_start");
+
+    static constexpr auto cycle = w0;
+    static constexpr auto line = w1;
+
+    /// Expects the hooks to have seen the new chain from on_start.
+    const auto expect_seen = [](const NewChainObserver& obs,
+                                const Edge* const eg)
+    {
+        const auto& h = obs.edgeCreation;
+        ASSERT_TRUE(eg);
+        EXPECT_EQ(h.newChain, eg->w);
+        EXPECT_EQ(h.newEdge, eg->ind);
+        EXPECT_EQ(h.lastChain, h.newChain);
+        EXPECT_EQ(h.numEdges, h.newEdge + 1);
+        EXPECT_TRUE(h.isLastChainFree);
+    };
+
+    /// Unconnected cycle of 3 edges, followed by a line of 2 edges.
+    const auto make_graph = [](G& gr)
+    {
+        gr.add_single_chain_component(3);
+        gr.add_single_chain_component(2);
+        trs::vertex_merger::From<Deg1, Deg1, G> merge11 {gr};
+        merge11(ESlot {cycle, End::A}, ESlot {cycle, End::B});
+        ASSERT_TRUE(gr.chain(cycle).is_unconnected_cycle());
+    };
+
+    using Branch2 = trs::edge_creation::InNewChain<Deg2, G, NewChainObserver>;
+    using Branch3 = trs::edge_creation::InNewChain<Deg3, G, NewChainObserver>;
+
+    {   // bulk vertex, by slot
+        G gr;
+        const IntegrityCheck integrityCheck {gr};
+        make_graph(gr);
+        const auto obs = std::make_shared<NewChainObserver>(gr);
+        Branch2 branch {gr, obs};
+        expect_seen(*obs, branch(BSlot {line, 1})[0]);
+    }
+    {   // junction, by slot
+        G gr;
+        const IntegrityCheck integrityCheck {gr};
+        make_graph(gr);
+        trs::edge_creation::InNewChain<Deg2, G> {gr}(BSlot {line, 1});
+        const auto obs = std::make_shared<NewChainObserver>(gr);
+        Branch3 branch {gr, obs};
+        expect_seen(*obs, branch(ESlot {line, End::B})[0]);
+    }
+    {   // cycle boundary vertex, by chain
+        G gr;
+        const IntegrityCheck integrityCheck {gr};
+        make_graph(gr);
+        const auto obs = std::make_shared<NewChainObserver>(gr);
+        Branch2 branch {gr, obs};
+        expect_seen(*obs, branch(cycle)[0]);
+    }
+    {   // cycle boundary vertex, by vertex
+        G gr;
+        const IntegrityCheck integrityCheck {gr};
+        make_graph(gr);
+        const auto obs = std::make_shared<NewChainObserver>(gr);
+        Branch2 branch {gr, obs};
+        auto& v = *gr.chain(cycle).vertex_at_end(End::A);
+        expect_seen(*obs, branch(v)[0]);
+    }
 }
 
 }  // namespace graffine::tests::property_processor
