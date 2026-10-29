@@ -35,10 +35,10 @@ limitations under the License.
 #include "graffine/structure/descriptors/end.h"
 #include "graffine/structure/descriptors/vertex_in_graph.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <vector>
 
 
@@ -78,8 +78,17 @@ private:
 
     using Base::m_data;
 
-    /// Positions in m_data by vertex id.
-    std::unordered_map<std::uint32_t, std::size_t> index;
+    /** Positions in m_data, indexed by the vertex id.
+     * \details The vertex ids are issued by a counter over the run (see
+     * Vertex::create_id()), so they are dense: a table indexed by them is
+     * faster than a hash map, and takes 4 bytes per vertex created in the
+     * run. Entries of vertices no longer in the graph are not cleared:
+     * find() confirms a hit by the id of the descriptor found.
+     */
+    std::vector<std::uint32_t> index;
+
+    /// Sets the index entry of the vertex \p id to the position \p pos.
+    constexpr void set_index(std::uint32_t id, std::size_t pos);
 };
 
 // IMPLEMENTATION ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -91,16 +100,13 @@ set(const Graph& gr)
 {
     m_data.clear();
     m_data.reserve(gr.num_vertices());
-    index.clear();
-    index.reserve(gr.num_vertices());
 
     for (const auto& cmp: gr.ct)
         for (const auto& v : cmp.vertices().get()) {
 
             GRAFFINE_ASSERT(cmp.ind == v->get_c());
 
-            index.emplace(static_cast<std::uint32_t>(v->get_id()()),
-                          m_data.size());
+            set_index(static_cast<std::uint32_t>(v->get_id()()), m_data.size());
             m_data.emplace_back(static_cast<uint>(v->get_c()()),
                                 static_cast<uint>(m_data.size()),
                                 static_cast<uint>(v->get_id()()),
@@ -112,13 +118,12 @@ set(const Graph& gr)
     for (const auto& cmp : gr.ct) {
         const auto& egl = cmp.get_egl();  // descriptors for edges of this component
         for (const auto& v : cmp.vertices().get()) {
-            const auto edvs = v->edges().as_vector();
-            for (uint i {}; i < v->deg(); ++i) {
+            uint i {};
+            for (const auto& edv : v->edges()) {  // edge descriptors in vertex
 
-                const auto& edv = edvs[i];  // edge descriptor in vertex
                 const auto& edge = gr.edge(egl[edv.w].i);
                 const auto oend = descriptors::End::opp(edv.e);
-                m_data[vi].links[i] = VertexDescr::Link{
+                m_data[vi].links[i++] = VertexDescr::Link{
                     static_cast<uint>(edge.ind()),
                     static_cast<uint>(find(edge.vertex_at_inner(oend)->get_id()))
                 };
@@ -135,8 +140,20 @@ push_back(const VertexDescr& vd)
 {
     auto v = vd; // copy
     v.ind = static_cast<uint>(m_data.size());
-    index.insert_or_assign(v.idh, m_data.size());
+    set_index(v.idh, m_data.size());
     m_data.push_back(std::move(v));
+}
+
+template<typename G>
+constexpr
+void VertexDescriptorsInGraph<G>::
+set_index(const std::uint32_t id,
+          const std::size_t pos)
+{
+    if (id >= index.size())
+        index.resize(std::max<std::size_t>(id + 1, 2 * index.size()),
+                     utils::undefined<std::uint32_t>);
+    index[id] = static_cast<std::uint32_t>(pos);
 }
 
 template<typename G>
@@ -159,10 +176,13 @@ find(const VIdH vid) const noexcept -> std::size_t
     const auto h = static_cast<std::uint32_t>(vid());
 
     // The index is kept in sync by set(), push_back() and clear(); the hit is
-    // confirmed in case the data was changed through the Sequence interface.
-    if (const auto it = index.find(h);
-        it != index.end() && it->second < size() && m_data[it->second].idh == h)
-        return it->second;
+    // confirmed, as entries of vertices removed are not cleared, and in case
+    // the data was changed through the Sequence interface.
+    if (h < index.size()) {
+        const std::size_t i = index[h];
+        if (i < size() && m_data[i].idh == h)
+            return i;
+    }
 
     for (size_t i {}; i < size(); ++i)
         if (m_data[i].idh == h)
