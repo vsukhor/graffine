@@ -254,6 +254,73 @@ TEST_F(PullingBulkSourceTest, Deg3)
 }
 
 
+/**
+ * Degree 3 pull to a degree 2 source inside the connected cycle of the driver.
+ * \details The split at the junction opens the cycle, but the merger closes
+ * it again at the next path vertex, so the cycle loses an edge every step,
+ * and its minimal length bounds the steps.
+ */
+TEST_F(PullingBulkSourceTest, Deg3_SameCycle)
+{
+    ++testCount;
+
+    if constexpr (verboseT)
+        print_description(
+            "Tests degree 3 pulling to a degree 2 source in the driver cycle");
+
+    // cycle w0 (4), driven from its end A: 3 edges of the path are over it
+    const Maker make = [](Pullee& s) {
+        make_lollipop(s.gr, 6);
+        const auto& m = s.gr.chain(w0);
+        s.path = Path {&s.gr.compt(CmpId{}), Driver {&m.end_edge(eA), eA},
+                       Source {BSlot {w0, 3}}};
+    };
+
+    Pullee s;
+    make(s);
+    ASSERT_EQ(s.path.length_over_source_chain(), 3);
+    Pull<Deg3> pull {s.gr};
+    EXPECT_TRUE(pull.applicability(s.path, 2));
+    EXPECT_FALSE(pull.applicability(s.path, 3));  // would leave a 1-edge cycle
+
+    pull(s.path, 2);
+
+    const auto& vS = *s.path.vertices().back();
+    EXPECT_EQ(vS.deg(), Deg2);
+    bool hasMinCycle {};
+    for (const auto w : s.gr.compt(CmpId{}).chids())
+        hasMinCycle |= s.gr.chain(w).is_connected_cycle() &&
+                       s.gr.chain(w).length() == minCycleLength;
+    EXPECT_TRUE(hasMinCycle);
+    EXPECT_FALSE(pull.applicability(s.path, 1));
+
+    for (int n {1}; n <= 2; ++n)
+        check_hooks<Deg3>(make, n);
+}
+
+
+/// Rejection of a degree 3 pull over a single edge to a degree 2 source.
+TEST_F(PullingBulkSourceTest, Deg3_SingleEdgePath)
+{
+    ++testCount;
+
+    if constexpr (verboseT)
+        print_description(
+            "Tests rejection of degree 3 pulling over a single edge to a ",
+            "degree 2 source");
+
+    Pullee s;
+    make_two_junctions(s.gr);
+    const auto& m = s.gr.chain(w3);
+    s.path = Path {&s.gr.compt(CmpId{}), Driver {&m.end_edge(eA), eA},
+                   Source {BSlot {w3, 1}}};
+    ASSERT_EQ(s.path.length(), 1);
+
+    EXPECT_FALSE(Pull<Deg3> {s.gr}.applicability(s.path, 1));
+    EXPECT_FALSE(trs::pulling::Functor<G> {s.gr}.applicability(s.path, 1));
+}
+
+
 /// Degree 1 pull to a degree 2 source inside a connected cycle.
 TEST_F(PullingBulkSourceTest, ConnectedCycle)
 {

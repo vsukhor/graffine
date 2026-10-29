@@ -180,6 +180,8 @@ applicability(
     const auto& m = cn[path.d.w];
     if (m.ngs[path.d.end_slot(m).e].num() != 2)
         return reject("driver end is not at a 3-way junction");
+    if (path.s.is_bulk() && path.length() == 1)
+        return reject("driver vertex is next to a degree 2 source");
 
     return check_source(path, steps);
 }
