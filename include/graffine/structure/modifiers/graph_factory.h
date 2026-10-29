@@ -296,8 +296,10 @@ create(
             cmp.set_chis();
         }
 
-        for (auto& cmp : ct)
-            cmp.template check<beLoud>();
+        for (const auto& cmp : ct)
+            GRAFFINE_ENSURE(!cmp.template check<beLoud>(),
+                            "Graph Factory: component ", cmp.ind,
+                            " fails its internal checks");
 
         // Set auxiliary graph members:
         gr.set_num_edges();

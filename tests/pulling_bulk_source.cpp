@@ -299,6 +299,46 @@ TEST_F(PullingBulkSourceTest, Deg3_SameCycle)
 }
 
 
+/**
+ * Component check of a cycle shorter than allowed.
+ * \details An unchecked degree 3 pull beyond the bound of Deg3_SameCycle
+ * leaves a single-edge connected cycle, which no checked transformation
+ * produces. In debug builds, the check after each pull step stops it.
+ */
+TEST_F(PullingBulkSourceTest, ComponentCheckCatchesShortCycle)
+{
+    ++testCount;
+
+    if constexpr (verboseT)
+        print_description(
+            "Tests that the component check reports a too short cycle");
+
+    G gr;  // no IntegrityCheck: the graph is left invalid on purpose
+    make_lollipop(gr, 6);
+    const auto& m = gr.chain(w0);
+    Path path {&gr.compt(CmpId{}), Driver {&m.end_edge(eA), eA},
+               Source {BSlot {w0, 3}}};
+    Pull<Deg3> pull {gr};
+    ASSERT_FALSE(pull.applicability(path, 3));
+    ASSERT_FALSE(gr.compt(CmpId{}).template check_chain_lengths<false>());
+
+#ifdef DEBUG
+    EXPECT_DEATH(pull.apply(path, 3), "Intermediate cmp check");
+#else
+    pull.apply(path, 3);
+
+    bool hasShortCycle {};
+    for (const auto w : gr.compt(CmpId{}).chids())
+        hasShortCycle |= gr.chain(w).is_cycle() &&
+                         gr.chain(w).length() < minCycleLength;
+    ASSERT_TRUE(hasShortCycle);
+    EXPECT_TRUE(gr.compt(CmpId{}).template check_chain_lengths<false>());
+    EXPECT_TRUE(gr.compt(CmpId{}).template check<false>());
+    EXPECT_FALSE((structure::IntegralTests<G, false> {gr}.validate()));
+#endif
+}
+
+
 /// Rejection of a degree 3 pull over a single edge to a degree 2 source.
 TEST_F(PullingBulkSourceTest, Deg3_SingleEdgePath)
 {

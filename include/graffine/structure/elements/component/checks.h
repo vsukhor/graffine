@@ -60,18 +60,24 @@ check_connectivity_vetrex_edge() const -> Vertex*
     for (const auto& v : vv.get())
         for (const auto& s : v->edges()) {
 
-            GRAFFINE_ASSERT(s.w < num_edges(),
-                   "EgDescr.w", s.w, " >= num_edges", num_edges());
-            GRAFFINE_ASSERT(End::is_valid(s.e), "End is not valid: ", s.e);
+            if (s.w >= num_edges() || !End::is_valid(s.e)) {
+                if constexpr (beLoud)
+                    jot("Edge descriptor of vertex ", v->get_id(),
+                        " is not valid: edge ", s.w, " end ", End::str(s.e));
+                return v.get();
+            }
 
             if (edge(s.w).vertex_at_inner(s.e) != v.get()) {
 
-                jot<false>("Connection is not valid for vertex ");
-                v->print("");
-                jot<false>("and edge at inner end ", End::str(s.e),
-                           "           ");
-                edge(s.w).print("");
-                edge(s.w).vertex_at_inner(s.e)->print("found");
+                if constexpr (beLoud) {
+                    jot<false>("Connection is not valid for vertex ");
+                    v->print("");
+                    jot<false>("and edge at inner end ", End::str(s.e),
+                               "           ");
+                    edge(s.w).print("");
+                    if (const auto u = edge(s.w).vertex_at_inner(s.e))
+                        u->print("found");
+                }
 
                 return v.get();
             }
@@ -84,36 +90,35 @@ template<bool beLoud>
 bool Component<Ch>::
 check_chain_idc() const
 {
-    // Check continuity of idc values.
+    // Check that idc values are 0, 1, ... num_chains() - 1.
 
     if constexpr (beLoud)
         jot<false>("chain_idc ... ");
 
-    std::vector<ChIdC> idcs(num_chains());
-    std::iota(idcs.begin(), idcs.end(), 0);
-
-    for (const auto& i : idcs) {
-
-        [[maybe_unused]] bool found{};
-        for (const auto& w : ww)
-            if (cn[w].idc == i) {
-
-                found = true;
-                break;
-            }
-
-        GRAFFINE_ASSERT(found, "idc ", i, " not found in component ", ind);
+    std::vector<bool> found(num_chains());
+    for (const auto& w : ww) {
+        // the other checks rely on the chains being found
+        if (w >= cn.size() || cn[w].c != ind) {
+            if constexpr (beLoud)
+                jot("chain ", w, " is not in component ", ind);
+            return true;
+        }
+        const auto i = cn[w].idc();
+        if (i >= found.size() || found[i]) {
+            if constexpr (beLoud)
+                jot("idc ", cn[w].idc, " of chain ", w, " is out of range ",
+                    "or repeated in component ", ind);
+            return true;
+        }
+        found[i] = true;
     }
 
-    // Check max idc.
-
-    ChIdC maxval{};
-    for (const auto& w : ww)
-        if (cn[w].idc > maxval)
-            maxval = cn[w].idc;
-
-    GRAFFINE_ASSERT(!num_chains() || maxval < num_chains(),
-           "Max idc ", maxval, " >= num_chains ", num_chains());
+    // As many chains as idc values, so each value is found.
+    if (ww.size() != num_chains()) {
+        if constexpr (beLoud)
+            jot("idc values do not cover the chains of component ", ind);
+        return true;
+    }
 
     return false;
 }
@@ -123,37 +128,32 @@ template<bool beLoud>
 bool Component<Ch>::
 check_edge_indc() const
 {
-    // Check continuity of indc values.
+    // Check that indc values are 0, 1, ... num_edges() - 1.
 
     if constexpr (beLoud)
         jot<false>("edge_indc ... ");
 
-    std::vector<ChIdC> idcs(num_edges());
-    std::iota(idcs.begin(), idcs.end(), 0);
-
-    for (const auto& i : idcs) {
-
-        bool found{};
-        for (const auto& w : ww)
-            for (const auto& eg : cn[w].g)
-                if (eg.indc() == i()) {
-
-                    found = true;
-                    break;
-                }
-        GRAFFINE_ENSURE(found, "indc ", i, " not found in component ", ind);
-    }
-
-    // Check max indc.
-
-    ChIdC maxval{};
+    std::vector<bool> found(num_edges());
+    std::size_t n {};
     for (const auto& w : ww)
-        for (const auto& eg : cn[w].g)
-            if (eg.indc() > maxval())
-                maxval = cn[w].idc;
+        for (const auto& eg : cn[w].g) {
+            const auto i = eg.indc();
+            if (i >= found.size() || found[i]) {
+                if constexpr (beLoud)
+                    jot("indc ", eg.indc, " of edge ", eg.ind, " is out of ",
+                        "range or repeated in component ", ind);
+                return true;
+            }
+            found[i] = true;
+            ++n;
+        }
 
-    GRAFFINE_ENSURE(!num_edges() || maxval < num_edges(),
-           "Max indc ", maxval, " >= num_edges ", num_edges());
+    // As many edges as indc values, so each value is found.
+    if (n != num_edges()) {
+        if constexpr (beLoud)
+            jot("indc values do not cover the edges of component ", ind);
+        return true;
+    }
 
     return false;
 }
@@ -166,20 +166,31 @@ check_egl() const
     if constexpr (beLoud)
         jot<false>("egl ... ");
 
-    GRAFFINE_ASSERT(egl.size() == num_edges(),
-           "egl size is incorrect for component ", ind);
+    if (egl.size() != num_edges()) {
+        if constexpr (beLoud)
+            jot("egl size is incorrect for component ", ind);
+        return true;
+    }
 
+    // edge(k) is found through egl[k], so egl[k] is checked to refer to an
+    // edge of the component first
     for (EgIdC k{}; k < egl.size(); ++k)
-        egl[k].check(edge(k), ind, k);
+        if (egl[k].w >= cn.size() || cn[egl[k].w].c != ind ||
+            egl[k].a >= cn[egl[k].w].length() ||
+            !egl[k].matches(edge(k))) {
+            if constexpr (beLoud)
+                jot("egl[", k, "] does not match its edge in component ", ind);
+            return true;
+        }
 
     for (const auto& w : ww)
-        for (const auto& eg : cn[w].g) {
-
-            GRAFFINE_ASSERT(egl.size() > eg.indc(),
-                   "egl size", egl.size(), " is <= for component ", eg.indc);
-
-            egl[eg.indc].check(eg, ind, eg.indc);
-        }
+        for (const auto& eg : cn[w].g)
+            if (egl.size() <= eg.indc() || !egl[eg.indc].matches(eg)) {
+                if constexpr (beLoud)
+                    jot("egl does not match edge ", eg.ind, " of chain ", w,
+                        " in component ", ind);
+                return true;
+            }
 
     return false;
 }
@@ -192,9 +203,19 @@ check_chis() const
     if constexpr (beLoud)
         jot<false>("chis ... ");
 
-    GRAFFINE_ENSURE(chis.num_chains() == num_chains(),
-                    "Incorrect number of chains: ",
-                    chis.num_chains(), " != ", num_chains());
+    /// Reports a failure if \p cond is false.
+    const auto failed = [this](const bool cond, const auto&... msg)
+    {
+        if constexpr (beLoud)
+            if (!cond)
+                jot(msg..., " in component ", ind);
+        return !cond;
+    };
+
+    if (failed(chis.num_chains() == num_chains(),
+               "Incorrect number of chains: ",
+               chis.num_chains(), " != ", num_chains()))
+        return true;
 
     if (!num_chains())
         return false;
@@ -203,41 +224,71 @@ check_chis() const
             "Found multiple unconnected linear chains in cmp ", ind);
 
     if (chis.num({1, 1})) {
-        [[maybe_unused]] const auto u = chis.cn_11()[0];
+        const auto u = chis.cn_11()[0];
         // allow several unconnected chains to handle irregular components
-        GRAFFINE_ASSERT(cn[u].is_unconnected_linear(),
-               "Error 11 for w ", u);
+        if (failed(cn[u].is_unconnected_linear(), "Error 11 for w ", u))
+            return true;
     }
 
     warn_if(chis.num({2, 2}) > 1,
             "Found multiple unconnected cycle chains in cmp ", ind);
 
     if (chis.num({2, 2})) {
-        [[maybe_unused]] const auto u = chis.cn_22()[0];
+        const auto u = chis.cn_22()[0];
         // allow several unconnected chains to handle irregular components
-        GRAFFINE_ASSERT(cn[u].is_unconnected_cycle(),
-               "Error 22 for w ", u);
+        if (failed(cn[u].is_unconnected_cycle(), "Error 22 for w ", u))
+            return true;
     }
-    for ([[maybe_unused]] const auto& u : chis.cn_33())
-        GRAFFINE_ASSERT(cn[u].ngs[End::A].num() == 2 && cn[u].ngs[End::B].num() == 2,
-               "Error 33 for w ", u);
+    for (const auto& u : chis.cn_33())
+        if (failed(cn[u].ngs[End::A].num() == 2 && cn[u].ngs[End::B].num() == 2,
+                   "Error 33 for w ", u))
+            return true;
 
-    for ([[maybe_unused]] const auto& u : chis.cn_44())
-        GRAFFINE_ASSERT(cn[u].ngs[End::A].num() == 3 && cn[u].ngs[End::B].num() == 3,
-               "Error 44 for w ", u);
+    for (const auto& u : chis.cn_44())
+        if (failed(cn[u].ngs[End::A].num() == 3 && cn[u].ngs[End::B].num() == 3,
+                   "Error 44 for w ", u))
+            return true;
 
-    for ([[maybe_unused]] const auto& u : chis.cn_13())
-        GRAFFINE_ASSERT(!cn[u.w].ngs[u.e].num() && cn[u.w].ngs[End::opp(u.e)].num() == 2,
-               "Error 13 for w ", u.str_short());
+    for (const auto& u : chis.cn_13())
+        if (failed(!cn[u.w].ngs[u.e].num() &&
+                   cn[u.w].ngs[End::opp(u.e)].num() == 2,
+                   "Error 13 for w ", u.str_short()))
+            return true;
 
-    for ([[maybe_unused]] const auto& u : chis.cn_14())
-        GRAFFINE_ASSERT(!cn[u.w].ngs[u.e].num() && cn[u.w].ngs[End::opp(u.e)].num() == 3,
-               "Error 14 for w ", u.str_short());
-
-    for ([[maybe_unused]] const auto& u : chis.cn_34())
-        GRAFFINE_ASSERT(cn[u.w].ngs[u.e].num() == 2 &&
+    for (const auto& u : chis.cn_14())
+        if (failed(!cn[u.w].ngs[u.e].num() &&
                    cn[u.w].ngs[End::opp(u.e)].num() == 3,
-               "Error 34 for w ", u.str_short());
+                   "Error 14 for w ", u.str_short()))
+            return true;
+
+    for (const auto& u : chis.cn_34())
+        if (failed(cn[u.w].ngs[u.e].num() == 2 &&
+                   cn[u.w].ngs[End::opp(u.e)].num() == 3,
+                   "Error 34 for w ", u.str_short()))
+            return true;
+
+    return false;
+}
+
+template <typename Ch>
+template<bool beLoud>
+bool Component<Ch>::
+check_chain_lengths() const
+{
+    if constexpr (beLoud)
+        jot<false>("chain lengths ... ");
+
+    // Empty linear chains are allowed: components are assembled from them.
+    for (const auto& w : ww) {
+        const auto& m = cn[w];
+        if (m.is_cycle() && m.length() < Chain::minCycleLength) {
+            if constexpr (beLoud)
+                jot(colorcodes::BOLDRED, "cycle chain ", w, " of length ",
+                    m.length(), " is shorter than ", Chain::minCycleLength,
+                    colorcodes::RESET);
+            return true;
+        }
+    }
 
     return false;
 }
@@ -250,10 +301,8 @@ check_vertex_data() const
     if constexpr (beLoud)
         jot<false>("vertex_c ... ");
 
-    GRAFFINE_ASSERT(!vv.check_c(ind));
-    GRAFFINE_ASSERT(!check_connectivity_vetrex_edge<beLoud>());
-
-    return false;
+    return vv.check_c(ind) ||
+           check_connectivity_vetrex_edge<beLoud>();
 }
 
 template <typename Ch>
@@ -271,6 +320,8 @@ check(const std::string_view s) const
     if (int err = check_egl<beLoud>(); err)
         return err;
     if (int err = check_chis<beLoud>(); err)
+        return err;
+    if (int err = check_chain_lengths<beLoud>(); err)
         return err;
     if (int err = check_vertex_data<beLoud>(); err)
         return err;

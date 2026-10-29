@@ -330,7 +330,9 @@ components(const itT it) const
             );
         }
 
-        c.template check<beLoud>();
+        c.ensure(!c.template check<beLoud>(),
+                 "at iter ", it, " component ", c.ind,
+                 " fails its internal checks");
     }
 
     for (std::size_t w {}; w<gr.num_chains(); ++w)

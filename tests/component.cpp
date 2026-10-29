@@ -28,6 +28,9 @@ limitations under the License.
 
 
 #include <array>
+#include <functional>
+#include <tuple>
+#include <vector>
 #include <iostream>
 #include <numeric>  // accumulate
 #include <string>
@@ -1060,6 +1063,75 @@ TEST_F(ComponentTest, GetEglDoesNotMove)
     const auto copy = cmp.get_egl();
     EXPECT_EQ(copy.size(), len);
     EXPECT_EQ(cmp.get_egl().size(), len);
+}
+
+
+
+/**
+ * Tests that the component checks report corrupted component records.
+ * \details Each check detects one kind of corruption of a valid component, in
+ * all builds, and so does check().
+ */
+TEST_F(ComponentTest, ChecksReportCorruption)
+{
+    ++testCount;
+
+    if constexpr (verboseT)
+        print_description(
+            "Tests that the component checks report corrupted records");
+
+    static constexpr ChIdG w0 {0};
+    static constexpr ChIdG w1 {1};
+    static constexpr CmpId c {0};
+
+    /// Valid component: w1 (2) joined to the bulk of w0 (6), splitting it.
+    const auto make = [](G& gr)
+    {
+        gr.add_single_chain_component(6);
+        gr.add_single_chain_component(2);
+        VertexMerger<1, 2, G> merge12 {gr};
+        merge12(ESlot{w1, End::B}, BSlot{w0, 3});
+    };
+
+    using Corrupt = std::function<void(G&)>;
+    using Check = std::function<bool(const Cmp&)>;
+    const std::vector<std::tuple<const char*, Corrupt, Check>> cases {
+        {"repeated chain idc",
+         [](G& gr) { gr.chain(w1).idc = gr.chain(w0).idc; },
+         [](const Cmp& m) { return m.check_chain_idc<false>(); }},
+        {"repeated edge indc",
+         [](G& gr) { gr.chain(w0).g[1].indc = gr.chain(w0).g[0].indc; },
+         [](const Cmp& m) { return m.check_edge_indc<false>(); }},
+        {"edge descriptor of another position",
+         [](G& gr) { gr.compt(c).get_egl()[EgIdC{0}].a = EgIdA{5}; },
+         [](const Cmp& m) { return m.check_egl<false>(); }},
+        {"chain classified at a junction it is not at",
+         [](G& gr) { gr.chain(w1).ngs[End::B] = {}; },
+         [](const Cmp& m) { return m.check_chis<false>(); }},
+        {"vertex of another component",
+         [](G& gr) { gr.compt(c).vv.get()[0]->set_c(CmpId{7}); },
+         [](const Cmp& m) { return m.check_vertex_data<false>(); }},
+        {"vertex listing an edge end not at it",
+         [](G& gr) {
+             const auto& eg = gr.chain(w0).g[0];
+             auto& other = *gr.chain(w1).g[0].vertex_at_inner(End::A);
+             other.insert(G::Vertex::EgDescr {eg.id, eg.indc, End::A});
+         },
+         [](const Cmp& m) { return m.check_vertex_data<false>(); }},
+    };
+
+    {
+        G gr;
+        make(gr);
+        ASSERT_FALSE(gr.compt(c).template check<profuse>());
+    }
+    for (const auto& [what, corrupt, check] : cases) {
+        G gr;  // no IntegrityCheck: the graph is corrupted on purpose
+        make(gr);
+        corrupt(gr);
+        EXPECT_TRUE(check(gr.compt(c))) << what;
+        EXPECT_TRUE(gr.compt(c).template check<false>()) << what;
+    }
 }
 
 }

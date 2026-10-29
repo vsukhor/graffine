@@ -454,6 +454,13 @@ public: // Functions
     template<bool beLoud = true>
     bool check_chis() const;
 
+    /**
+     * Ensure that no cycle chain is shorter than Chain::minCycleLength.
+     * \note Unlike the other checks, reports a failure in all builds.
+     */
+    template<bool beLoud = true>
+    bool check_chain_lengths() const;
+
     /// Collection of test of this component internal structures and indices.
     template<bool beLoud = true>
     bool check(std::string_view s = "") const;

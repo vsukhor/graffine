@@ -66,6 +66,15 @@ struct EdgeInComponent
         return *this != Undef;
     }
 
+    /// Checks that this descriptor is the one of edge \p eg.
+    constexpr bool matches(const Edge& eg) const noexcept
+    {
+        return w == eg.w &&
+               a == eg.indw &&
+               i == eg.ind &&
+               h == eg.id;
+    }
+
     void check(const Edge& eg,
                const CmpId ic,
                const auto k) const
