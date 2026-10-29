@@ -234,6 +234,16 @@ is_shrinkable() const noexcept
 template<typename E>
 constexpr
 bool Chain<E>::
+is_shrinkable_by(const std::size_t n) const noexcept
+{
+    const auto l = length();
+
+    return l >= n + (is_cycle() ? minCycleLength : minLength);
+}
+
+template<typename E>
+constexpr
+bool Chain<E>::
 is_unconnected_cycle_boundary(const Vertex& v) const noexcept
 {
     return is_unconnected_cycle() && vertex_at_end(endA)->operator==(v);

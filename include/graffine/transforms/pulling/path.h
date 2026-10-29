@@ -61,7 +61,48 @@ struct Path
     using PathW = Base::PathW;
     using PathCh = structure::paths::over_endslots::Generic<C>::Path;
 //    using Skeleton = paths::Container<Driver>;
-    using Source = EndSlot;
+    using BulkSlot = Chain::BulkSlot;
+
+    /**
+     * Descriptor of the Path source.
+     * \details Either a chain end: a free end, or the end of a cycle chain;
+     * or a vertex of degree 2 inside a chain, given as a BulkSlot. Pulling
+     * shifts the junctions on the path towards a degree 2 source, and so
+     * shortens the path part over the source chain, without moving the source
+     * in its chain beyond the junction.
+     */
+    struct Source
+        : public EndSlot
+    {
+        /// Position of a degree 2 source in its chain; undefined for an end.
+        EgIdA pos {EgIdA::undefined};
+
+        using EndSlot::EndSlot;
+
+        constexpr Source() = default;
+
+        constexpr Source(const EndSlot& s) noexcept
+            : EndSlot {s}
+        {}
+
+        explicit constexpr Source(const BulkSlot& s) noexcept
+            : EndSlot {s.w, End::undefined}
+            , pos {s.a()}
+        {}
+
+        constexpr bool operator==(const Source& s) const noexcept
+        {
+            return EndSlot::operator==(s) && pos == s.pos;
+        }
+
+        /// Checks that the source is a degree 2 vertex inside a chain.
+        constexpr bool is_bulk() const noexcept { return pos.is_defined(); }
+
+        constexpr auto bulk_slot() const noexcept -> BulkSlot { return {this->w, pos}; }
+
+        /// The chain end of a source which is not a degree 2 vertex.
+        constexpr auto end_slot() const noexcept -> EndSlot { return *this; }
+    };
 
     /// Descriptor of the Path driver.
     struct Driver
@@ -173,6 +214,10 @@ struct Path
     static constexpr auto end_to_a_tip(const C::Chain& m,
                                        const End::Id e);
 
+    /// Checks that position \p a of chain \p m is a vertex inside it.
+    static constexpr bool is_bulk_position(const Chain& m,
+                                           EgIdA a) noexcept;
+
 //    void set_skeleton() const;
 
     /// Id of the chain at the leading path end.
@@ -208,7 +253,20 @@ struct Path
 
     constexpr auto length_over_source_chain() const noexcept -> std::size_t;
 
+    /**
+     * Vertices along the path, from the driver vertex to the source vertex.
+     * \details Vertex \a i is shared by path edges \a i-1 and \a i, so there
+     * are length() + 1 of them.
+     * \return Empty if the path is not contiguous.
+     */
     constexpr auto vertices() const noexcept -> std::vector<Vertex*>;
+
+    /**
+     * Checks that \p pthc and \p pthw refer to the same edges, and that each
+     * path edge shares a vertex with the preceding one, starting from the
+     * driver vertex.
+     */
+    constexpr bool is_contiguous() const noexcept;
 
     template<typename... Args>
     void print_path(Args... args) const noexcept;
@@ -231,6 +289,13 @@ private:
         const Component* const cmp
     ) -> std::tuple<PathC, PathW>;
 
+    /// Component-wide index of the last path edge, the one at source \p sr.
+    static auto source_edge(
+        const Driver& dr,
+        const Source& sr,
+        Base& b
+    ) -> EgIdC;
+
     void set_driver_end(const End::Id e);
 };
 
@@ -249,12 +314,14 @@ Path(
     , d {d}
     , s {s}
 {
-    GRAFFINE_ASSERT(cmp->chain(s.w).ngs[s.e].num() == 0,
+    GRAFFINE_ASSERT(s.is_bulk() || cmp->chain(s.w).ngs[s.e].num() == 0,
            "Source end is not disconnected");
     GRAFFINE_ASSERT(cmp->chain(s.w).c == cmp->ind,
            "Source compartment is different from cmp");
     GRAFFINE_ASSERT(cmp->chain(d.w).c == cmp->ind,
            "Driver compartment is different from cmp");
+    GRAFFINE_ASSERT(!s.is_bulk() || is_bulk_position(cmp->chain(s.w), s.pos),
+           "Source is not inside its chain");
 
     set_shortest();
 }
@@ -280,13 +347,16 @@ Path(
            "Source compartment is different from cmp");
     GRAFFINE_ASSERT(cmp->chain(d.w).c == cmp->ind,
            "Driver compartment is different from cmp");
+    GRAFFINE_ASSERT(!s.is_bulk() || is_bulk_position(cmp->chain(s.w), s.pos),
+           "Source is not inside its chain");
 
     if (internals.size()) {
 
         GRAFFINE_ASSERT(cmp->chain(internals[0].w).c == cmp->ind,
                "Compartment of internal 0 is different from cmp");
         GRAFFINE_ASSERT(internals[0].ind != d.ind, "Internal 0 is same as driver");
-        GRAFFINE_ASSERT(internals[0].ind != cmp->chain(s.w).end2ind(s.e),
+        GRAFFINE_ASSERT(s.is_bulk() ||
+               internals[0].ind != cmp->chain(s.w).end2ind(s.e),
                "Internal 0 is same as source");
 
         auto [pc0, pw0] = set_shortest(d, driver2source(internals.front()), cmp);
@@ -297,7 +367,8 @@ Path(
             GRAFFINE_ASSERT(cmp->chain(internals[i].w).c == cmp->ind,
                    "Compartment of internal ", i, " is different from cmp");
             GRAFFINE_ASSERT(internals[i].ind != d.ind, "Internal ", i, " is same as driver");
-            GRAFFINE_ASSERT(internals[i].ind != cmp->chain(s.w).end2ind(s.e),
+            GRAFFINE_ASSERT(s.is_bulk() ||
+                   internals[i].ind != cmp->chain(s.w).end2ind(s.e),
                    "Internal ", i, " is same as source");
 
             auto [pc, pw] = set_shortest(internals[i-1], driver2source(internals[i]), cmp);
@@ -433,10 +504,8 @@ set_shortest()
 {
     // driver is at pthc.front(),
     // source is at pthc.back()
-    pthc = this->template find_shortest_path<true>(
-        cmp->ind2indc(d.ind),
-        cmp->chain(s.w).end_edge(s.e).indc
-    );
+    const auto icS = source_edge(d, s, *this);
+    pthc = this->template find_shortest_path<true>(cmp->ind2indc(d.ind), icS);
     pthw = this->path_to_global_ind(pthc);
 }
 
@@ -452,7 +521,7 @@ set_shortest(const Driver& dr,
     Base b {c};
 
     const auto icD = b.cmp->ind2indc(dr.ind);
-    const auto icS = b.cmp->chain(sr.w).end_edge(sr.e).indc;
+    const auto icS = source_edge(dr, sr, b);
 
     PathC pc;
     if (dr.w != sr.w)
@@ -473,6 +542,46 @@ set_shortest(const Driver& dr,
     const auto p = b.path_to_global_ind(pc);
 
     return {pc, p};
+}
+
+
+template<typename C>
+auto Path<C>::
+source_edge(const Driver& dr,
+            const Source& sr,
+            Base& b) -> EgIdC  // static
+{
+    const auto& m = b.cmp->chain(sr.w);
+
+    if (!sr.is_bulk())
+        return m.end_edge(sr.e).indc;
+
+    // A degree 2 source is reached over one of the two edges next to it,
+    // without passing through it.
+    const auto icL = m.g[sr.pos() - 1].indc;  // edge before the source
+    const auto icR = m.g[sr.pos()].indc;      // edge after the source
+    const auto icD = b.cmp->ind2indc(dr.ind);
+
+    if (dr.w == sr.w)  // along the chain, from the side of the driver
+        return b.cmp->get_egl(icD).a < sr.pos ? icL : icR;
+
+    // A path to one of the edges passing over the other one is longer than
+    // the path to the other one.
+    const auto pL = b.template find_shortest_path<true>(icD, icL);
+    const auto pR = b.template find_shortest_path<false>(icD, icR);
+
+    return pR.empty() || (!pL.empty() && pL.size() <= pR.size()) ? icL
+                                                                 : icR;
+}
+
+
+template<typename C>
+constexpr
+bool Path<C>::
+is_bulk_position(const Chain& m,
+                 const EgIdA a) noexcept  // static
+{
+    return a.is_defined() && a() > 0 && a() < m.length();
 }
 
 
@@ -745,7 +854,8 @@ constexpr
 auto Path<C>::
 source_vertex() const noexcept -> const Vertex&
 {
-    const auto vp = cmp->edge(pthc.back()).vertex_at_outer(s.e);
+    const auto vp = s.is_bulk() ? vertices().back()
+                                : cmp->edge(pthc.back()).vertex_at_outer(s.e);
 
     GRAFFINE_ASSERT(vp, "Driver edge leading end is not connected");
 
@@ -757,7 +867,9 @@ constexpr
 auto Path<C>::
 source_vertex() noexcept -> Vertex&
 {
-    auto vp = const_cast<Vertex*>(cmp->edge(pthc.back()).vertex_at_outer(s.e));
+    auto vp = s.is_bulk()
+            ? vertices().back()
+            : const_cast<Vertex*>(cmp->edge(pthc.back()).vertex_at_outer(s.e));
 
     GRAFFINE_ASSERT(vp, "Driver edge leading end is not connected");
 
@@ -787,7 +899,49 @@ constexpr
 auto Path<C>::
 vertices() const noexcept -> std::vector<Vertex*>
 {
-    return Base::vertices(pthc, d.egEnd);
+    if (pthc.empty())
+        return {};
+
+    std::vector<Vertex*> vv;
+    vv.reserve(pthc.size() + 1);
+
+    auto v = cmp->edge(pthc[0]).vertex_at_inner(d.egEnd);
+    vv.push_back(const_cast<Vertex*>(v));
+
+    for (const auto ic : pthc) {
+        const auto& eg = cmp->edge(ic);
+        const auto vA = eg.vertex_at_inner(End::A);
+        const auto vB = eg.vertex_at_inner(End::B);
+
+        if (!v || !vA || !vB)
+            return {};
+        if (*vA == *v)
+            v = vB;
+        else if (*vB == *v)
+            v = vA;
+        else
+            return {};  // the edge does not continue the path
+
+        vv.push_back(const_cast<Vertex*>(v));
+    }
+
+    return vv;
+}
+
+
+template<typename C>
+constexpr
+bool Path<C>::
+is_contiguous() const noexcept
+{
+    if (pthc.empty() || pthc.size() != pthw.size())
+        return false;
+
+    for (std::size_t i {}; i<pthc.size(); ++i)
+        if (pthc[i] >= cmp->num_edges() || cmp->get_egl(pthc[i]).i != pthw[i])
+            return false;
+
+    return vertices().size() == pthc.size() + 1;
 }
 
 template<typename C>
@@ -832,7 +986,8 @@ print_detailed(const std::string& str) const
 
     this->print_edge(pthc.size()-1, pthc.back(),
                      colorcodes::CYAN, "source", colorcodes::RESET,
-                     " (end ", End::str(s.e), ")   ");
+                     s.is_bulk() ? " (pos "s + std::to_string(s.pos()) + ")   "
+                                 : " (end "s + End::str(s.e) + ")   ");
 }
 
 

@@ -468,6 +468,14 @@ struct Chain<E>
      */
     constexpr bool is_shrinkable() const noexcept;
 
+    /**
+     * Checks if \p n edges can be removed from the chain, which is preserved.
+     * \details Unlike is_shrinkable(), does not let a chain having a leaf
+     * vertex disappear: the chain should keep at least minLength edges, or
+     * minCycleLength edges if it is a cycle.
+     */
+    constexpr bool is_shrinkable_by(std::size_t n) const noexcept;
+
     constexpr bool is_unconnected_cycle_boundary(const Vertex& v) const noexcept;
 
     constexpr bool is_cycle_boundary(const Vertex& v) const noexcept;

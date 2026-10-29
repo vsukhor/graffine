@@ -210,16 +210,18 @@ check_path(
     GRAFFINE_ASSERT(c->chain(wD).ngs[eD].num() == 0, "Driver end is not disconnected");
 
     [[maybe_unused]] const auto sourceIsCycle = cn[wS].is_cycle();
+    [[maybe_unused]] const auto sourceIsBulk = path.s.is_bulk();
 
-    GRAFFINE_ASSERT(sourceIsCycle ||
+    GRAFFINE_ASSERT(sourceIsBulk || sourceIsCycle ||
            (!sourceIsCycle && c->chain(wS).ngs[eS].num() == 0),
            "Source end is not disconnected");
 
     [[maybe_unused]] const auto lenS = path.length_over_source_chain();
 
-    GRAFFINE_ASSERT((!sourceIsCycle &&
+    GRAFFINE_ASSERT((sourceIsBulk && lenS >= static_cast<size_t>(steps)) ||
+           (!sourceIsBulk && !sourceIsCycle &&
             lenS >= static_cast<size_t>(steps)) ||
-           (sourceIsCycle &&
+           (!sourceIsBulk && sourceIsCycle &&
             lenS >= Chain::minCycleLength + static_cast<size_t>(steps)),
            "Pulling over the track longer than the source chain");
 }

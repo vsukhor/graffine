@@ -40,6 +40,8 @@ list(APPEND cpps
     pulling_1.cpp
     pulling_2.cpp
     pulling_3.cpp
+    pulling_hooks.cpp
+    pulling_bulk_source.cpp
 )
 
 set(bindir ${CMAKE_CURRENT_SOURCE_DIR}/bin)

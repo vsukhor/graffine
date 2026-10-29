@@ -68,6 +68,7 @@ struct On<Deg2, Dir, G, PP>
     using End = Base::End;
     using EndSlot = Base::EndSlot;
     using Path = Base::Path;
+    using Source = Base::Source;
     using PropertyProcessor = Base::PropertyProcessor;
     using ResT = Trait::ResT;
     using Res = Trait::Res;
@@ -114,6 +115,8 @@ protected:
     using Base::check_path_basics;
     using Base::check_source;
     using Base::egl;
+    using Base::source_at;
+    using Base::source_egEnd;
     using Base::updateProperties;
 
     /**
@@ -196,6 +199,15 @@ applicability(
     if (corrected.length() > 1)
         correct_driver(corrected);
 
+    if (omitUnconnectedCycles && cn[corrected.d.w].is_unconnected_cycle())
+        return reject("pulling deg 2 from an unconnected cycle chain");
+
+    if (corrected.src().is_bulk()) {
+        if (corrected.length() == 1)
+            return reject("driver vertex is next to a degree 2 source");
+        return check_source(corrected, steps);
+    }
+
     if (corrected.drv().w == corrected.src().w) {
         const auto& m = cn[corrected.s.w];
         if (!m.is_cycle() && m.ngs[corrected.s.e].num())
@@ -266,8 +278,8 @@ pull_N(Path& path)
 
     // source
     const auto iS = p.back();  // ind of the source edge
-    auto& cnS = path.cmp->chain(path.s.w);
-    const auto egeS = cnS.g[egl[iS].a].inner_endId(path.s.e);
+    const auto egeS = source_egEnd(path);
+    const auto isBulk = path.s.is_bulk();
 
     // non-path edge in front of the driver:
     // because driver end is at degree 2, there should be at least one such edge
@@ -282,16 +294,15 @@ pull_N(Path& path)
     vertex_split_11(bsDe);
 
     auto wS = egl[iS].w;
-    auto eS = cn.edge(egl[iS]).points_forwards()
-            ? egeS
-            : End::opp(egeS);
 
     path = Path {&gr.compt(wS),
                  typename Path::Driver {&gr.edge(iD), egeD},
-                 typename Path::Source {EndSlot{wS, eS}},
+                 source_at(iS, egeS, isBulk),
                  path.pthw};
 
-    [[maybe_unused]] const auto source_was_dissolved = this->pull_leaf_vertex(path, 1);
+    // on_end is called below, once the step is completed by the merger
+    [[maybe_unused]] const auto source_was_dissolved =
+        this->template pull_leaf_vertex<false>(path);
 
     const auto wQ = egl[iQ].w;
     const auto eQ = cn.edge(egl[iQ]).points_forwards() ? egeQ
@@ -303,18 +314,23 @@ pull_N(Path& path)
 
     wS = egl[iS].w;
 
-    GRAFFINE_ASSERT(source_was_dissolved || (!source_was_dissolved &&
+    GRAFFINE_ASSERT(isBulk || source_was_dissolved || (!source_was_dissolved &&
            (cn[wS].is_headind(iS) || cn[wS].is_tailind(iS))),
            "Source is not a chain end");
 
-    eS = cn[wS].has_single_leaf_vertex()
-       ? cn[wS].get_single_leaf_end()
-       : End::undefined;
+    const auto src = isBulk
+                   ? source_at(iS, egeS, true)
+                   : Source {EndSlot{wS, cn[wS].has_single_leaf_vertex()
+                                         ? cn[wS].get_single_leaf_end()
+                                         : End::undefined}};
 
     path = Path {&gr.compt(wS),
                  typename Path::Driver {&gr.edge(iD), egeD},
-                 typename Path::Source {EndSlot{wS, eS}},
+                 src,
                  path.pthw};
+
+    if constexpr (!std::is_void_v<PP>)
+        updateProperties->pulling.on_end(path);
 }
 
 
@@ -412,7 +428,7 @@ check_path(
         }
         const auto gS = c->get_egl(pc.back());
         const auto gT = c->get_egl(pc[pc.size()-2]);
-        if (gS.w == gT.w) {
+        if (!path.s.is_bulk() && gS.w == gT.w) {
             GRAFFINE_ASSERT(End::opp(cn[wS].internal_egEnd(gT.a, gS.a)) ==
                    cn[wS].g[gS.a].inner_endId(eS),
                    "opp of source's internal_egEnd is not its inner_endId");
@@ -420,14 +436,16 @@ check_path(
     }
 
     [[maybe_unused]] const auto sourceIsCycle = cn[wS].is_cycle();
+    [[maybe_unused]] const auto sourceIsBulk = path.s.is_bulk();
 
-    GRAFFINE_ASSERT(sourceIsCycle ||
+    GRAFFINE_ASSERT(sourceIsBulk || sourceIsCycle ||
            (!sourceIsCycle && cn[wS].ngs[eS].num() == 0),
            "Source end is not disconnected");
 
     [[maybe_unused]] const auto lenS = path.length_over_source_chain();
 
-    GRAFFINE_ASSERT(path.drv().w == path.src().w ||
+    GRAFFINE_ASSERT((sourceIsBulk && lenS >= static_cast<size_t>(steps)) ||
+           (!sourceIsBulk && path.drv().w == path.src().w) ||
            (!sourceIsCycle &&
             lenS >= static_cast<size_t>(steps)) ||
            (sourceIsCycle &&

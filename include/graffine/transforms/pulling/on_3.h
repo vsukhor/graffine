@@ -70,6 +70,7 @@ struct On<Deg3, Dir, G, PP>
     using BulkSlot = Base::BulkSlot;
     using EndSlot = Base::EndSlot;
     using Path = Base::Path;
+    using Source = Base::Source;
     using PropertyProcessor = Base::PropertyProcessor;
     using ResT = Trait::ResT;
     using Res = Trait::Res;
@@ -131,6 +132,8 @@ private:
     using Base::check_source;
     using Base::egl;
     using Base::gr;
+    using Base::source_at;
+    using Base::source_egEnd;
     using Base::updateProperties;
 
     // Auxiliary functors for vertex transformations
@@ -227,8 +230,8 @@ pull(Path& path)
     GRAFFINE_ASSERT(End::is_defined(eD), "driver of pull<", D, "> is not a chain end.");
 
     const auto iS = path.pthw.back();
-    auto& cnS = path.cmp->chain(path.s.w);
-    const auto egeS = cnS.g[egl[iS].a].inner_endId(path.s.e);
+    const auto egeS = source_egEnd(path);
+    const auto isBulk = path.s.is_bulk();
 
     // cn[wD].ngs[eD].num() == D - 1,
     // since it is a connected chain end with nn < D, and the
@@ -256,9 +259,11 @@ pull(Path& path)
 
     path = Path {&gr.compt(wS),
                  typename Path::Driver {&cn.edge(egl[iD]), egeD},
-                 typename Path::Source {EndSlot{wS, eS}},
+                 isBulk ? source_at(iS, egeS, true) : Source {EndSlot{wS, eS}},
                  path.pthw};
-    this->pull_leaf_vertex(path, 1);
+
+    // on_end is called below, once the step is completed by the merger
+    this->template pull_leaf_vertex<false>(path);
 
     wD = egl[iD].w;
     if (iD != iS)
@@ -268,7 +273,7 @@ pull(Path& path)
 
     path = Path {&gr.compt(wS),
                  typename Path::Driver {&cn.edge(egl[iD]), egeD},
-                 typename Path::Source {EndSlot{wS, eS}},
+                 isBulk ? source_at(iS, egeS, true) : Source {EndSlot{wS, eS}},
                  path.pthw};
 
     const auto a0 = eD == End::A
@@ -307,8 +312,11 @@ pull(Path& path)
     // recreate path for eventual further steps
     path = Path {&gr.compt(wS),
                  typename Path::Driver {&cn.edge(egl[iD]), egeD},
-                 typename Path::Source {EndSlot{wS, eS}},
+                 isBulk ? source_at(iS, egeS, true) : Source {EndSlot{wS, eS}},
                  path.pthw};
+
+    if constexpr (!std::is_void_v<PP>)
+        updateProperties->pulling.on_end(path);
 }
 
 
@@ -332,16 +340,18 @@ check_path(
            "Driver end is not at a three-way junction");
 
     [[maybe_unused]] const auto sourceIsCycle = cn[wS].is_cycle();
+    [[maybe_unused]] const auto sourceIsBulk = path.s.is_bulk();
 
-    GRAFFINE_ASSERT(sourceIsCycle ||
+    GRAFFINE_ASSERT(sourceIsBulk || sourceIsCycle ||
            (!sourceIsCycle && c->chain(wS).ngs[eS].num() == 0),
            "Source end is not disconnected");
 
     [[maybe_unused]] const auto lenS = path.length_over_source_chain();
 
-    GRAFFINE_ASSERT((!sourceIsCycle &&
+    GRAFFINE_ASSERT((sourceIsBulk && lenS >= static_cast<size_t>(steps)) ||
+           (!sourceIsBulk && !sourceIsCycle &&
             lenS >= static_cast<size_t>(steps)) ||
-           (sourceIsCycle &&
+           (!sourceIsBulk && sourceIsCycle &&
             lenS >= Chain::minCycleLength + static_cast<size_t>(steps)),
            "Pulling over the track longer than the source chain");
 }

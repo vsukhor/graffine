@@ -64,6 +64,7 @@ struct FunctorBase
     using PropertyProcessor = PP;
     using Path = pulling::Path<Compt>;
     using PathW = typename Path::PathW;
+    using Source = typename Path::Source;
 
     /**
      * Base class for deriving functors handling degree-specific vertex pulling.
@@ -85,9 +86,31 @@ protected:
     /**
      * Checks that the source end of \p path is free, unless the source is a
      * cycle, and that the source chain is long enough for \p steps.
+     * \details A degree 2 source should end the path, which should cover at
+     * least \p steps edges of the source chain, and the source chain should
+     * be shrinkable by \p steps edges.
      */
     auto check_source(const Path& path,
                       int steps) const -> Applicability;
+
+    /**
+     * End of the last edge of \p path at the source vertex.
+     * \details Is the end of the edge itself, so remains valid as the edge
+     * moves between chains.
+     */
+    auto source_egEnd(const Path& path) const -> End::Id;
+
+    /**
+     * Source at end \p egeS of the edge \p iS, which is the last path edge.
+     * \details A degree 2 source which is reached by the junction becomes the
+     * chain end at this junction.
+     * \param[in] iS Graph-wide index of the source edge.
+     * \param[in] egeS End of the source edge at the source vertex.
+     * \param[in] isBulk The source is a degree 2 vertex.
+     */
+    auto source_at(EgIdG iS,
+                   End::Id egeS,
+                   bool isBulk) const -> Source;
 
     Graph&         gr;  ///< Reference to the modified graph object
     Graph::Chains& cn;  ///< Reference to the graph edge chains.
@@ -105,7 +128,11 @@ protected:
     /**
      * Pull once a sequence of consecutive edges defined by \p path .
      * \overload
+     * \tparam notify Calls pulling.on_end after the step. False for a step
+     * which the caller completes with further topology changes, and so calls
+     * pulling.on_end itself.
      */
+    template<bool notify = true>
     bool pull_leaf_vertex(Path& path);
 
     bool chain_exit_path(
@@ -150,9 +177,11 @@ check_path_basics(
     const auto c = path.cmp;
     if (!c || c->ind >= gr.num_compts() || &gr.compt(c->ind) != c)
         return reject("path does not refer to a component of the graph");
-    if (path.d.w >= gr.num_chains() || path.s.w >= gr.num_chains() ||
-        !End::is_valid(path.s.e))
+    if (path.d.w >= gr.num_chains() || path.s.w >= gr.num_chains())
         return reject("path refers to invalid chains");
+    if (path.s.is_bulk() ? !Path::is_bulk_position(cn[path.s.w], path.s.pos)
+                         : !End::is_valid(path.s.e))
+        return reject("path refers to an invalid source");
     if (steps < 1)
         return reject("number of steps is not positive");
 
@@ -176,6 +205,19 @@ check_source(
     const auto& m = cn[path.s.w];
     const auto sourceIsCycle = m.is_cycle();
 
+    if (path.s.is_bulk()) {
+        const auto vv = path.vertices();
+        const auto& vS = *m.vertex_at_bulk(path.s.pos);
+        if (vv.empty() || !(*vv.back() == vS))
+            return reject("path does not end at the source");
+        if (path.length_over_source_chain() < static_cast<std::size_t>(steps))
+            return reject("path over the source chain is too short for the steps");
+        if (!m.is_shrinkable_by(static_cast<std::size_t>(steps)))
+            return reject("source chain is not shrinkable by the steps");
+
+        return {};
+    }
+
     if (!sourceIsCycle && m.ngs[path.s.e].num())
         return reject("source end is not free");
 
@@ -186,6 +228,58 @@ check_source(
 
     return {};
 }
+
+template<typename G,
+         typename PP>
+    requires pulling::Processor<PP, G> &&
+             edge_creation::Processor<PP, G> &&
+             edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
+auto FunctorBase<G, PP>::
+source_egEnd(const Path& path) const -> End::Id
+{
+    const auto iS = path.pthw.back();
+    const auto& m = cn[path.s.w];
+    const auto a = egl[iS].a;
+
+    // the chain end of the source edge at the source vertex
+    const auto e = !path.s.is_bulk() ? path.s.e
+                 : a() + 1 == path.s.pos() ? End::B
+                                           : End::A;
+
+    return m.g[a].inner_endId(e);
+}
+
+
+template<typename G,
+         typename PP>
+    requires pulling::Processor<PP, G> &&
+             edge_creation::Processor<PP, G> &&
+             edge_deletion::Processor<PP, G> &&
+             vertex_split::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
+auto FunctorBase<G, PP>::
+source_at(
+    const EgIdG iS,
+    const End::Id egeS,
+    const bool isBulk
+) const -> Source
+{
+    const auto wS = egl[iS].w;
+    const auto& m = cn[wS];
+
+    if (!isBulk)
+        return EndSlot {wS, cn.edge(egl[iS]).points_forwards() ? egeS
+                                                             : End::opp(egeS)};
+
+    const auto bs = m.egEnd_to_bulkslot(egeS, egl[iS].a);
+
+    return Path::is_bulk_position(m, bs.a())
+         ? Source {bs}
+         : Source {EndSlot {wS, bs.a()() ? End::B : End::A}};
+}
+
 
 template<typename G,
          typename PP>
@@ -236,6 +330,7 @@ pull_leaf_vertex(
         }
 
         GRAFFINE_ASSERT(!path.cmp->template check<verboseF>(), "Intermediate cmp check.");
+        GRAFFINE_ASSERT(path.is_contiguous(), "Path is broken by the pull step.");
     }
 
     return source_was_dissolved;
@@ -249,6 +344,7 @@ template<typename G,
              edge_deletion::Processor<PP, G> &&
              vertex_split::Processor<PP, G> &&
              vertex_merger::Processor<PP, G>
+template<bool notify>
 bool FunctorBase<G, PP>::
 pull_leaf_vertex(Path& path)
 {
@@ -256,7 +352,7 @@ pull_leaf_vertex(Path& path)
 
     if (path.d.w == wS) {  // driver and source belong to the same chain
 
-        if constexpr (!std::is_void_v<PP>)
+        if constexpr (notify && !std::is_void_v<PP>)
             updateProperties->pulling.on_end(path);
 
         return false;      // no dissolving of the source edge
@@ -271,7 +367,11 @@ pull_leaf_vertex(Path& path)
 
     bool is_dissolved {};
 
-    if (cn[wS].length() == 1) {  // the whole source chain will disappear
+    // a degree 2 source is kept track of by its edge
+    const auto iS = path.pthw.back();
+    const auto egeS = path.s.is_bulk() ? source_egEnd(path) : End::undefined;
+
+    if (!path.s.is_bulk() && cn[wS].length() == 1) {  // the whole source chain will disappear
 
         dissolve_single_edge_chain(path);
         is_dissolved = true;
@@ -283,7 +383,10 @@ pull_leaf_vertex(Path& path)
     // 'shift_edges_to_target_chain()', so here vertex descriptors are to update
     gr.update_vertex_descriptors();
 
-    if constexpr (!std::is_void_v<PP>)
+    if (path.s.is_bulk())
+        path.set_src(source_at(iS, egeS, true));
+
+    if constexpr (notify && !std::is_void_v<PP>)
         updateProperties->pulling.on_end(path);
 
     if constexpr (verboseF) {
@@ -318,12 +421,13 @@ dissolve_single_edge_chain(Path& path)
             ":", colorcodes::RESET);
 
     GRAFFINE_ASSERT(cn[wS].length() == 1, "trailing chain is too long: ", wS);
+    GRAFFINE_ASSERT(!path.s.is_bulk(), "dissolving the chain of a degree 2 source");
 
     const auto iS = cn[wS].g[0].ind;  // since cn[wS].length() == 1
     auto& cnS = path.cmp->chain(wS);
     const auto egeS = cnS.g[egl[iS].a].inner_endId(path.s.e);
 
-    create_edge(path.s);  // create an edge at the free end of the source chain
+    create_edge(path.s.end_slot());  // create an edge at the free end of the source chain
 
     const auto connectedSlot = path.s.opp();  // the only connected source slot
 
