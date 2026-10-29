@@ -60,6 +60,7 @@ struct Snapshot {
     Degree deg1 {};         ///< Degree of the path vertex next to the driver.
     bool endsAtSource {};   ///< The last path vertex is the source vertex.
     bool isSourceBulk {};   ///< The source is a degree 2 vertex.
+    bool isSourceValid {};  ///< The source is inside its chain, or at an end.
 };
 
 inline auto snapshot(const G& gr, const Path& path) -> Snapshot
@@ -75,7 +76,10 @@ inline auto snapshot(const G& gr, const Path& path) -> Snapshot
             vv.size() > 1 ? vv[1]->deg() : Degree {},
             !vv.empty() && (path.src().is_bulk() || End::is_valid(path.src().e)) &&
                 *vv.back() == path.source_vertex(),
-            path.src().is_bulk()};
+            path.src().is_bulk(),
+            path.src().is_bulk()
+                ? Path::is_bulk_position(gr.chain(path.src().w), path.src().pos)
+                : End::is_valid(path.src().e)};
 }
 
 /**
@@ -157,6 +161,18 @@ inline void make_two_junctions(G& gr)
     merge12(ESlot{ChIdG{2}, eB}, BSlot{ChIdG{3}, 3});  // w3 (3), w4 (3)
 }
 
+/**
+ * Linear chain w1 (2), free at end A, joined at its end B to both ends of
+ * a cycle w0 of length \p len - 2. Edges 0 and 1 are w1, and edges 2, 3...
+ * are w0 from its end A.
+ */
+inline void make_lollipop(G& gr, const std::size_t len)
+{
+    gr.add_single_chain_component(len);
+    VertexMerger<1, 2, G> merge12 {gr};
+    merge12(ESlot{ChIdG{0}, eB}, BSlot{ChIdG{0}, 2});
+}
+
 inline constexpr ChIdG w1 {1};
 inline constexpr ChIdG w3 {3};
 inline constexpr ChIdG w4 {4};
@@ -186,7 +202,6 @@ void check_hooks(const Maker& make, const int steps)
     make(s);
     ASSERT_TRUE(s.path.is_contiguous());
     const auto length = s.path.length();
-    const auto isSourceBulk = s.path.src().is_bulk();
     const auto rec = std::make_shared<Recorder>(s.gr);
     Pull<D> pull {s.gr, rec};
     const auto before = signature(s.gr, s.path.cmp->ind);
@@ -205,8 +220,8 @@ void check_hooks(const Maker& make, const int steps)
         EXPECT_EQ(e.length, length) << "on_end of step " << k + 1;
         EXPECT_EQ(e.numVertices, length + 1) << "on_end of step " << k + 1;
         EXPECT_EQ(e.deg0, Deg1) << "on_end of step " << k + 1;
-        if (isSourceBulk)
-            EXPECT_TRUE(e.endsAtSource) << "on_end of step " << k + 1;
+        EXPECT_TRUE(e.isSourceValid) << "on_end of step " << k + 1;
+        EXPECT_TRUE(e.endsAtSource) << "on_end of step " << k + 1;
     }
     EXPECT_TRUE(s.path.is_contiguous());
     EXPECT_EQ(s.path.length(), length);

@@ -68,7 +68,6 @@ struct On<Deg2, Dir, G, PP>
     using End = Base::End;
     using EndSlot = Base::EndSlot;
     using Path = Base::Path;
-    using Source = Base::Source;
     using PropertyProcessor = Base::PropertyProcessor;
     using ResT = Trait::ResT;
     using Res = Trait::Res;
@@ -318,15 +317,10 @@ pull_N(Path& path)
            (cn[wS].is_headind(iS) || cn[wS].is_tailind(iS))),
            "Source is not a chain end");
 
-    const auto src = isBulk
-                   ? source_at(iS, egeS, true)
-                   : Source {EndSlot{wS, cn[wS].has_single_leaf_vertex()
-                                         ? cn[wS].get_single_leaf_end()
-                                         : End::undefined}};
-
+    // the source is found from its edge, which also holds for a cycle source
     path = Path {&gr.compt(wS),
                  typename Path::Driver {&gr.edge(iD), egeD},
-                 src,
+                 source_at(iS, egeS, isBulk),
                  path.pthw};
 
     if constexpr (!std::is_void_v<PP>)

@@ -20,6 +20,8 @@ limitations under the License.
 
 #include "pulling_hooks.h"
 
+#include <initializer_list>
+
 namespace graffine::tests::pulling::hooks {
 
 class PullingHooksTest
@@ -137,6 +139,97 @@ TEST_F(PullingHooksTest, Deg3_SameChain)
                        Source {w4, eB}};
     };
     for (int n {1}; n <= 2; ++n)
+        check_hooks<Deg3>(make, n);
+}
+
+
+/// Path from \p eg at \p egEnd over the edges \p rest to source \p src.
+Path path_over(G& gr, const Edge& eg, const End::Id egEnd,
+               std::initializer_list<std::size_t> rest, const Source src)
+{
+    Path::PathW pw {eg.ind};
+    for (const auto i : rest)
+        pw.push_back(EgIdG{i});
+
+    return Path {&gr.compt(CmpId{}), Driver {&eg, egEnd}, src, pw};
+}
+
+
+/**
+ * Degree 2 pull to the end of a cycle: around the cycle, entered at its other
+ * end.
+ */
+TEST_F(PullingHooksTest, Deg2_CycleSource)
+{
+    ++testCount;
+
+    if constexpr (verboseT)
+        print_description(
+            "Tests the pulling hooks of a degree 2 pull to a cycle end");
+
+    // w1 (edges 0, 1) joined to both ends of the cycle w0 (edges 2 ... 7):
+    // from the bulk vertex of w1, over the cycle from its end B to its end A
+    const Maker make = [](Pullee& s) {
+        make_lollipop(s.gr, 8);
+        s.path = path_over(s.gr, s.gr.chain(w1).g[1], eA, {7, 6, 5, 4, 3, 2},
+                           Source {ChIdG{0}, eA});
+    };
+
+    Pullee s;
+    make(s);
+    ASSERT_TRUE(s.path.is_contiguous());
+    ASSERT_TRUE(s.gr.chain(ChIdG{0}).is_connected_cycle());
+    Pull<Deg2> pull {s.gr, std::make_shared<Recorder>(s.gr)};
+    ASSERT_TRUE(pull.applicability(s.path, 4));
+    ASSERT_FALSE(pull.applicability(s.path, 5));
+
+    for (int n {1}; n <= 4; ++n)
+        check_hooks<Deg2>(make, n);
+
+    // after pulling, the path can be pulled further from its source end
+    pull(s.path, 2);
+    EXPECT_TRUE(End::is_valid(s.path.src().e));
+    EXPECT_TRUE(s.path.source_vertex() == *s.path.vertices().back());
+    const trs::pulling::Functor<G, Recorder> any {
+        s.gr, std::make_shared<Recorder>(s.gr)};
+    EXPECT_TRUE(any.applicability(s.path, 2));
+}
+
+
+/**
+ * Degree 3 pull to the end of a cycle: around the cycle, entered at its other
+ * end.
+ */
+TEST_F(PullingHooksTest, Deg3_CycleSource)
+{
+    ++testCount;
+
+    if constexpr (verboseT)
+        print_description(
+            "Tests the pulling hooks of a degree 3 pull to a cycle end");
+
+    // w1 (edges 0, 1) joined to both ends of the cycle w0 (edges 2 ... 7);
+    // a chain joined to the bulk of w1 makes a junction between edges 0, 1:
+    // from that junction, over edge 1 and the cycle from its end B to its end A
+    const Maker make = [](Pullee& s) {
+        make_lollipop(s.gr, 8);
+        s.gr.add_single_chain_component(2);
+        VertexMerger<1, 2, G> merge12 {s.gr};
+        merge12(ESlot{ChIdG{2}, eB}, BSlot{w1, 1});
+        const auto& eg = s.gr.edge(EgIdG{1});
+        const auto& m = s.gr.chain(eg.w);
+        s.path = path_over(s.gr, eg, m.end2ind(eA) == eg.ind ? eA : eB,
+                           {7, 6, 5, 4, 3, 2}, Source {ChIdG{0}, eA});
+    };
+
+    Pullee s;
+    make(s);
+    ASSERT_TRUE(s.path.is_contiguous());
+    ASSERT_EQ(s.path.driver_vertex().deg(), Deg3);
+    Pull<Deg3> pull {s.gr, std::make_shared<Recorder>(s.gr)};
+    ASSERT_TRUE(pull.applicability(s.path, 4));
+
+    for (int n {1}; n <= 4; ++n)
         check_hooks<Deg3>(make, n);
 }
 

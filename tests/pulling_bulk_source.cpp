@@ -28,6 +28,7 @@ using hooks::Maker;
 using hooks::Pullee;
 using hooks::Recorder;
 using hooks::check_hooks;
+using hooks::make_lollipop;
 using hooks::make_two_junctions;
 using hooks::w1;
 using hooks::w3;
@@ -42,15 +43,6 @@ void expect_at(const G& gr, const EgIdG i, const G::Vertex& v)
     const auto& eg = gr.edge(i);
     EXPECT_TRUE(*eg.vertex_at_inner(eA) == v ||
                 *eg.vertex_at_inner(eB) == v) << "edge " << i;
-}
-
-/// Linear chain w1 (2), free at end A, joined at its end B to both ends of
-/// a cycle w0 of length \p len - 2.
-void make_lollipop(G& gr, const std::size_t len)
-{
-    gr.add_single_chain_component(len);
-    VertexMerger<1, 2, G> merge12 {gr};
-    merge12(ESlot{ChIdG{0}, eB}, BSlot{ChIdG{0}, 2});
 }
 
 constexpr ChIdG w0 {0};

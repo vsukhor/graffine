@@ -70,7 +70,6 @@ struct On<Deg3, Dir, G, PP>
     using BulkSlot = Base::BulkSlot;
     using EndSlot = Base::EndSlot;
     using Path = Base::Path;
-    using Source = Base::Source;
     using PropertyProcessor = Base::PropertyProcessor;
     using ResT = Trait::ResT;
     using Res = Trait::Res;
@@ -254,14 +253,12 @@ pull(Path& path)
         eD = cn[wD].ind2end(iD, egeD);
     // otherwise (iD == iS) eD is not changed by the vertex split above.
 
+    // the source is found from its edge after each change of the topology
     auto wS = egl[iS].w;
-    auto eS = cn.edge(egl[iS]).points_forwards()
-            ? egeS
-            : End::opp(egeS);
 
     path = Path {&gr.compt(wS),
                  typename Path::Driver {&cn.edge(egl[iD]), egeD},
-                 isBulk ? source_at(iS, egeS, true) : Source {EndSlot{wS, eS}},
+                 source_at(iS, egeS, isBulk),
                  path.pthw};
 
     // on_end is called below, once the step is completed by the merger
@@ -275,7 +272,7 @@ pull(Path& path)
 
     path = Path {&gr.compt(wS),
                  typename Path::Driver {&cn.edge(egl[iD]), egeD},
-                 isBulk ? source_at(iS, egeS, true) : Source {EndSlot{wS, eS}},
+                 source_at(iS, egeS, isBulk),
                  path.pthw};
 
     const auto a0 = eD == End::A
@@ -307,14 +304,11 @@ pull(Path& path)
             : vertex_merge_22(BulkSlot{wD, a0}, BulkSlot{w1, a1});
 
     wS = egl[iS].w;
-    eS = cn.edge(egl[iS]).points_forwards()
-       ? egeS
-       : End::opp(egeS);
 
     // recreate path for eventual further steps
     path = Path {&gr.compt(wS),
                  typename Path::Driver {&cn.edge(egl[iD]), egeD},
-                 isBulk ? source_at(iS, egeS, true) : Source {EndSlot{wS, eS}},
+                 source_at(iS, egeS, isBulk),
                  path.pthw};
 
     if constexpr (!std::is_void_v<PP>)
