@@ -102,6 +102,10 @@ struct Adjacency
                                 ChId w2,
                                 EgIdA a2) const noexcept;
 
+    /** Whether the vertices at the chain ends \p s1 and \p s2 are the same
+     * or joined by an edge.
+     * \details Independent of the order of the arguments.
+     */
     constexpr bool are_adjacent(const EndSlot& s1,
                                 const EndSlot& s2) const noexcept;
 
@@ -294,10 +298,14 @@ are_adjacent(
         }
     }
 
-    const auto oe1 = H::Chain::opp_end(e1);
-    for (const auto& s : m1.ngs[oe1]())
-        if (s == s2)
-            return true;
+    // Through the chain of s1 itself: only a single-edge chain makes the
+    // vertex at its other end a neighbour; s2 is then at that vertex.
+    if (is_short(m1)) {
+        const auto oe1 = H::Chain::opp_end(e1);
+        for (const auto& s : m1.ngs[oe1]())
+            if (s == s2)
+                return true;
+    }
 
     return false;
 }

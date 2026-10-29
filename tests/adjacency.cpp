@@ -96,6 +96,39 @@ protected:
     {
         return ESlot{w, End::B};
     }
+
+    /** Expects are_adjacent() of every pair of chain ends, in both orders,
+     * to tell whether their vertices are the same or joined by an edge, as
+     * the vertex descriptors give it.
+     */
+    static void expect_end_adjacency_of_vertices(const G& gr,
+                                                 const char* stage)
+    {
+        const auto& ved = gr.get_ved();
+        auto index = [&](const ESlot& s) {
+            return ved.find(gr.vertex(s)->get_id());
+        };
+        auto near = [&](const std::size_t i, const std::size_t j) {
+            if (i == j)
+                return true;
+            for (uint k {}; k < ved[i].d; ++k)
+                if (ved[i].links[k].vidW == j)
+                    return true;
+            return false;
+        };
+
+        for (ChIdG w1 {}; w1 < gr.num_chains(); ++w1)
+            for (const auto e1 : End::Ids)
+                for (ChIdG w2 {}; w2 < gr.num_chains(); ++w2)
+                    for (const auto e2 : End::Ids) {
+                        const ESlot s1 {w1, e1};
+                        const ESlot s2 {w2, e2};
+                        EXPECT_EQ(gr.adj.are_adjacent(s1, s2),
+                                  near(index(s1), index(s2)))
+                            << stage << ": chain ends " << s1.str_short()
+                            << " and " << s2.str_short();
+                    }
+    }
 };
 
 // =============================================================================
@@ -115,6 +148,7 @@ TEST_F(AdjacencyTest, VerticesAdjacent)
     const IntegrityCheck integrityCheck {gr};
     for (const auto u : len)
         gr.add_single_chain_component(u);
+    expect_end_adjacency_of_vertices(gr, "linear chains");
 
     // Chain indexes:
     auto u = ChIdG::undefined;
@@ -195,6 +229,7 @@ TEST_F(AdjacencyTest, VerticesAdjacent)
     fc.to_cycle(2);    // length 3
     fc.to_cycle(4);    // length 2
     fc.to_cycle(7);    // length 4
+    expect_end_adjacency_of_vertices(gr, "cycles");
 
     // cn[2].length() == 3 and it is a separate cycle: -------------------------
     u = 2;
@@ -256,6 +291,13 @@ TEST_F(AdjacencyTest, VerticesAdjacent)
     EXPECT_TRUE(gr.adj.are_adjacent(sA(v), sA(x))); // cn[v].length() == 1
     EXPECT_TRUE(gr.adj.are_adjacent(sA(u), sA(v))); // cn[v].length() == 1
     EXPECT_FALSE(gr.adj.are_adjacent(sA(u), sB(x))); // chain(x).length() == 2
+    // The free end of a chain is adjacent to the other chain ends at its
+    // junction only if the chain has a single edge:
+    EXPECT_FALSE(gr.adj.are_adjacent(sB(u), sA(x))); // cn[u].length() == 4
+    EXPECT_FALSE(gr.adj.are_adjacent(sA(x), sB(u))); // the same, other order
+    EXPECT_FALSE(gr.adj.are_adjacent(sB(u), sB(v))); // cn[u].length() == 4
+    EXPECT_TRUE(gr.adj.are_adjacent(sA(v), sA(u)));  // cn[v].length() == 1
+    expect_end_adjacency_of_vertices(gr, "3-way junction");
 
     EXPECT_TRUE(gr.adj.are_adjacent(sA(u), x, 1)); // chain(x).length() == 2
     EXPECT_TRUE(gr.adj.are_adjacent(sA(x), u, 1)); // chain(x).length() == 2
@@ -277,6 +319,7 @@ TEST_F(AdjacencyTest, VerticesAdjacent)
 
     EXPECT_TRUE(gr.adj.are_adjacent(sA(w), sA(x)));
     EXPECT_FALSE(gr.adj.are_adjacent(sA(w), x, 1));
+    expect_end_adjacency_of_vertices(gr, "loop at a junction");
 }
 
 
