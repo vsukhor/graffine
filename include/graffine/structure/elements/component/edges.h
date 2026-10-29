@@ -185,7 +185,7 @@ insert_edge_into_chain(
     if (a == 0)
         return prepend_edge_to_chain(std::move(eg), m);
 
-    // else: insert inbetween other edges of chain 'm'
+    // else: insert in between other edges of chain 'm'
     return insert_edge_inside_chain(std::move(eg), m, a);
 }
 

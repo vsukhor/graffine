@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file common.h
- * \brief Contains genetic templates for degree-specific vertex pulling.
+ * \brief Contains generic templates for degree-specific vertex pulling.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -51,6 +51,7 @@ struct Trait<TransformType::Pulling, G>
     using Compt = Graph::Compt;
     using Chain = Graph::Chain;
     using ResT = CmpId;
+    /// Result of the transformation: index of the component hosting the path after the pull.
     using Res = std::array<ResT, 1>;
 
     static constexpr auto Type = TransformType::Pulling;
@@ -101,13 +102,19 @@ concept pullable_degree =
 template<Orientation Dir>
 constexpr char signchar = Dir == Orientation::Backwards ? '-' : '+';
 
+/// Whether pulling from a degree 2 driver on an unconnected cycle is rejected.
 inline constexpr bool omitUnconnectedCycles = true;
 
 /**
  * Generic template for specifying vertex degree-specific pulling classes.
- * \tparam D Degree of the vertex from which the pull operation is initiated.
- * \tparam Dir Direction of the pull operation.
+ * \details See FunctorBase for the pulling transformation, and Path for its
+ * driver and source.
+ * \tparam D Degree of the driver vertex, from which the pull operation is
+ * initiated.
+ * \tparam Dir Direction of the pull operation. It only labels the functor
+ * names: the pull is always directed from the source towards the driver.
  * \tparam G Graph to which the transformation is applied.
+ * \tparam PP Processor of non-topological properties, or void.
  */
 template<Degree D,
          Orientation Dir,

@@ -42,8 +42,11 @@ limitations under the License.
 namespace graffine::transforms::pulling {
 
 /**
- * Wrapper functor for vertex degree-independent vertex split operations.
- * \tparam Graph hosting the edge to be deleted.
+ * Wrapper functor for vertex degree-independent pulling.
+ * \details Dispatches to the On functor matching the degree of the driver
+ * vertex: 1, 2 or 3. See FunctorBase for the transformation itself.
+ * \tparam G Graph to which the transformation is applied.
+ * \tparam PP Processor of non-topological properties, or void.
  */
 template<typename G,
          typename PP = void>
@@ -79,14 +82,18 @@ struct Functor
     /**
      * Pulls over edge sequence \p path.
      * This is a wrapper operator able to process all implemented degrees of
-     * the driver vertices.
-     * \param[in] path Path containing the string of edges to get pulled.
+     * the driver vertices. Unchecked: see Applicable.
+     * \param[inout] path Path containing the string of edges to get pulled.
      * \param[in] n Number of steps to pull over.
+     * \return Index of the component hosting the path after the pull.
      */
     auto apply(Path<Compt>& path,
                int n) -> Res;
 
     /// Checks that \p path can be pulled by \p n steps.
+    /// \details Rejects a path not referring to a component of the graph or
+    /// having no driver edge, and a driver vertex of degree 4, then checks
+    /// the path as the On functor for the driver degree does.
     auto applicability(const Path<Compt>& path,
                        int n) const -> Applicability;
 

@@ -44,12 +44,11 @@ namespace graffine::transforms::edge_creation {
 
 /**
  * Creates an edge adjoint to a vertex, putting it into an existing chain.
- * \details Creates a graph edge inserted into an existing chain. The edge will
- * have as one of its ends a vertex of degree , not affected by the addition
- * of the edge. Because the edge extends an already existing chain, vertex at
- * the other end of the new edge will have degree 2.
- * \tparam D Degree of one of the vertexes accepting the created edge.
+ * \details Creates a graph edge inserted into an existing chain, at a vertex
+ * of any degree. That vertex keeps its degree. Because the edge extends an
+ * already existing chain, the chain gains a new vertex of degree 2.
  * \tparam G Graph to which the transformation is applied.
+ * \tparam PP Processor of non-topological properties, or void.
  */
 template<typename G,
          typename PP = void>
@@ -88,23 +87,42 @@ struct InExistingChain
     explicit InExistingChain(Graph& gr,
                              std::shared_ptr<PP> pp = nullptr);
 
+    /**
+     * Executes the transformation at vertex \p v.
+     * \details Calls its overload using the slot of \p v: its bulk slot if
+     * \p v has degree 2, otherwise a chain end slot at \p v .
+     * Unchecked: see Applicable.
+     * \param[in] v Vertex at which the new edge is placed.
+     * \return Pointer to the new edge.
+     */
     auto apply(Vertex& v) -> Res;
 
     /**
-     * Executs the transformation.
+     * Executes the transformation.
      * The new edge is appended/inserted at vertex defined by slot \p s.
      * If the vertex is internal, the new edge will become spanned between its
-     * incident edges. Otherwise the new dge is appended to the chain, becoming
+     * incident edges. Otherwise the new edge is appended to the chain, becoming
      * its boundary edge.
+     * Unchecked: see Applicable.
      * \param[in] s Slot inside a chain where the new edge is placed.
+     * \return Pointer to the new edge.
      */
     template<structure::descriptors::slot S>
     auto apply(const S& s) -> Res;
 
-    /// Checks that a new edge can be inserted at vertex \p v.
+    /**
+     * Checks that a new edge can be inserted at vertex \p v.
+     * \details Rejects \p v if it does not belong to the graph, then checks
+     * its slot as the slot overload does.
+     */
     auto applicability(const Vertex& v) const -> Applicability;
 
-    /// Checks that a new edge can be inserted at slot \p s.
+    /**
+     * Checks that a new edge can be inserted at slot \p s.
+     * \details Rejects an end slot of a nonexistent chain or having an
+     * undefined end, and a bulk slot of a nonexistent chain or at a position
+     * outside (0, chain length].
+     */
     template<structure::descriptors::slot S>
     auto applicability(const S& s) const -> Applicability;
 
@@ -232,7 +250,7 @@ apply(const S& s) -> Res
     }
 
     // Insert the new edge at 'a', moving forwards original 'a' and the rest
-    // of the head portion. In the spatial formulation, the positions anf other
+    // of the head portion. In the spatial formulation, the positions and other
     // properties are set or adjusted by respective property processors.
 
     auto& cmp = gr.compt(m.c);

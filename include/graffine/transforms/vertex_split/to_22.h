@@ -122,6 +122,9 @@ struct To<Deg2, Deg2, G, PP>
                const EndSlot& s2) -> Res;
 
     /// Checks that edges \p s can be detached together from vertex \p v.
+    /// \details Rejects \p v if it does not belong to the graph or its
+    /// degree is not 4, and \p s not holding two edges connected to \p v ,
+    /// then checks their chain ends as the slot overloads do.
     auto applicability(const Vertex& v,
                        const std::vector<EdgeInVertex>& s) const -> Applicability;
 
@@ -131,6 +134,8 @@ struct To<Deg2, Deg2, G, PP>
 
     /// Checks that chain ends \p s1 and \p s2 can be detached together from
     /// their junction.
+    /// \details Rejects invalid slots, \p s1 equal to \p s2 , a chain end
+    /// not at a vertex of degree 4, and chain ends not at the same vertex.
     auto applicability(const EndSlot& s1,
                        const EndSlot& s2) const -> Applicability;
 

@@ -22,11 +22,12 @@ limitations under the License.
 
 /**
  * \file vertex.h
- * \brief Contains implementation of various vertex types and their containers.
- * \details Due to its edge-centric graph implementation, graffine does not keep
- * instances of vertices in allocated memory throughout the graph lifetime.
- * On relatively rear occasions when explicit vertex instances are needed, these
- * are reconstructed from edge connectivity data.
+ * \brief Contains implementation of various vertex types.
+ * \details Vertices are owned by the containers::Vertices collection of their
+ * host component, which holds them by std::unique_ptr, so that their
+ * addresses remain stable while the graph is transformed. A vertex records
+ * the descriptors of its incident edges, while each edge points back to the
+ * vertices at its ends.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -56,11 +57,11 @@ namespace detail {
 
 template <typename... Ligands>
 struct Vertex {};
+
+
 /**
- * A vertex in a graph.
+ * A vertex having only an identifier, unique over the program run.
  */
-
-
 template<>
 struct Vertex<>
 {
@@ -92,7 +93,7 @@ public:  // Functions
      * @{
      */
 
-    /// Prints attributes to an output message processor 'os'.
+    /// Prints attributes, preceded by \p s , to the message processor.
     template<bool endLine=true>
     void print(std::string_view s="") const;
 
@@ -252,7 +253,7 @@ public:  // Functions
      * @{
      */
 
-    /// Prints attributes to an output message processor 'os'.
+    /// Prints attributes, preceded by \p s , to the message processor.
     template<bool endLine=true>
     void print(std::string_view s="") const;
 
@@ -394,9 +395,9 @@ edges_connected_to(const EgDescr& s) const -> const EgDescrors
     if (is_leaf()) {
 
         GRAFFINE_ASSERT(egDescrors.contains(s),
-               "Seeking neigbours of a missing LEAF edge slot", s.str_short());
+               "Seeking neighbours of a missing LEAF edge slot", s.str_short());
 
-        warn("Seeking neigbours of a LEAF edge end.");
+        warn("Seeking neighbours of a LEAF edge end.");
 
         return {};
     }
@@ -404,7 +405,7 @@ edges_connected_to(const EgDescr& s) const -> const EgDescrors
         auto ss = egDescrors;  // copy
 
         GRAFFINE_ASSERT(ss.contains(s),
-               "Seeking neigbours of a missing edge slot ", s.str_short());
+               "Seeking neighbours of a missing edge slot ", s.str_short());
         ss.erase(s);
 
         return ss;
@@ -420,7 +421,7 @@ edges_connected_to(
     GRAFFINE_ASSERT(deg() >= 2, "egDescrors.size() < 2");
 
     if (deg() == 2) {
-        warn("Neigbours of the slot pair is empty set.");
+        warn("Neighbours of the slot pair is empty set.");
 
         return {};
     }
@@ -429,7 +430,7 @@ edges_connected_to(
         for (const auto& u : aa) {
 
             GRAFFINE_ASSERT(ss.contains(u),
-                   "Seeking neigbours of a missing edge slot ", u.str_short());
+                   "Seeking neighbours of a missing edge slot ", u.str_short());
             ss.erase(u);
         }
         return ss;
@@ -443,7 +444,7 @@ edges_connected_to(const EgDescrors& s) const noexcept -> const EgDescrors
     GRAFFINE_ASSERT(egDescrors.size() >= s.size(), "egDescrors.size() < s.size()");
 
     if (egDescrors.size() == s.size()) {
-        warn("Edge neigbours is empty set.");
+        warn("Edge neighbours is empty set.");
 
         return {};
     }
@@ -452,7 +453,7 @@ edges_connected_to(const EgDescrors& s) const noexcept -> const EgDescrors
         for (const auto& u : s) {
 
             GRAFFINE_ASSERT(ss.contains(u),
-                   "Seeking neigbours of a missing edge slot ", u.str_short());
+                   "Seeking neighbours of a missing edge slot ", u.str_short());
 
             ss.erase(u);
         }

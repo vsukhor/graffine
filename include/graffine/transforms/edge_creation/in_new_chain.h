@@ -83,7 +83,7 @@ struct InNewChain
     static constexpr auto isNewChain = true;
 
     static constexpr auto I1 = undefined<Degree>; // There is only one input vertex.
-    static constexpr auto I2 = D;     ///< Degree of the input vetrex.
+    static constexpr auto I2 = D;     ///< Degree of the input vertex.
     static constexpr auto J1 = Deg1;  ///< Degree of the 1st output vertex.
     static constexpr auto J2 = I2 + Deg1;  ///< Degree of the 2nd output vertex.
 
@@ -119,18 +119,24 @@ struct InNewChain
      * Creates a new edge packed into a single-edge chain.
      * \details The source vertex is a boundary vertex of an unconnected chain.
      * \overload
-     * \param[in] w Id of the an unconnected cycle chain .
+     * \param[in] w Id of an unconnected cycle chain .
      */
     auto apply(ChIdG w) -> Res;
 
     /// Checks that a new edge can be attached to vertex \p v.
+    /// \details Rejects \p v if it does not belong to the graph or its degree
+    /// is not D, then checks its slot as the slot overload does.
     auto applicability(const Vertex& v) const -> Applicability;
 
     /// Checks that a new edge can be attached to the vertex at \p s.
+    /// \details Rejects an invalid slot and, for D == 3, a chain end not at a
+    /// vertex of degree 3.
     auto applicability(const Slot& s) const -> Applicability;
 
     /// Checks that a new edge can be attached to the boundary vertex of the
     /// unconnected cycle \p w.
+    /// \details Rejects every \p w unless D == 2, and a chain \p w which
+    /// does not exist or is not an unconnected cycle.
     auto applicability(ChIdG w) const -> Applicability;
 
 protected:
@@ -138,7 +144,7 @@ protected:
     Graph& gr;  ///< Reference to the modified graph object.
     Chains& cn;
 
-    /// Auxiliary transform merging vertexes of degrees Deg1 and I2.
+    /// Auxiliary transform merging vertices of degrees Deg1 and I2.
     /// Is utilized for internal operation.
     vertex_merger::From<Deg1, I2, Graph, PP> merge_vertices;
 

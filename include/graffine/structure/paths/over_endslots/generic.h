@@ -70,7 +70,7 @@ struct Generic
 
     /**
      * Computes paths connecting a vertex in the graph
-     * \details Computes paths starting at vertex \p source to other vertexes
+     * \details Computes paths starting at vertex \p source to other vertices
      * in the connected component of the graph;
      * \note Utilizes the component adjacency list of chains.
      * \note Implements Dijkstra's algorithm

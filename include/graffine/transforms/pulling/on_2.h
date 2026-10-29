@@ -50,8 +50,11 @@ namespace graffine::transforms::pulling {
 
 /**
  * Functor for the edge pulling initiated from a vertex of degree 2.
- * \tparam Dir Direction of the pull operation.
+ * \details The first step uses vertex splits and mergers to turn the driver
+ * into a free chain end; the remaining steps then pull it as a leaf.
+ * \tparam Dir Direction of the pull operation, see On.
  * \tparam G Graph to which the pull operation is applied.
+ * \tparam PP Processor of non-topological properties, or void.
  */
 template<Orientation Dir,
          typename G,
@@ -93,15 +96,25 @@ struct On<Deg2, Dir, G, PP>
                 std::shared_ptr<PP> pp = nullptr);
 
     /**
-     * Pulls a vertex of degree 2.
+     * Pulls a vertex of degree 2 along \p path by \p steps.
+     * \details Corrects the driver of \p path first, if the path has more
+     * than one edge. Unchecked: see Applicable.
+     * \param[inout] path Path containing the string of edges to get pulled.
+     * \param[in] steps Number of steps to pull over.
+     * \return Index of the component hosting the path after the pull.
      */
-    /// Pulls along \p path by \p steps. Unchecked: see Applicable.
     auto apply(
         Path& path,
         int steps
     ) -> Res;
 
     /// Checks that \p path can be pulled by \p steps.
+    /// \details Checks a copy of \p path with the driver corrected as by
+    /// apply(). Rejects a path failing check_path_basics(), a driver on an
+    /// unconnected cycle if such are omitted, and a degree 2 source next to
+    /// the driver. If the driver and the source are on the same chain, only
+    /// rejects a source end which is not free, unless the chain is a cycle;
+    /// otherwise, rejects a source failing check_source().
     auto applicability(
         const Path& path,
         int steps

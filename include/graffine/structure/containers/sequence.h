@@ -22,10 +22,11 @@ limitations under the License.
 
 /**
  * \file sequence.h
- * \brief Contains definition of a vector container class.
- * \details This class provides a simple wrapper around std::vector to manage
- * elements of a specific type. It provides basic functionalities such as
- * accessing elements, checking size, and modifying the container.
+ * \brief Contains definition of a sequence container wrapper.
+ * \details This class provides a simple wrapper around an std sequence
+ * container, such as std::vector or std::deque. It provides basic
+ * functionalities such as accessing elements, checking size, and modifying
+ * the container.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -44,7 +45,7 @@ namespace graffine::structure::containers {
  * container to manage elements of a specific type. It provides basic
  * functionalities such as accessing elements, checking size, and modifying
  * the container.
- * \tparam Type Type of elements stored in the container.
+ * \tparam Type Wrapped std sequence container type, e.g. std::vector<T>.
  */
  template<typename Type>
 struct Sequence

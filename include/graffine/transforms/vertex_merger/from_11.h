@@ -90,30 +90,46 @@ struct From<Deg1, Deg1, G, PP>
      * Unchecked: see Applicable.
      * \param[in] v1 First merged vertex.
      * \param[in] v2 Second merged vertex.
+     * \return The vertex resulting from the merger.
      */
     auto apply(Vertex& v1,
                Vertex& v2) -> Res;
 
     /**
      * Merges two vertices of degree 1 to produce a vertex of degree 2.
-     * \attention Important: when merge.this operator is used for antiparallel
-     * merger (i.e. on equal end IDs of the merged chains), one of the
-     * chains is reversed:
-     * then, if \p e1 is A, reverses g of w1, if \p e1 is B, reverses g of w2:
-     * e1 == A: 456 + 0123 -> 6540123 (>>> + >>>> -> <<<>>>>)
-     * e1 == B: 456 + 0123 -> 4563210 (>>> + >>>> -> >>><<<<)
+     * \details If \p s1 and \p s2 are the two ends of the same chain, the
+     * chain is closed into a cycle.
+     * \attention Important: when used for antiparallel merger (i.e. on equal
+     * ends of the merged chains), one of the chains is reversed:
+     * if \p s1.e is A, reverses chain \p s1.w, if \p s1.e is B, reverses
+     * chain \p s2.w:
+     * s1.e == A: 456 + 0123 -> 6540123 (>>> + >>>> -> <<<>>>>)
+     * s1.e == B: 456 + 0123 -> 4563210 (>>> + >>>> -> >>><<<<)
      * Unchecked: see Applicable.
      * \param[in] s1 Chain boundary slot at the 1st parent vertex.
      * \param[in] s2 Chain boundary slot on the 2nd parent vertex.
+     * \return The vertex resulting from the merger.
      */
     auto apply(const EndSlot& s1,
                const EndSlot& s2) -> Res;
 
-    /// Checks that vertices \p v1 and \p v2 can be merged.
+    /**
+     * Checks that vertices \p v1 and \p v2 can be merged.
+     * \details Rejects vertices not belonging to the graph, or not of degree
+     * 1, then checks their slots as the slot overload does.
+     */
     auto applicability(const Vertex& v1,
                        const Vertex& v2) const -> Applicability;
 
-    /// Checks that the vertices at slots \p s1 and \p s2 can be merged.
+    /**
+     * Checks that the vertices at slots \p s1 and \p s2 can be merged.
+     * \details Rejects:
+     * - invalid slots, or \p s1 equal to \p s2 ;
+     * - slots of chains having no edges;
+     * - slots at chain ends which are not free;
+     * - the two ends of a chain shorter than Chain::minCycleLength, which
+     *   would form a too short cycle.
+     */
     auto applicability(const EndSlot& s1,
                        const EndSlot& s2) const -> Applicability;
 
@@ -215,8 +231,8 @@ apply(
 }
 
 
-// Important: when merge.antiparallel is called:
-// if \p e1 is A, reverses g of w1, if \p e1 is B, reverses g of w2
+// Important: for an antiparallel merger, if s1.e is A, reverses chain s1.w;
+// if s1.e is B, reverses chain s2.w.
 template<typename G,
          typename PP>
 auto From<Deg1, Deg1, G, PP>::

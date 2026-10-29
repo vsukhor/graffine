@@ -53,6 +53,8 @@ struct Trait<TransformType::EdgeSplit, G>
     using OnStart = const Edge*;
     using OnEnd = Vertex*;
     using ResT = Edge*;
+    /// Result of the transformation: pointer to the new edge, placed right after the split edge in its
+    /// chain.
     using Res = std::array<ResT, 1>;
 
     static constexpr const char* fullName {"edge_split"};
@@ -110,6 +112,7 @@ struct Functor
     auto apply(const EgIdG ind) -> Res;
 
     /// Checks that edge \p ind can be split.
+    /// \details Rejects an invalid edge index only.
     auto applicability(EgIdG ind) const -> Applicability;
 
 protected:

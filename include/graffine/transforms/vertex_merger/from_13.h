@@ -102,10 +102,17 @@ struct From<Deg1, Deg3, G, PP>
                const EndSlot& s2) -> Res;
 
     /// Checks that vertices \p v1 and \p v2 can be merged.
+    /// \details Rejects vertices not belonging to the graph, or whose
+    /// degrees are not 1 and 3, in either order, then checks their slots as
+    /// the slot overload does.
     auto applicability(const Vertex& v1,
                        const Vertex& v2) const -> Applicability;
 
     /// Checks that the vertices at \p s1 and \p s2 can be merged.
+    /// \details Rejects invalid slots, a chain of \p s1 having no edges or
+    /// not free at \p s1 , a slot \p s2 not at a 3-way junction, and, if the
+    /// other end of the chain of \p s1 is at that junction, a merger closing
+    /// a loop shorter than Chain::minCycleLength.
     auto applicability(const EndSlot& s1,
                        const EndSlot& s2) const -> Applicability;
 

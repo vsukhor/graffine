@@ -46,7 +46,7 @@ namespace graffine::transforms::vertex_split {
 
 /**
  * Wrapper functor for vertex degree-independent vertex split operations.
- * \tparam Graph hosting the edge to be deleted.
+ * \tparam G Graph to which the transformation is applied.
  */
 template<typename G,
          typename PP = void>
@@ -79,6 +79,10 @@ struct Functor
                const std::vector<typename Vertex::EgDescr>& ss) -> Res;
 
     /// Checks that vertex \p v can be split, detaching edges \p ss.
+    /// \details Dispatches on the degree of \p v and the size of \p ss :
+    /// degree 2 (\p ss ignored), degree 3 with one edge, degree 4 with one or
+    /// two edges. Rejects other combinations, then checks as the
+    /// degree-specific functor does.
     auto applicability(
         const Vertex& v,
         const std::vector<typename Vertex::EgDescr>& ss

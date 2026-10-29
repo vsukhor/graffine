@@ -49,6 +49,7 @@ struct Trait<TransformType::EdgeCreation, G>
     using Chain = Graph::Chain;
     using Edge = Graph::Edge;
     using ResT = Edge*;
+    /// Result of the transformation: pointer to the created edge.
     using Res = std::array<ResT, 1>;
 
     static constexpr const char* shortName {"ec_oc"};

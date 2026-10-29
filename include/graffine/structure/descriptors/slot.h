@@ -53,7 +53,7 @@ concept SlotCoord = std::is_same_v<T, End> ||
  *  and the location identifier. It provides methods for comparison, equality
  * checks, and string representation. The slot can be used to represent both
  * ends of a chain and internal connections within a chain.
- * \tparam HostId Type of the host identifier (e.g., ChId or EgId).
+ * \tparam HId Type of the host identifier (e.g., ChId or EgId).
  * \tparam Location Type of the location identifier (e.g., End or Bulk).
  */
 template<typename HId,

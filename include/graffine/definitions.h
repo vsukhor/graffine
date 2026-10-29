@@ -76,7 +76,7 @@ using real = std::conditional_t<realIsDouble, double, float>;
 /// Tests report in verbose mode.
 inline constexpr bool verboseT {true};
 
-/// Orientation of elements relative to ther orientation of their host.
+/// Orientation of elements relative to the orientation of their host.
 enum Orientation {
     Backwards = -1,  ///< B -> A
     Forwards = 1,    ///< A -> B

@@ -55,6 +55,7 @@ struct Trait<TransformType::EdgeMerger, G>
     using OnStart = std::array<const Edge*, 2>;
     using OnEnd = Edge*;
     using ResT = Edge*;
+    /// Result of the transformation: pointer to the edge resulting from the merger.
     using Res = std::array<ResT, 1>;
 
     static constexpr const char* fullName {"edge_merger"};
@@ -127,13 +128,18 @@ struct Functor
      * \details \p ind1 will be merged into \p ind2 and disappear if 'ind2' has
      * other edges besides it; if it does not, 'ind2' will be merged into 'ind1'
      * and disappear.
-     * \param[in] ind1 Graph_wide index of the 1st edge merged.
-     * \param[in] ind2 Graph_wide index of the 2nd edge merged.
+     * \param[in] ind1 Graph-wide index of the 1st edge merged.
+     * \param[in] ind2 Graph-wide index of the 2nd edge merged.
      */
     auto apply(const EgIdG ind1,
                const EgIdG ind2) -> Res;
 
     /// Checks that edges \p ind1 and \p ind2 can be merged.
+    /// \details Rejects invalid edge indexes, an edge merged with itself,
+    /// edges which are not adjacent, and edges of chains of which neither is
+    /// shrinkable. Then checks the deletion of the edge which apply()
+    /// removes: that of \p ind1 if its chain is shrinkable, otherwise that
+    /// of \p ind2.
     auto applicability(EgIdG ind1,
                        EgIdG ind2) const -> Applicability;
 

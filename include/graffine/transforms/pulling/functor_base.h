@@ -42,7 +42,20 @@ namespace graffine::transforms::pulling {
 
 /**
  * Base for deriving functor classes pulling a specific graph edge.
+ * \details Pulling shifts the edges of a Path relative to the rest of the
+ * component, from the source towards the driver. A pull by one step shifts
+ * each chain junction along the path by one edge towards the source: the
+ * chain at the driver gains an edge, the chain at the source loses one, and
+ * the chains in between keep their lengths. The vertex degrees and the number
+ * of edges are preserved. A source chain made of a single edge is dissolved
+ * by the step: its edge joins the adjacent chain of the path, which then
+ * holds the source. If the
+ * driver and the source are on the same chain, a step leaves the topology
+ * unchanged. A pull by \a steps repeats the step \a steps times; the
+ * degree-specific functors deriving from this class prepare the driver for
+ * the steps.
  * \tparam G Graph to which the transformation is applied.
+ * \tparam PP Processor of non-topological properties, or void.
  */
 template<typename G,
          typename PP = void>
@@ -391,7 +404,7 @@ pull_leaf_vertex(Path& path)
 
     if constexpr (verboseF) {
 
-        jot<false>(colorcodes::GREEN, "---Finised pulling free end.",
+        jot<false>(colorcodes::GREEN, "---Finished pulling free end.",
                    colorcodes::RESET);
         const auto txt = (is_dissolved ? "Source was dissolved"s : ""s);
         jot(colorcodes::YELLOW, txt, colorcodes::RESET);
@@ -484,7 +497,7 @@ shift_edges_to_target_chain(const Path& path)
     GRAFFINE_ASSERT(cn[d.w].end2ind(path.driver_chain_end()) == d.ind,
            "driver chain end ind differs from driver ind ");
 
-    // path.front() is a pulling edge which is alwais a free end
+    // path.front() is a pulling edge which is always a free end
     const auto w0 = d.w;
 
     // cn[w2].length()>1 must be ensured before, because shift_chain_junction()

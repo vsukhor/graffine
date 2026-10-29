@@ -32,7 +32,7 @@ limitations under the License.
 #include "graffine/definitions.h"
 
 /// Contains graph elements, their collections and auxiliary
-/// structure-related functinality
+/// structure-related functionality
 namespace graffine::structure {
 
 enum class Elements {

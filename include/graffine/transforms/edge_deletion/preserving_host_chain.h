@@ -52,7 +52,7 @@ namespace graffine::transforms::edge_deletion {
  * contains more than a single edge, at least one of the edge ends is a vertex
  * of degree 2.
  * \tparam D Vertex degree at the non-trivial edge end (the other one has D==2).
- * \tparam Graph hosting the edge to be deleted.
+ * \tparam G Graph hosting the edge to be deleted.
  */
 template<Degree D,
          typename G,
@@ -133,10 +133,15 @@ struct PreservingHostChain
     auto apply(const BulkSlot& s) -> Res;
 
     /// Checks that edge \p ind can be deleted, keeping its chain.
+    /// \details Rejects an invalid edge index, then checks the edge as the
+    /// slot overload does.
     auto applicability(EgIdG ind) const -> Applicability;
 
     /// Checks that the edge at chain position \p s can be deleted, keeping
     /// its chain.
+    /// \details Rejects a position outside the chain, a single-edge chain,
+    /// a chain which is not shrinkable, and an edge not having a vertex of
+    /// degree D at its end opposite to a degree 2 vertex.
     auto applicability(const BulkSlot& s) const -> Applicability;
 
 protected:  // Data

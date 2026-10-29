@@ -44,7 +44,7 @@ struct VertexInGraph
 
     struct Link
     {
-        // EgIdG of an incndent edge (either in or out).
+        // EgIdG of an incident edge (either in or out).
         uint egidW {utils::undefined<uint>};
 
         /// Index in 'VerticesInGraph' of the neighbour vertex linked by 'egidW'

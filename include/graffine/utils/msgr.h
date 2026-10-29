@@ -146,7 +146,7 @@ public:
     ) const noexcept;
 
     /**
-     * \brief Print an data series of of various types.
+     * \brief Print a data series of various types.
      * \details Based on proposition stackoverflow.com proposition by geza:
      * https://stackoverflow.com/questions/51647834/printf-like-utility-in-c-without-format-specifier/51648068#51648068
      * \tparam endline Finish with line end.

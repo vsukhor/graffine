@@ -51,7 +51,7 @@ namespace graffine::transforms::edge_deletion {
  * suitable for deletion upon the edge removal only if one of its ends is
  * unconnected, while the other end is at a junction.
  * \tparam D Vertex degree at the connected end of the deleted chain.
- * \tparam Graph hosting the edge to be deleted.
+ * \tparam G Graph hosting the edge to be deleted.
  */
 template<Degree D,
          typename G,
@@ -123,15 +123,21 @@ struct DeletingHostChain
     auto apply(EgIdG ind) -> Res;
 
     /**
-     * Dletion using edge position.
+     * Deletion using edge position.
      * \param[in] s End slot connecting the deleted edge.
      */
     auto apply(const EndSlot& s) -> Res;
 
     /// Checks that edge \p ind can be deleted with its single-edge chain.
+    /// \details Rejects an invalid edge index and an edge which is not a
+    /// single-edge chain attached by a single end, then checks the attached
+    /// end as the slot overload does.
     auto applicability(EgIdG ind) const -> Applicability;
 
     /// Checks that the single-edge chain attached at \p s can be deleted.
+    /// \details Rejects an invalid slot, a chain which is not a single edge
+    /// attached by a single end or is not shrinkable, and an end at a vertex
+    /// of degree other than D.
     auto applicability(const EndSlot& s) const -> Applicability;
 
 protected:
@@ -257,7 +263,7 @@ apply(const EndSlot& s) -> Res
     if constexpr (!std::is_void_v<PP>)
         updateProperties->edgeDeletion.template on_start<isChainDeleteded>(m.g[0]);
 
-    // The deleted chain has a connected end because othrwise a component
+    // The deleted chain has a connected end because otherwise a component
     // deletion rather than edge deletion should have been active.
     // The connected end is single because if both ends were connected,
     // edge (and hence, chain) removal would induce topology

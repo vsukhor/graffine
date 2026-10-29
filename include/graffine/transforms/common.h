@@ -22,7 +22,11 @@ limitations under the License.
 
 /**
  * \file common.h
- * \brief Contains generic template for transformation traits.
+ * \brief Contains the interface shared by the transformation functors.
+ * \details Defines the generic template for transformation traits, the
+ * Applicable base providing checked application of the transformations,
+ * the Rejection reported for inapplicable arguments, and the argument
+ * checks shared by the transformations.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 

@@ -46,8 +46,9 @@ namespace graffine::transforms::pulling {
 
 /**
  * Functor for edge pulling initiated at a vertex of degree 1.
- * \tparam Dir Direction of the pull operation.
+ * \tparam Dir Direction of the pull operation, see On.
  * \tparam G Graph to which the pull operation is applied.
+ * \tparam PP Processor of non-topological properties, or void.
  */
 template<Orientation Dir,
          typename G,
@@ -87,20 +88,21 @@ struct On<Deg1, Dir, G, PP>
                 std::shared_ptr<PP> pp = nullptr);
 
     /**
-     * Pulls a vertex of degree 1.
-     * \note The path is expected to be a valid path over the graph.
-     * The path starts with a driver edge and ends with a source edge.
+     * Pulls a vertex of degree 1 along \p path by \p steps.
+     * \details The path starts with a driver edge and ends with a source edge.
+     * Unchecked: see Applicable.
      * \param[inout] path Path containing the string of edges to get pulled.
      * \param[in] steps Number of steps to pull over.
-     * \return Result containing the component ID after the pull operation.
+     * \return Index of the component hosting the path after the pull.
      */
-    /// Pulls along \p path by \p steps. Unchecked: see Applicable.
     auto apply(
         Path& path,
         int steps
     ) -> Res;
 
     /// Checks that \p path can be pulled by \p steps.
+    /// \details Rejects a path failing check_path_basics(), a driver end
+    /// which is not free, and a source failing check_source().
     auto applicability(
         const Path& path,
         int steps

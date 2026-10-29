@@ -66,7 +66,7 @@ struct Component
 
 /**
  * Connected component of a graph.
- * \tparam Chain Type of the Chain forming the graph.
+ * \tparam Ch Type of the Chain forming the graph.
  */
 template <typename Ch>
 struct Component<Ch>
@@ -100,7 +100,7 @@ public: // Variables
     CmpId ind{CmpId::undefined};
 
     ChIdGs ww;   ///< Graph-wide ids of the chains hosted by this component.
-    Vertices vv; ///< Containter holdingertices of this connected component.
+    Vertices vv; ///< Container holding vertices of this connected component.
 
     /// Chain indexes classified by degrees of their boundary vertices.
     Chis chis;
@@ -152,7 +152,7 @@ public: // Functions
      * Change component index in internal records of all edges
      * keeping the chain index unaltered.
      * \details Change connected graph component-related indexes of the
-     * chain edges, keeping the chain index unoltered.
+     * chain edges, keeping the chain index unaltered.
      */
     void set_edges() noexcept;
     void set_edges(
@@ -210,9 +210,9 @@ public: // Functions
      * \note Does not update global edge indices.
      * \note Does not remove the host chain even if the removed edge was the
      * last one.
-     * \param[in] indc Component_wide index of the edge to be removed.
+     * \param[in] indc Component-wide index of the edge to be removed.
      * \return Pointer to the edge g[a] after the shift if the removed edge
-     * was not the at the chain head, \a nullptr otherwise.
+     * was not at the chain head, \a nullptr otherwise.
      */
     template <bool preserveTopology = true>
     auto remove_edge(const EgIdC indc) -> Edge*;
@@ -227,7 +227,7 @@ public: // Functions
      * \param[in] w Graph-wide id of the chain to get processed.
      * \param[in] a Position of the removed edge in the original chain.
      * \return Pointer to the edge g[a] after the shift if the removed edge
-     * was not the at the chain head, \a nullptr otherwise.
+     * was not at the chain head, \a nullptr otherwise.
      */
     template <bool preserveTopology = true>
     auto remove_edge(ChIdG w, EgIdA a) -> Edge*;
@@ -242,7 +242,7 @@ public: // Functions
      * \param[in] m Chain to get processed.
      * \param[in] a Position of the removed edge in the original chain.
      * \return Pointer to the edge g[a] after the shift if the removed edge
-     * was not the at the chain head, \a nullptr otherwise.
+     * was not at the chain head, \a nullptr otherwise.
      */
     template <bool preserveTopology = true>
     auto remove_edge(Chain& m, EgIdA a) -> Edge*;
@@ -257,7 +257,7 @@ public: // Functions
      * \param[in] e Edge object to be inserted.
      * \param[in] w Graph-wide id of the chain to get processed.
      * \param[in] a Position the inserted edge will have in the chain.
-     * \return Pointer to the newly inserted edge.
+     * \return Reference to the newly inserted edge.
      */
     auto insert_edge_into_chain(Edge&& e, ChIdG w, EgIdA a) -> Edge&;
     auto insert_edge_into_chain(Edge&& e, Chain& m, EgIdA a) -> Edge&;
@@ -270,7 +270,7 @@ public: // Functions
      * \param[in] e Edge object to be inserted.
      * \param[in] w Graph-wide id of the chain to get processed.
      * \param[in] a Position the inserted edge will have in the chain.
-     * \return Pointer to the newly inserted edge.
+     * \return Reference to the newly inserted edge.
      */
     auto insert_edge_inside_chain(Edge&& e, ChIdG w, EgIdA a) -> Edge&;
     auto insert_edge_inside_chain(Edge&& e, Chain& m, EgIdA a) -> Edge&;
@@ -339,7 +339,7 @@ public: // Functions
         const EndSlot& nov);
 
     /**
-     * Reconnect edges from vA to vB.
+     * Reconnect edges from vertex \p f to vertex \p t .
      * \details Disconnect edges connected to vertex \p f and
      * connect them to vertex \p t
      */
@@ -408,7 +408,7 @@ public: // Functions
     /**
      * Shift an edge from f.e end of f.w to t.e end of t.w
      * \note Provides functionality similar to the one implemented by
-     * functor core::modifiers::JunctionShifter.
+     * functor structure::modifiers::JunctionShifter.
      */
     void shift_chain_junction(const EndSlot& f,
                               const EndSlot& t);
@@ -438,30 +438,36 @@ public: // Functions
     template<bool beLoud = true>
     bool check_vertex_data() const;
 
-    /// Ensure corectness of chain indices component-wise
+    /// Ensure correctness of chain indices component-wise.
+    /// \return \a false iff all is ok.
     template<bool beLoud = true>
     bool check_chain_idc() const;
 
-    /// Ensure corectness of edge indices component-wise
+    /// Ensure correctness of edge indices component-wise.
+    /// \return \a false iff all is ok.
     template<bool beLoud = true>
     bool check_edge_indc() const;
 
-    /// Ensure corectness of edge desctiptors.
+    /// Ensure correctness of edge descriptors.
+    /// \return \a false iff all is ok.
     template<bool beLoud = true>
     bool check_egl() const;
 
-    /// Ensure corectness of chain classification.
+    /// Ensure correctness of chain classification.
+    /// \return \a false iff all is ok.
     template<bool beLoud = true>
     bool check_chis() const;
 
     /**
      * Ensure that no cycle chain is shorter than Chain::minCycleLength.
      * \note Unlike the other checks, reports a failure in all builds.
+     * \return \a false iff all is ok.
      */
     template<bool beLoud = true>
     bool check_chain_lengths() const;
 
-    /// Collection of test of this component internal structures and indices.
+    /// Collection of tests of this component internal structures and indices.
+    /// \return \a false iff all is ok.
     template<bool beLoud = true>
     bool check(std::string_view s = "") const;
 

@@ -36,7 +36,7 @@ limitations under the License.
 #include <string>
 #include <type_traits>
 
-/// Defines identificators for graph structural elements
+/// Defines identifiers for graph structural elements
 namespace graffine::structure::descriptors::ids {
 
 

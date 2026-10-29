@@ -54,7 +54,7 @@ namespace graffine::transforms::edge_deletion {
  * of degree 2.
  * \note This case is discriminated because deletion of an edge in multi-edge
  * chains does not trigger automatically deletion of the host chain itself
- * \tparam Graph hosting the edge to be deleted.
+ * \tparam G Graph hosting the edge to be deleted.
  */
 template<typename G,
          typename PP = void>
@@ -92,6 +92,10 @@ struct InMultiEdgeChain
     auto apply(EgIdG ind) -> Res;
 
     /// Checks that edge \p ind can be deleted from its multi-edge chain.
+    /// \details Rejects an invalid edge index, an edge of a single-edge
+    /// chain, and an edge at the boundary vertex of an unconnected cycle,
+    /// then checks it as the PreservingHostChain functor for the degree at
+    /// its non-bulk end does.
     auto applicability(EgIdG ind) const -> Applicability;
 
 private:

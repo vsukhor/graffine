@@ -50,6 +50,7 @@ struct Trait<TransformType::VertexSplit, G>
     using EndSlot = Chain::EndSlot;
     using Vertex = Graph::Vertex;
     using ResT = Vertex*;
+    /// Result of the transformation: pointers to the two vertices produced by the split.
     using Res = std::array<ResT, 2>;
 
     static constexpr auto Type = TransformType::VertexSplit;

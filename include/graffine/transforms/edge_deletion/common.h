@@ -51,6 +51,9 @@ struct Trait<TransformType::EdgeDeletion, G>
     using Chain = Graph::Chain;
     using Edge = Graph::Edge;
     using ResT = CmpId;
+    /// Result of the transformation: index of the component hosting the deleted edge before the deletion.
+    /// If the deletion removed a component, the index may now refer to another
+    /// component, or be past the end.
     using Res = std::array<ResT, 1>;
 
     static constexpr auto Type = TransformType::EdgeDeletion;

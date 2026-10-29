@@ -49,7 +49,7 @@ concept arithmetic = std::integral<T> ||
                      std::floating_point<T>;
 
 
-/// Make these definitions available to the whole library by defaule.
+/// Make these definitions available to the whole library by default.
 inline namespace constants {
 
 template<typename T>

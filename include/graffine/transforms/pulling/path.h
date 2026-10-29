@@ -46,6 +46,20 @@ limitations under the License.
 namespace graffine::transforms::pulling {
 
 
+/**
+ * Path of edges along which a component is pulled.
+ * \details The path is a contiguous sequence of edges inside a component,
+ * leading from a driver to a source:
+ * - the driver is a chain end at the vertex initiating the pull, given by
+ *   the first path edge and its end at that vertex;
+ * - the source is where the path ends: a free chain end, an end of a cycle
+ *   chain, or a degree 2 vertex inside a chain.
+ *
+ * The path edges are kept both as graph-wide (\a pthw) and component-wide
+ * (\a pthc) indexes, ordered from the driver edge to the source edge. As the
+ * pull moves edges between chains, the functors update the path accordingly.
+ * \tparam C Type of the component hosting the path.
+ */
 template<typename C>
 struct Path
     : public structure::paths::over_edges::Generic<C>
@@ -172,8 +186,8 @@ struct Path
 
     using Base::cmp;
 
-    PathW pthw;  // active path using edge ind (graph-wde EgIdG)
-    PathC pthc;  // active path using edge indc (component-wde EgIdC);
+    PathW pthw;  ///< Path edges by graph-wide index, from driver to source.
+    PathC pthc;  ///< Path edges by component-wide index, from driver to source.
 
 //    Skeleton skeleton;
 

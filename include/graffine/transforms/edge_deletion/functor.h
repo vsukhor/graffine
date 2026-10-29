@@ -47,7 +47,7 @@ namespace graffine::transforms::edge_deletion {
 
 /**
  * Wrapper functor for edge deletion able to handle all possible configurations.
- * \tparam Graph hosting the edge to be deleted.
+ * \tparam G Graph hosting the edge to be deleted.
  */
 template<typename G,
          typename PP = void>
@@ -77,6 +77,10 @@ struct Functor
     auto apply(EgIdG ind) -> Res;
 
     /// Checks that edge \p ind can be deleted.
+    /// \details Rejects an invalid edge index and an edge of a chain which is
+    /// not shrinkable (see Chain::is_shrinkable()), then checks it as the
+    /// functor deleting it does: DeletingHostChain for a single-edge chain
+    /// attached by a single end, PreservingHostChain otherwise.
     auto applicability(EgIdG ind) const -> Applicability;
 
 protected:

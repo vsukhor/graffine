@@ -100,15 +100,20 @@ struct To<Deg1, Deg2, G, PP>
 
      /**
      * Divides the graph at a vertex of degree 3.
-     * \param[in] s End slot disconnected vrom the divided vertex.
+     * \param[in] s End slot disconnected from the divided vertex.
      */
     auto apply(const EndSlot& s) -> Res;
 
     /// Checks that edge \p s can be detached from vertex \p v.
+    /// \details Rejects \p v if it does not belong to the graph, its degree
+    /// is not 3, or \p s is not connected to it, then checks the chain end
+    /// of \p s as the slot overload does.
     auto applicability(const Vertex& v,
                        const EdgeInVertex& s) const -> Applicability;
 
     /// Checks that chain end \p s can be detached from its junction.
+    /// \details Rejects an invalid slot and a chain end not at a vertex of
+    /// degree 3.
     auto applicability(const EndSlot& s) const -> Applicability;
 
 private:
@@ -230,7 +235,7 @@ apply(const EndSlot& s) -> Res
 
     auto& vv = gr.compt(c).vertices();
 
-    auto v01 = egS.vertex_at_outer(e);  // original vertex to be splitted
+    auto v01 = egS.vertex_at_outer(e);  // original vertex to be split
 
     egS.disconnect_end_outer(e);
     auto vS = &vv.create_vertex(c);  // new free end of chain 'w'
@@ -258,7 +263,7 @@ apply(const EndSlot& s) -> Res
             if constexpr (verboseF)
                 report.branch(2, " an end of a connected cycle chain");
 
-            eg1.disconnect_end_outer(e1);  // v01 is now coonected to eg0:e0 only
+            eg1.disconnect_end_outer(e1);  // v01 is now connected to eg0:e0 only
            auto v1 = &vv.create_vertex(c);
             eg1.connect_to_outer(e1, *v1);  // v1 is connected to eg1:e1
 
@@ -273,7 +278,7 @@ apply(const EndSlot& s) -> Res
             if constexpr (verboseF)
                 report.branch(2, " extracts unconnected linear chain");
 
-            eg1.disconnect_end_outer(e1);  // v01 is now coonected to eg0:e0 only
+            eg1.disconnect_end_outer(e1);  // v01 is now connected to eg0:e0 only
             auto v1 = &vv.create_vertex(c);
             eg1.connect_to_outer(e1, *v1);  // v1 is connected to eg1:e1
 
@@ -286,7 +291,7 @@ apply(const EndSlot& s) -> Res
         }
         else {
 
-            eg1.disconnect_end_outer(e1);  // v01 is now coonected to eg0:e0 only
+            eg1.disconnect_end_outer(e1);  // v01 is now connected to eg0:e0 only
             auto v1 = &vv.create_vertex(c);
             eg1.connect_to_outer(e1, *v1);  // v1 is connected to eg1:e1
 

@@ -107,9 +107,14 @@ struct To<Deg1, Deg1, G, PP>
     auto apply(const BulkSlot& s) -> Res;
 
     /// Checks that vertex \p v can be split.
+    /// \details Rejects \p v if it does not belong to the graph or its
+    /// degree is not 2, then checks its slot as the slot overload does.
     auto applicability(const Vertex& v) const -> Applicability;
 
     /// Checks that the vertex at \p s can be split.
+    /// \details Rejects a nonexistent chain or a position past its length,
+    /// and a position at a chain end unless the chain is an unconnected
+    /// cycle, whose boundary vertex it then denotes.
     auto applicability(const BulkSlot& s) const -> Applicability;
 
 protected:
@@ -229,10 +234,10 @@ apply(const BulkSlot& s) -> Res
     const auto& m = gr.chain(w);
 
     return a == 0 || a == m.length()
-        ? disconnected_cycle(w)  // boundary vetex of an unconnected cycle chain
+        ? disconnected_cycle(w)  // boundary vertex of an unconnected cycle chain
         : m.is_unconnected_cycle()
-        ? disconnected_cycle(s)  // internal vetex of an unconnected cycle chain
-        : linear(s);      // internal vetex of a linear or connected cycle chain
+        ? disconnected_cycle(s)  // internal vertex of an unconnected cycle chain
+        : linear(s);      // internal vertex of a linear or connected cycle chain
 }
 
 
@@ -339,7 +344,7 @@ disconnected_cycle(const BulkSlot& s) -> Res
 }
 
 
-// Divide at a vertex of degree 2 in chains othre than unconnected cycles.
+// Divide at a vertex of degree 2 in chains other than unconnected cycles.
 // 'w' is a global chain index
 // 'a' is the vertex position inside the chain 'w'
 // 'a' is counted from 1 and is the last edge to remain in the original chain

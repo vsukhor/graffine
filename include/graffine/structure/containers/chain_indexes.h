@@ -134,7 +134,7 @@ auto ChainIndexes<ES>::
 operator()(const Key& k) const -> const Slots&
 {
     GRAFFINE_ASSERT(k[0] < k[1], "Incorreect order of key elements.");
-//    GRAFFINE_ASSERT(asymmetric.contains(k), "Degree acsessed is missing.");
+//    GRAFFINE_ASSERT(asymmetric.contains(k), "Degree accessed is missing.");
 
     return asymmetric.contains(k)
         ? asymmetric.at(k)

@@ -98,15 +98,20 @@ struct To<Deg1, Deg3, G, PP>
 
     /**
      * Divides the chain at a vertex of degree 4 to produce 1+3.
-     * \param[in] s Slot on a oundary chain vertex.
+     * \param[in] s Slot on a boundary chain vertex.
      */
     auto apply(const EndSlot& s) -> Res;
 
     /// Checks that edge \p s can be detached from vertex \p v.
+    /// \details Rejects \p v if it does not belong to the graph, its degree
+    /// is not 4, or \p s is not connected to it, then checks the chain end
+    /// of \p s as the slot overload does.
     auto applicability(const Vertex& v,
                        const EdgeInVertex& s) const -> Applicability;
 
     /// Checks that chain end \p s can be detached from its junction.
+    /// \details Rejects an invalid slot and a chain end not at a vertex of
+    /// degree 4.
     auto applicability(const EndSlot& s) const -> Applicability;
 
 private:
@@ -224,7 +229,7 @@ apply(const EndSlot& s) -> Res
         ind[i] = gr.slot2ind(ngs[i-1]);
 
     auto& vv = gr.compt(c).vertices();
-    auto v01 = eg[0]->vertex_at_outer(e);  // original vertex to be splitted
+    auto v01 = eg[0]->vertex_at_outer(e);  // original vertex to be split
     eg[0]->disconnect_end_outer(e);
     auto vS = &vv.create_vertex(c);  // new free end of 'w'
     eg[0]->connect_to_outer(e, *vS);

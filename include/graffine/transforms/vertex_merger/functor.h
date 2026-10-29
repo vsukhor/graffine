@@ -49,7 +49,7 @@ namespace graffine::transforms::vertex_merger {
 
 /**
  * Wrapper functor for vertex degree-independent vertex merger.
- * \tparam Graph hosting the edge to be deleted.
+ * \tparam G Graph to which the transformation is applied.
  */
 template<typename G,
          typename PP = void>
@@ -81,6 +81,9 @@ struct Functor
                Vertex& v2) -> Res;
 
     /// Checks that vertices \p v1 and \p v2 can be merged.
+    /// \details Rejects pairs of degrees other than (1, 1), (1, 2), (1, 3)
+    /// and (2, 2), in either order, then checks the pair as the
+    /// degree-specific functor does.
     auto applicability(const Vertex& v1,
                        const Vertex& v2) const -> Applicability;
 

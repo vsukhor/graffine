@@ -48,6 +48,8 @@ struct Trait<TransformType::ComponentDeletion, G>
     using EndSlot = Chain::EndSlot;
     using Vertex = Graph::Vertex;
     using ResT = CmpId;
+    /// Result of the transformation: index the deleted component had: it may now be held by the formerly
+    /// last component, or be past the end.
     using Res = std::array<ResT, 1>;
 
     static constexpr const char* fullName {"component_deletion"};
@@ -57,16 +59,12 @@ struct Trait<TransformType::ComponentDeletion, G>
 };
 
 
-/// Enables deletion of an unconnected component form the graph.
+/// Enables deletion of a component from the graph.
 namespace component_deletion {
 
 template<typename G>
 using Trait = transforms::Trait<TransformType::ComponentDeletion, G>;
 
-/**
- * Functor class deleting specific graph component.
- * \tparam G Graph to which the transformation is applied.
- */
 /**
  * Processor of non-topological properties usable by the component deletions.
  * \details Either void, for no processing, or a type providing the hooks
@@ -85,6 +83,13 @@ concept Processor =
     };
 
 
+/**
+ * Functor class deleting specific graph component.
+ * \details The last component of the graph is moved to the index of the
+ * deleted one, unless the deleted component was the last.
+ * \tparam G Graph to which the transformation is applied.
+ * \tparam PP Processor of non-topological properties, or void.
+ */
 template<typename G,
          typename PP = void>
     requires component_deletion::Processor<PP, G>
@@ -112,12 +117,18 @@ struct Functor
                      std::shared_ptr<PP> pp = nullptr);
 
     /**
-     * Function call operator executing the transformation.
+     * Executes the transformation.
+     * \details Unchecked: see Applicable.
      * \param[in] c Index of the connected component to be deleted.
+     * \return \p c , which now holds the formerly last component, unless
+     * the deleted component was the last.
      */
     auto apply(CmpId c) -> Res;
 
-    /// Checks that component \p c can be deleted.
+    /**
+     * Checks that component \p c can be deleted.
+     * \details Rejects \p c not indexing a component of the graph.
+     */
     auto applicability(CmpId c) const -> Applicability;
 
 protected:

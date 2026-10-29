@@ -101,8 +101,8 @@ struct Core
     /**
      * Performs merger of free ends of two parallel oriented chains.
      * \details Parallel orientation is defined as:
-     * merging end 1 of the 1st chain to to end 2 of the 2nd chain, or
-     * merging end 2 of the 1st chain to to end 1 of the 2nd chain.
+     * merging end 1 of the 1st chain to end 2 of the 2nd chain, or
+     * merging end 2 of the 1st chain to end 1 of the 2nd chain.
      * \note: edge indexes are combined as 234 + 01-> 23401 (>>>> + >> -> >>>>>>)
      * \param[in] w1 Index of the 1st chain.
      * \param[in] w2 Index of the 2nd chain.

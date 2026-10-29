@@ -48,6 +48,7 @@ struct Trait<TransformType::ComponentCreation, G>
     using EndSlot = Chain::EndSlot;
     using Vertex = Graph::Vertex;
     using ResT = CmpId;
+    /// Result of the transformation: index of the created component.
     using Res = std::array<ResT, 1>;
 
     static constexpr const char* fullName {"component_creation"};
@@ -63,11 +64,6 @@ namespace component_creation {
 template<typename G>
 using Trait = transforms::Trait<TransformType::ComponentCreation, G>;
 
-/**
- * Functor class creating specific graph component.
- * \details The component is created as a single chain.
- * \tparam G Graph to which the transformation is applied.
- */
 /**
  * Processor of non-topological properties usable by the component creations.
  * \details Either void, for no processing, or a type providing the hooks
@@ -86,6 +82,12 @@ concept Processor =
     };
 
 
+/**
+ * Functor class creating specific graph component.
+ * \details The component is created as a single chain.
+ * \tparam G Graph to which the transformation is applied.
+ * \tparam PP Processor of non-topological properties, or void.
+ */
 template<typename G,
          typename PP = void>
     requires component_creation::Processor<PP, G>
@@ -112,12 +114,17 @@ struct Functor
                      std::shared_ptr<PP> pp = nullptr);
 
     /**
-     * Function call operator executing the transformation.
+     * Executes the transformation.
+     * \details Unchecked: see Applicable.
      * \param[in] s Length (in edges) of the chain forming the new component.
+     * \return Index of the new component, which is the last one in the graph.
      */
     auto apply(std::size_t s = 1) -> Res;
 
-    /// Checks that a component of \p s edges can be created.
+    /**
+     * Checks that a component of \p s edges can be created.
+     * \details Rejects \p s shorter than Chain::minLength.
+     */
     auto applicability(std::size_t s = 1) const -> Applicability;
 
 protected:

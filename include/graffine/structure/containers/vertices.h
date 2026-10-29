@@ -23,11 +23,9 @@ limitations under the License.
 /**
  * \file vertices.h
  * \brief Contains classes holding and updating vertex collections.
- * \details Due to its edge-centric graph implementation, graffine does not
- * keep instances of vertices in allocated memory throughout the graph lifetime.
- * On relatively rear occasions when explicit vertex instances are needed, these
- * are reconstructed from edge connectivity data. The Updaters are
- * defined for each if vertex degrees.
+ * \details Each graph component owns its vertices through a Vertices
+ * collection, which holds them by std::unique_ptr: vertex addresses remain
+ * stable while the collection changes, so that edges can point to them.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -51,7 +49,7 @@ limitations under the License.
 namespace graffine::structure::containers {
 
 /**
- * Collection of veertices.
+ * Collection of vertices.
  * \tparam V Vertex class
  * \tparam H Graph compartment class hosting the vertices.
  */

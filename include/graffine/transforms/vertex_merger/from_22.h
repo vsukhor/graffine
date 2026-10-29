@@ -128,20 +128,33 @@ struct From<Deg2, Deg2, G, PP>
                ChIdG w2) -> Res;
 
     /// Checks that vertices \p v1 and \p v2 can be merged.
+    /// \details Rejects vertices not belonging to the graph or not of
+    /// degree 2, and a vertex merged with itself, then checks their slots, or
+    /// their cycles for boundary vertices of cycles, as the other overloads
+    /// do.
     auto applicability(const Vertex& v1,
                        const Vertex& v2) const -> Applicability;
 
     /// Checks that the vertices at \p b1 and \p b2 can be merged.
+    /// \details Rejects invalid slots, \p b1 equal to \p b2 , and, if both
+    /// are in the same chain, a merger closing a loop shorter than
+    /// Chain::minCycleLength (on an unconnected cycle, both parts become
+    /// loops).
     auto applicability(const BulkSlot& b1,
                        const BulkSlot& b2) const -> Applicability;
 
     /// Checks that the vertex at \p b1 can be merged to the boundary vertex
     /// of the unconnected cycle \p w2.
+    /// \details Rejects an invalid \p b1 , a chain \p w2 which does not
+    /// exist or is not an unconnected cycle, and, if \p b1 is in \p w2 , a
+    /// merger closing a loop shorter than Chain::minCycleLength.
     auto applicability(const BulkSlot& b1,
                        ChIdG w2) const -> Applicability;
 
     /// Checks that the boundary vertices of unconnected cycles \p w1 and
     /// \p w2 can be merged.
+    /// \details Rejects chains which do not exist or are not unconnected
+    /// cycles, and \p w1 equal to \p w2 .
     auto applicability(ChIdG w1,
                        ChIdG w2) const -> Applicability;
 

@@ -49,6 +49,7 @@ struct Trait<TransformType::VertexMerger, G>
     using EndSlot = Chain::EndSlot;
     using Vertex = Graph::Vertex;
     using ResT = Vertex*;
+    /// Result of the transformation: pointer to the vertex resulting from the merger.
     using Res = std::array<ResT, 1>;
 
     static constexpr auto Type = TransformType::VertexMerger;

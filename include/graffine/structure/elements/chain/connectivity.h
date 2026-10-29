@@ -1,6 +1,6 @@
 /* =============================================================================
 
-This file is part of graph-mutator, a lightweight graph transformation library.
+This file is part of graffine, a lightweight graph transformation library.
 
 Copyright (c) 2021-2026 Valerii Sukhorukov <vsukhorukov@yahoo.com>
 All Rights Reserved.

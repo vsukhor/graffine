@@ -114,21 +114,31 @@ struct From<Deg1, Deg2, G, PP>
                ChIdG w2) -> Res;
 
     /// Checks that vertices \p v1 and \p v2 can be merged.
+    /// \details Rejects vertices not belonging to the graph, or whose
+    /// degrees are not 1 and 2, in either order, then checks their slots as
+    /// the slot overloads do.
     auto applicability(const Vertex& v1,
                        const Vertex& v2) const -> Applicability;
 
     /// Checks that the vertices at \p s1 and \p s2 can be merged.
+    /// \details Rejects \p s1 failing check_free_end(), an invalid \p s2 ,
+    /// and, if both are in the same chain, a merger closing a loop shorter
+    /// than Chain::minCycleLength.
     auto applicability(const EndSlot& s1,
                        const BulkSlot& s2) const -> Applicability;
 
     /// Checks that the vertex at \p s1 can be merged to the boundary vertex
     /// of the unconnected cycle \p w2.
+    /// \details Rejects \p s1 failing check_free_end(), and a chain \p w2
+    /// which does not exist or is not an unconnected cycle.
     auto applicability(const EndSlot& s1,
                        ChIdG w2) const -> Applicability;
 
 private:
 
     /// Checks of the free end \p s1.
+    /// \details Rejects an invalid slot, a chain having no edges, and a
+    /// chain end which is not free.
     auto check_free_end(const EndSlot& s1) const -> Applicability;
 
     Graph& gr;  ///< Reference to the modified graph object.
@@ -315,7 +325,7 @@ apply(
     Vertex* v2 {};
     if (w1 == w2) {
         // This is not a cycle chain because the cycle requires neighbors
-        // at both ends. In contrast, 'w1' is allowed to have a neigbours at one
+        // at both ends. In contrast, 'w1' is allowed to have neighbours at one
         // end only
         const auto w = w1;
         const auto wA = w1A;

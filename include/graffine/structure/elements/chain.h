@@ -1,6 +1,6 @@
 /* =============================================================================
 
-This file is part of graph-mutator, a lightweight graph transformation library.
+This file is part of graffine, a lightweight graph transformation library.
 
 Copyright (c) 2021-2026 Valerii Sukhorukov <vsukhorukov@yahoo.com>
 All Rights Reserved.
@@ -100,19 +100,19 @@ struct Chain<E>
     ChIdG idw {ChIdG::undefined};  ///< Identifier over the whole graph.
     ChIdC idc {ChIdC::undefined};  ///< Identifier over the current component.
 
-    /// Identifier of the current connected component the chain bleongs to.
+    /// Identifier of the current connected component the chain belongs to.
     CmpId c {CmpId::undefined};
 
     /**
      * Empty chain constructor without component specs.
-     * \param[in] idw Graph-wide index of of this chain.
+     * \param[in] idw Graph-wide index of this chain.
      */
     explicit constexpr Chain(ChIdG idw);
 
     /**
      * A chain with specific parameters as a part of a graph.
-     * \param[in] idw Graph-wide index of of this chain.
-     * \param[in] idc Index of of this chain in the host component.
+     * \param[in] idw Graph-wide index of this chain.
+     * \param[in] idc Index of this chain in the host component.
      * \param[in] c Index of connected component to which the chain belongs.
      */
     explicit constexpr Chain(
@@ -196,7 +196,7 @@ struct Chain<E>
     /**
      * Vertex at slot \p s . Depending on the slot type, returns either internal
      * or boundary vertex.
-     * \tparam s Slot type
+     * \tparam S Slot type
      * \return Pointer to vertex at slot \p s
      */
     template<typename S>
@@ -242,7 +242,7 @@ struct Chain<E>
     /**
      * Get pointer to the edge connected at \p end egEnd to the edge at
      * chain position \p a .
-     * \param[in] a Intra-chain position of the edge.x
+     * \param[in] a Intra-chain position of the edge.
      * \param[in] egEnd Edge internal end.
      */
     constexpr auto connected_edge(
@@ -260,7 +260,7 @@ struct Chain<E>
     /**
      * Calculate chain end slot from edge position and edge internal end
      * \param[in] a Edge position within the chain.
-     * \param[in] internalEgEnd Edge end in edge internal representatinon.
+     * \param[in] internalEgEnd Edge end in edge internal representation.
      * \return End slot of this chain if input is valid, otherwise Slot::undef;
     */
     constexpr auto end_slot(
@@ -298,15 +298,15 @@ struct Chain<E>
      * \details Converts the chain end of the boundary edge to internal
      * position in the chain.
      * \param[in] e Chain end index.
-     * \return Internal positionof the boundary edge at chain end \p e .
-     * \return The last edge index in the current connected component.
+     * \return Internal position of the boundary edge at chain end \p e .
      */
     constexpr auto end2a(EndId e) const noexcept -> EgIdA;
 
    /**
      * Edge position to chain end conversion.
      * \details Converts edge position within the chain to the end
-     * if the edge is a the boundary edge.
+     * if the edge is the boundary edge.
+     * \return The chain end, or End::undefined for single-edge chains.
      * \param[in] a Edge position within the chain.
      */
     constexpr auto a2end(EgIdA a) const noexcept -> EndId;
@@ -332,13 +332,13 @@ struct Chain<E>
     /**
      * Convert graph-wide edge index to chain end.
      * \details Convert graph-wide edge index to chain end if the edge
-     * is on chain boundary. For single-edge chains end cannot be determined.
+     * is on chain boundary. For single-edge chains, the end is determined
+     * by the edge internal end \p ege .
      * \param[in] ind Graph-wide edge index.
-     * \param[in] ege Edge internal end.
-     * \return One of the following:
-     * Chain end index [1, 2] if chain length > 1 and the edge is at the border;
-     * 0 if chain length == 1
-     * undefined if edge is not at the border.
+     * \param[in] ege Edge internal end; used only for single-edge chains.
+     * \return End::A if the edge is the chain tail, End::B if it is the head;
+     * for single-edge chains, the chain end at the edge end \p ege .
+     * \throws precondition_error If the edge is not at a chain end.
      */
     auto ind2end(EgIdG ind,
                  EndId ege = End::undefined) const -> EndId;
@@ -346,13 +346,15 @@ struct Chain<E>
     /**
      * Global edge index to chain end conversion.
      * \details Convert graph-wide edge index to chain end if the edge
-     * is on chain boundary and the chain is connected at this end.
+     * is on chain boundary. For single-edge chains, the end is the one
+     * connected to \p nb .
      * \param[in] ieg Graph-wide edge index.
-     * \param[in] nb Index of the connected partner chain.
-     * \return One of the following:
-     * Chain end index [1, 2] if chain length > 1 and the edge is at the border;
-     * 0 if chain length == 1
-     * undefined if edge is not at the border.
+     * \param[in] nb Slot connected to the searched end; used only for
+     * single-edge chains.
+     * \return End::A if the edge is the chain tail, End::B if it is the head;
+     * for single-edge chains, the chain end connected to \p nb .
+     * \throws precondition_error If the edge is not at a chain end, or, for
+     * single-edge chains, if no end is connected to \p nb .
      */
     auto ind2end(EgIdG ieg,
                  const EndSlot& nb) const -> EndId;
@@ -381,7 +383,7 @@ struct Chain<E>
     constexpr bool is_connected_at(EndId e) const noexcept;
 
     /**
-     * Determines if chain is connected to any segments at any of its ends.
+     * Determines if chain is connected to any chains at any of its ends.
      * \return \a true iff the chain is connected at any of its ends.
      */
     constexpr bool is_connected() const noexcept;
@@ -409,22 +411,28 @@ struct Chain<E>
     constexpr auto get_single_4way_end() const -> EndId;
 
     /**
-     * Determines if the chain has one free end.
-     * \return The end index if true.
+     * Determines if the chain has exactly one free end.
+     * \return \a true iff one end is connected and the other is not.
      */
     constexpr bool has_single_leaf_vertex() const noexcept;
 
+    /**
+     * Index of the free end of a chain having exactly one free end.
+     * \note Valid only if has_single_leaf_vertex() is true.
+     */
     constexpr auto the_only_leaf_end() const noexcept -> EndId;
 
     /**
      * Determines if at least one of the chain ends is not connected.
+     * \return \a true and the free end (End::A if both are free), or
+     *         \a false and End::undefined.
      */
     constexpr auto has_a_leaf_end() const noexcept -> std::pair<bool, EndId>;
 
     /**
      * Checks if the chain has its both ends unconnected.
      * \details This chain is unconnected iff it is
-     * not connected its boundary vertices.
+     * not connected at its boundary vertices.
      * \return \a true if the chain is unconnected at its boundary vertices,
      *         \a false otherwise.
      */
@@ -453,7 +461,7 @@ struct Chain<E>
 
     /**
      * Checks if the chain is cycled onto itself.
-     * \details A chain is cycled onto itself if it is its ends are connected
+     * \details A chain is cycled onto itself if its ends are connected
      * to each other.
      * \return \a true if the chain is cycled onto itself, \a false otherwise.
      */
@@ -462,7 +470,9 @@ struct Chain<E>
     /**
      * Checks if an edge can be deleted from the chain.
      * \details An edge can be deleted from the chain if the chain length is
-     * larger than the minimal length alowed for the given chain topology.
+     * larger than the minimal length allowed for the given chain topology,
+     * or if the chain has a single leaf end: then, removing its last edge
+     * removes the chain.
      * \return \a true if an edge can be deleted from the chain,
      *         \a false otherwise.
      */
@@ -530,7 +540,7 @@ struct Chain<E>
     constexpr bool ind_is_end(const EgIdG ind) const noexcept { return head().ind == ind || tail().ind == ind; }
 
     /**
-     * Fiind if the given edge is at the chain head.
+     * Find if the given edge is at the chain head.
      * \param ind Edge index in graph scope.
      * \param egEnd Inner end of the edge at \p ind
      */
@@ -538,7 +548,7 @@ struct Chain<E>
                                  EndId egEnd) const noexcept;
 
     /**
-     * Fiind if the given edge is at the chain tail.
+     * Find if the given edge is at the chain tail.
      * \param ind Edge index in graph scope.
      * \param egEnd Inner end of the edge at \p ind
      */
@@ -550,7 +560,7 @@ struct Chain<E>
     constexpr void set_g_w() noexcept;
 #if 0
     /**
-     * \name Vertex addition and removal.connect_bulk_vertex
+     * \name Vertex addition and removal.
      * @{
      */
 
@@ -561,7 +571,7 @@ struct Chain<E>
      * \p egend of edge \p eg and the latter is set as the incoming slot to \p v.
      * \param[in] v Vertex object to which the new connection is appended.
      * \param[in] eg Edge object to which the new vertex is appended.
-     * \param[in] egend End of the edge accepting the the new vertex.
+     * \param[in] egend End of the edge accepting the new vertex.
      */
     constexpr void connect(
         Vertex& v,  // by reference
@@ -572,12 +582,12 @@ struct Chain<E>
     /**
      * Disconnects an edge end from a vertex.
      * \details Removes the descriptors in vertex \p v pointing to edge \p eg
-     * end \p egend and the other vay around. After this operation, the
+     * end \p egend and the other way around. After this operation, the
      * vertex \p v is not assigned to the end \p egend of edge \p eg  any more
      * and the latter is removed from the incoming slots of \p v.
      * \param[in] v Vertex object from which the connection is removed.
-     * \param[in] eg Edge object from which the new vertex is desconnected.
-     * \param[in] egend End of the edge losing the the connection.
+     * \param[in] eg Edge object from which the vertex is disconnected.
+     * \param[in] egend End of the edge losing the connection.
      */
     constexpr void disconnect(
         Vertex& v,  // by reference

@@ -53,7 +53,7 @@ namespace graffine::transforms::edge_deletion {
  * junction between chains.
  * \note This case is discriminated because deletion of an edge in single-edge
  * chains does trigger automatically deletion of the host chain itself
- * \tparam Graph hosting the edge to be deleted.
+ * \tparam G Graph hosting the edge to be deleted.
  */
 template<typename G,
          typename PP = void>
@@ -88,6 +88,9 @@ struct InSingleEdgeChain
     auto apply(EgIdG ind) -> Res;
 
     /// Checks that edge \p ind can be deleted with its single-edge chain.
+    /// \details Rejects an invalid edge index, an edge which is not a
+    /// single-edge chain attached by a single end, and an end attached at a
+    /// vertex of degree other than 3 or 4.
     auto applicability(EgIdG ind) const -> Applicability;
 
 protected:

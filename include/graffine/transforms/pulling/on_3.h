@@ -51,8 +51,9 @@ namespace graffine::transforms::pulling {
 
 /**
  * Functor doing edge pulling initiated from a vertex of degree 3.
- * \tparam Dir Direction of the pull operation.
+ * \tparam Dir Direction of the pull operation, see On.
  * \tparam G Graph to which the pull operation is applied.
+ * \tparam PP Processor of non-topological properties, or void.
  */
 template<Orientation Dir,
          typename G,
@@ -95,19 +96,22 @@ struct On<Deg3, Dir, G, PP>
                 std::shared_ptr<PP> pp = nullptr);
 
     /**
-     * Pulls a vertex of degree 3.
+     * Pulls a vertex of degree 3 along \p path by \p steps.
      * \details Pulls vertex at the end of the path, converting it to a 4-node.
-     * \param[in] path Path containing the string of edges to get pulled.
+     * Unchecked: see Applicable.
+     * \param[inout] path Path containing the string of edges to get pulled.
      * \param[in] steps Number of steps to pull over.
-     * \return Result containing the component ID after the pull operation.
+     * \return Index of the component hosting the path after the pull.
      */
-    /// Pulls along \p path by \p steps. Unchecked: see Applicable.
     auto apply(
         Path& path,
         int steps
     ) -> Res;
 
     /// Checks that \p path can be pulled by \p steps.
+    /// \details Rejects a path failing check_path_basics(), a driver end not
+    /// at a 3-way junction, a degree 2 source next to the driver, and a
+    /// source failing check_source().
     auto applicability(
         const Path& path,
         int steps
@@ -280,7 +284,7 @@ pull(Path& path)
                   : cn[wD].length() - 1;
     const auto w1 = egl[ni[0]].w;
 
-    // driver neigbour slots over the branching are part of the path
+    // driver neighbour slots over the branching are part of the path
     if (const auto pi =
             std::find(path.pthw.begin(), path.pthw.end(), ni[0]) - path.pthw.begin();
         pi < static_cast<long int>(path.pthw.size()) - 1)
