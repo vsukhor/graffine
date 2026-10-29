@@ -160,7 +160,6 @@ struct Vertex<ED>
     static constexpr auto isSpatial = Base::isSpatial;
 
     using Base::id;
-    using Base::operator==;
     using Base::get_id;
     using Base::set_id;
 
@@ -183,6 +182,16 @@ public:  // Functions
      * \param[in] c Id of the graph connected component hosting the vertex.
      */
     explicit Vertex(CmpId c);
+
+    /**
+     * Equality operator.
+     * \details Declared here rather than taken from the base, whose operator
+     * makes `a == b` ambiguous with its reversed form `b == a` in C++20.
+     */
+    constexpr bool operator==(const Vertex& other) const noexcept
+    {
+        return Base::operator==(other);
+    }
 
     /// Vertex degree (number of incident edges).
     constexpr auto deg() const noexcept -> Degree;
