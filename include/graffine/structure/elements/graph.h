@@ -173,8 +173,17 @@ public:
     /// Appends an unconnected chain to the graph.
     void add_single_chain_component(std::size_t len);
 
+    /// Appends component \p cmp to the graph and updates the graph data.
     void add_component(Compt&& cmp);
 
+    /**
+     * Removes edge \p ind from the graph.
+     * \details Removes the edge from its chain as Component::remove_edge()
+     * does, merging the two vertices of the edge, and updates the graph data.
+     * \note The formerly last edge of the graph takes over index \p ind:
+     * graph-wide edge indexes of the other edges remain valid.
+     * \param[in] ind Graph-wide index of the edge to be removed.
+     */
     void remove_edge(EgIdG ind);
 
 //    /**
@@ -226,17 +235,41 @@ public:
         CmpId donor
     ) -> Compt&;
 
+    /**
+     * Moves the chains of \p cmp unreachable from slot \p s to a new
+     * component.
+     * \details The chains are classified by
+     * PathsOverEndSlots::classify_chains_by_connectivity(), so that \p pp
+     * must hold the distances computed from \p s, e.g. by
+     * pp.compute_from_source(s) or pp.are_connected(s, ...).
+     * \note See split_component(Compt&, ChIdGs&&) on invalidation.
+     * \return Reference to the new component.
+     */
     auto split_component(
         Compt& cmp,
         const PathsOverEndSlots& pp,
         const EndSlot& s
     )-> Compt&;
 
+    /**
+     * Moves chains \p rm of \p cmp to a new component.
+     * \details The new component is appended to the components: this may
+     * reallocate them, invalidating references to the components,
+     * \p cmp included.
+     * \note Does not mark the graph-wide vertex descriptors stale: the
+     * caller does so once its changes are complete.
+     * \return Reference to the new component.
+     */
     auto split_component(
         Compt& cmp,
         ChIdGs&& rm
     ) -> Compt&;
 
+    /**
+     * Moves chain \p m of \p cmp to a new component.
+     * \details As split_component(Compt&, ChIdGs&&), for a single chain.
+     * \return Reference to the new component.
+     */
     auto split_component(
         Compt& cmp,
         Chain& m
@@ -416,6 +449,13 @@ public:
     constexpr auto ind_last_cmpt() const noexcept -> CmpId;
     constexpr auto ind_last_chain() const noexcept -> ChIdG;
 
+    /**
+     * Records chain ends \p s1 and \p s2 as joined.
+     * \details Adds each slot to the neighbour list (Chain::ngs) of the
+     * other.
+     * \note Only updates the chain connectivity: the vertices at the two
+     * ends are not merged.
+     */
     constexpr void connect(const EndSlot& s1,
                            const EndSlot& s2);
 

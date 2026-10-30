@@ -65,6 +65,21 @@ struct Chain
  * connected to each other form a graph component (aka 'component').
  * The class handles the tasks and properties specific to a single
  * chain and its relation to other graph components.
+ *
+ * Chain coordinates:
+ * - the edges are stored in \a g, ordered from chain end A to chain end B:
+ *   edge \a g[a] has position \a a (EgIdA), the \a tail g[0] is at end A
+ *   and the \a head g[length()-1] at end B. The outer ends of the edges
+ *   (see Edge) follow this orientation: outer end A faces chain end A;
+ * - consecutive edges g[a-1] and g[a] share an internal (bulk) vertex,
+ *   addressed by BulkSlot {idw, a} with 0 < a < length();
+ * - each chain end \a e has a boundary vertex, addressed by EndSlot
+ *   {idw, e}. \a ngs[e] lists the other chain end slots joined at it, so
+ *   that its degree is \a ngs[e].num() + 1.
+ *
+ * A chain is a \a cycle if both its ends are at the same vertex: each end
+ * then lists the opposite end of the same chain. An unconnected cycle is
+ * joined to nothing else, so that both its ends have degree 2.
  * \tparam E Edge class having max vertex degree 4.
  */
 template<typename E>

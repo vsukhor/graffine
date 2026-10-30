@@ -265,6 +265,19 @@ template<typename, typename...> struct Chain;
  * \details Edge is a minimal structural unit of a graph.
  * The struct implements the tasks and properties specific to a single edge
  * and its relation to other components.
+ *
+ * The ends of an edge are labelled in two coordinate systems:
+ * - \a inner ends are the edge's own ends A and B: vertex \a vv[e] is
+ *   connected at inner end \a e, and the vertices record the inner end in
+ *   their descriptors of the edge (Vertex::edges());
+ * - \a outer ends are the edge ends in the coordinates of its host chain:
+ *   outer end A faces chain end A.
+ *
+ * The orientation \a ornt relates the two: if the edge points forwards, the
+ * inner and outer ends coincide, otherwise they are opposite. Accordingly,
+ * the \c *_inner and \c *_outer members take an end in the respective
+ * coordinates. inner_endId() and outer_endId() convert between them.
+ * \see descriptors::ids for the meaning of the edge identifiers.
  * \tparam V Vertex the edge is designed to operate with.
  */
 template<typename V>
@@ -370,15 +383,25 @@ public:  // functions
 
     constexpr void set_cmp(CmpId cc, EgIdC indcc) noexcept;
 
-    /// Swap the edge ends.
+    /**
+     * Reverses the edge orientation.
+     * \details With \p swapVV, also swaps the inner ends: the vertices and
+     * their descriptors of the edge are relabelled, so that each outer end
+     * keeps its vertex. Without, only \a ornt is flipped, which swaps the
+     * vertices at the outer ends: used when the host chain is reversed.
+     * \tparam swapVV Whether to swap the inner ends.
+     */
     template<bool swapVV> void reverse();
 
     /// Get edge orientation.
     constexpr auto orientation() const noexcept -> Orientation;
 
+    /// Whether the inner and outer ends of the edge coincide.
     constexpr bool points_forwards() const noexcept;
 
+    /// Outer end corresponding to inner end \p innerE.
     constexpr auto outer_endId(EndId innerE) const noexcept -> EndId;
+    /// Inner end corresponding to outer end \p outerE.
     constexpr auto inner_endId(EndId outerE) const noexcept -> EndId;
 
     /// Return index of the edge end opposite to 'e'.

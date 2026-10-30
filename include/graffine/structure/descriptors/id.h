@@ -36,10 +36,41 @@ limitations under the License.
 #include <string>
 #include <type_traits>
 
-/// Defines identifiers for graph structural elements
+/**
+ * Defines identifiers for graph structural elements.
+ * \details An identifier is typed by the kind of element it identifies and
+ * by its scope, i.e. the range over which it is unique. The alias names
+ * encode both: \c EgId, \c ChId, \c VId for edges, chains and vertices,
+ * with suffix
+ * - \c H (IdScope::RUN): unique over the program run, and stable: it is
+ *   assigned once, when the element is created;
+ * - \c G (IdScope::GRAPH): position in a container of the graph;
+ * - \c C (IdScope::COMPONENT): position in a container of the component;
+ * - \c A (IdScope::CHAIN): position of an edge along its chain.
+ *
+ * The G, C and A ids are positions, so they change when the graph does:
+ * - removal of an element moves the last element of the same container
+ *   into the vacated position, renumbering it: e.g. after Graph::remove_edge,
+ *   the formerly last edge of the graph takes over the removed EgIdG, and
+ *   the last edge of the component the removed EgIdC; chains and components
+ *   are renumbered alike;
+ * - merging and splitting of components renumbers the chains and edges
+ *   they contain (ChIdC, EgIdC) and may change CmpId;
+ * - insertion or removal of an edge in a chain shifts the EgIdA of the
+ *   edges following it.
+ *
+ * Only the H ids therefore remain valid over transformations. The data
+ * members holding the ids are named as follows:
+ * - Edge: \a id (EgIdH), \a ind (EgIdG), \a indc (EgIdC), \a indw (EgIdA),
+ *   \a w (ChIdG of the host chain), \a c (CmpId of the host component);
+ * - Chain: \a idw (ChIdG), \a idc (ChIdC), \a c (CmpId);
+ * - Component: \a ind (CmpId), \a ww (ChIdGs of its chains);
+ * - Vertex: \a id (VIdH), \a c (CmpId);
+ * - slots and edge descriptors: \a w (chain), \a a (EgIdA), \a e (end).
+ */
 namespace graffine::structure::descriptors::ids {
 
-
+/// Kind of the element identified.
 enum class ElementType {
     END,
     VERTEX,
@@ -50,11 +81,12 @@ enum class ElementType {
     UNDEF
 };
 
+/// Range over which an identifier is unique; see the namespace description.
 enum class IdScope {
-    RUN,
-    GRAPH,
-    COMPONENT,
-    CHAIN
+    RUN,        ///< Program run: stable handle.
+    GRAPH,      ///< Position in a graph container.
+    COMPONENT,  ///< Position in a component container.
+    CHAIN       ///< Position along a chain.
 };
 
 /// Struct template for element ids.
@@ -174,15 +206,19 @@ using ChIdG = Id<ElementType::CHAIN, IdScope::GRAPH>;
 /// Chain ids relative to the hosting component.
 using ChIdC = Id<ElementType::CHAIN, IdScope::COMPONENT>;
 
-/// Edge ids.
+/// Edge ids unique over the program run.
 using EgIdH = Id<ElementType::EDGE, IdScope::RUN>;
-
+/// Edge ids relative to the hosting graph.
 using EgIdG = Id<ElementType::EDGE, IdScope::GRAPH>;
+/// Edge ids relative to the hosting component.
 using EgIdC = Id<ElementType::EDGE, IdScope::COMPONENT>;
+/// Edge positions in the hosting chain, from 0 at chain end A.
 using EgIdA = Id<ElementType::EDGE, IdScope::CHAIN>;
 
-using VIdH = Id<ElementType::VERTEX, IdScope::RUN>;       ///< Vertex ids: simulation-wide.
-using VIdG = Id<ElementType::VERTEX, IdScope::GRAPH>;     ///< Vertex ids: graph-wide.
+using VIdH = Id<ElementType::VERTEX, IdScope::RUN>;       ///< Vertex ids: unique over the program run.
+/// Vertex ids: positions in the graph-wide vertex descriptors, which are
+/// rebuilt on their first access after a change of the graph.
+using VIdG = Id<ElementType::VERTEX, IdScope::GRAPH>;
 using VIdC = Id<ElementType::VERTEX, IdScope::COMPONENT>; ///< Vertex ids: component-wide.
 
 using CmpId = Id<ElementType::COMPONENT, IdScope::GRAPH>;  ///< Component ids.

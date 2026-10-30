@@ -37,8 +37,8 @@ namespace graffine::structure::descriptors {
 /// Descriptor of an edge.
 struct EdgeInGraph
 {
-    ChIdG w {ChIdG::undefined};  ///< Chain index.
-    EgIdA a {EgIdA::undefined};  ///< Chain::idw.
+    ChIdG w {ChIdG::undefined};  ///< Index of the edge hosting chain.
+    EgIdA a {EgIdA::undefined};  ///< Position inside the host chain.
     EgIdH h {EgIdH::undefined};  ///< Edge hash.
 
     constexpr EdgeInGraph() = default;

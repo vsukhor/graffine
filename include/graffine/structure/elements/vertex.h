@@ -169,7 +169,8 @@ protected:  // Data
     CmpId     c;  ///< Identifier of the current hosting connected component.
     FixedAttr isFixed {"isFixed", "F", {}};
 
-    /// Component-wide edge indexes and ends of incident edge descriptors.
+    /// Descriptors of the incident edges: component-wide edge index and
+    /// the inner end connected to this vertex (see Edge).
     EgDescrors egDescrors;
 
 public:  // Functions
@@ -213,7 +214,11 @@ public:  // Functions
     constexpr auto edges() const noexcept -> const EgDescrors& { return egDescrors; }
     constexpr auto edges() noexcept -> EgDescrors&             { return egDescrors; }
 
+    /// Descriptors of the edges connected at their inner end B, i.e.
+    /// pointing into this vertex by their own orientation.
     auto edges_in() const noexcept -> EgDescrors;
+    /// Descriptors of the edges connected at their inner end A, i.e.
+    /// pointing out of this vertex by their own orientation.
     auto edges_out() const noexcept -> EgDescrors;
 
     auto erase(const EgDescr& g) noexcept -> EgDescrors::size_type;

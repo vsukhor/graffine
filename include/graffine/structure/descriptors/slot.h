@@ -50,9 +50,13 @@ concept SlotCoord = std::is_same_v<T, End> ||
  * Template for a slot representing a connection point in an edge or chain.
  * \details The slot is used to represent a connection point in a chain, which can
  * be either one of the ends or interior. The slot contains the host identifier
- *  and the location identifier. It provides methods for comparison, equality
- * checks, and string representation. The slot can be used to represent both
- * ends of a chain and internal connections within a chain.
+ * \a w and the location identifier \a e. It provides methods for comparison,
+ * equality checks, and string representation. The slot can be used to
+ * represent both ends of a chain and internal connections within a chain:
+ * - with Location End (EndSlot), \a e is an end of the host, A or B;
+ * - with Location Bulk (BulkSlot), \a e is the position \a a of the vertex
+ *   inside the host chain: the vertex between edges g[a-1] and g[a], with
+ *   0 < a < length() (see Chain).
  * \tparam HId Type of the host identifier (e.g., ChId or EgId).
  * \tparam Location Type of the location identifier (e.g., End or Bulk).
  */
@@ -107,6 +111,7 @@ struct _Slot
         return std::tie(w, e);
     }
 
+    /// Location \a e; for a BulkSlot, the position in the host chain.
     constexpr auto a() const noexcept -> LocId { return e; }
 
     constexpr auto ea_str() const -> std::string
@@ -114,11 +119,13 @@ struct _Slot
         return Location::str(e);
     }
 
+    /// \return \p s.opp()
     static constexpr auto opp(const _Slot& s) noexcept -> _Slot
     {
         return s.opp();
     }
 
+    /// Slot at the opposite end of the same host; undefined for a BulkSlot.
     constexpr auto opp() const noexcept -> _Slot
     {
         return isEnd
@@ -166,11 +173,13 @@ struct _Slot
 };
 
 
-using EdgeSlotC = _Slot<EgIdC, End>;
-using EdgeSlotW = _Slot<EgIdG, End>;
-using EndSlot = _Slot<ChIdG, End>;
-using BulkSlot = _Slot<ChIdG, Bulk>;
+using EdgeSlotC = _Slot<EgIdC, End>;  ///< End of an edge, by component-wide index.
+using EdgeSlotW = _Slot<EgIdG, End>;  ///< End of an edge, by graph-wide index.
+using EndSlot = _Slot<ChIdG, End>;    ///< Chain end, i.e. its boundary vertex.
+using BulkSlot = _Slot<ChIdG, Bulk>;  ///< Chain internal vertex.
 
+/// Slot type addressing a vertex of degree \p D in the degree-specific
+/// transforms: BulkSlot for degree 2, EndSlot otherwise.
 template<Degree D>
 using Slot = std::conditional_t<D == Deg2, BulkSlot, EndSlot>;
 

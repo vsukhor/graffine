@@ -43,6 +43,16 @@ namespace graffine::structure::containers {
 
 /**
  * Chain indexes classified according to end degrees.
+ * \details A chain is classified by the degrees of the vertices at its two
+ * ends (Chain::degree_at_end()):
+ * - a chain having degree \a d at both ends is listed by its id under key
+ *   \a d, accessed by operator()(Degree);
+ * - a chain having different degrees is listed by the end slot of its
+ *   lower-degree end, under key {lower, higher}, accessed by
+ *   operator()(const Key&).
+ *
+ * E.g. {1, 1} holds the unconnected linear chains, and {2, 2} the
+ * unconnected cycles; num() accepts both kinds of key.
  * \tparam ES Type of end slot.
  */
 template<typename ES>
@@ -53,15 +63,15 @@ struct ChainIndexes
     using ChId = ES::HostId;
     using ChIds = std::vector<ChId>;
     using Slots = std::vector<EndSlot>;
-    using Key = std::array<Degree, 2>;
+    using Key = std::array<Degree, 2>;  ///< End degrees, in ascending order.
     template<typename> friend struct Component;
     static constexpr ChIds emptyChids {};
     static constexpr Slots emptySlots {};
 
 private:
 
-    std::map<Degree, ChIds> symmetric;
-    std::map<Key, Slots> asymmetric;
+    std::map<Degree, ChIds> symmetric;  ///< Chains with equal end degrees.
+    std::map<Key, Slots> asymmetric;    ///< Lower-degree ends of the others.
 
 public:
 
@@ -88,6 +98,7 @@ public:
     constexpr void insert(Degree k, ChId v);
     constexpr void insert(const Key& k, EndSlot&& v) noexcept;
 
+    /// Number of chains having end degrees \p k, equal or not.
     constexpr auto num(const Key& k) const -> std::size_t;
 
     constexpr auto num_chains() const noexcept -> std::size_t;
