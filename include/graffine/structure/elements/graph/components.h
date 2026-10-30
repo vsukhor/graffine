@@ -226,7 +226,7 @@ move_edges(
     // Does not remove source chain if it is emptied.
 
     GRAFFINE_ASSERT(fr.c == to.c,
-            "Source chain componenet is different from that of the target");
+            "Source chain component is different from that of the target");
 
     ct[fr.c].move_edges(fr, posFrBegin, posFrEnd, to, posTo);
 

@@ -74,7 +74,7 @@ struct IO
 
     /**
      * Writes graph to a file.
-     * \param[in] startnew SrunNametart a new file vs. adding new data records.
+     * \param[in] startnew Start a new file vs. adding new data records.
      * \param[in] last Is the final writeout.
      * \param[in] itr Current simulation iteration.
      * \param[in] t Current simulation time.

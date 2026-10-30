@@ -60,7 +60,7 @@ struct Generic
 
     const Component& cmp;   ///< The graph component.
 
-    ///< Number of end slots in the cluster: 2 * cmp.num_chains().
+    /// Number of end slots in the component: 2 * cmp.num_chains().
     const std::size_t numSlots;
 
     explicit constexpr Generic(const Component& cmp) noexcept;
@@ -69,13 +69,15 @@ struct Generic
                        const EndSlot& s2);
 
     /**
-     * Computes paths connecting a vertex in the graph
-     * \details Computes paths starting at vertex \p source to other vertices
-     * in the connected component of the graph;
-     * \note Utilizes the component adjacency list of chains.
+     * Computes shortest paths from chain end slot \p s.
+     * \details Computes the distances from \p s to every chain end slot of
+     * the component, and the preceding slot of each on its shortest path.
+     * The slots connected to \p s are at distance zero; traversing a chain
+     * adds the chain weight.
+     * \note Follows the chain connections in Chain::ngs.
      * \note Implements Dijkstra's algorithm
      * \see https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm.
-     * \param[in] s Path element from which the paths are computed (source).
+     * \param[in] s Chain end slot from which the paths are computed (source).
      */
     void compute_from_source(const EndSlot& s);
 

@@ -73,7 +73,7 @@ public:  // functions
     constexpr Bond2() noexcept;  // Id is initialized, rest is undefined
 
     /**
-     * Constructor with both chain all specs unset.
+     * Constructor leaving chain and component data undefined.
      * \param[in] ind Index graph-wide.
      */
     explicit constexpr Bond2(EgIdG ind) noexcept;
@@ -265,7 +265,7 @@ template<typename, typename...> struct Chain;
  * \details Edge is a minimal structural unit of a graph.
  * The struct implements the tasks and properties specific to a single edge
  * and its relation to other components.
- * \tparam V Vertex the edge is desined to operate with.
+ * \tparam V Vertex the edge is designed to operate with.
  */
 template<typename V>
 struct Edge<V>
@@ -316,7 +316,7 @@ public:  // functions
     constexpr Edge() : Base{} {}  // Id is initialized, rest is undefined
 
     /**
-     * Constructor with both chain all specs unset.
+     * Constructor leaving chain and component data undefined.
      * \param[in] ind Index graph-wide.
      */
     explicit constexpr Edge(EgIdG ind) noexcept;
@@ -435,7 +435,7 @@ public:  // functions
     // Testing
 
     /**
-     * Ensures that the edge indexes are consistant within the graph.
+     * Ensures that the edge indexes are consistent within the graph.
      * \param[in] nInd Total number of edges in the graph.
      * \param[in] nIndC Number of edges in the component.
      * \param[in] nIndW Number of edges in the chain.

@@ -134,9 +134,9 @@ rem_unconnected_cycle_boundary_vertex() noexcept
     const auto w = ww[0];
 
     GRAFFINE_ASSERT(num_chains() == 1,
-           "component ", ind, " is supposed to hold un unconnected cycle");
+           "component ", ind, " is supposed to hold an unconnected cycle");
     GRAFFINE_ASSERT(cn[w].is_unconnected_cycle(),
-           "chain ", w, " is supposed to be un unconnected cycle");
+           "chain ", w, " is supposed to be an unconnected cycle");
 
     constexpr auto eA = End::A;
     constexpr auto eB = End::B;
@@ -159,7 +159,7 @@ constexpr auto Component<Ch>::
 rem_chain_internal_vertex(const ChIdG w,
                           const EgIdA a) noexcept -> std::array<Edge*, 2>
 {
-    GRAFFINE_ASSERT(contains_chain(w), "chain ", w, " is not part of copmonent ", ind);
+    GRAFFINE_ASSERT(contains_chain(w), "chain ", w, " is not part of component ", ind);
 
     auto& m = cn[w];
 

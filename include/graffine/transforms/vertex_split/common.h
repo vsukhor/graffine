@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file common.h
- * \brief Contains classes controling vertex split transformation.
+ * \brief Contains classes controlling vertex split transformation.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 

@@ -80,13 +80,13 @@ struct PreservingHostChain
 
     /**
      * Vertex degree at the first end of the deleted edge.
-     * \note This is a multi-edge chain, so this verex has degree 2.
+     * \note This is a multi-edge chain, so this vertex has degree 2.
      */
     static constexpr auto I1 = Deg2;
 
     /**
      * Vertex degree at the second end of the deleted edge.
-     * \note This verex can have arbitrary implemented degree.
+     * \note This vertex can have arbitrary implemented degree.
      */
     static constexpr auto I2 = D;
 

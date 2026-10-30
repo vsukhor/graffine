@@ -23,7 +23,7 @@ limitations under the License.
 /**
  * \file functor.h
  * \brief Contains implementation of a wrapper class for vertex merger
- * transformaation.
+ * transformation.
  * \details Class encapsulating merger of vertices of all implemented degrees.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */

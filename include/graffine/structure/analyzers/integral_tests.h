@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file integral_tests.h
- * \brief Contains class encapsulating intergal testing of the graph structure.
+ * \brief Contains class encapsulating integral testing of the graph structure.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>.
  */
 
@@ -37,7 +37,7 @@ namespace graffine::structure {
 /**
  * Implements integral tests of the graph internal structure and its elements.
  * \tparam G Graph subjected to the tests.
- * \tparam beLoud Flag switching verbous reporting.
+ * \tparam beLoud Flag switching verbose reporting.
  */
 template<typename G,
          bool beLoud = true>

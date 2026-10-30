@@ -359,7 +359,7 @@ void Vertex<ED>::
 insert(const EgDescr& s) noexcept
 {
     GRAFFINE_ASSERT(!egDescrors.contains(s),
-            "Attempt to insert repeting egDescr ", s.str_short());
+            "Attempt to insert repeating egDescr ", s.str_short());
 
     egDescrors.insert(s);
 }
@@ -369,7 +369,7 @@ void Vertex<ED>::
 insert(EgDescr&& s)
 {
     GRAFFINE_ASSERT(!egDescrors.contains(s),
-           "Attempt to insert repeting egDescr ", s.str_short());
+           "Attempt to insert repeating egDescr ", s.str_short());
 
     egDescrors.insert(std::move(s));
 }

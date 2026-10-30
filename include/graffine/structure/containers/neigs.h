@@ -43,10 +43,14 @@ namespace graffine::structure::containers {
 
 
 /**
- * Container struct for holding and managing slots connected to the current one.
- * \details This Container holds all the slots that are directly connected to
- * the current slot in the chain. It provides methods to add, remove, and access
- * the connected slots.
+ * Ordered set of slots connected at a common vertex.
+ * \details Holds, for a chain end (Chain::ngs), the end slots of the other
+ * chains joined at its boundary vertex, and, for a vertex
+ * (Vertex::edges()), the descriptors of its incident edge ends. It provides
+ * methods to add, remove, and access the slots.
+ * \note \a maxNum is the maximal size for a chain end: a vertex may hold up
+ * to maxDegree descriptors.
+ * \tparam S Slot type; its location must be an end (End::Id).
  */
 template<typename S>
 struct Neigs

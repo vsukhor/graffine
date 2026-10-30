@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file junction_shifter.h
- * \brief Contains implementation of the mechainsm enabling smooth shifting of
+ * \brief Contains implementation of the mechanism enabling smooth shifting of
  * internal chain vertices over a junction node connecting the chains.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
@@ -41,7 +41,7 @@ limitations under the License.
 namespace graffine::structure::modifiers {
 
 /**
- * Contains implementation of the mechainsm enabling smooth shifting of
+ * Contains implementation of the mechanism enabling smooth shifting of
  * internal chain vertices over a junction node connecting the chains.
  */
 template<typename H>

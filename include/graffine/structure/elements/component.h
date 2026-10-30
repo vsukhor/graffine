@@ -207,9 +207,12 @@ public: // Functions
      * \details Removes an edge at chain coordinate a = egl[indc].a while
      * shifting original g[a+1], g[a+2], ... backwards. These then become
      * g[a], g[a+1], ... .
+     * The two vertices of the removed edge are merged into one, and the
+     * last edge of the component takes over its component-wide index.
      * \note Does not update global edge indices.
-     * \note Does not remove the host chain even if the removed edge was the
-     * last one.
+     * \note The host chain must have more than one edge (asserted).
+     * \tparam preserveTopology Whether to assert that the merged vertex has
+     * an implemented degree.
      * \param[in] indc Component-wide index of the edge to be removed.
      * \return Pointer to the edge g[a] after the shift if the removed edge
      * was not at the chain head, \a nullptr otherwise.
@@ -221,9 +224,12 @@ public: // Functions
      * Removes an edge at position \p a .
      * \details Removes an edge g[a] while shifting original
      * g[a+1], g[a+2], ... backwards. These then become g[a], g[a+1], ... .
+     * The two vertices of the removed edge are merged into one, and the
+     * last edge of the component takes over its component-wide index.
      * \note Does not update global edge indices.
-     * \note Does not remove the host chain even if the removed edge was the
-     * last one.
+     * \note The host chain must have more than one edge (asserted).
+     * \tparam preserveTopology Whether to assert that the merged vertex has
+     * an implemented degree.
      * \param[in] w Graph-wide id of the chain to get processed.
      * \param[in] a Position of the removed edge in the original chain.
      * \return Pointer to the edge g[a] after the shift if the removed edge
@@ -236,9 +242,12 @@ public: // Functions
      * Removes an edge at position \p a .
      * \details Removes an edge g[a] while shifting original
      * g[a+1], g[a+2], ... backwards. These then become g[a], g[a+1], ... .
+     * The two vertices of the removed edge are merged into one, and the
+     * last edge of the component takes over its component-wide index.
      * \note Does not update global edge indices.
-     * \note Does not remove the host chain even if the removed edge was the
-     * last one.
+     * \note The host chain must have more than one edge (asserted).
+     * \tparam preserveTopology Whether to assert that the merged vertex has
+     * an implemented degree.
      * \param[in] m Chain to get processed.
      * \param[in] a Position of the removed edge in the original chain.
      * \return Pointer to the edge g[a] after the shift if the removed edge
@@ -329,10 +338,14 @@ public: // Functions
     void remove_slot_from_neigs(const EndSlot& s);
 
     /**
-     * Replaces \p old with \p nov in slots connected to \p nov .
-     * \details Slots connected to \p nov will be checked, and if there is
-     * \p old, it will be replaced by \p nov .
+     * Replaces \p old with \p nov in the neighbour lists of the slots
+     * connected to \p nov .
+     * \details To be called once \p nov holds the neighbours of \p old,
+     * e.g. after copy_neigs(): each of these must list \p old, which is
+     * replaced by \p nov .
      * \note Important: \p old retains list of slots formerly connected to it.
+     * \throws invariant_error If a slot connected to \p nov does not list
+     * \p old.
      */
     void replace_slot_in_neigs(
         const EndSlot& old,

@@ -156,8 +156,8 @@ public:
     void print(T... values) const;
 
     /**
-     * \brief ostream operator with the same functionaluty as the print method.
-     * \note The oputput is not terminated by a \a newline .
+     * \brief ostream operator with the same functionality as the print method.
+     * \note The output is not terminated by a \a newline .
      */
     template<typename... T>
     Msgr& operator<<(T... values);

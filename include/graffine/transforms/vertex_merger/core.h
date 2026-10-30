@@ -47,7 +47,7 @@ namespace graffine::transforms::vertex_merger {
 /**
  * Encapsulates core vertex merger operations.
  * \details Elementary dynamics and updates the graph for it.
- * Forms base for clases adding more specific types of dynamics.
+ * Forms base for classes adding more specific types of dynamics.
  * \tparam G Graph to which the transformation is applied.
  */
 template<typename G,
@@ -72,7 +72,7 @@ struct Core
      * Constructs a Core object from the Graph class instance.
      * \param[in] gr Graph to which the transformation is applied.
      * \param[in] pp Processor for non-topological properties.
-     * \param[in] shortName Human-readable name, shoer form.
+     * \param[in] shortName Human-readable name, short form.
      */
     explicit constexpr Core(Graph& gr,
                             std::shared_ptr<PP> pp = nullptr,

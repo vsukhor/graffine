@@ -35,7 +35,7 @@ inline constexpr std::array degrees {
 };
 inline constexpr auto numDegrees = degrees.size();
 
-///< Maximal vertex degree.
+/// Maximal vertex degree.
 inline constexpr auto maxDegree {degrees.back()};
 
 /**

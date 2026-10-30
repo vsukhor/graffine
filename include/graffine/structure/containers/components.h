@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file components.h
- * \brief Contains class implementating collections of components in the graph.
+ * \brief Contains class implementing collections of components in the graph.
  * \details Adds components-specific functionality to the Sequence container.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */

@@ -184,8 +184,8 @@ struct Chain<E>
 
     /**
      * \return Internal vertex linking edges \p ind1 and \p ind2
-     * \param[in] ind1 Graph_wide index of the 1st edge.
-     * \param[in] ind2 Graph_wide index of the 2nd edge.
+     * \param[in] ind1 Graph-wide index of the 1st edge.
+     * \param[in] ind2 Graph-wide index of the 2nd edge.
      * \note \p ind1 and \p ind2 must be neighbouring edges, both part of
      * this chain
      */
@@ -240,7 +240,7 @@ struct Chain<E>
     constexpr auto edge_internal_end_at_end(EndId e) const noexcept -> EndId;
 
     /**
-     * Get pointer to the edge connected at \p end egEnd to the edge at
+     * Get pointer to the edge connected at edge end \p egEnd to the edge at
      * chain position \p a .
      * \param[in] a Intra-chain position of the edge.
      * \param[in] egEnd Edge internal end.

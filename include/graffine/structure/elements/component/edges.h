@@ -104,7 +104,7 @@ remove_edge(Chain& m, // chain modified by the edge removal
 
     GRAFFINE_ASSERT(!preserveTopology ||
            is_implemented_degree(vA->deg() + vB->deg() - Deg2),
-           "Erasing edge produces vertex above max implemented degre.");
+           "Erasing edge produces vertex above max implemented degree.");
 
     h.disconnect_end_outer(End::A);
     h.disconnect_end_outer(End::B);
@@ -414,7 +414,7 @@ move_edges(
     // Does not remove source chain if it is emptied.
 
     GRAFFINE_ASSERT(fr.c == to.c,
-           "Source chain componenet is different from that of the target");
+           "Source chain component is different from that of the target");
 
     to.g.insert(to.g.begin() + posTo,
                 std::make_move_iterator(fr.g.begin() + posFrBegin),

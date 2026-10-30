@@ -192,11 +192,16 @@ public:
 
     /**
      * Appends \p donor component to \p acceptor component.
-     * \note If necessary, the last component in \a ct is moved to the donor
-     * place and reindexed.
+     * \details The place of \p donor is filled by the last component of
+     * \a ct, which is reindexed, unless \p donor is the last one itself.
+     * Hence, if \p acceptor is the last component, the merged component
+     * ends up in the place, and with the index, of \p donor; otherwise it
+     * keeps the place and index of \p acceptor.
+     * \note References to the last component are invalidated: use the
+     * returned reference rather than \p acceptor.
      * \param[in] acceptor Component to which \p donor component is appended.
      * \param[in] donor Component merged to the \p acceptor.
-     * \return reference to the \p acceptor object
+     * \return Reference to the merged component.
      */
     auto merge_components(
         Compt& acceptor,
@@ -205,11 +210,16 @@ public:
 
     /**
      * Appends \p donor component to \p acceptor component.
-     * \note If necessary, the last component in \a ct is moved to the donor
-     * place and reindexed.
+     * \details The place of \p donor is filled by the last component of
+     * \a ct, which is reindexed, unless \p donor is the last one itself.
+     * Hence, if \p acceptor is the last component, the merged component
+     * ends up in the place, and with the index, of \p donor; otherwise it
+     * keeps the place and index of \p acceptor.
+     * \note References to the last component are invalidated: use the
+     * returned reference rather than \p acceptor.
      * \param[in] acceptor Component to which \p donor component is appended.
      * \param[in] donor Component merged to the \p acceptor.
-     * \return reference to the \p acceptor object
+     * \return Reference to the merged component.
      */
     auto merge_components(
         CmpId acceptor,
@@ -457,10 +467,14 @@ public:
     void remove_slot_from_neigs(const EndSlot& s);
 
     /**
-     * Replaces \p old with \p nov in slots connected to \p nov .
-     * \details Slots connected to \p nov will be checked, and if there is
-     * \p old, it will be replaced by \p nov .
+     * Replaces \p old with \p nov in the neighbour lists of the slots
+     * connected to \p nov .
+     * \details To be called once \p nov holds the neighbours of \p old,
+     * e.g. after copy_neigs(): each of these must list \p old, which is
+     * replaced by \p nov .
      * \note Important: \p old retains list of slots formerly connected to it.
+     * \throws invariant_error If a slot connected to \p nov does not list
+     * \p old.
      */
     void replace_slot_in_neigs(
         const EndSlot& old,
@@ -474,7 +488,8 @@ public:
 
     /**
      * Checks if the graph is equilibrated.
-     * \return True if equilibrated, false otherwise.
+     * \note Placeholder: not implemented, always returns \a true.
+     * \return \a true.
      */
     bool is_equilibrated() const noexcept;
 

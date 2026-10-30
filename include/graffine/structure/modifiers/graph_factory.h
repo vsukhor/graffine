@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file graph_factory.h
- * \brief Implements assembling of graph structture from collection
+ * \brief Implements assembling of graph structure from collection
  * of independent vertex and edge indexes.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
