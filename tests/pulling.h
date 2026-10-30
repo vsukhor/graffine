@@ -80,13 +80,12 @@ struct VertexMerger
 
 /// Subclass to make protected members accessible for testing:
 template<Degree D,
-         Orientation Dir,
          typename G>
 struct Pulling
-    : public trs::pulling::On<D, Dir, G> {
+    : public trs::pulling::On<D, G> {
 
     explicit Pulling(G& graph)
-        : trs::pulling::On<D, Dir, G> {graph}
+        : trs::pulling::On<D, G> {graph}
     {}
 };
 

@@ -46,16 +46,14 @@ namespace graffine::transforms::pulling {
 
 /**
  * Functor for edge pulling initiated at a vertex of degree 1.
- * \tparam Dir Direction of the pull operation, see On.
  * \tparam G Graph to which the pull operation is applied.
  * \tparam PP Processor of non-topological properties, or void.
  */
-template<Orientation Dir,
-         typename G,
+template<typename G,
          typename PP>
-struct On<Deg1, Dir, G, PP>
+struct On<Deg1, G, PP>
     : public FunctorBase<G, PP>
-    , public Applicable<On<Deg1, Dir, G, PP>>
+    , public Applicable<On<Deg1, G, PP>>
 {
     using Base = FunctorBase<G, PP>;
     using Trait = Base::Trait;
@@ -67,17 +65,14 @@ struct On<Deg1, Dir, G, PP>
     using ResT = Trait::ResT;
     using Res = Trait::Res;
 
-    static constexpr auto Direction = Dir;
-
     /// Degree of the vertex from which the pull operation is initiated.
     static constexpr auto D = Deg1;
 
     static_assert(is_pullable_degree<D>);
 
     const std::string d {std::to_string(D)};
-    const std::string dir {std::to_string(Dir)};
-    const std::string shortName {d + "pu_" + dir};
-    const std::string fullName  {"Pulling "s + dir + " from Vertex Deg " + d};
+    const std::string shortName {d + "pu"};
+    const std::string fullName  {"Pulling from Vertex Deg "s + d};
 
     /**
      * Constructs functor object based on the Graph instance.
@@ -129,16 +124,15 @@ protected:
 private:
 
     /// Pretty-printer of the initial and final configurations.
-    Reporter<On<D, Dir, Graph, PP>> report {*this};
+    Reporter<On<D, Graph, PP>> report {*this};
 };
 
 
 // IMPLEMENTATION ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-template<Orientation Dir,
-         typename G,
+template<typename G,
          typename PP>
-On<Deg1, Dir, G, PP>::
+On<Deg1, G, PP>::
 On(Graph& gr,
    std::shared_ptr<PP> pp)
     : Base {gr, pp}
@@ -147,10 +141,9 @@ On(Graph& gr,
 }
 
 
-template<Orientation Dir,
-         typename G,
+template<typename G,
          typename PP>
-auto On<Deg1, Dir, G, PP>::
+auto On<Deg1, G, PP>::
 applicability(
     const Path& path,
     const int steps
@@ -167,10 +160,9 @@ applicability(
 }
 
 
-template<Orientation Dir,
-         typename G,
+template<typename G,
          typename PP>
-auto On<Deg1, Dir, G, PP>::
+auto On<Deg1, G, PP>::
 apply(
     Path& path,
     int steps
@@ -193,10 +185,9 @@ apply(
 }
 
 
-template<Orientation Dir,
-         typename G,
+template<typename G,
          typename PP>
-void On<Deg1, Dir, G, PP>::
+void On<Deg1, G, PP>::
 check_path(
     const Path& path,
     [[maybe_unused]] const int steps

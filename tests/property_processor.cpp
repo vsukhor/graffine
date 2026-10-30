@@ -281,7 +281,7 @@ TEST_F(PropertyProcessorTest, ComponentsAndPulling)
 
     Path path {&gr.compt(w0), Path::Driver {&gr.chain(w0).tail(), End::A},
                Path::Source {w0, End::B}};
-    trs::pulling::On<Deg1, Orientation::Forwards, G, Recorder> pull {gr, pp};
+    trs::pulling::On<Deg1, G, Recorder> pull {gr, pp};
     constexpr int steps {2};
     pull(path, steps);
     EXPECT_EQ(pp->pulling.starts, 1);      // once per pull

@@ -179,7 +179,7 @@ inline constexpr ChIdG w4 {4};
 
 
 template<Degree D>
-using Pull = trs::pulling::On<D, Orientation::Forwards, G, Recorder>;
+using Pull = trs::pulling::On<D, G, Recorder>;
 
 /**
  * Pulls \p steps, and checks the hooks: on_start once, and on_end once per

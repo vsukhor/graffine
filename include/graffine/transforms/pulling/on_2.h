@@ -52,16 +52,14 @@ namespace graffine::transforms::pulling {
  * Functor for the edge pulling initiated from a vertex of degree 2.
  * \details The first step uses vertex splits and mergers to turn the driver
  * into a free chain end; the remaining steps then pull it as a leaf.
- * \tparam Dir Direction of the pull operation, see On.
  * \tparam G Graph to which the pull operation is applied.
  * \tparam PP Processor of non-topological properties, or void.
  */
-template<Orientation Dir,
-         typename G,
+template<typename G,
          typename PP>
-struct On<Deg2, Dir, G, PP>
+struct On<Deg2, G, PP>
     : public FunctorBase<G, PP>
-    , public Applicable<On<Deg2, Dir, G, PP>>
+    , public Applicable<On<Deg2, G, PP>>
 {
     using Base = FunctorBase<G, PP>;
     using Trait = Base::Trait;
@@ -75,17 +73,14 @@ struct On<Deg2, Dir, G, PP>
     using ResT = Trait::ResT;
     using Res = Trait::Res;
 
-    static constexpr auto Direction = Dir;
-
     /// Degree of the vertex from which the pull operation is initiated.
     static constexpr auto D = Deg2;
 
     static_assert(is_pullable_degree<D>);
 
     const std::string d {std::to_string(D)};
-    const std::string dir {std::to_string(Dir)};
-    const std::string shortName {d + "pu_" + dir};
-    const std::string fullName  {"Pulling "s + dir + " from Vertex Deg " + d};
+    const std::string shortName {d + "pu"};
+    const std::string fullName  {"Pulling from Vertex Deg "s + d};
 
     /**
      * Constructs this functor object based on the Graph instance.
@@ -171,7 +166,7 @@ private:
     vertex_merger::From<Deg1, Deg2, G, PP> vertex_merge_12;  // degree 1 + 2 -> 3
 
     /// Pretty-printer of the initial and final configurations.
-    Reporter<On<D, Dir, G, PP>> report {*this};
+    Reporter<On<D, G, PP>> report {*this};
 
     void correct_driver(Path& path) const;
 };
@@ -179,10 +174,9 @@ private:
 
 // IMPLEMENTATION ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-template<Orientation Dir,
-         typename G,
+template<typename G,
          typename PP>
-On<Deg2, Dir, G, PP>::
+On<Deg2, G, PP>::
 On(Graph& gr,
    std::shared_ptr<PP> pp)
     : Base {gr, pp}
@@ -194,10 +188,9 @@ On(Graph& gr,
 }
 
 
-template<Orientation Dir,
-         typename G,
+template<typename G,
          typename PP>
-auto On<Deg2, Dir, G, PP>::
+auto On<Deg2, G, PP>::
 applicability(
     const Path& path,
     const int steps
@@ -231,10 +224,9 @@ applicability(
 }
 
 
-template<Orientation Dir,
-         typename G,
+template<typename G,
          typename PP>
-auto On<Deg2, Dir, G, PP>::
+auto On<Deg2, G, PP>::
 apply(
     Path& path,
     const int steps
@@ -264,10 +256,9 @@ apply(
 }
 
 
-template<Orientation Dir,
-         typename G,
+template<typename G,
          typename PP>
-void On<Deg2, Dir, G, PP>::
+void On<Deg2, G, PP>::
 pull_N(Path& path)
 {
     const auto& p = path.pthw;   // path over graph-wide edge indexes (ind)
@@ -341,10 +332,9 @@ pull_N(Path& path)
 }
 
 
-template<Orientation Dir,
-         typename G,
+template<typename G,
          typename PP>
-void On<Deg2, Dir, G, PP>::
+void On<Deg2, G, PP>::
 pull_1(Path& path)
 {
     GRAFFINE_ASSERT(path.length() == 1, "Path is longer than 1 edge.");
@@ -367,10 +357,9 @@ pull_1(Path& path)
 }
 
 
-template<Orientation Dir,
-         typename G,
+template<typename G,
          typename PP>
-void On<Deg2, Dir, G, PP>::
+void On<Deg2, G, PP>::
 correct_driver(Path& path) const
 {
     GRAFFINE_ASSERT(path.length() > 1,
@@ -408,10 +397,9 @@ correct_driver(Path& path) const
 }
 
 
-template<Orientation Dir,
-         typename G,
+template<typename G,
          typename PP>
-void On<Deg2, Dir, G, PP>::
+void On<Deg2, G, PP>::
 check_path(
     const Path& path,
     [[maybe_unused]] const int steps

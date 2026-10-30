@@ -29,7 +29,7 @@ limitations under the License.
 namespace graffine::tests::pulling::d1 {
 
 using Pull_1 = Test;
-using PullForw = Pulling<1, Orientation::Forwards, G>;
+using Pull = Pulling<1, G>;
 
 // =============================================================================
 // ===== Single Chain ==========================================================
@@ -92,9 +92,9 @@ TEST_F(Pull_1, SingleLinChain_DrA)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
+    Pull pu1 {gr};
     constexpr int n {2};
-    pu1f(pp, n);
+    pu1(pp, n);
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -174,9 +174,9 @@ TEST_F(Pull_1, SingleLinChain_DrB)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
+    Pull pu1 {gr};
     constexpr int n {2};
-    pu1f(pp, n);
+    pu1(pp, n);
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -278,8 +278,8 @@ TEST_F(Pull_1, J3_DrA_SrLiA_Srv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull two steps to leave source edge in the original chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -393,9 +393,9 @@ TEST_F(Pull_1, J3_DrA_SrLiB_Srv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
+    Pull pu1 {gr};
 
-    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
+    pu1(pp, n);  // pull two steps to leave source edge in the original chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -509,8 +509,8 @@ TEST_F(Pull_1, J3_DrB_SrLiA_Srv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull two steps to leave source edge in the original chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -623,9 +623,9 @@ TEST_F(Pull_1, J3_DrB_SrLiB_Srv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
+    Pull pu1 {gr};
 
-    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
+    pu1(pp, n);  // pull two steps to leave source edge in the original chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -737,8 +737,8 @@ TEST_F(Pull_1, J3_DrA_SrLiA_Rmv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull two steps to consume the source chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull two steps to consume the source chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -845,8 +845,8 @@ TEST_F(Pull_1, J3_DrA_SrLiB_Rmv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull three steps to consume the source chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull three steps to consume the source chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -952,8 +952,8 @@ TEST_F(Pull_1, J3_DrB_SrLiB_Rmv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull three steps to consume the source chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull three steps to consume the source chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -1059,8 +1059,8 @@ TEST_F(Pull_1, J3_DrB_SrLiA_Rmv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull two steps to consume the source chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull two steps to consume the source chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -1177,8 +1177,8 @@ TEST_F(Pull_1, J3_DrA_SrCyA_Srv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull two steps to get min length of the source cycle chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull two steps to get min length of the source cycle chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -1297,8 +1297,8 @@ TEST_F(Pull_1, J3_DrA_SrCyB_Srv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull two steps to get min length of the source cycle chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull two steps to get min length of the source cycle chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -1417,8 +1417,8 @@ TEST_F(Pull_1, J3_DrB_SrCyA_Srv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull two steps to get min length of the source cycle chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull two steps to get min length of the source cycle chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -1537,8 +1537,8 @@ TEST_F(Pull_1, J3_DrB_SrCyB_Srv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull two steps to get min length of the source cycle chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull two steps to get min length of the source cycle chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -1664,8 +1664,8 @@ TEST_F(Pull_1, J4_LinLin_DrA_SrLiA_Srv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull two steps to leave source edge in the original chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -1785,8 +1785,8 @@ TEST_F(Pull_1, J4_LinLin_DrA_SrLiB_Srv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull two steps to leave source edge in the original chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -1906,8 +1906,8 @@ TEST_F(Pull_1, J4_LinLin_DrB_SrLiB_Srv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull two steps to leave source edge in the original chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -2028,8 +2028,8 @@ TEST_F(Pull_1, J4_LinLin_DrB_SrLiA_Srv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull two steps to leave source edge in the original chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -2149,8 +2149,8 @@ TEST_F(Pull_1, J4_LinLin_DrA_SrLiA_Rmv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull three steps to consume the source chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull three steps to consume the source chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -2263,8 +2263,8 @@ TEST_F(Pull_1, J4_LinLin_DrA_SrLiB_Rmv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull three steps to consume the source chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull three steps to consume the source chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -2377,8 +2377,8 @@ TEST_F(Pull_1, J4_LinLin_DrB_SrLiB_Rmv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull three steps to consume the source chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull three steps to consume the source chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -2493,8 +2493,8 @@ TEST_F(Pull_1, J4_LinLin_DrB_SrLiA_Rmv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull three steps to consume the source chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull three steps to consume the source chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -2616,8 +2616,8 @@ TEST_F(Pull_1, J4_DrA_OutCyc_SrLiA_Srv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull two steps to leave source edge in the original chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -2738,8 +2738,8 @@ TEST_F(Pull_1, J4_DrA_OutCyc_SrLiB_Srv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull two steps to leave source edge in the original chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -2866,8 +2866,8 @@ TEST_F(Pull_1, J4_DrB_OutCyc_SrLiB_Srv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull two steps to leave source edge in the original chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -2988,8 +2988,8 @@ TEST_F(Pull_1, J4_DrB_OutCyc_SrLiA_Srv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull two steps to leave source edge in the original chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -3116,8 +3116,8 @@ TEST_F(Pull_1, J4_DrA_OutCyc_SrLiA_Rmv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull three steps to consume the source chain completely
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull three steps to consume the source chain completely
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -3228,8 +3228,8 @@ TEST_F(Pull_1, J4_DrA_OutCyc_SrLiB_Rmv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull three steps to consume the source chain completely
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull three steps to consume the source chain completely
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -3346,8 +3346,8 @@ TEST_F(Pull_1, J4_DrB_OutCyc_SrLiB_Rmv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull three steps to consume the source chain completely
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull three steps to consume the source chain completely
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -3459,8 +3459,8 @@ TEST_F(Pull_1, J4_DrB_OutCyc_SrLiA_Rmv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull three steps to consume the source chain completely
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull three steps to consume the source chain completely
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -3587,8 +3587,8 @@ TEST_F(Pull_1, J4_DrA_InCyAB_SrLiA_Srv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull two steps to leave source edge in the original chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -3729,8 +3729,8 @@ TEST_F(Pull_1, J4_DrA_InCyBA_SrLiA_Srv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull two steps to leave source edge in the original chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -3865,8 +3865,8 @@ TEST_F(Pull_1, J4_DrA_InCyAB_SrLiB_Srv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull two steps to leave source edge in the original chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -4001,8 +4001,8 @@ TEST_F(Pull_1, J4_DrA_InCyBA_SrLiB_Srv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull two steps to leave source edge in the original chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -4143,8 +4143,8 @@ TEST_F(Pull_1, J4_DrB_InCyAB_SrLiB_Srv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull two steps to leave source edge in the original chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -4285,8 +4285,8 @@ TEST_F(Pull_1, J4_DrB_InCyBA_SrLiB_Srv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull two steps to leave source edge in the original chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -4421,8 +4421,8 @@ TEST_F(Pull_1, J4_DrB_InCyAB_SrLiA_Srv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull two steps to leave source edge in the original chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -4554,8 +4554,8 @@ TEST_F(Pull_1, J4_DrB_InCyBA_SrLiA_Srv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull two steps to leave source edge in the original chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -4696,8 +4696,8 @@ TEST_F(Pull_1, J4_DrA_InCyAB_SrLiA_Rmv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull three steps to consume the source chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull three steps to consume the source chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -4832,8 +4832,8 @@ TEST_F(Pull_1, J4_DrA_InCyBA_SrLiA_Rmv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull three steps to consume the source chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull three steps to consume the source chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -4960,8 +4960,8 @@ TEST_F(Pull_1, J4_DrA_InCyAB_SrLiB_Rmv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull three steps to consume the source chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull three steps to consume the source chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -5087,8 +5087,8 @@ TEST_F(Pull_1, J4_DrA_InCyBA_SrLiB_Rmv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull three steps to consume the source chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull three steps to consume the source chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -5220,8 +5220,8 @@ TEST_F(Pull_1, J4_DrB_InCyAB_SrLiB_Rmv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull three steps to consume the source chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull three steps to consume the source chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -5353,8 +5353,8 @@ TEST_F(Pull_1, J4_DrB_InCyBA_SrLiB_Rmv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull three steps to consume the source chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull three steps to consume the source chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -5482,8 +5482,8 @@ TEST_F(Pull_1, J4_DrB_InCyAB_SrLiA_Rmv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull three steps to consume the source chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull three steps to consume the source chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -5614,8 +5614,8 @@ TEST_F(Pull_1, J4_DrB_InCyBA_SrLiA_Rmv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull three steps to consume the source chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull three steps to consume the source chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -5754,8 +5754,8 @@ TEST_F(Pull_1, J344_DrA_SrLiB_Srv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull two steps to leave source edge in the original chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull two steps to leave source edge in the original chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -5899,8 +5899,8 @@ TEST_F(Pull_1, J344_DrA_SrLiB_Rmv)
 
     // Do the transformation.
 
-    PullForw pu1f {gr};
-    pu1f(pp, n);  // pull three steps to consume the source chain
+    Pull pu1 {gr};
+    pu1(pp, n);  // pull three steps to consume the source chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);

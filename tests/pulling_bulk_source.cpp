@@ -35,7 +35,7 @@ using hooks::w3;
 using hooks::w4;
 
 template<Degree D>
-using Pull = trs::pulling::On<D, Orientation::Forwards, G>;
+using Pull = trs::pulling::On<D, G>;
 
 /// Expects vertex \p v to be at one of the ends of edge \p i.
 void expect_at(const G& gr, const EgIdG i, const G::Vertex& v)

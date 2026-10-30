@@ -371,7 +371,7 @@ TEST_F(PreconditionsTest, Pulling)
     gr.add_single_chain_component(len);
     Path path {&gr.compt(w0), Driver {&gr.chain(w0).tail(), eA}, Source {w0, eB}};
 
-    trs::pulling::On<Deg1, Orientation::Forwards, G> pull1 {gr};
+    trs::pulling::On<Deg1, G> pull1 {gr};
     int zero {};
     int tooMany {static_cast<int>(len) + 1};
     expect_rejected(gr, pull1, "steps is not positive", path, zero);

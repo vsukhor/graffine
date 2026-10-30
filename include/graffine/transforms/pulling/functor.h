@@ -101,9 +101,9 @@ protected:
 
     Graph& gr;  ///< Reference to the modified graph object.
 
-    On<Deg1, Orientation::Forwards, G, PP> on_1f;
-    On<Deg2, Orientation::Forwards, G, PP> on_2f;
-    On<Deg3, Orientation::Forwards, G, PP> on_3f;
+    On<Deg1, G, PP> on_1;
+    On<Deg2, G, PP> on_2;
+    On<Deg3, G, PP> on_3;
 };
 
 
@@ -121,9 +121,9 @@ Functor<G, PP>::
 Functor(Graph& gr,
         std::shared_ptr<PP> pp)
     : gr {gr}
-    , on_1f {gr, pp}
-    , on_2f {gr, pp}
-    , on_3f {gr, pp}
+    , on_1 {gr, pp}
+    , on_2 {gr, pp}
+    , on_3 {gr, pp}
 {
     GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
 }
@@ -149,9 +149,9 @@ applicability(
         return reject("path has no driver edge");
 
     const auto& v = path.driver_vertex();
-    if (v.is_leaf())      return on_1f.applicability(path, n);
-    if (v.is_bulk())      return on_2f.applicability(path, n);
-    if (v.is_junctionY()) return on_3f.applicability(path, n);
+    if (v.is_leaf())      return on_1.applicability(path, n);
+    if (v.is_bulk())      return on_2.applicability(path, n);
+    if (v.is_junctionY()) return on_3.applicability(path, n);
 
     return reject("pulling is not implemented for the driver vertex degree");
 }
@@ -171,9 +171,9 @@ apply(
 ) -> Res
 {
     const auto& v = path.driver_vertex();
-    if (v.is_leaf())      return on_1f.apply(path, n);
-    if (v.is_bulk())      return on_2f.apply(path, n);
-    /* is_junctionY() */  return on_3f.apply(path, n);
+    if (v.is_leaf())      return on_1.apply(path, n);
+    if (v.is_bulk())      return on_2.apply(path, n);
+    /* is_junctionY() */  return on_3.apply(path, n);
 }
 
 

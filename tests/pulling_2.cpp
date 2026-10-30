@@ -23,7 +23,7 @@ limitations under the License.
 namespace graffine::tests::pulling::d2 {
 
 using Pull_2 = Test;
-using PullForw = Pulling<2, Orientation::Forwards, G>;
+using Pull = Pulling<2, G>;
 
 
 /// Tests single-step pulling degree 2 over a single-edge path.
@@ -92,8 +92,8 @@ TEST_F(Pull_2, SingleLinChain_Step1_PathLen1_SrcA)
 
     // Do the transformation.
 
-    PullForw pu2f {gr};
-    pu2f(pp, n);  // Pull single step.
+    Pull pu2 {gr};
+    pu2(pp, n);  // Pull single step.
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -206,8 +206,8 @@ TEST_F(Pull_2, SingleLinChain_Step1_PathLen1_SrcB)
 
     // Do the transformation.
 
-    PullForw pu2f {gr};
-    pu2f(pp, n);  // pull one step
+    Pull pu2 {gr};
+    pu2(pp, n);  // pull one step
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -324,8 +324,8 @@ TEST_F(Pull_2, SingleLinChain_Step1_PathLenMult_SrcA)
 
     // Do the transformation.
 
-    PullForw pu2f {gr};
-    pu2f(pp, n);  // pull one step
+    Pull pu2 {gr};
+    pu2(pp, n);  // pull one step
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -444,8 +444,8 @@ TEST_F(Pull_2, SingleLinChain_SrcB_SrcSurvives)
 
     // Do the transformation.
 
-    PullForw pu2f {gr};
-    pu2f(pp, n);  // pull one step: creates w1, w2
+    Pull pu2 {gr};
+    pu2(pp, n);  // pull one step: creates w1, w2
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -569,8 +569,8 @@ TEST_F(Pull_2, SingleLinChain_SrcA_SrcConsumed_Reversed)
 
     // Do the transformation.
 
-    PullForw pu2f {gr};
-    pu2f(pp, n);  // pull three steps
+    Pull pu2 {gr};
+    pu2(pp, n);  // pull three steps
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -701,8 +701,8 @@ TEST_F(Pull_2, SingleLinChain_SrcB_SrcConsumed)
 
     // Do the transformation.
 
-    PullForw pu2f {gr};
-    pu2f(pp, n);  // pull three steps
+    Pull pu2 {gr};
+    pu2(pp, n);  // pull three steps
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -842,8 +842,8 @@ TEST_F(Pull_2, J3_DrvLinB_SrcLinA_SrcSurvives)
 
     // Do the transformation.
 
-    PullForw pu2f {gr};
-    pu2f(pp, n);  // pull two steps
+    Pull pu2 {gr};
+    pu2(pp, n);  // pull two steps
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -944,8 +944,8 @@ TEST_F(Pull_2, J3_DrvLinA_SrcLinB_SrcSurvives)
 
     // Do the transformation.
 
-    PullForw pu2f {gr};
-    pu2f(pp, n);  // pull two steps
+    Pull pu2 {gr};
+    pu2(pp, n);  // pull two steps
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -1046,8 +1046,8 @@ TEST_F(Pull_2, J3_DrvLinB_SrcLinB_SrcSurvives)
 
     // Do the transformation.
 
-    PullForw pu2f {gr};
-    pu2f(pp, n);  // pull two steps
+    Pull pu2 {gr};
+    pu2(pp, n);  // pull two steps
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -1148,10 +1148,10 @@ TEST_F(Pull_2, J3_DrvLinA_SrcLinA_SrcSurvives)
 
     // Do the transformation.
 
-    PullForw pu2f {gr};
+    Pull pu2 {gr};
 
     // Pull two steps.
-    pu2f(pp, n);
+    pu2(pp, n);
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -1252,8 +1252,8 @@ TEST_F(Pull_2, J3_LinDrvA_LinSrcA_SrcConsumed)
 
     // Do the transformation.
 
-    PullForw pu2f {gr};
-    pu2f(pp, n);  // pull three steps
+    Pull pu2 {gr};
+    pu2(pp, n);  // pull three steps
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -1350,8 +1350,8 @@ TEST_F(Pull_2, J3_LinDrvB_LinSrcB_SrcConsumed)
 
     // Do the transformation.
 
-    PullForw pu2f {gr};
-    pu2f(pp, n);  // pull three steps
+    Pull pu2 {gr};
+    pu2(pp, n);  // pull three steps
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -1448,8 +1448,8 @@ TEST_F(Pull_2, J3_LinDrvA_LinSrcB_SrcConsumed)
 
     // Do the transformation.
 
-    PullForw pu2f {gr};
-    pu2f(pp, n);  // pull three steps
+    Pull pu2 {gr};
+    pu2(pp, n);  // pull three steps
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -1546,8 +1546,8 @@ TEST_F(Pull_2, J3_LinDrvB_LinSrcA_SrcConsumed)
 
     // Do the transformation.
 
-    PullForw pu2f {gr};
-    pu2f(pp, n);  // pull three steps
+    Pull pu2 {gr};
+    pu2(pp, n);  // pull three steps
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -1646,8 +1646,8 @@ TEST_F(Pull_2, J4_LinDrvA_LinSrcB_SrcSurvives)
 
     // Do the transformation.
 
-    PullForw pu2f {gr};
-    pu2f(pp, n);  // pull two steps
+    Pull pu2 {gr};
+    pu2(pp, n);  // pull two steps
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -1756,8 +1756,8 @@ TEST_F(Pull_2, J4_LinDrvB_LinSrcB_SrcSurvives)
 
     // Do the transformation.
 
-    PullForw pu2f {gr};
-    pu2f(pp, n);  // pull two steps
+    Pull pu2 {gr};
+    pu2(pp, n);  // pull two steps
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -1889,8 +1889,8 @@ TEST_F(Pull_2, J344_LinDrvA_LinSrcB_SrcSurvives)
 
     // Do the transformation.
 
-    PullForw pu2f {gr};
-    pu2f(pp, n);  // pull two steps
+    Pull pu2 {gr};
+    pu2(pp, n);  // pull two steps
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -2102,8 +2102,8 @@ TEST_F(Pull_2, J344_LinDrvB_LinSrcB_SrcSurvives)
 
     // Do the transformation.
 
-    PullForw pu2f {gr};
-    pu2f(pp, 2);  // pull two steps
+    Pull pu2 {gr};
+    pu2(pp, 2);  // pull two steps
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -2291,10 +2291,10 @@ TEST_F(Pull_2, J3_SameChainAB_SrcConsumed)
 
     // Do the transformation.
 
-    PullForw pu2f {gr};
+    Pull pu2 {gr};
 
 
-    pu2f(pp, n);  // pull two steps
+    pu2(pp, n);  // pull two steps
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -2432,8 +2432,8 @@ TEST_F(Pull_2, J3_SameChainBA_SrcConsumed)
 
     // Do the transformation.
 
-    PullForw pu2f {gr};
-    pu2f(pp, n);  // pull two steps
+    Pull pu2 {gr};
+    pu2(pp, n);  // pull two steps
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -2565,8 +2565,8 @@ TEST_F(Pull_2, Deg3junctionSrcRem_X)
 
     // Do the transformation.
 
-    PullForw pu2f {gr};
-    pu2f(pp, 2);  // pull two steps
+    Pull pu2 {gr};
+    pu2(pp, 2);  // pull two steps
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -2722,8 +2722,8 @@ TEST_F(Pull_2, J344_DrvLinA_SrcLinB_SrcConsumed)
 
     // Do the transformation.
 
-    PullForw pu2f {gr};
-    pu2f(pp, n);  // pull three steps
+    Pull pu2 {gr};
+    pu2(pp, n);  // pull three steps
 
     if constexpr (profuse) {
         gr.print_components(tagAfter);

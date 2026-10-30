@@ -99,9 +99,6 @@ concept pullable_degree =
     std::find(pullableDegrees.begin(), pullableDegrees.end(), D) !=
     pullableDegrees.end();
 
-template<Orientation Dir>
-constexpr char signchar = Dir == Orientation::Backwards ? '-' : '+';
-
 /// Whether pulling from a degree 2 driver on an unconnected cycle is rejected.
 inline constexpr bool omitUnconnectedCycles = true;
 
@@ -111,13 +108,10 @@ inline constexpr bool omitUnconnectedCycles = true;
  * driver and source.
  * \tparam D Degree of the driver vertex, from which the pull operation is
  * initiated.
- * \tparam Dir Direction of the pull operation. It only labels the functor
- * names: the pull is always directed from the source towards the driver.
  * \tparam G Graph to which the transformation is applied.
  * \tparam PP Processor of non-topological properties, or void.
  */
 template<Degree D,
-         Orientation Dir,
          typename G,
          typename PP = void>
     requires pullable_degree<D> &&

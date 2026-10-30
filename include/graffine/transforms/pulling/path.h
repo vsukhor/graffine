@@ -173,7 +173,6 @@ struct Path
     friend struct FunctorBase;
 
     template<Degree D,
-             Orientation Dir,
              typename G,
              typename PP>
         requires pullable_degree<D> &&

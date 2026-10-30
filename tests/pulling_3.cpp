@@ -24,7 +24,7 @@ limitations under the License.
 namespace graffine::tests::pulling::d3 {
 
 using Pull3 = Test;
-using PullForw = Pulling<3, Orientation::Forwards, G>;
+using Pull = Pulling<3, G>;
 
 // =============================================================================
 // ===== Linear Linear Linear ==================================================
@@ -112,8 +112,8 @@ TEST_F(Pull3, DrLiA_SrLiB_SameCnDS_Survive)
 
     // Do the transformation.
 
-    PullForw pu3f {gr};
-    pu3f(pp, n);  // pull one step to preserve source chain
+    Pull pu3 {gr};
+    pu3(pp, n);  // pull one step to preserve source chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -219,8 +219,8 @@ TEST_F(Pull3, DrLiA_SrLiB_SameCnDS_Consume)
 
     // Do the transformation.
 
-    PullForw pu3f {gr};
-    pu3f(pp, n);  // pull two steps to consume the source chain
+    Pull pu3 {gr};
+    pu3(pp, n);  // pull two steps to consume the source chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -330,8 +330,8 @@ TEST_F(Pull3, DrLiB_SrLiA_SameCnDS_Survive)
 
     // Do the transformation.
 
-    PullForw pu3f {gr};
-    pu3f(pp, n);  // pull one step to preserve source chain
+    Pull pu3 {gr};
+    pu3(pp, n);  // pull one step to preserve source chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -437,8 +437,8 @@ TEST_F(Pull3, DrLiB_SrLiA_SameCnDS_Consume)
 
     // Do the transformation.
 
-    PullForw pu3f {gr};
-    pu3f(pp, n);  // pull two steps to consume the source chain
+    Pull pu3 {gr};
+    pu3(pp, n);  // pull two steps to consume the source chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -558,8 +558,8 @@ TEST_F(Pull3, DrLiA_SrLiB_OutCyc_SameCnDS_Survive)
 
     // Do the transformation.
 
-    PullForw pu3f {gr};
-    pu3f(pp, n);  // pull one step to preserve source chain
+    Pull pu3 {gr};
+    pu3(pp, n);  // pull one step to preserve source chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -662,8 +662,8 @@ TEST_F(Pull3, DrLiA_SrLiB_OutCyc_SameCnDS_Consume)
 
     // Do the transformation.
 
-    PullForw pu3f {gr};
-    pu3f(pp, n);  // pull two steps to consume the source chain completely
+    Pull pu3 {gr};
+    pu3(pp, n);  // pull two steps to consume the source chain completely
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -785,8 +785,8 @@ TEST_F(Pull3, DrLiB_SrLiA_OutCyc_SameCnDS_Survive)
 
     // Do the transformation.
 
-    PullForw pu3f {gr};
-    pu3f(pp, n);  // pull one step to preserve the source chain
+    Pull pu3 {gr};
+    pu3(pp, n);  // pull one step to preserve the source chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -878,8 +878,8 @@ TEST_F(Pull3, DrLiB_SrLiA_OutCyc_SameCnDS_Consume)
 
     // Do the transformation.
 
-    PullForw pu3f {gr};
-    pu3f(pp, n);  // pull two steps to consume the source chain completely
+    Pull pu3 {gr};
+    pu3(pp, n);  // pull two steps to consume the source chain completely
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -993,8 +993,8 @@ TEST_F(Pull3, DrCyA_SrLiB_Survive)
 
     // Do the transformation.
 
-    PullForw pu3f {gr};
-    pu3f(pp, n);  // pull one step to preserve the source chain
+    Pull pu3 {gr};
+    pu3(pp, n);  // pull one step to preserve the source chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -1118,8 +1118,8 @@ TEST_F(Pull3, DrCyA_SrLiB_Consume)
 
     // Do the transformation.
 
-    PullForw pu3f {gr};
-    pu3f(pp, n);  // pull two steps to consume the source chain completely
+    Pull pu3 {gr};
+    pu3(pp, n);  // pull two steps to consume the source chain completely
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
@@ -1242,8 +1242,8 @@ TEST_F(Pull3, DrCyB_SrLiB_Survive)
 
     // Do the transformation.
 
-    PullForw pu3f {gr};
-    pu3f(pp, n);  // pull one step to preserve source chain
+    Pull pu3 {gr};
+    pu3(pp, n);  // pull one step to preserve source chain
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
