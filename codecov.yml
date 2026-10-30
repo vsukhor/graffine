@@ -1,0 +1,23 @@
+# Codecov configuration: https://docs.codecov.com/docs/codecov-yaml
+
+coverage:
+  status:
+    # Report only, until a baseline is established.
+    project:
+      default:
+        informational: true
+    patch:
+      default:
+        informational: true
+
+# The report is already filtered to include/graffine/ by gcovr;
+# this is a safety net.
+ignore:
+  - "tests/**"
+  - "external/**"
+  - "benchmarks/**"
+  - "examples/**"
+
+comment:
+  layout: "diff, files"
+  require_changes: true

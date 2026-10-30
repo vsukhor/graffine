@@ -78,6 +78,51 @@ jobs:
       - name: Test
         run: ctest --test-dir build --output-on-failure
 
+  coverage:
+    name: gcc-${{ matrix.version }} Debug coverage
+    runs-on: ubuntu-24.04
+    container: gcc:${{ matrix.version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [16]
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install CMake, Ninja and gcovr
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends cmake ninja-build python3-venv
+          python3 -m venv /opt/gcovr
+          /opt/gcovr/bin/pip install gcovr==8.8
+          echo /opt/gcovr/bin >> "$GITHUB_PATH"
+      # The container runs as root over a checkout it does not own.
+      - name: Trust the checkout
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Configure
+        run: |
+          mkdir -p tests/bin
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_CXX_COMPILER=g++ \
+            -DGRAFFINE_COVERAGE=ON -DBUILD_EXAMPLES=OFF
+      - name: Build
+        run: cmake --build build --parallel
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+      # --merge-lines counts each source line once, not once per template
+      # instantiation.
+      - name: Report
+        run: |
+          gcovr -r . build --filter include/graffine/ \
+            --gcov-executable gcov --merge-lines \
+            --xml-pretty -o coverage.xml --print-summary
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+
   benchmarks:
     name: gcc-${{ matrix.version }} benchmarks (smoke run)
     runs-on: ubuntu-24.04

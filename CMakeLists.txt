@@ -144,6 +144,17 @@ if(PROJECT_IS_TOP_LEVEL)
         add_compile_options("-march=native")
     endif()
 
+    # Opt-in for test coverage instrumentation (gcov); use with a Debug build.
+    option(GRAFFINE_COVERAGE "Instrument the build for test coverage" OFF)
+    if(GRAFFINE_COVERAGE)
+        if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+            message(FATAL_ERROR "GRAFFINE_COVERAGE requires GCC")
+        endif()
+        add_compile_options("--coverage" "-O0" "-fno-inline"
+                            "-fprofile-update=atomic")
+        add_link_options("--coverage")
+    endif()
+
     # Add the cmake folder so the FindSphinx module is found
     set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 

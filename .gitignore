@@ -16,3 +16,5 @@ testPly*
 out/**
 examples/bin/**
 include/graffine/config_cmake.h
+coverage.xml
+coverage/**
