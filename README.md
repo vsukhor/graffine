@@ -8,6 +8,7 @@
 </p>
 
 ![build](https://github.com/vsukhor/graffine/actions/workflows/cmake.yml/badge.svg)
+[![codecov](https://codecov.io/gh/vsukhor/graffine/graph/badge.svg)](https://codecov.io/gh/vsukhor/graffine)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 Elementary transformations of graphs.
