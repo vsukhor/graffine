@@ -39,7 +39,6 @@ limitations under the License.
 #include "graffine/structure/descriptors/vertex_degrees.h"
 
 #include <array>
-#include <fstream>
 #include <ostream>
 
 
@@ -85,12 +84,6 @@ public:  // functions
      */
     explicit constexpr Bond2(EgIdG ind) noexcept;
 
-    /**
-     * Import constructor.
-     * \param[in] ifs Input file stream for reading in edge attributes.
-     */
-    explicit Bond2(std::ifstream& ifs);
-
     constexpr bool operator==(const Bond2& other) const noexcept;
 
     constexpr auto vertex_at(EndId e) const noexcept -> const Vertex*;
@@ -101,20 +94,6 @@ public:  // functions
     constexpr auto descriptor_for_vertex_at(
         const EndId e
     ) const noexcept -> DescrInVertex;
-
-    // In/Out
-
-    /**
-     * Read the edge from a binary file.
-     * \param[in] ofs Output file stream.
-     */
-    void read(std::ifstream& ofs);
-
-    /**
-     * Write the edge to a binary file.
-     * \param[in] ofs Output file stream.
-     */
-    void write(std::ofstream& ofs) const;
 
     /**
      * Formatted printing out of the edge data.
@@ -147,13 +126,6 @@ Bond2(const EgIdG ind) noexcept
     : id {create_id()}
     , ind {ind}
 {}
-
-template<typename V>
-Bond2<V>::
-Bond2(std::ifstream& ifs)
-{
-    read(ifs);
-}
 
 
 template<typename V>
@@ -216,24 +188,6 @@ descriptor_for_vertex_at(
 ) const noexcept -> DescrInVertex
 {
     return DescrInVertex {id, undefined<std::size_t>, e};
-}
-
-template<typename V>
-void Bond2<V>::
-read(std::ifstream& ifs)
-{
-    ifs.read(reinterpret_cast<char*>(&ind), sizeof(ind));
-    ifs.read(reinterpret_cast<char*>(&vv[End::A]), sizeof(VIdH));
-    ifs.read(reinterpret_cast<char*>(&vv[End::B]), sizeof(VIdH));
-}
-
-template<typename V>
-void Bond2<V>::
-write(std::ofstream& ofs) const
-{
-    ofs.write(reinterpret_cast<const char*>(&ind), sizeof(ind));
-    ofs.write(reinterpret_cast<const char*>(&vv[End::A]), sizeof(VIdH));
-    ofs.write(reinterpret_cast<const char*>(&vv[End::B]), sizeof(VIdH));
 }
 
 template<typename V>
@@ -382,12 +336,6 @@ public:  // functions
         CmpId c
     ) noexcept;
 
-    /**
-     * Import constructor.
-     * \param[in] ifs Input file stream for reading in edge attributes.
-     */
-    explicit Edge(std::ifstream& ifs);
-
     using Base::operator==;
 
     constexpr void set_cmp(CmpId cc, EgIdC indcc) noexcept;
@@ -441,20 +389,6 @@ public:  // functions
         const EndId e
     ) const noexcept -> DescrInVertex;
 
-
-    // In/Out
-
-    /**
-     * Read the edge from a binary file.
-     * \param[in] ofs Output file stream.
-     */
-    void read(std::ifstream& ofs);
-
-    /**
-     * Write the edge to a binary file.
-     * \param[in] ofs Output file stream.
-     */
-    void write(std::ofstream& ofs) const;
 
     /**
      * Formatted printing out of the edge data.
@@ -549,14 +483,6 @@ Edge(
     , c {c}
     , ornt {Orientation::Forwards}
 {}
-
-
-template<typename V>
-Edge<V>::
-Edge(std::ifstream& ifs)
-{
-    read(ifs);
-}
 
 
 template<typename V>
@@ -910,38 +836,6 @@ descriptor_for_vertex_at(
 ) const noexcept -> DescrInVertex
 {
     return DescrInVertex {id, indc, e};
-}
-
-
-template<typename V>
-void Edge<V>::
-read(std::ifstream& ifs)
-{
-    ifs.read(reinterpret_cast<char*>(&ind), sizeof(ind));
-    ifs.read(reinterpret_cast<char*>(&indc), sizeof(indc));
-    ifs.read(reinterpret_cast<char*>(&indw), sizeof(indw));
-    ifs.read(reinterpret_cast<char*>(&w), sizeof(w));
-    ifs.read(reinterpret_cast<char*>(&c), sizeof(c));
-    ifs.read(reinterpret_cast<char*>(&weight), sizeof(weight));
-    ifs.read(reinterpret_cast<char*>(&ornt), sizeof(ornt));
-    ifs.read(reinterpret_cast<char*>(&vv[End::A]), sizeof(VIdH));
-    ifs.read(reinterpret_cast<char*>(&vv[End::B]), sizeof(VIdH));
-}
-
-
-template<typename V>
-void Edge<V>::
-write(std::ofstream& ofs) const
-{
-    ofs.write(reinterpret_cast<const char*>(&ind), sizeof(ind));
-    ofs.write(reinterpret_cast<const char*>(&indc), sizeof(indc));
-    ofs.write(reinterpret_cast<const char*>(&indw), sizeof(indw));
-    ofs.write(reinterpret_cast<const char*>(&w), sizeof(w));
-    ofs.write(reinterpret_cast<const char*>(&c), sizeof(c));
-    ofs.write(reinterpret_cast<const char*>(&weight), sizeof(weight));
-    ofs.write(reinterpret_cast<const char*>(&ornt), sizeof(ornt));
-    ofs.write(reinterpret_cast<const char*>(&vv[End::A]), sizeof(VIdH));
-    ofs.write(reinterpret_cast<const char*>(&vv[End::B]), sizeof(VIdH));
 }
 
 

@@ -675,12 +675,6 @@ struct Chain<E>
     ///@}  // Formatted printing.
 
     /**
-     * Writes the chain to a binary file.
-     * \param[in] ofs File stream for writing.
-     */
-    void write(std::ofstream& ofs) const;
-
-    /**
      * Checks that \p cond is satisfied.
      * \tparam T Types of the message arguments.
      * \param[in] cond Condition to be checked.

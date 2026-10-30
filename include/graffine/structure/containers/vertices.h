@@ -103,7 +103,9 @@ public:  // Functions
     constexpr void remove_disconnected(Vertex* vp) noexcept;
     constexpr void remove_connected_to_outer(Edge& eg,
                                              End::Id e) noexcept;
-    constexpr void remove(VIdH indc, Host& hst) noexcept;
+    /// Disconnects vertex \p id from its edges, which are hosted by
+    /// \p hst , and deletes it.
+    constexpr void remove(VIdH id, Host& hst) noexcept;
 
     constexpr void reind_edge(const Edge& from,
                               EgIdC to) noexcept;
@@ -271,14 +273,16 @@ template<typename V,
          typename H>
 constexpr
 void Vertices<V, H>::
-remove(const VIdH indc, Host& hst) noexcept
+remove(const VIdH id, Host& hst) noexcept
 {
-    const auto i = find_container_coord(indc);
+    const auto i = find_container_coord(id);
 
-    GRAFFINE_ASSERT(is_defined(i), "Vertex not found, indc: ", indc);
+    GRAFFINE_ASSERT(utils::is_defined(i), "Vertex not found, id: ", id);
 
-    for (const auto& ee : vv[i].edges())
-        hst.edge(ee.w).disconnect_end(ee.e);
+    // Copy: disconnecting an edge erases its descriptor from the vertex.
+    const auto ee = vv[i]->edges();
+    for (const auto& s : ee)
+        hst.edge(s.indc()).disconnect_end_inner(s.e);
 
     vv.erase(vv.begin() + i);
 }

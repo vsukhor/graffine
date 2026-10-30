@@ -20,107 +20,60 @@ limitations under the License.
 ================================================================================
 */
 
+
 /**
  * \file triangles.h
- * \brief Implements container holding triangles.
+ * \brief Implements container holding chain triangles.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
 #ifndef GRAFFINE_STRUCTURE_CONTAINERS_TRIANGLES_H
 #define GRAFFINE_STRUCTURE_CONTAINERS_TRIANGLES_H
 
-
-#include <cmath>
-#include <vector>
-
 #include "graffine/definitions.h"
+
+#include <array>
+#include <cstddef>
+#include <vector>
 
 
 namespace graffine::structure {
 
 
-/// A triangle, given by its three vertices.
+/**
+ * A chain triangle: three chains joined end to end into a loop.
+ * \details The chains meet pairwise at three distinct junction vertices.
+ */
 struct Triangle
 {
-    static constexpr std::size_t numVertices {3};
+    static constexpr std::size_t num {3};
 
-    using VIds = std::array<VIdH, numVertices>;  // Indices of the three vertices
+    using ChIds = std::array<ChIdG, num>;
+    using VIds = std::array<VIdH, num>;
 
+    ChIds ww;  ///< Graph-wide ids of the chains, in ascending order.
+    VIds vv;   ///< Ids of the junction vertices, in ascending order.
+
+    bool operator==(const Triangle&) const = default;
 };
 
-using TriVIds = Triangle::VIds;
 
-
-/**
- * Collection of triangles.
- * \note Not populated yet: Component::detect_triangles() does not store
- * the triangles it finds, so that the collection stays empty.
- */
+/// Collection of chain triangles.
 struct Triangles
 {
-//    using Positions = std::vector<Triangle::VPos>;
-    using VertIds = std::vector<Triangle::VIds>;
+    std::vector<Triangle> tris;  ///< The triangles.
 
-//    Positions verts;  ///< Positions of the three vertices.
-
-    /// Ids of the three vertices of each triangle.
-    VertIds tris;
-
-    constexpr std::size_t num() const
+    /// Number of triangles.
+    constexpr auto num() const noexcept -> std::size_t
     {
-//        assert(tris.size() == Triangle::numVertices * verts.size());
-
         return tris.size();
     }
-/*
-    constexpr
-    BoundingBox bounding_box() const
+
+    /// Removes all triangles.
+    constexpr void clear() noexcept
     {
-        BoundingBox b;
-
-        for (const auto& u : verts)
-            for (int j = 0; j < 3; ++j) {
-                if (u[j] < b.min[j]) b.min[j] = u[j];  // min
-                if (u[j] > b.max[j]) b.max[j] = u[j];  // max
-            }
-
-        return b;
+        tris.clear();
     }
-
-
-    constexpr
-    Vec3r centroid() const
-    {
-        const auto bb = bounding_box();
-
-        auto ctr = bb.min + (bb.max - bb.min) * 0.5f;
-
-        jot("centroid tri: ", ctr[0], " ", ctr[1], " ", ctr[2]);
-
-        return ctr;
-    }
-
-
-    void print(const std::string& s,
-               const TrId ti) const
-    {
-        const auto& t = tris[ti];
-        jot<false>(s, "[", ti, "] ");
-        for (const auto vi : t)
-            jot<false>(vi, "{", verts[vi][0], " ",
-                                 verts[vi][1], " ",
-                                 verts[vi][2], "} ");
-        jot();
-    }
-
-    void print(const std::string& s1,
-               const std::string& s2) const
-    {
-        jot(s1);
-        for (TrId ti {}; ti <tris.size(); ++ti)
-            print(s2, ti);
-    }
-*/
 };
 
 }  // namespace graffine::structure

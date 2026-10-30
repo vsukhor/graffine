@@ -249,9 +249,11 @@ struct Neigs
         return res;
     }
 
-    auto incoming() const -> ContainerTempl<const_reference>
+    /// The slots at end B of their host, e.g. the edges pointing into a
+    /// vertex by their own orientation.
+    auto incoming() const -> Slots
     {
-        ContainerTempl<const_reference> res;
+        Slots res;
 
         for (const auto& s : ss)
             if (s.e == End::B)
@@ -260,9 +262,11 @@ struct Neigs
         return res;
     }
 
-    auto outgiong() const -> ContainerTempl<const_reference>
+    /// The slots at end A of their host, e.g. the edges pointing out of a
+    /// vertex by their own orientation.
+    auto outgoing() const -> Slots
     {
-        ContainerTempl<const_reference> res;
+        Slots res;
 
         for (const auto& s : ss)
             if (s.e == End::A)
@@ -277,14 +281,6 @@ struct Neigs
         for (const auto& s : ss)
             s.print();
         jot<ENDL>("");
-    }
-
-    void write(std::ofstream& ofs) const
-    {
-        const auto n = num();
-        ofs.write(reinterpret_cast<const char*>(&n), sizeof(n));
-        for (const auto& s : ss)
-            s.write(ofs);
     }
 
 private:

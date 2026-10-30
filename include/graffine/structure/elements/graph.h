@@ -189,19 +189,6 @@ public:
      */
     void remove_edge(EgIdG ind);
 
-//    /**
-//     * Updates the connected component indexes.
-//     * \param f Initial index.
-//     * \param t Final index.
-//     */
-//    void changechange_cmpt_cmpt(CmpId f, CmpId t) noexcept;
-
-//    /**
-//     * Updates the connected component indexes.
-//     * \param c Initial index.
-//     */
-//    void update_indc(CmpId c) noexcept;
-
     /**
      * Appends \p donor component to \p acceptor component.
      * \details The place of \p donor is filled by the last component of
@@ -365,9 +352,6 @@ public:
     /// Inner end, of the edge at chain end \p s , facing that chain end.
     constexpr auto edge_end(const EndSlot& s) const noexcept -> EndId;
 
-//    /// Updates internal data for component c.
-//    void update_adjacency_cmpt(CmpId c) noexcept;
-
     /// Updates internal data related to edge 'ind'.
     void update_adjacency_edges(EgIdG ind) noexcept;
 
@@ -432,9 +416,6 @@ public:
     auto adjacency_list_edges(F(*f)(const Edge&)) const noexcept -> vec2<F>;
 
     auto adjacency_list_chains() const noexcept -> vec2<ChIdG>;
-
-//    auto make_adjacency_list_old() const noexcept -> Base::adjLT;
-//    auto make_adjacency_list_old(std::size_t c) noexcept -> vec2<size_t>;
 
     constexpr auto max_degree() const noexcept -> Degree;
 

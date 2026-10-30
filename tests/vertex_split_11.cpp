@@ -701,4 +701,31 @@ TEST_F(VertexSplitTest, Divide11_dic)
     }
 }
 
+
+/// Tests that To1<Deg1> is usable, and splits as To<Deg1, Deg1> does.
+TEST_F(VertexSplitTest, To1Deg1)
+{
+    ++testCount;
+
+    if constexpr (verboseT)
+        print_description("Tests vertex split by the To1<Deg1> functor");
+
+    constexpr std::size_t len {4};
+    constexpr EgIdA a {2};
+
+    G gr;
+    const IntegrityCheck integrityCheck {gr};
+    gr.add_single_chain_component(len);
+
+    trs::vertex_split::To1<Deg1, G> divide {gr};
+    divide(BSlot{ChIdG{0}, a});
+
+    ASSERT_EQ(gr.num_edges(), len);
+    ASSERT_EQ(gr.num_chains(), 2);
+    ASSERT_EQ(gr.num_compts(), 2);
+    ASSERT_EQ(gr.num_vertices(Deg1), 4);
+    ASSERT_EQ(gr.chain(ChIdG{0}).length(), a);
+    ASSERT_EQ(gr.chain(ChIdG{1}).length(), len - a);
+}
+
 }  // namespace graffine::tests::vertex_split

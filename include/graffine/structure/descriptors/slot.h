@@ -133,20 +133,6 @@ struct _Slot
            : _Slot{};
     }
 
-    constexpr auto next() const -> _Slot
-    {
-        if constexpr (std::is_same_v<Location, Bulk>)
-            return _Slot {w, e + 1};
-        else
-            return _Slot {w, e.opp()};
-    }
-
-    constexpr void write(std::ofstream& ofs) const
-    {
-        ofs.write(reinterpret_cast<const char*>(&w), sizeof(w));
-        ofs.write(reinterpret_cast<const char*>(&e), sizeof(e));
-    }
-
     void print(const char* color=colorcodes::YELLOW) const
     {
        jot<false>('{', color, str_short(), colorcodes::RESET, '}');
@@ -196,11 +182,6 @@ template<typename T>
 concept generic_slot = std::is_same_v<T, EndSlot> ||
                        std::is_same_v<T, BulkSlot> ||
                        std::is_same_v<T, ChIdG>;
-
-constexpr auto to_BulkSlot(const _Slot<ChIdG, End>& s) noexcept -> _Slot<ChIdG, Bulk>
-{
-    return _Slot<ChIdG, Bulk> {s.w, s.e};
-};
 
 
 }  // namespace graffine::structure::descriptors

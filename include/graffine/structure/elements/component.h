@@ -109,7 +109,8 @@ public: // Variables
 
     modifiers::JunctionShifter<Component> jShifter;
 
-    /// Triangles of the component; not populated, see detect_triangles().
+    /// Chain triangles of the component, as found by the last call to
+    /// detect_chain_triangles().
     Triangles trs;
 
 protected:  // Variables
@@ -196,18 +197,22 @@ public: // Functions
     void clear();
 
     //    constexpr void detect_facets() const noexcept;
-    /// Finds the triangles of three chains joined end to end, starting from
-    /// the chains whose both ends are 3-way junctions.
-    /// \note Incomplete: the triangles found are discarded, not stored in
-    /// \a trs.
-    constexpr void detect_triangles() const noexcept;
+    /**
+     * Finds the chain triangles of the component and stores them in \a trs.
+     * \details A chain triangle is formed by three distinct chains, none a
+     * cycle, joined end to end into a loop through three distinct junction
+     * vertices. Each triangle is stored once, with its chains and vertices
+     * in ascending order of their ids.
+     * \note \a trs is not kept up to date by the transformations: call this
+     * function again after changing the component.
+     */
+    void detect_chain_triangles();
 
     constexpr auto egId_last() const noexcept -> EgIdC;
     constexpr auto num_edges() const noexcept -> std::size_t;
     constexpr auto num_chains() const noexcept -> std::size_t;
     //    constexpr auto num_facets() const noexcept -> std::size_t;
-    /// Number of triangles in \a trs: currently always 0, see
-    /// detect_triangles().
+    /// Number of chain triangles in \a trs, see detect_chain_triangles().
     constexpr auto num_triangles() const noexcept -> std::size_t;
 
     constexpr auto num_vertices(Degree d) const noexcept -> std::size_t;
@@ -399,6 +404,8 @@ public: // Functions
 
     /// Deletes vertex \p vp, which must have no edges connected.
     void remove_disconnected(Vertex* vp);
+    /// Disconnects vertex \p vi from its edges and deletes it, leaving the
+    /// edge ends free. The chain connectivity (Chain::ngs) is not updated.
     void remove_vertex(const VIdH vi);
     /// Disconnects outer end \p e of edge \p eg and deletes the vertex it
     /// was connected to, which must have no other edges.
@@ -462,8 +469,7 @@ public: // Functions
     /// Moves chains \p vv, with their vertices, as move_to(Component&, Chain&)
     /// does, in descending order of the chain indexes.
     void move_to(Component& c, ChIdGs&& vv);
-    /// Moves chains \p mm. Unlike the other overloads, does not move their
-    /// vertices.
+    /// Moves chains \p mm, with their vertices.
     void move_to(Component& c, Chains& mm);
     /// Moves chain \p m, with its vertices.
     void move_to(Component& c, Chain& m);
@@ -491,7 +497,8 @@ public: // Functions
     constexpr auto edge_vertices(EgIdC indc) const noexcept -> const Edge::Vertices&;
     constexpr auto edge_vids(EgIdC indc) const noexcept -> Edge::VIDs;
 
-    constexpr auto edges() const noexcept -> std::vector<const Edge&>;
+    /// The edges of the component, in the order of their component-wide index.
+    constexpr auto edges() const noexcept -> std::vector<const Edge*>;
     constexpr auto edge(EgIdC indc) const noexcept -> const Edge&;
     constexpr auto edge(EgIdC indc)       noexcept ->       Edge&;
     constexpr auto edge(const EndSlot& s) const noexcept -> const Edge&;
@@ -500,7 +507,8 @@ public: // Functions
     constexpr auto edge(const BulkSlot& s)       noexcept ->       Edge&;
     constexpr auto edge(EgIdG i) const noexcept -> const Edge&;
 
-    constexpr auto chains() const noexcept -> std::vector<const Chain&>;
+    /// The chains of the component, in the order of \a ww.
+    constexpr auto chains() const noexcept -> std::vector<const Chain*>;
     constexpr auto chain(ChIdC w) const noexcept -> const Chain&;
     constexpr auto chain(ChIdC w)       noexcept ->       Chain&;
     constexpr auto chain(ChIdG w) const noexcept -> const Chain&;
@@ -648,6 +656,7 @@ Component(Component&& other) noexcept
     , vv{std::move(other.vv)}
     , chis{std::move(other.chis)}
     , adj{std::move(other.adj), *this}  // must refer to this, not to 'other'
+    , trs{std::move(other.trs)}
     , cn{other.cn}
     , egl{std::move(other.egl)}
 {}
@@ -666,6 +675,7 @@ operator=(Component&& other) noexcept -> Component&
     vv = std::move(other.vv);
     chis = std::move(other.chis);
     adj.take_lists(std::move(other.adj));
+    trs = std::move(other.trs);
     egl = std::move(other.egl);
 
     return *this;
@@ -785,24 +795,63 @@ is_unconnected_cycle() const
     return chis.num({2, 2});
 }
 template <typename Ch>
-constexpr void Component<Ch>::
-detect_triangles() const noexcept
+void Component<Ch>::
+detect_chain_triangles()
 {
-    using Tiple = std::array<ChIdG, 3>;
-    std::set<Tiple> eee{};
+    using TChIds = Triangle::ChIds;
+    using TVIds = Triangle::VIds;
 
-    for (const auto w : chis.cn_33()) {
+    // A chain eligible to a triangle is no cycle, and has junctions at
+    // both ends.
+    auto is_eligible = [](const Chain& m)
+    {
+        return !m.is_cycle() &&
+               m.degree_at_end(End::A) >= Deg3 &&
+               m.degree_at_end(End::B) >= Deg3;
+    };
+
+    trs.clear();
+    std::set<TChIds> found;
+
+    for (const auto w : ww) {
 
         const auto& m = cn[w];
-        for (const auto& nAm : m.ngs[End::A]()) {
+        if (!is_eligible(m))
+            continue;
 
-            const auto& mA = cn[nAm.w];
-            for (const auto& nBm : m.ngs[End::B]()) {
+        const auto vA = m.vertex_at_end(End::A)->get_id();
+        const auto vB = m.vertex_at_end(End::B)->get_id();
 
-                const auto& mB = cn[nBm.w];
-                for (const auto& nnA : mA.ngs[End::opp(nAm.e)]())
-                    if (mB.ngs[End::opp(nBm.e)].contains(nnA))
-                        eee.insert({w, nAm.w, nBm.w});
+        for (const auto& sA : m.ngs[End::A]()) {
+
+            const auto& mA = cn[sA.w];
+            if (sA.w == w || !is_eligible(mA))
+                continue;
+            const EndSlot fA {sA.w, End::opp(sA.e)};  // far end of mA
+
+            for (const auto& sB : m.ngs[End::B]()) {
+
+                const auto& mB = cn[sB.w];
+                if (sB.w == w || sB.w == sA.w || !is_eligible(mB))
+                    continue;
+                const EndSlot fB {sB.w, End::opp(sB.e)};  // far end of mB
+
+                // The far ends of mA and mB are joined at the third vertex.
+                if (!mA.ngs[fA.e].contains(fB))
+                    continue;
+
+                const auto vC = mA.vertex_at_end(fA.e)->get_id();
+                if (vC == vA || vC == vB)
+                    continue;
+
+                TChIds tw {w, sA.w, sB.w};
+                std::ranges::sort(tw);
+                if (!found.insert(tw).second)
+                    continue;
+
+                TVIds tv {vA, vB, vC};
+                std::ranges::sort(tv);
+                trs.tris.push_back(Triangle {tw, tv});
             }
         }
     }
@@ -991,11 +1040,11 @@ ww_is_sorted() const noexcept
 
 template <typename Ch>
 constexpr auto Component<Ch>::
-edges() const noexcept -> std::vector<const Edge&>
+edges() const noexcept -> std::vector<const Edge*>
 {
-    std::vector<const Edge&> g;
+    std::vector<const Edge*> g;
     for (const auto& h : egl)
-        g.push_back(cn[h.w].g[h.a]);
+        g.push_back(&cn[h.w].g[h.a]);
 
     return g;
 }
@@ -1073,11 +1122,11 @@ edge(const EgIdG i) const noexcept -> const Edge&
 
 template <typename Ch>
 constexpr auto Component<Ch>::
-chains() const noexcept -> std::vector<const Chain&>
+chains() const noexcept -> std::vector<const Chain*>
 {
-    std::vector<const Chain&> mm;
+    std::vector<const Chain*> mm;
     for (const auto w : ww)
-        mm.push_back(cn[w]);
+        mm.push_back(&cn[w]);
 
     return mm;
 }

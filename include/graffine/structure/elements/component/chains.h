@@ -233,8 +233,9 @@ template <typename Ch>
 void Component<Ch>::
 append(Chains& mm)
 {
-    for (auto& m : mm)
-        append(m);
+    // Through the graph's chains, which mm may only be copies of.
+    for (const auto& m : mm)
+        append(cn[m.idw]);
 }
 
 template <typename Ch>
@@ -335,34 +336,9 @@ template <typename Ch>
 void Component<Ch>::
 remove(const Chains& mm)
 {
-    Edges g;
-    for (const auto m : mm) // copy
-        g.append_range(std::move(m.g));
-
-    // sort in descending order of indc
-    std::ranges::sort(g, [](Edge& a, Edge& b)
-                      { return a.indc > b.indc; });
-
-    GRAFFINE_ASSERT(std::adjacent_find(g.begin(), g.end()) == g.end(),
-           "edges having identical indc found");
-
-    for (const auto& eg : g)
-        remove(eg);
-
-    for (const auto& m : mm) {
-
-        if (const auto last = num_chains() - 1;
-            m.idc < last)
-
-            for (const auto w : ww)
-                if (cn[w].idc == last)
-                    cn[w].idc = m.idc;
-
-        std::erase(ww, m.idw);
-        m.is_unconnected_cycle()
-            ? chis.populate(cn, ww)
-            : chis.remove(m);
-    }
+    // Through the graph's chains: their records change at each removal.
+    for (const auto& m : mm)
+        remove(cn[m.idw]);
 }
 
 template <typename Ch>
@@ -402,6 +378,8 @@ template <typename Ch>
 void Component<Ch>::
 move_to(Component& c, Chains& mm)
 {
+    for (const auto& m : mm)
+        vv.move_to(c, m);
     remove(mm);
     c.append(mm);
 }

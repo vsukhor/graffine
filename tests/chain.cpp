@@ -514,4 +514,25 @@ TEST_F(ChainTest, InternalEgEnd)
     ASSERT_EQ(cn.internal_egEnd(2, 1), End::B);
 }
 
+
+/// Tests selection of the slots by end in Neigs::incoming() and outgoing().
+TEST_F(ChainTest, NeigsIncomingOutgoing)
+{
+    ++testCount;
+
+    if constexpr (verboseT)
+        print_description("Tests Neigs::incoming() and Neigs::outgoing()");
+
+    using Neigs = structure::containers::Neigs<ESlot>;
+
+    const Neigs n {ESlot{ChIdG{0}, End::A},
+                   ESlot{ChIdG{1}, End::B},
+                   ESlot{ChIdG{2}, End::A}};
+
+    EXPECT_EQ(n.incoming(), (Neigs::Slots {ESlot{ChIdG{1}, End::B}}));
+    EXPECT_EQ(n.outgoing(), (Neigs::Slots {ESlot{ChIdG{0}, End::A},
+                                           ESlot{ChIdG{2}, End::A}}));
+    EXPECT_TRUE(Neigs{}.incoming().empty());
+}
+
 }  // namespace graffine::tests::chain

@@ -464,9 +464,6 @@ struct To1<Deg1, G, PP>
     static constexpr auto I2 = Base::I2;  ///< No 2nd input vertex.
     static constexpr auto I = Base::I;    ///< Input vertex degree.
 
-    static_assert(PropertyProcessor::TransformType == Trait::Type);
-    static_assert(PropertyProcessor::Element::Type == G::Type);
-
     using Base::dd;
     using Base::shortName;
     using Base::fullName;

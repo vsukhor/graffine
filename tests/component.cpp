@@ -25,14 +25,18 @@ limitations under the License.
 #include "graffine/structure/elements/edge.h"
 #include "graffine/structure/descriptors/vertex_degrees.h"
 #include "graffine/transforms/vertex_merger/from_12.h"
+#include "graffine/structure/modifiers/graph_factory.h"
 
 
+#include <algorithm>
 #include <array>
+#include <memory>
 #include <functional>
 #include <tuple>
 #include <vector>
 #include <iostream>
 #include <numeric>  // accumulate
+#include <set>
 #include <string>
 #include <type_traits>
 
@@ -1132,6 +1136,187 @@ TEST_F(ComponentTest, ChecksReportCorruption)
         EXPECT_TRUE(check(gr.compt(c))) << what;
         EXPECT_TRUE(gr.compt(c).template check<false>()) << what;
     }
+}
+
+
+/// Builds a graph from \p links: pairs of vertex ids joined by an edge.
+template<std::size_t N>
+G graph_of_links(const std::array<std::pair<uint, uint>, N>& links)
+{
+    using Vertex = G::Vertex;
+
+    uint numVertices {};
+    for (const auto& [a, b] : links)
+        numVertices = std::max({numVertices, a + 1, b + 1});
+
+    std::vector<std::unique_ptr<Vertex>> vv;
+    for (uint i {}; i < numVertices; ++i)
+        vv.push_back(std::make_unique<Vertex>(VIdH {i}, false));
+
+    std::vector<Edge> egs;
+    for (std::size_t i {}; i < links.size(); ++i) {
+        auto& eg = egs.emplace_back(EgIdG {i}, Orientation::Forwards,
+                                    Edge::weight_t {1});
+        eg.connect_to_outer(End::A, *vv[links[i].first]);
+        eg.connect_to_outer(End::B, *vv[links[i].second]);
+    }
+
+    G gr;
+    structure::modifiers::GraphFactory<G> {}.create(gr, std::move(vv),
+                                                    std::move(egs));
+    return gr;
+}
+
+
+/// Tests detection of the chain triangles of a component.
+TEST_F(ComponentTest, DetectChainTriangles)
+{
+    ++testCount;
+
+    if constexpr (verboseT)
+        print_description("Tests detect_chain_triangles(): loops of three ",
+                          "chains joined end to end");
+
+    using VIds = elements::Triangle::VIds;
+
+    // Junctions 0, 1, 2 joined pairwise by two-edge chains through 3, 4, 5,
+    // with a tail at each junction.
+    {
+        auto gr = graph_of_links<9>({{
+            {0, 3}, {3, 1}, {1, 4}, {4, 2}, {2, 5}, {5, 0},
+            {0, 6}, {1, 7}, {2, 8}}});
+        ASSERT_EQ(gr.num_compts(), 1);
+        auto& cmp = gr.compt(CmpId {0});
+
+        EXPECT_EQ(cmp.num_triangles(), 0);
+        cmp.detect_chain_triangles();
+        ASSERT_EQ(cmp.num_triangles(), 1);
+
+        const auto& t = cmp.trs.tris[0];
+        EXPECT_EQ(t.vv, (VIds {VIdH {0}, VIdH {1}, VIdH {2}}));
+        EXPECT_TRUE(std::ranges::is_sorted(t.ww));
+        EXPECT_NE(t.ww[0], t.ww[1]);
+        EXPECT_NE(t.ww[1], t.ww[2]);
+        for (const auto w : t.ww)
+            EXPECT_EQ(gr.chain(w).length(), 2);
+
+        // Repeated detection replaces the triangles found before.
+        cmp.detect_chain_triangles();
+        EXPECT_EQ(cmp.num_triangles(), 1);
+    }
+
+    // Complete graph on junctions 0..3, of single-edge chains, with a tail
+    // at each junction, which makes it a 4-way one: four triangles.
+    {
+        auto gr = graph_of_links<10>({{
+            {0, 1}, {0, 2}, {0, 3}, {1, 2}, {1, 3}, {2, 3},
+            {0, 4}, {1, 5}, {2, 6}, {3, 7}}});
+        ASSERT_EQ(gr.num_compts(), 1);
+        auto& cmp = gr.compt(CmpId {0});
+
+        cmp.detect_chain_triangles();
+        ASSERT_EQ(cmp.num_triangles(), 4);
+
+        std::set<VIds> vvs;
+        for (const auto& t : cmp.trs.tris)
+            vvs.insert(t.vv);
+        EXPECT_EQ(vvs, (std::set<VIds> {
+            {VIdH {0}, VIdH {1}, VIdH {2}}, {VIdH {0}, VIdH {1}, VIdH {3}},
+            {VIdH {0}, VIdH {2}, VIdH {3}}, {VIdH {1}, VIdH {2}, VIdH {3}}}));
+    }
+
+    // Theta: two junctions joined by three chains: no triangle.
+    {
+        auto gr = graph_of_links<6>({{
+            {0, 2}, {2, 1}, {0, 3}, {3, 1}, {0, 4}, {4, 1}}});
+        auto& cmp = gr.compt(CmpId {0});
+
+        cmp.detect_chain_triangles();
+        EXPECT_EQ(cmp.num_triangles(), 0);
+    }
+}
+
+
+/// Tests the collections of the component edges and chains.
+TEST_F(ComponentTest, EdgesAndChains)
+{
+    ++testCount;
+
+    if constexpr (verboseT)
+        print_description("Tests Component::edges() and Component::chains()");
+
+    auto gr = graph_of_links<9>({{
+        {0, 3}, {3, 1}, {1, 4}, {4, 2}, {2, 5}, {5, 0},
+        {0, 6}, {1, 7}, {2, 8}}});
+    const auto& cmp = gr.compt(CmpId {0});
+
+    const auto egs = cmp.edges();
+    ASSERT_EQ(egs.size(), cmp.num_edges());
+    for (EgIdC i {}; i < egs.size(); ++i)
+        EXPECT_EQ(egs[i()], &cmp.edge(i));
+
+    const auto mm = cmp.chains();
+    ASSERT_EQ(mm.size(), cmp.num_chains());
+    for (std::size_t i {}; i < mm.size(); ++i)
+        EXPECT_EQ(mm[i], &gr.chain(cmp.ww[i]));
+}
+
+
+/// Tests deletion of a vertex connected to edges.
+TEST_F(ComponentTest, RemoveVertex)
+{
+    ++testCount;
+
+    if constexpr (verboseT)
+        print_description("Tests remove_vertex(): deletion of a connected ",
+                          "vertex");
+
+    constexpr std::size_t len {3};
+
+    G gr;
+    gr.add_single_chain_component(len);
+    auto& cmp = gr.compt(CmpId {0});
+    const auto& m = gr.chain(ChIdG {0});
+
+    const auto numVertices = cmp.num_vertices();
+    const auto id = m.vertex_at_bulk(EgIdA {1})->get_id();
+
+    cmp.remove_vertex(id);
+
+    EXPECT_EQ(cmp.num_vertices(), numVertices - 1);
+    EXPECT_EQ(cmp.vertices().find(id), nullptr);
+    EXPECT_FALSE(m.g[0].is_connected_outer(End::B));
+    EXPECT_FALSE(m.g[1].is_connected_outer(End::A));
+    EXPECT_TRUE(m.g[0].is_connected_outer(End::A));
+    EXPECT_TRUE(m.g[1].is_connected_outer(End::B));
+}
+
+
+/// Tests moving chains given by a chain container, with their vertices.
+TEST_F(ComponentTest, MoveToChains)
+{
+    ++testCount;
+
+    if constexpr (verboseT)
+        print_description("Tests move_to(Component&, Chains&): the vertices ",
+                          "move along with the chains");
+
+    constexpr std::size_t len {4};
+
+    G gr;
+    gr.add_single_chain_component(len);
+    const auto numVertices = gr.compt(CmpId {0}).num_vertices();
+    auto& to = gr.compts().emplace_back(CmpId {1}, gr.chains());
+    auto& src = gr.compt(CmpId {0});  // after the emplacement, which may
+                                      // reallocate the components
+    src.move_to(to, gr.chains());
+
+    EXPECT_EQ(src.num_chains(), 0);
+    EXPECT_EQ(src.num_vertices(), 0);
+    EXPECT_EQ(to.num_chains(), 1);
+    EXPECT_EQ(to.num_vertices(), numVertices);
+    for (const auto& v : to.vertices().get())
+        EXPECT_EQ(v->get_c(), CmpId {1});
 }
 
 }

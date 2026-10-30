@@ -207,7 +207,6 @@ are_connected(const EndSlot& s1,
         return true;
     }
 
-//    compute_from_source<withChain1>(s1);
     compute_from_source(s1);
 
     return distances[element_ind(s2)].is_finite();
@@ -215,7 +214,6 @@ are_connected(const EndSlot& s1,
 
 
 template<typename Component>
-//template<bool withSourceChain>
 void Generic<Component>::
 compute_from_source(const EndSlot& s)
 {
@@ -223,8 +221,7 @@ compute_from_source(const EndSlot& s)
 
     distances[element_ind(s)].dist = Dist::zero;
 
-//    if constexpr (withSourceChain)
-        q.emplace(s, Dist::zero);
+    q.emplace(s, Dist::zero);
 
     for (const auto& nb : cmp.chain(s.w).ngs[s.e]()) {
 
@@ -271,35 +268,8 @@ update(
     }
 }
 
-/*
 template<typename Component>
-void Generic<Component>::
-compute_from_source(const EndSlot& source)
-{
-    reset();
-
-    distances[element_ind(source)].dist = zeroWeight;
-    q.emplace(source, zeroWeight);
-    for (const auto& nb : cmp.chain(source.w).ngs[source.e]()) {
-        distances[element_ind(nb)].set(source, zeroWeight);
-        if (nb.w != source.w)
-            q.emplace(nb, zeroWeight);
-    }
-
-    do {
-        const auto ud = std::move(*q.begin());
-        q.erase(q.begin());
-
-        // Visit the opposite chain end of u
-        update(ud, ud.prev.opp());
-    } while (!q.empty());
-}
-*/
-
-template<typename Component>
-template<bool computeFromSource//,
-         //bool withSourceChain
-         >
+template<bool computeFromSource>
 auto Generic<Component>::
 find_shortest_path(
     const EndSlot& s1,  // starting chain end slot
@@ -307,7 +277,6 @@ find_shortest_path(
 ) -> Path
 {
     if constexpr (computeFromSource)
-//        compute_from_source<withSourceChain>(s1);  // populate distances
         compute_from_source(s1);  // populate distances
 
     if (distances[element_ind(s2)].is_finite()) {

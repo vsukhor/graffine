@@ -101,24 +101,6 @@ print(T&&... tag) const
 
 
 template<typename E>
-void Chain<E>::
-write(std::ofstream& ofs) const
-{
-    const auto len = length();
-    ofs.write(reinterpret_cast<const char*>(&len), sizeof(len));
-    ofs.write(reinterpret_cast<const char*>(&idw), sizeof(ChIdG));
-    ofs.write(reinterpret_cast<const char*>(&idc), sizeof(ChIdC));
-    ofs.write(reinterpret_cast<const char*>(&c), sizeof(CmpId));
-
-    for (const auto& ng : ngs)
-        ng.write(ofs);
-
-    for (const auto& a : g)
-        a.write(ofs);
-}
-
-
-template<typename E>
 template<typename... T>
 void Chain<E>::
 ensure(
