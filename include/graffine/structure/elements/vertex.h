@@ -79,11 +79,19 @@ private:
 
 public:  // Functions
 
-    constexpr Vertex();
-    explicit constexpr Vertex(VIdH id);
+    constexpr Vertex()
+        : id {create_id()}
+    {}
+
+    explicit constexpr Vertex(const VIdH id)
+        : id {id}
+    {}
 
     /// Equality operator.
-    constexpr bool operator==(const Vertex& other) const noexcept;
+    constexpr bool operator==(const Vertex& other) const noexcept
+    {
+        return id == other.id;
+    }
 
     constexpr auto get_id() const noexcept -> VIdH { return id; }
     constexpr void set_id(const VIdH i) noexcept   { id = i;}
@@ -95,7 +103,15 @@ public:  // Functions
 
     /// Prints attributes, preceded by \p s , to the message processor.
     template<bool endLine=true>
-    void print(std::string_view s="") const;
+    void print(const std::string_view s="") const
+    {
+        jot<false>(s, " ");
+
+        jot<false>("id ", colorcodes::GREEN, id, colorcodes::RESET);
+
+        if constexpr (endLine)
+            jot("");
+    }
 
     ///@}  // In/Out operations.
 
@@ -107,39 +123,6 @@ protected: // Functions
         return ++h;
     }
 };
-
-// IMPLEMENTATION ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-constexpr
-Vertex<>::
-Vertex()
-    : id {create_id()}
-{}
-
-constexpr
-Vertex<>::
-Vertex(const VIdH id)
-    : id {id}
-{}
-
-constexpr
-bool Vertex<>::
-operator==(const Vertex& other) const noexcept
-{
-    return id == other.id;
-}
-
-template<bool endLine>
-void Vertex<>::
-print(const std::string_view s) const
-{
-    jot<false>(s, " ");
-
-    jot<false>("id ", colorcodes::GREEN, id, colorcodes::RESET);
-
-    if constexpr (endLine)
-        jot("");
-}
 
 using VertexFeaturelessUnconnected = Vertex<>;
 
