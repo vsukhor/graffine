@@ -406,7 +406,7 @@ apply(
                     "w1 == w2 : NOT unconnected cycle: \n", report.indent,
                     "two internal vertices of the same linear chain");
 
-            ct[c1].rem_chain_internal_vetrex(w, aL);
+            ct[c1].rem_chain_internal_vertex(w, aL);
 
             // make nA..nB:mA..mB:pA..pB
             ct[c1].create_chain();            // to connect end A of w
@@ -439,7 +439,7 @@ apply(
                     "w1 == w2 : w is unconnected cycle: \n", report.indent,
                     "two internal vertices of the same unconnected chain");
 
-            ct[c1].rem_chain_internal_vetrex(w, aS);
+            ct[c1].rem_chain_internal_vertex(w, aS);
 
             auto& n = ct[c1].create_chain();  // to hold w[aS...aL-1]
             auto& m = cn[w];                  // assigned AFTER create_chain
@@ -471,7 +471,7 @@ apply(
                     report.indent, "w1 is NOT unconnected cycle \n",
                     report.indent, "w2 is NOT unconnected cycle");
 
-            ct[c1].rem_chain_internal_vetrex(w1, a1);
+            ct[c1].rem_chain_internal_vertex(w1, a1);
 
             const auto u1 = ct[c1].create_chain().idw;  // to move w1 head
             auto& n2 = ct[c2].create_chain();           // to move w2 head
@@ -512,7 +512,7 @@ apply(
             auto& m2 = cn[w2];
 
             gr.rotate_chain(m1, a1());
-            ct[c2].rem_chain_internal_vetrex(w2, a2);
+            ct[c2].rem_chain_internal_vertex(w2, a2);
             gr.rotate_chain(m2, a2());
             gr.merge_components(c1, c2);
 
@@ -541,7 +541,7 @@ apply(
 
                 gr.rotate_chain(m1, a1());
 
-                ct[c2].rem_chain_internal_vetrex(w2, a2);
+                ct[c2].rem_chain_internal_vertex(w2, a2);
 
                 gr.move_edges(m2, a2(), m2.length(), n2, 0);  // move head of m2 to n2
                 gr.copy_neigs(w2B, n2B);  // set neigs at n2.B
@@ -572,7 +572,7 @@ apply(
 
                 gr.rotate_chain(m2, a2());
 
-                ct[c1].rem_chain_internal_vetrex(w1, a1);
+                ct[c1].rem_chain_internal_vertex(w1, a1);
 
                 gr.move_edges(m1, a1(), m1.length(), n1, 0);  // move head of m1 to n1
                 gr.copy_neigs(w1B, n1B);  // set neigs at n1.B
@@ -643,7 +643,7 @@ apply(
     ResT res0 {};
     EndSlot s1 {}, s2 {}, s3 {}, s4 {};
 
-    ct[c2].rem_unconnected_cycle_boindary_vetrex();
+    ct[c2].rem_unconnected_cycle_boundary_vertex();
 
     if (w1 == w2) {
 
@@ -782,7 +782,7 @@ apply(
 
     // Produce an unconnected intermediary:
 
-    auto [eg11, eg12] = ct[c1].rem_unconnected_cycle_boindary_vetrex();
+    auto [eg11, eg12] = ct[c1].rem_unconnected_cycle_boundary_vertex();
 
     join_ends(a1, b1, a2, b2);
 

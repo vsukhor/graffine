@@ -752,10 +752,10 @@ TEST_F(EdgeTest, Vertex_edge_consistency_on_reverse)
     ASSERT_EQ(e.vertex_at_outer(eA), &v1);
     ASSERT_EQ(e.vertex_at_outer(eB), &v2);
 
-    ASSERT_TRUE(e.vertex_at_inner(eA)->is_conected_to(Vertex::EgDescr{e.id, e.indc, eA}));  // v1
-    ASSERT_FALSE(e.vertex_at_inner(eA)->is_conected_to(Vertex::EgDescr{e.id, e.indc, eB}));  // v1
-    ASSERT_FALSE(e.vertex_at_inner(eB)->is_conected_to(Vertex::EgDescr{e.id, e.indc, eA}));  // v2
-    ASSERT_TRUE(e.vertex_at_inner(eB)->is_conected_to(Vertex::EgDescr{e.id, e.indc, eB}));  // v2
+    ASSERT_TRUE(e.vertex_at_inner(eA)->is_connected_to(Vertex::EgDescr{e.id, e.indc, eA}));  // v1
+    ASSERT_FALSE(e.vertex_at_inner(eA)->is_connected_to(Vertex::EgDescr{e.id, e.indc, eB}));  // v1
+    ASSERT_FALSE(e.vertex_at_inner(eB)->is_connected_to(Vertex::EgDescr{e.id, e.indc, eA}));  // v2
+    ASSERT_TRUE(e.vertex_at_inner(eB)->is_connected_to(Vertex::EgDescr{e.id, e.indc, eB}));  // v2
 
     e.reverse<true>();  // reverses what is seen by inner but not by outer
 
@@ -769,10 +769,10 @@ TEST_F(EdgeTest, Vertex_edge_consistency_on_reverse)
     ASSERT_EQ(e.vertex_at_outer(eA), &v1);
     ASSERT_EQ(e.vertex_at_outer(eB), &v2);
 
-    ASSERT_FALSE(e.vertex_at_inner(eB)->is_conected_to(Vertex::EgDescr{e.id, e.indc, eA}));  // v1
-    ASSERT_TRUE(e.vertex_at_inner(eB)->is_conected_to(Vertex::EgDescr{e.id, e.indc, eB}));  // v1
-    ASSERT_TRUE(e.vertex_at_inner(eA)->is_conected_to(Vertex::EgDescr{e.id, e.indc, eA}));  // v2
-    ASSERT_FALSE(e.vertex_at_inner(eA)->is_conected_to(Vertex::EgDescr{e.id, e.indc, eB}));  // v2
+    ASSERT_FALSE(e.vertex_at_inner(eB)->is_connected_to(Vertex::EgDescr{e.id, e.indc, eA}));  // v1
+    ASSERT_TRUE(e.vertex_at_inner(eB)->is_connected_to(Vertex::EgDescr{e.id, e.indc, eB}));  // v1
+    ASSERT_TRUE(e.vertex_at_inner(eA)->is_connected_to(Vertex::EgDescr{e.id, e.indc, eA}));  // v2
+    ASSERT_FALSE(e.vertex_at_inner(eA)->is_connected_to(Vertex::EgDescr{e.id, e.indc, eB}));  // v2
 
     e.disconnect_end_inner(eA);
     e.disconnect_end_inner(eB);

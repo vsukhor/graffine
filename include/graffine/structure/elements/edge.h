@@ -539,7 +539,7 @@ reverse()
                 const typename Vertex::EgDescr s {id, indc, e};
                 auto v = vertex_at_inner(e);
 
-                GRAFFINE_ASSERT(v->is_conected_to(s),
+                GRAFFINE_ASSERT(v->is_connected_to(s),
                     "Edge slot ", s.str_short(), " in connected vertex");
 
                 auto& egSs = v->edges();
@@ -707,7 +707,7 @@ connect_to_inner(
 
     typename Vertex::EgDescr s {id, indc, e};
 
-    GRAFFINE_ASSERT(!v.is_conected_to(s), "EgDescr ", s.str_short(),
+    GRAFFINE_ASSERT(!v.is_connected_to(s), "EgDescr ", s.str_short(),
                                  " already present in vertex ", v.id);
 
     v.insert(std::move(s));
@@ -734,7 +734,7 @@ connect_to_outer(
                                     " is already connected to outer slot ",
                                     s.str_short());
 
-    GRAFFINE_ASSERT(!v.is_conected_to(s),
+    GRAFFINE_ASSERT(!v.is_connected_to(s),
            "EgDescr ", s.str_short(), " already present in vertex ", v.id);
 
     v.insert(std::move(s));
@@ -760,7 +760,7 @@ disconnect_end_outer(
 
     auto v = vertex_at_outer(e);
 
-    GRAFFINE_ASSERT_CALLING(v->is_conected_to(s), v->print("ERROR"),
+    GRAFFINE_ASSERT_CALLING(v->is_connected_to(s), v->print("ERROR"),
                    "EgDescr ", s.str_short(), " not found in vertex ", v->id);
 
     v->erase(s);
@@ -784,7 +784,7 @@ disconnect_end_inner(
 
     auto v = vertex_at_inner(e);
 
-    GRAFFINE_ASSERT(v->is_conected_to(s), "EgDescr ", s.str_short(),
+    GRAFFINE_ASSERT(v->is_connected_to(s), "EgDescr ", s.str_short(),
                               " not found in vertex ", v->id);
 
     v->erase(s);
@@ -848,8 +848,8 @@ is_neig_of(const Edge& eg) const noexcept
         if (!v)
             return false;
 
-        if (v->is_conected_to(typename Vertex::EgDescr{eg.id, eg.indc, End::A}) ||
-            v->is_conected_to(typename Vertex::EgDescr{eg.id, eg.indc, End::B}))
+        if (v->is_connected_to(typename Vertex::EgDescr{eg.id, eg.indc, End::A}) ||
+            v->is_connected_to(typename Vertex::EgDescr{eg.id, eg.indc, End::B}))
 
             return true;
     }

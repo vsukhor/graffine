@@ -113,7 +113,7 @@ operator()(Host& host,
         const auto st = edge_descriptor(egt, t.e);
 
         GRAFFINE_ASSERT_CALLING(
-            v->is_conected_to(st),
+            v->is_connected_to(st),
             v->print("v_at_slot_f"),
             "Vertex at slot f is not connected to slot t", t.str_short()
         );
@@ -149,7 +149,7 @@ operator()(Host& host,
         const auto st = edge_descriptor(egt, t.e);
 
         GRAFFINE_ASSERT_CALLING(
-            v->is_conected_to(st),
+            v->is_connected_to(st),
             v->print("v_at_slot_f"),
             "Vertex at slot f is not connected to slot t", t.str_short()
         );

@@ -463,14 +463,14 @@ TEST_F(VertexMergerTest, vm22_case_4)
 
 
 /// Tests vertex merger 22 case 5: internal vertices of distinct
-/// chains - a disconected cycle and a linear chain.
+/// chains - a disconnected cycle and a linear chain.
 TEST_F(VertexMergerTest, vm22_case_5)
 {
     ++testCount;
 
     if constexpr (verboseT)
         print_description("Tests vertex merger 22 case 5: internal vertices ",
-                          "of distinct chains - a disconected cycle ",
+                          "of distinct chains - a disconnected cycle ",
                           "and a linear chain");
 
     constexpr std::array<size_t, 2> len {4, 4};
@@ -581,7 +581,7 @@ TEST_F(VertexMergerTest, vm22_case_5)
 }
 
 /// Tests vertex merger 22 case 6: internal vertices of distinct
-/// chains - a linear chain and an unconected cycle.
+/// chains - a linear chain and an unconnected cycle.
 TEST_F(VertexMergerTest, vm22_case_6)
 {
     ++testCount;
@@ -589,7 +589,7 @@ TEST_F(VertexMergerTest, vm22_case_6)
     if constexpr (verboseT)
         print_description("Tests vertex merger 22 case 6: internal vertices ",
                           "of distinct chains - a linear chain and ",
-                          "an unconected cycle");
+                          "an unconnected cycle");
 
     constexpr std::array<size_t, 2> len {4, 4};
 
@@ -814,7 +814,7 @@ TEST_F(VertexMergerTest, vm22_case_7)
 
 
 /// Tests vertex merger 22 case 8: internal vertex of a linear chain to a
-/// boundary vertex of an unsconected cycle.
+/// boundary vertex of an unconnected cycle.
 TEST_F(VertexMergerTest, vm22_case_8)
 {
     ++testCount;
@@ -822,7 +822,7 @@ TEST_F(VertexMergerTest, vm22_case_8)
     if constexpr (verboseT)
         print_description("Tests vertex merger 22 case 8: internal vertex of ",
                           "a linear chain to a boundary vertex of ",
-                          "an unconected cycle");
+                          "an unconnected cycle");
 
     constexpr std::array<size_t, 2> len {4, 4};
 

@@ -221,8 +221,8 @@ public:  // Functions
     constexpr void insert(const EgDescr& s) noexcept;
     constexpr void insert(EgDescr&& s);
 
-    constexpr bool is_conected_to(const EgDescr& s) const noexcept;
-    constexpr bool is_conected() const noexcept;
+    constexpr bool is_connected_to(const EgDescr& s) const noexcept;
+    constexpr bool is_connected() const noexcept;
 
     auto common_edge(const Vertex& v) const noexcept -> EgIdC;
 
@@ -376,14 +376,14 @@ insert(EgDescr&& s)
 
 constexpr
 bool Vertex<ED>::
-is_conected_to(const EgDescr& s) const noexcept
+is_connected_to(const EgDescr& s) const noexcept
 {
     return egDescrors.contains(s);
 }
 
 constexpr
 bool Vertex<ED>::
-is_conected() const noexcept
+is_connected() const noexcept
 {
     return egDescrors.size();
 }

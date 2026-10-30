@@ -199,7 +199,7 @@ applicability(
         return reject("vertex degree is not 4");
     if (s.size() != J1)
         return reject("number of edges to detach is not 2");
-    if (!v.is_conected_to(s[0]) || !v.is_conected_to(s[1]))
+    if (!v.is_connected_to(s[0]) || !v.is_connected_to(s[1]))
         return reject("edge is not connected to the vertex");
 
     const auto& cmp = gr.compt(v.get_c());
@@ -251,10 +251,10 @@ apply(Vertex& v,
     GRAFFINE_ASSERT(s.size() == J1,
            "Incorrect number of incident slots for ", shortName);
 
-    GRAFFINE_ASSERT_CALLING(v.is_conected_to(s[0]),
+    GRAFFINE_ASSERT_CALLING(v.is_connected_to(s[0]),
                    v.print("NOT CONNECTED"),
                    "Vertex is not connected to ", s[0].str_short());
-    GRAFFINE_ASSERT_CALLING(v.is_conected_to(s[1]),
+    GRAFFINE_ASSERT_CALLING(v.is_connected_to(s[1]),
                    v.print("NOT CONNECTED"),
                    "Vertex is not connected to ", s[1].str_short());
 

@@ -128,7 +128,7 @@ rename_chain(const ChIdG f,
 
 template <typename Ch>
 constexpr auto Component<Ch>::
-rem_unconnected_cycle_boindary_vetrex() noexcept
+rem_unconnected_cycle_boundary_vertex() noexcept
     -> std::array<Edge*, 2>
 {
     const auto w = ww[0];
@@ -156,7 +156,7 @@ rem_unconnected_cycle_boindary_vetrex() noexcept
 
 template <typename Ch>
 constexpr auto Component<Ch>::
-rem_chain_internal_vetrex(const ChIdG w,
+rem_chain_internal_vertex(const ChIdG w,
                           const EgIdA a) noexcept -> std::array<Edge*, 2>
 {
     GRAFFINE_ASSERT(contains_chain(w), "chain ", w, " is not part of copmonent ", ind);

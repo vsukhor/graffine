@@ -159,7 +159,7 @@ applicability(
         return reject("vertex not in the graph");
     if (v.deg() != I)
         return reject("vertex degree is not 3");
-    if (!v.is_conected_to(s))
+    if (!v.is_connected_to(s))
         return reject("edge is not connected to the vertex");
 
     return applicability(gr.compt(v.get_c()).end_slot(s));
@@ -190,7 +190,7 @@ apply(Vertex& v,
                    v.print("INCORRECT DEGREE"),
                    "Vertex must have degree", I, " actual degree is", v.deg());
 
-    GRAFFINE_ASSERT_CALLING(v.is_conected_to(s),
+    GRAFFINE_ASSERT_CALLING(v.is_connected_to(s),
                    v.print("NOT CONNECTED"),
                    "Vertex is not connected to ", s.str_short());
 

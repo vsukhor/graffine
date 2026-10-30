@@ -245,7 +245,7 @@ remove_disconnected(Vertex* vp) noexcept
 {
     const auto vid = vp->id();
 
-    GRAFFINE_ASSERT(!vp->is_conected(), "Vertex is connected, indc: ", vid);
+    GRAFFINE_ASSERT(!vp->is_connected(), "Vertex is connected, indc: ", vid);
 
     const auto i = find_container_coord(vid);
 
@@ -364,7 +364,7 @@ auto Vertices<V, H>::
 find(const EdgeSlotC& s) noexcept -> Vertex*
 {
     for (auto& v : vv)
-        if (v->is_conected_to(s))
+        if (v->is_connected_to(s))
             return v.get();
 
     return nullptr;
@@ -376,7 +376,7 @@ auto Vertices<V, H>::
 find(const EdgeSlotC& s) const noexcept -> const Vertex*
 {
     for (auto& v : vv)
-        if (v->is_conected_to(s))
+        if (v->is_connected_to(s))
             return v.get();
 
     return nullptr;

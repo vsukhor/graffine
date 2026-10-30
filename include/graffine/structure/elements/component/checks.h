@@ -52,10 +52,10 @@ ensure(
 template <typename Ch>
 template<bool beLoud>
 auto Component<Ch>::
-check_connectivity_vetrex_edge() const -> Vertex*
+check_connectivity_vertex_edge() const -> Vertex*
 {
     if constexpr (beLoud)
-        jot<false>("connectivity_vetrex_edge ... ");
+        jot<false>("connectivity_vertex_edge ... ");
 
     for (const auto& v : vv.get())
         for (const auto& s : v->edges()) {
@@ -302,7 +302,7 @@ check_vertex_data() const
         jot<false>("vertex_c ... ");
 
     return vv.check_c(ind) ||
-           check_connectivity_vetrex_edge<beLoud>();
+           check_connectivity_vertex_edge<beLoud>();
 }
 
 template <typename Ch>

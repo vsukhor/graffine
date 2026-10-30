@@ -84,7 +84,7 @@ struct Component<Ch>
     using Vertex = Edge::Vertex;
     using Vertices = containers::Vertices<Vertex, Component>;
     using EdgeInVertex = Vertex::EgDescr;
-    using Trinangles = structure::Triangles;
+    using Triangles = structure::Triangles;
     using Chis = containers::ChainIndexes<EndSlot>;
 
     static constexpr auto Type = Elements::Component;
@@ -318,9 +318,9 @@ public: // Functions
     void remove_vertex(const VIdH vi);
     constexpr void remove_vertex_at_edge_outer(Edge& eg, EndId e) noexcept;
 
-    constexpr auto rem_unconnected_cycle_boindary_vetrex() noexcept
+    constexpr auto rem_unconnected_cycle_boundary_vertex() noexcept
         -> std::array<Edge*, 2>;
-    constexpr auto rem_chain_internal_vetrex(ChIdG w, EgIdA a) noexcept
+    constexpr auto rem_chain_internal_vertex(ChIdG w, EgIdA a) noexcept
         -> std::array<Edge*, 2>;
 
     /**
@@ -433,7 +433,7 @@ public: // Functions
      */
 
     template<bool beLoud = true>
-    auto check_connectivity_vetrex_edge() const -> Vertex* ;
+    auto check_connectivity_vertex_edge() const -> Vertex* ;
 
     template<bool beLoud = true>
     bool check_vertex_data() const;

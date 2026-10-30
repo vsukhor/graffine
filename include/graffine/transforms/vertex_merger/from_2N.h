@@ -250,7 +250,7 @@ operator()(
     if constexpr (!std::is_void_v<PP>)
         updateProperties->vertexMerger.on_start(s2, slots1[0]);  // (preserved, removed)
 
-    auto [eg11, eg12] = ct[c1].rem_unconnected_cycle_boindary_vetrex();
+    auto [eg11, eg12] = ct[c1].rem_unconnected_cycle_boundary_vertex();
 
     const auto ngs = gr.ngs_at(s2);  // chains connected to w2 at e2
 
