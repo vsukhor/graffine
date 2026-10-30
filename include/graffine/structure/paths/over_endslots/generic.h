@@ -44,6 +44,15 @@ limitations under the License.
 
 namespace graffine::structure::paths::over_endslots {
 
+/**
+ * Shortest paths over the chain end slots of a component.
+ * \details The paths run over chains: a path is the sequence of chain end
+ * slots it passes, and its length the sum of the weights (Chain::weight())
+ * of the chains it traverses, the slots joined at a vertex being at zero
+ * distance. compute_from_source() computes the distances from one slot to
+ * all others, on which the other queries rely.
+ * \tparam Component Type of the graph component.
+ */
 template<typename Component>
 struct Generic
 {
@@ -65,6 +74,12 @@ struct Generic
 
     explicit constexpr Generic(const Component& cmp) noexcept;
 
+    /**
+     * Whether chain end slots \p s1 and \p s2 are connected by a path.
+     * \details Computes the distances from \p s1 with compute_from_source(),
+     * except if the slots are on the same chain: then the distances are only
+     * reset, and the slots are reported connected.
+     */
     bool are_connected(const EndSlot& s1,
                        const EndSlot& s2);
 
@@ -87,7 +102,10 @@ struct Generic
      * and \p s2 using the compute_from_source() member function.
      * \param[in] s1 The first slot of the path.
      * \param[in] s2 The last slot of the path.
-     * \return The shortest path between slots \p s1 and \p s2 .
+     * \tparam computeFromSource Whether to compute the distances from
+     * \p s1 first; if not, those computed beforehand from \p s1 are used.
+     * \return The shortest path between slots \p s1 and \p s2 , or an
+     * empty path if they are not connected.
      */
     template<bool computeFromSource>
     auto find_shortest_path(
@@ -95,9 +113,17 @@ struct Generic
         const EndSlot& s2
     ) -> Path;
 
+    /**
+     * Classifies the chains of the component by their reachability.
+     * \note Relies on the distances computed beforehand by
+     * compute_from_source(\p s) or are_connected(\p s, ...).
+     * \param[in] s Source slot of the distances; only used for checking.
+     * \return The chains reachable from \p s , and the others, in this order.
+     */
     auto classify_chains_by_connectivity(const EndSlot& s) const
         -> std::array<ChIdGs, 2>;
 
+    /// Chains traversed by \p path, and their total number of edges.
     auto path_chains_numedges(const Path& path) const noexcept
         -> std::tuple<std::set<ChIdG>, std::size_t>;
 

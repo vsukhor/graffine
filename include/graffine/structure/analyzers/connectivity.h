@@ -43,6 +43,14 @@ limitations under the License.
 
 namespace graffine::structure {
 
+/**
+ * Reachability of chains over their end connections.
+ * \details Searches the chains reachable from a chain end slot or chain,
+ * moving between chains joined at their ends (Chain::ngs) and from one end
+ * of a chain to the other. The searches reuse the auxiliary data of this
+ * object, so that consecutive searches over the same chains are cheap.
+ * \tparam Ch Chain type.
+ */
 template<typename Ch>
 struct Connectivity
 {
@@ -52,6 +60,7 @@ struct Connectivity
     using EndSlot = Chain::EndSlot;
 
 
+    /// Constructs the analyzer of the chains in \p cn, which it refers to.
     explicit constexpr Connectivity(const Chains& cn);
 
     /**

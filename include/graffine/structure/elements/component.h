@@ -109,6 +109,7 @@ public: // Variables
 
     modifiers::JunctionShifter<Component> jShifter;
 
+    /// Triangles of the component; not populated, see detect_triangles().
     Triangles trs;
 
 protected:  // Variables
@@ -136,12 +137,27 @@ public: // Functions
     constexpr CmpId get_id() const noexcept { return ind; };
 
     void set_chains() noexcept;
+    /**
+     * Assigns chain \p m to this component.
+     * \details Sets the component index and the component-wide chain index
+     * \p idc of \p m, and numbers its edges consecutively from \p indc .
+     * \param[in] m Chain to be assigned.
+     * \param[in] idc Component-wide index given to \p m .
+     * \param[inout] indc Component-wide index given to the first edge of
+     * \p m ; on return, the one following its last edge.
+     */
     void set_chain(
         Chain& m,
         ChIdC idc,
         EgIdC& indc  // ref
     ) noexcept;
 
+    /**
+     * Renumbers the chains of this component and their edges.
+     * \details As set_chain() for each chain of \a ww in turn: the chains are
+     * numbered from \p idc and the edges from \p indc . Used to append the
+     * chains to another component's numbering.
+     */
     void reind_chains(ChIdC idc,
                       EgIdC indc) noexcept;
 
@@ -172,26 +188,40 @@ public: // Functions
     void update_edge_descriptors() noexcept;
 
     auto set_chis() -> Component&;
+    /// Moves the chain classification out of this component, leaving
+    /// \a chis in a moved-from state.
     auto get_chis() noexcept -> Chis&&;
     void clear_chis() noexcept { chis.clear(); }
 
     void clear();
 
     //    constexpr void detect_facets() const noexcept;
+    /// Finds the triangles of three chains joined end to end, starting from
+    /// the chains whose both ends are 3-way junctions.
+    /// \note Incomplete: the triangles found are discarded, not stored in
+    /// \a trs.
     constexpr void detect_triangles() const noexcept;
 
     constexpr auto egId_last() const noexcept -> EgIdC;
     constexpr auto num_edges() const noexcept -> std::size_t;
     constexpr auto num_chains() const noexcept -> std::size_t;
     //    constexpr auto num_facets() const noexcept -> std::size_t;
+    /// Number of triangles in \a trs: currently always 0, see
+    /// detect_triangles().
     constexpr auto num_triangles() const noexcept -> std::size_t;
 
     constexpr auto num_vertices(Degree d) const noexcept -> std::size_t;
     constexpr auto num_vertices() const noexcept -> std::size_t;
 
+    /// Whether the component holds an unconnected linear chain, i.e. a chain
+    /// classified by end degrees {1, 1}.
     constexpr bool is_single_unconnected_chain() const;
+    /// Whether the component holds an unconnected cycle, i.e. a chain
+    /// classified by end degrees {2, 2}.
     constexpr bool is_unconnected_cycle() const;
 
+    /// Whether the component is a complete graph: an edge links every pair
+    /// of its vertices.
     constexpr bool is_complete() const noexcept;
 
     constexpr auto max_degree() const noexcept -> Degree;
@@ -299,6 +329,11 @@ public: // Functions
     auto prepend_edge_to_chain(Edge&& e, ChIdG w) -> Edge&;
     auto prepend_edge_to_chain(Edge&& e, Chain& m) -> Edge&;
 
+    /**
+     * Rotates the edges of chain \p m by \p n positions, as Chain::rotate(),
+     * and updates their positions in the component-wide edge descriptors.
+     * \note Meaningful for cycles, whose ends are at the same vertex.
+     */
     constexpr void rotate_chain(Chain& m, const std::size_t n);
 
     constexpr bool contains_chain(ChIdG w) const noexcept;
@@ -310,25 +345,84 @@ public: // Functions
     constexpr auto find(const Vertex& v) const noexcept -> Vertex* ;
     constexpr auto find_vertex(const VIdH vi) const noexcept -> Vertex* ;
 
+    /**
+     * \name Appending to this component.
+     * \details The chains appended are numbered after those already in the
+     * component, and their edges after its edges. The vertices are moved only
+     * when appending a whole component.
+     * @{
+     */
+
+    /// Appends the chains, edges and vertices of component \p other, leaving
+    /// it empty. \p other must be a different component.
     void append(Component&& other);
+    /// \overload
     void append(Component& other);
+    /// Appends the chains \p vv, without their vertices.
     void append(const ChIdGs& vv);
+    /// Appends the chains \p mm, without their vertices.
     void append(Chains& mm);
+    /// Appends chain \p m, without its vertices: it must not be part of this
+    /// component.
     void append(Chain& m);
+    /// As append(Edge&), for each edge of \p g .
     void append(Edges &g);
+    /// Assigns edge \p eg to this component, with the next component-wide
+    /// index, and rebuilds the edge descriptors.
     void append(Edge& eg);
 
+    ///@}  // Appending to this component.
+
+    /**
+     * \name Removal from the records of this component.
+     * \details The elements are removed from the component-wide records only:
+     * the chains and edges stay in the graph, and the vertices in the
+     * component. Elements following the removed ones in these records are
+     * renumbered: e.g. the last edge takes over the component-wide index of
+     * a removed edge.
+     * @{
+     */
+
+    /// As remove(const Edge&), for each edge of \p g .
     void remove(const Edges &g);
+    /// Removes edge \p eg from the component-wide edge descriptors.
     void remove(const Edge& eg);
+    /// Removes chain \p m and its edges from the records of this component.
     void remove(const Chain& m);
+    /// Removes chains \p mm and their edges from the records of this
+    /// component.
     void remove(const Chains& mm);
+    /// Removes chains \p vv and their edges from the records of this
+    /// component.
     void remove(const ChIdGs& vv);
+    ///@}  // Removal from the records of this component.
+
+    /// Deletes vertex \p vp, which must have no edges connected.
     void remove_disconnected(Vertex* vp);
     void remove_vertex(const VIdH vi);
+    /// Disconnects outer end \p e of edge \p eg and deletes the vertex it
+    /// was connected to, which must have no other edges.
     constexpr void remove_vertex_at_edge_outer(Edge& eg, EndId e) noexcept;
 
+    /**
+     * Deletes the boundary vertex of the unconnected cycle forming this
+     * component.
+     * \details Disconnects the edges at both chain ends from the vertex, then
+     * deletes it, so that the chain ends become free. The chain connectivity
+     * (Chain::ngs) is not updated.
+     * \note The component must consist of a single unconnected cycle.
+     * \return The edges at chain ends A and B, in this order.
+     */
     constexpr auto rem_unconnected_cycle_boundary_vertex() noexcept
         -> std::array<Edge*, 2>;
+    /**
+     * Deletes internal vertex \p a of chain \p w .
+     * \details Disconnects edges g[a-1] and g[a] from the vertex they share
+     * (BulkSlot {w, a}), then deletes it, leaving the two edge ends free.
+     * The chain itself is not split.
+     * \note Requires 0 < \p a < length().
+     * \return Edges g[a-1] and g[a], in this order.
+     */
     constexpr auto rem_chain_internal_vertex(ChIdG w, EgIdA a) noexcept
         -> std::array<Edge*, 2>;
 
@@ -358,8 +452,20 @@ public: // Functions
      */
     void reconnect_edges(Vertex* f, Vertex* t);
 
+    /**
+     * \name Moving chains to component \p c .
+     * \details The chains are removed from the records of this component and
+     * appended to those of \p c .
+     * @{
+     */
+
+    /// Moves chains \p vv, with their vertices, as move_to(Component&, Chain&)
+    /// does, in descending order of the chain indexes.
     void move_to(Component& c, ChIdGs&& vv);
+    /// Moves chains \p mm. Unlike the other overloads, does not move their
+    /// vertices.
     void move_to(Component& c, Chains& mm);
+    /// Moves chain \p m, with its vertices.
     void move_to(Component& c, Chain& m);
 
     /**
@@ -445,9 +551,15 @@ public: // Functions
      * @{
      */
 
+    /// Ensure that each edge descriptor of each vertex refers to an edge of
+    /// the component connected to the vertex at the recorded inner end.
+    /// \return The first vertex failing the check, or \a nullptr.
     template<bool beLoud = true>
     auto check_connectivity_vertex_edge() const -> Vertex* ;
 
+    /// Ensure that the vertices record this component, and pass
+    /// check_connectivity_vertex_edge().
+    /// \return \a false iff all is ok.
     template<bool beLoud = true>
     bool check_vertex_data() const;
 

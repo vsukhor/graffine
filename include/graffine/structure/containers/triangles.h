@@ -39,6 +39,7 @@ limitations under the License.
 namespace graffine::structure {
 
 
+/// A triangle, given by its three vertices.
 struct Triangle
 {
     static constexpr std::size_t numVertices {3};
@@ -50,9 +51,11 @@ struct Triangle
 using TriVIds = Triangle::VIds;
 
 
-//
-// Data structure representing a collection of triangles.
-//
+/**
+ * Collection of triangles.
+ * \note Not populated yet: Component::detect_triangles() does not store
+ * the triangles it finds, so that the collection stays empty.
+ */
 struct Triangles
 {
 //    using Positions = std::vector<Triangle::VPos>;
@@ -60,7 +63,7 @@ struct Triangles
 
 //    Positions verts;  ///< Positions of the three vertices.
 
-    /// Indices in verts of the tree vertices: [number of triangles x 3]
+    /// Ids of the three vertices of each triangle.
     VertIds tris;
 
     constexpr std::size_t num() const

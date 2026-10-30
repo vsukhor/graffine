@@ -422,6 +422,11 @@ check_validity(
 
 // /////////////////////////////////////////////////////////////////////////////
 
+/**
+ * Vertex split producing vertices of degrees 2 and 2.
+ * \details The same functor as To<Deg2, Deg2, G, PP>, addressed
+ * by the degree of the second vertex only.
+ */
 template<typename G,
          typename PP>
 struct To2<Deg2, G, PP>

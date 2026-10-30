@@ -147,6 +147,14 @@ using VertexFeaturelessUnconnected = Vertex<>;
 
 using ED = descriptors::EdgeInVertex<IdScope::COMPONENT>;
 
+/**
+ * A vertex knowing its incident edges and its host component.
+ * \details The edges are recorded by descriptors (Vertex::edges()) holding
+ * their component-wide index and the inner end connected to the vertex;
+ * the vertex degree is the number of descriptors. A vertex can be \a fixed:
+ * a flag for the user, stored and saved to PLY files, but not interpreted
+ * by graffine.
+ */
 template<>
 struct Vertex<ED>
     : public VertexFeaturelessUnconnected
@@ -167,6 +175,7 @@ struct Vertex<ED>
 protected:  // Data
 
     CmpId     c;  ///< Identifier of the current hosting connected component.
+    /// Whether the vertex is fixed; see is_fixed().
     FixedAttr isFixed {"isFixed", "F", {}};
 
     /// Descriptors of the incident edges: component-wide edge index and
@@ -206,10 +215,19 @@ public:  // Functions
      * @{
      */
 
+    /**
+     * \name Edges connected to the given ones at this vertex.
+     * \details Return the descriptors of the incident edges other than the
+     * given ones, which must be incident; the result is empty, with a warning,
+     * if there are no others.
+     * @{
+     */
     auto edges_connected_to(const EgDescr& s) const -> const EgDescrors;
     auto edges_connected_to(const std::array<EgDescr, 2>& ss) const
         -> const EgDescrors;
     auto edges_connected_to(const EgDescrors& s) const noexcept -> const EgDescrors;
+
+    ///@}  // Edges connected to the given ones.
 
     constexpr auto edges() const noexcept -> const EgDescrors& { return egDescrors; }
     constexpr auto edges() noexcept -> EgDescrors&             { return egDescrors; }
@@ -221,19 +239,35 @@ public:  // Functions
     /// pointing out of this vertex by their own orientation.
     auto edges_out() const noexcept -> EgDescrors;
 
+    /// Removes the descriptor \p g of an incident edge.
+    /// \return The number of descriptors removed: 1.
     auto erase(const EgDescr& g) noexcept -> EgDescrors::size_type;
 
+    /// Records the incident edge described by \p s, which must be new.
     constexpr void insert(const EgDescr& s) noexcept;
+    /// \overload
     constexpr void insert(EgDescr&& s);
 
+    /// Whether the edge described by \p s is incident.
     constexpr bool is_connected_to(const EgDescr& s) const noexcept;
+    /// Whether any edge is incident.
     constexpr bool is_connected() const noexcept;
 
+    /// Component-wide index of an edge joining this vertex and \p v, or
+    /// undefined if there is none.
     auto common_edge(const Vertex& v) const noexcept -> EgIdC;
 
+    /**
+     * Changes the component-wide index recorded for an incident edge.
+     * \param[in] from Descriptor of the edge, holding its former index.
+     * \param[in] to New component-wide index of the edge.
+     * \return \a true if the edge was found.
+     */
     bool reind_edge(EgDescr&& from,
                     EgIdC to) noexcept;
 
+    /// Degree tests: 2 (bulk), 1 (leaf), 3 (junctionY), 4 (junctionX), and
+    /// above 2 (junction).
     constexpr bool is_bulk() const noexcept;
     constexpr bool is_leaf() const noexcept;
     constexpr bool is_junctionY() const noexcept;
@@ -247,6 +281,7 @@ public:  // Functions
      * @{
      */
 
+    /// Whether the vertex is fixed (see the class description).
     constexpr bool is_fixed() const noexcept { return isFixed(); }
     constexpr void fix() noexcept   { isFixed() = true; }
     constexpr void unfix() noexcept { isFixed() = false; }

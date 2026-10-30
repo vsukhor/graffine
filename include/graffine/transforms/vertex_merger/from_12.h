@@ -484,6 +484,11 @@ apply(
 
 // /////////////////////////////////////////////////////////////////////////////
 
+/**
+ * Vertex merger of vertices of degrees 1 and 2.
+ * \details The same functor as From<Deg1, Deg2, G, PP>, addressed
+ * by the degree of the second vertex only.
+ */
 template<typename G,
          typename PP>
 struct From1<Deg2, G, PP>

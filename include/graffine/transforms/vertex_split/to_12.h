@@ -345,6 +345,11 @@ apply(const EndSlot& s) -> Res
 
 // /////////////////////////////////////////////////////////////////////////////
 
+/**
+ * Vertex split producing vertices of degrees 1 and 2.
+ * \details The same functor as To<Deg1, Deg2, G, PP>, addressed
+ * by the degree of the second vertex only.
+ */
 template<typename G,
          typename PP>
 struct To1<Deg2, G, PP>

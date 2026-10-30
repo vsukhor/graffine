@@ -44,6 +44,15 @@ limitations under the License.
 namespace graffine::structure::modifiers {
 
 
+/**
+ * Assembles a graph from its vertices and edges.
+ * \details The input edges must be connected to the input vertices
+ * (Edge::connect_to_outer()). The factory groups the edges into chains,
+ * which run through the vertices of degree 2, joins the chains at the other
+ * vertices, and forms the components from the chains connected to each
+ * other, assigning all indexes.
+ * \tparam G Graph type.
+ */
 template<typename G>
 struct GraphFactory
 {
@@ -55,6 +64,13 @@ struct GraphFactory
     using EndSlot = Chain::EndSlot;
     using EdgeInVertex = Vertex::EgDescr;
 
+    /**
+     * Creates the graph assembled from \p globalVertices and
+     * \p globalEdges .
+     * \param[in] globalVertices All vertices of the graph.
+     * \param[in] globalEdges All edges, connected to the vertices.
+     * \return The assembled graph.
+     */
     template<bool beLoud = false>
     auto create(
         std::vector<std::unique_ptr<Vertex>>&& globalVertices,
@@ -66,6 +82,8 @@ struct GraphFactory
      * \details Suits graphs referred to by other objects, which therefore
      * cannot be replaced by a newly created one.
      * \param[out] gr Empty graph to be filled.
+     * \param[in] globalVertices All vertices of the graph.
+     * \param[in] globalEdges All edges, connected to the vertices.
      * \throws precondition_error If \p gr is not empty.
      */
     template<bool beLoud = false>

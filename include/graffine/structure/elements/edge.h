@@ -46,6 +46,13 @@ limitations under the License.
 namespace graffine::structure {
 namespace detail {
 
+/**
+ * Minimal edge: a run-wide identifier, a graph-wide index and the vertices
+ * at its two ends.
+ * \details Base of Edge, which adds the chain and component data and the
+ * orientation; the ends of a Bond2 are its inner ends (see Edge).
+ * \tparam V Vertex type.
+ */
 template<typename V>
 struct Bond2
 {
@@ -249,6 +256,8 @@ print(const std::string_view prefix) const
 
 // /////////////////////////////////////////////////////////////////////////////
 
+/// Generic template for edges with additional properties \p Props;
+/// see the specialization Edge<V> for the implemented edge.
 template<typename V,
          typename... Props>
 struct Edge

@@ -100,6 +100,8 @@ struct Graph<CC>
     static constexpr auto Type = Elements::Graph;
     static constexpr bool isSpatial {};
     static constexpr bool isMulticomponent {true};
+    /// Whether the graph keeps the adjacency lists in \a adj up to date on
+    /// update(). Off by default: the lists are then built on demand.
     static constexpr bool useAgl {};
 
     template<typename, bool> friend struct IntegralTests;
@@ -109,6 +111,7 @@ struct Graph<CC>
 
 // VARIABLES -------------------------------------------------------------------
 
+    /// Adjacency lists and checks over the graph-wide indexes.
     Adjacency<Graph> adj {*this};
 
 protected:
@@ -333,6 +336,8 @@ public:
     auto get_ved(VIdH h) const -> const VertexDescr& { refresh_vertex_descriptors(); return ved[h]; }
     auto get_ved(VIdH h)       ->       VertexDescr& { refresh_vertex_descriptors(); return ved[ved.find(h)]; }
 
+    /// Rotates the edges of chain \p m by \p n positions, as
+    /// Component::rotate_chain(), also updating the graph-wide descriptors.
     constexpr void rotate_chain(Chain& m, std::size_t n);
 
     /**
@@ -348,11 +353,16 @@ public:
         std::size_t posTo  // position of the first inserted element
     );
 
+    /// Position in its chain of the edge at chain end \p s .
     constexpr auto slot2a(const EndSlot& s) const noexcept -> EgIdA;
 
+    /// Graph-wide index of the edge at chain end \p s .
     constexpr auto slot2ind(const EndSlot& s) const noexcept -> EgIdG;
+    /// BulkSlot {chain, position} of edge \p ind : the internal vertex at
+    /// the outer end A of the edge, if the edge is not the chain tail.
     constexpr auto ind2bslot(EgIdG ind) const noexcept -> BulkSlot;
 
+    /// Inner end, of the edge at chain end \p s , facing that chain end.
     constexpr auto edge_end(const EndSlot& s) const noexcept -> EndId;
 
 //    /// Updates internal data for component c.
@@ -467,6 +477,12 @@ public:
     constexpr auto edge_vertices(EgIdG ind) const noexcept -> const Edge::Vertices&;
     constexpr auto edge_vids(EgIdG ind) const noexcept -> Edge::VIDs;
 
+    /**
+     * Chain end slots by which the end edges \p ind1 and \p ind2 of two
+     * chains are joined.
+     * \return The end slots of the chains of \p ind1 and \p ind2 at their
+     * common vertex, or a pair of undefined slots if they are not joined.
+     */
     auto inds_to_chain_link(
         EgIdG ind1,
         EgIdG ind2

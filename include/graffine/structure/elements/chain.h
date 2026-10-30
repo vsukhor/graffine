@@ -103,7 +103,9 @@ struct Chain<E>
     static constexpr auto endA = End::A;
     static constexpr auto endB = End::B;
     static constexpr auto endUndef = End::undefined;
+    /// Minimal number of edges of a cycle.
     static constexpr std::size_t minCycleLength {2};
+    /// Minimal number of edges of a chain.
     static constexpr std::size_t minLength {1};
     static constexpr auto isSpatial = false;
 
@@ -183,8 +185,14 @@ struct Chain<E>
      */
     constexpr auto vertices() const noexcept -> std::vector<const Vertex*>;
 
+    /// Connects vertex \p v at chain end \p e , i.e. to the outer end \p e
+    /// of the edge at that end.
     constexpr void connect_end_vertex(EndId e, Vertex& v);
+    /// Connects vertex \p v at internal position \p a , i.e. between edges
+    /// g[a-1] and g[a]. Requires 0 < \p a < length().
     constexpr void connect_bulk_vertex(EgIdA a, Vertex& v) noexcept;
+    /// Disconnects the vertex at chain end \p e from the edge at that end.
+    /// The vertex is not deleted.
     constexpr void disconnect_end_vertex(EndId e) noexcept;
 
     /// \return Boundary vertex at chain end \p e
@@ -206,6 +214,7 @@ struct Chain<E>
      */
     constexpr auto vertex_at_bulk(EgIdG ind1,
                                   EgIdG ind2) const noexcept -> const Vertex*;
+    /// \overload
     constexpr auto vertex_at_bulk(const Edge& eg1,
                                   const Edge& eg2) const noexcept -> const Vertex*;
     /**
@@ -226,6 +235,7 @@ struct Chain<E>
     ///@}  // Vertex operations.
 
 
+    /// Whether edge \p ind is part of this chain.
     bool has_edge(EgIdG ind) const noexcept;
 
     /**
@@ -265,12 +275,21 @@ struct Chain<E>
         EndId egEnd
     ) const noexcept -> const Edge*;
 
+    /**
+     * \name Edge lookup by graph-wide or component-wide edge index.
+     * \details Linear in the chain length. Return the position, or the edge,
+     * of the edge having the index; undefined, or \a nullptr, if no edge of
+     * this chain has it.
+     * @{
+     */
     constexpr auto ind2a(const EgIdG ind) const noexcept -> EgIdA;
     constexpr auto ind2eg(const EgIdG ind) const noexcept -> const Edge*;
     constexpr auto ind2eg(const EgIdG ind)       noexcept ->       Edge*;
     constexpr auto indc2a(const EgIdC indc) const noexcept -> EgIdA;
     constexpr auto indc2eg(const EgIdC indc) const noexcept -> const Edge*;
     constexpr auto indc2eg(const EgIdC indc)       noexcept ->       Edge*;
+
+    ///@}  // Edge lookup.
 
     /**
      * Calculate chain end slot from edge position and edge internal end
@@ -306,6 +325,7 @@ struct Chain<E>
         EgIdA b
     ) const noexcept -> EndId;
 
+    /// Inner end of edge g[\p a] facing chain end A.
     constexpr auto a2egEnd(EgIdA a) const noexcept -> EndId;
 
     /**
@@ -374,6 +394,12 @@ struct Chain<E>
     auto ind2end(EgIdG ieg,
                  const EndSlot& nb) const -> EndId;
 
+    /**
+     * Chain end at the edge having component-wide index \p indc .
+     * \details As ind2end(EgIdG, EndId), for a component-wide index: for a
+     * single-edge chain, the end is the one at inner end \p egEnd of the edge.
+     * \throws precondition_error If the edge is not at a chain end.
+     */
     constexpr auto indc2end(EgIdC indc,
                             EndId egEnd) const -> EndId;
 
@@ -501,12 +527,17 @@ struct Chain<E>
      */
     constexpr bool is_shrinkable_by(std::size_t n) const noexcept;
 
+    /// Whether the chain is an unconnected cycle and \p v its boundary vertex.
     constexpr bool is_unconnected_cycle_boundary(const Vertex& v) const noexcept;
 
+    /// Whether the chain is a cycle and \p v its boundary vertex, at which
+    /// both chain ends are.
     constexpr bool is_cycle_boundary(const Vertex& v) const noexcept;
 
+    /// Whether edge g[\p a] points forwards (see Edge).
     constexpr bool edge_points_forwards(EgIdA a) const noexcept;
 
+    /// Number of chain end slots joined at end \p e .
     constexpr auto num_neigs(const EndId e) const noexcept -> std::size_t;
 
     /**
@@ -538,6 +569,13 @@ struct Chain<E>
      */
     constexpr auto tail() const noexcept -> const Edge& { return g.front(); }
 
+    /**
+     * \name Head and tail tests.
+     * \details The tail is the edge at chain end A, position 0, and the head
+     * the edge at chain end B, position length() - 1. In a single-edge chain,
+     * the edge is both.
+     * @{
+     */
     constexpr auto headind() const noexcept -> EgIdG { return head().ind; }
     constexpr auto tailind() const noexcept -> EgIdG { return tail().ind; }
 
@@ -553,6 +591,8 @@ struct Chain<E>
     constexpr bool is_end(const EgIdA a) const noexcept { return is_head(a) || is_tail(a); }
 
     constexpr bool ind_is_end(const EgIdG ind) const noexcept { return head().ind == ind || tail().ind == ind; }
+
+    ///@}  // Head and tail tests.
 
     /**
      * Find if the given edge is at the chain head.

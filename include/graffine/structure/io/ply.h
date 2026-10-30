@@ -59,6 +59,18 @@ namespace graffine::structure::io {
 
 namespace ply = tinyply;
 
+/**
+ * Reads and writes graphs as PLY files, in text or binary format.
+ * \details A file holds two elements:
+ * - \c vertex, with properties \c id and \c isFixed;
+ * - \c edge, with properties \c vertex_index_at_outer_end_A and
+ *   \c vertex_index_at_outer_end_B (vertex ids), \c orientation and
+ *   \c weight.
+ *
+ * The vertex ids are written renumbered to 0, 1, ..., and reading
+ * reassembles the chains and components with GraphFactory.
+ * \tparam G Graph type.
+ */
 template<typename G>
 struct Ply
 {
@@ -178,6 +190,10 @@ protected:
         Reader& reader
     ) -> std::shared_ptr<Reader::Data>;
 
+    /**
+     * Renumbers the vertex ids \p vhs to 0, 1, ..., \p vhs.size() - 1, and
+     * the vertex ids at the edge ends \p vIdA and \p vIdB accordingly.
+     */
     void restore_consecutive_vids(
         std::vector<TypeVId>& vhs,   // ref
         std::vector<TypeVId>& vIdA,  // ref

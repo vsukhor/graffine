@@ -377,7 +377,7 @@ template <typename Ch>
 void Component<Ch>::
 remove_disconnected(Vertex* vp)
 {
-    vv.remove_disconnected(vp); // vp is set to nullptr inside
+    vv.remove_disconnected(vp); // deletes *vp: the caller's pointer dangles
 }
 
 template <typename Ch>
