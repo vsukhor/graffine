@@ -236,6 +236,31 @@ TEST_F(GraphTest, GenerateSingleChainComponents)
 }
 
 
+/// Tests compt(EgIdG): access to the component hosting an edge.
+TEST_F(GraphTest, ComptOfEdge)
+{
+    ++testCount;
+
+    if constexpr (verboseT)
+        print_description("Tests compt(EgIdG): ",
+                          "access to the component hosting an edge");
+
+    constexpr std::size_t num {3};
+    constexpr std::size_t len {4};
+
+    G gr;
+    gr.generate_single_chain_components(num, len);
+
+    const G& cgr = gr;
+    for (EgIdG i {}; i<gr.num_edges(); ++i) {
+        const auto c = gr.edge(i).c;
+        ASSERT_EQ(&gr.compt(i), &gr.compt(c));
+        ASSERT_EQ(&cgr.compt(i), &cgr.compt(c));
+        ASSERT_TRUE(gr.compt(i).contains_edge(i));
+    }
+}
+
+
 /// Tests add_component(): addition of a component to the graph.
 TEST_F(GraphTest, AddComponent)
 {

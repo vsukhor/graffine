@@ -281,8 +281,8 @@ public:
     constexpr auto compt(const CmpId c)       noexcept ->       Component& { return ct[c]; }
     constexpr auto compt(const ChIdG w) const noexcept -> const Component& { return ct[cn[w].c]; }
     constexpr auto compt(const ChIdG w)       noexcept ->       Component& { return ct[cn[w].c]; }
-    constexpr auto compt(const EgIdG i) const noexcept -> const Component& { return ct[egl[i].c]; }
-    constexpr auto compt(const EgIdG i)       noexcept ->       Component& { return ct[egl[i].c]; }
+    constexpr auto compt(const EgIdG i) const noexcept -> const Component& { return ct[cmpid(i)]; }
+    constexpr auto compt(const EgIdG i)       noexcept ->       Component& { return ct[cmpid(i)]; }
     constexpr auto compt_last() const noexcept -> const Component& { return ct.back(); }
     constexpr auto compt_last()       noexcept ->       Component& { return ct.back(); }
     constexpr auto cmpid(const ChIdG w) const noexcept -> CmpId { return cn[w].c; }
