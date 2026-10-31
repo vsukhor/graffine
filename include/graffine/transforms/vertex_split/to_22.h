@@ -142,6 +142,35 @@ struct To<Deg2, Deg2, G, PP>
     auto applicability(const EndSlot& s1,
                        const EndSlot& s2) const -> Applicability;
 
+    /// Outcome of detaching edges \p s together from vertex \p v (see plan.h).
+    auto plan(const Vertex& v,
+              const std::vector<EdgeInVertex>& s) const -> Plan<G>
+    {
+        const auto& cmp = gr.compt(v.get_c());
+
+        return plan(cmp.end_slot(s[0]), cmp.end_slot(s[1]));
+    }
+
+    /// Outcome of detaching chain ends \p s together (see plan.h).
+    auto plan(const std::array<EndSlot, J1>& s) const -> Plan<G>
+    {
+        return plan(s[0], s[1]);
+    }
+
+    /// Outcome of detaching chain ends \p s1 and \p s2 together from their
+    /// junction (see plan.h).
+    /// \details The edges at \p s1 and \p s2 go to the first resulting
+    /// vertex, the other two to the second one.
+    auto plan(const EndSlot& s1,
+              const EndSlot& s2) const -> Plan<G>
+    {
+        return make_plan(gr, plans::vertex_at(gr, s1),
+                         {gr.slot2ind(s1), gr.slot2ind(s2)});
+    }
+
+    /// Processor of non-topological properties.
+    auto processor() const noexcept -> PP* { return updateProperties.get(); }
+
 private:
 
     // Auxiliary low-level functors for intermediate states.

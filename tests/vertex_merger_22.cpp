@@ -179,16 +179,24 @@ TEST_F(VertexMergerTest, vm22_case_2)
     ASSERT_EQ(gr.num_vertices(Deg3), 0);
     ASSERT_EQ(gr.num_vertices(Deg4), 1);
 
-    ASSERT_EQ(gr.chain(w1).length(), a1 + len - a2);
-    ASSERT_EQ(gr.chain(w2).length(), a2 - a1);
+    // w1 is the loop between the merged vertices, w2 the rest of the cycle
+    ASSERT_EQ(gr.chain(w1).length(), a2 - a1);
+    ASSERT_EQ(gr.chain(w2).length(), a1 + len - a2);
 
-    EgIdG ind {};
-    for (EgIdA i=0; i<a1; ++i)
+    EgIdG ind {a1()};
+    for (EgIdA i=0; i<gr.chain(w1).length(); ++i)
         ASSERT_EQ(gr.chain(w1).g[i].ind, ind++);
-    for (EgIdA i=0; i<gr.chain(w2).length(); ++i)
-        ASSERT_EQ(gr.chain(w2).g[i].ind, ind++);
-    for (EgIdA i=a1; i<gr.chain(w1).length(); ++i)
-        ASSERT_EQ(gr.chain(w1).g[i].ind, ind++);
+    for (EgIdA i=0; i<gr.chain(w2).length(); ++i, ind = EgIdG {(ind() + 1) % len})
+        ASSERT_EQ(gr.chain(w2).g[i].ind, ind);
+
+    // the junction holds the edges of the two vertices merged
+    const auto& junction = *gr.chain(w1).vertex_at_end(End::A);
+    std::vector<EgIdG> ee;
+    for (const auto& egs : junction.edges())
+        ee.push_back(gr.compt(junction.get_c()).get_egl(egs.indc()).i);
+    std::ranges::sort(ee);
+    ASSERT_EQ(ee, (std::vector<EgIdG> {EgIdG {a1() - 1}, EgIdG {a1()},
+                                       EgIdG {a2() - 1}, EgIdG {a2()}}));
 
     const auto& c = gr.compt_last();
     ASSERT_EQ(c.ind, 0);

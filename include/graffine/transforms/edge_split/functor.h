@@ -119,6 +119,20 @@ struct Functor
     /// \details Rejects an invalid edge index only.
     auto applicability(EgIdG ind) const -> Applicability;
 
+    /// Outcome of the split of edge \p ind, as the edge creation performing
+    /// it: the end of \p ind at its end B moves to the new vertex (see plan.h).
+    auto plan(const EgIdG ind) const -> edge_creation::Plan<G>
+    {
+        const auto& eg = gr.edge(ind);
+        const auto& m = gr.chain(eg.w);
+
+        return m.is_headind(ind) ? create.plan(EndSlot {eg.w, End::B})
+                                 : create.plan(BulkSlot {eg.w, eg.indw + 1});
+    }
+
+    /// Processor of non-topological properties.
+    auto processor() const noexcept -> PP* { return create.processor(); }
+
 protected:
 
     Graph& gr;  ///< Reference to the modified graph object.

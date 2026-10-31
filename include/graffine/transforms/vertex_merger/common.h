@@ -33,6 +33,7 @@ limitations under the License.
 #include "graffine/structure/descriptors/end.h"
 #include "graffine/transforms/common.h"
 #include "graffine/transforms/context.h"
+#include "graffine/transforms/plan.h"
 
 #include <type_traits>
 
@@ -87,6 +88,26 @@ concept Processor =
 
 template<typename G>
 using Trait = transforms::Trait<TransformType::VertexMerger, G>;
+
+/**
+ * Outcome of a vertex merger, in terms of the graph before it.
+ * \details See plan.h.
+ */
+template<typename G>
+struct Plan {
+    using Vertex = G::Vertex;
+
+    /// Merged vertex which is the result, keeping its identity.
+    const Vertex* preserved {};
+    /// Merged vertex which is removed.
+    const Vertex* removed {};
+
+    template<typename PP>
+    static constexpr auto hooks(PP& pp) -> decltype((pp.vertexMerger))
+    {
+        return pp.vertexMerger;
+    }
+};
 
 /**
  * Generic template for vertex degree-specific merger executing classes.

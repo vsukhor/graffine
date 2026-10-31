@@ -144,6 +144,31 @@ struct PreservingHostChain
     /// degree D at its end opposite to a degree 2 vertex.
     auto applicability(const BulkSlot& s) const -> Applicability;
 
+    /// Outcome of the contraction of edge \p ind (see plan.h).
+    auto plan(const EgIdG ind) const -> Plan<G>
+    {
+        return plan(gr.ind2bslot(ind));
+    }
+
+    /// Outcome of the contraction of the edge at chain position \p s
+    /// (see plan.h).
+    /// \details The vertex of the edge towards chain end A is preserved,
+    /// that towards end B if the edge is the last one of the chain.
+    auto plan(const BulkSlot& s) const -> Plan<G>
+    {
+        const auto [w, a] = s.we();
+        const auto& m = gr.chain(w);
+        const auto& eg = m.g[a()];
+        const auto* vA = eg.vertex_at_outer(End::A);
+        const auto* vB = eg.vertex_at_outer(End::B);
+
+        return m.is_head(a) ? Plan<G> {eg.ind, false, vB, vA}
+                            : Plan<G> {eg.ind, false, vA, vB};
+    }
+
+    /// Processor of non-topological properties.
+    auto processor() const noexcept -> PP* { return updateProperties.get(); }
+
 protected:  // Data
 
     Graph& gr;  ///< Reference to the modified graph object.

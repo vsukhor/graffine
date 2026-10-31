@@ -89,6 +89,16 @@ struct FunctorBase
                 std::shared_ptr<PP> pp,
                 Degree d);
 
+    /// Outcome of pulling \p path by \p steps (see plan.h).
+    auto plan(const Path& path,
+              const int steps) const -> Plan<G>
+    {
+        return make_plan(gr, path, steps);
+    }
+
+    /// Processor of non-topological properties.
+    auto processor() const noexcept -> PP* { return updateProperties.get(); }
+
 protected:
 
     /**

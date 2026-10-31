@@ -69,6 +69,7 @@ struct InSingleEdgeChain
     using EndSlot = Chain::EndSlot;
     using ResT = Trait::ResT;
     using Res = Trait::Res;
+    using PropertyProcessor = PP;
 
     /// This is a single-edge chain, so one of the edge ends has degree 1.
     static constexpr auto I = Deg1;
@@ -92,6 +93,19 @@ struct InSingleEdgeChain
     /// single-edge chain attached by a single end, and an end attached at a
     /// vertex of degree other than 3 or 4.
     auto applicability(EgIdG ind) const -> Applicability;
+
+    /// Outcome of the deletion of edge \p ind with its chain (see plan.h).
+    auto plan(const EgIdG ind) const -> Plan<G>
+    {
+        const auto& m = gr.chain(ind);
+        const auto d = m.ngs[m.get_single_connected_end()].num() + 1;
+
+        return d == Deg3 ? deg3.plan(ind)
+                         : deg4.plan(ind);
+    }
+
+    /// Processor of non-topological properties.
+    auto processor() const noexcept -> PP* { return deg3.processor(); }
 
 protected:
 

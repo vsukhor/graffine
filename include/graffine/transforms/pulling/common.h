@@ -33,6 +33,7 @@ limitations under the License.
 #include "graffine/structure/elements/graph.h"
 #include "graffine/transforms/common.h"
 #include "graffine/transforms/context.h"
+#include "graffine/transforms/plan.h"
 #include "graffine/transforms/vertex_merger/common.h"
 #include "graffine/transforms/vertex_split/common.h"
 #include "graffine/transforms/edge_deletion/common.h"
@@ -42,6 +43,7 @@ limitations under the License.
 
 #include <algorithm>  // find
 #include <array>
+#include <vector>
 
 namespace graffine::transforms {
 
@@ -87,6 +89,68 @@ concept Processor =
 
 template<typename G>
 using Trait = transforms::Trait<TransformType::Pulling, G>;
+
+/**
+ * Outcome of a pulling, in terms of the graph before it.
+ * \details The path keeps its vertices and edges, in number and order: the
+ * driver gains an edge and the source loses one. In each of the first
+ * \a shifts steps, the edges off the path at its vertices other than the
+ * source (the branches at its junctions, and at the driver if it is not a
+ * leaf) move by one vertex towards the source: after step k, the branches at
+ * path vertex i < n, n indexing the source, are at path vertex
+ * i + min(k, shifts). The steps after the first \a shifts leave the topology
+ * unchanged: the source chain is dissolved in step \a shifts if a branch
+ * then reaches the source. Edges off the path at the source stay there.
+ * See plan.h.
+ */
+template<typename G>
+struct Plan {
+    using Vertex = G::Vertex;
+
+    /// Vertices of the path, from the driver to the source.
+    std::vector<const Vertex*> vertices;
+
+    /// Edges off the path at each of its vertices.
+    std::vector<std::vector<EgIdG>> branches;
+
+    int steps {};   ///< Number of steps.
+    int shifts {};  ///< Number of leading steps shifting the branches.
+
+    template<typename PP>
+    static constexpr auto hooks(PP& pp) -> decltype((pp.pulling))
+    {
+        return pp.pulling;
+    }
+};
+
+/**
+ * Plan of pulling \p path of graph \p gr by \p steps.
+ * \details The branch nearest to the source, at path vertex j, reaches the
+ * source in n - j steps.
+ */
+template<typename G,
+         typename P>
+auto make_plan(
+    const G& gr,
+    const P& path,
+    const int steps
+) -> Plan<G>
+{
+    Plan<G> p {{}, {}, steps, 0};
+    for (const auto* v : path.vertices()) {
+        p.vertices.push_back(v);
+        p.branches.push_back(plans::edges_at_other_than(gr, *v, path.pthw));
+    }
+
+    const auto n = static_cast<int>(p.vertices.size()) - 1;
+    for (int j {n - 1}; j >= 0; --j)
+        if (!p.branches[static_cast<std::size_t>(j)].empty()) {
+            p.shifts = std::min(steps, n - j);
+            break;
+        }
+
+    return p;
+}
 
 inline constexpr std::array pullableDegrees {Deg1, Deg2, Deg3};
 

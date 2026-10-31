@@ -117,6 +117,28 @@ struct To<Deg1, Deg1, G, PP>
     /// cycle, whose boundary vertex it then denotes.
     auto applicability(const BulkSlot& s) const -> Applicability;
 
+    /// Outcome of the split of vertex \p v (see plan.h).
+    auto plan(const Vertex& v) const -> Plan<G>
+    {
+        return plan(locate::bulk_slot(gr, v));
+    }
+
+    /// Outcome of the split of the vertex at \p s (see plan.h).
+    /// \details The edge after the vertex goes to the first resulting
+    /// vertex.
+    auto plan(const BulkSlot& s) const -> Plan<G>
+    {
+        const auto [w, a] = s.we();
+        const auto& m = gr.chain(w);
+        const auto& v = a == 0 ? *m.g[0].vertex_at_outer(End::A)
+                               : *m.g[a - 1].vertex_at_outer(End::B);
+
+        return make_plan(gr, v, {m.g[a() % m.length()].ind});
+    }
+
+    /// Processor of non-topological properties.
+    auto processor() const noexcept -> PP* { return updateProperties.get(); }
+
 protected:
 
     /**

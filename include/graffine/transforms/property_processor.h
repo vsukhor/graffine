@@ -35,6 +35,8 @@ limitations under the License.
  *
  * Each hook may take a trailing <tt>const Context&</tt> after its arguments,
  * listing the composed transformations in which it runs: see context.h.
+ * Each family may also have a planning hook, plan(), which may veto the
+ * transformations before they change the graph: see plan.h.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 

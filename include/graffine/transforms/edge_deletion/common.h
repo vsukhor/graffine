@@ -33,6 +33,7 @@ limitations under the License.
 #include "graffine/structure/elements/graph.h"
 #include "graffine/transforms/common.h"
 #include "graffine/transforms/context.h"
+#include "graffine/transforms/plan.h"
 #include "graffine/transforms/vertex_merger/common.h"
 #include "graffine/transforms/vertex_split/common.h"
 
@@ -92,6 +93,32 @@ concept Processor =
 
 template<typename G>
 using Trait = transforms::Trait<TransformType::EdgeDeletion, G>;
+
+/**
+ * Outcome of an edge deletion, in terms of the graph before it.
+ * \details Either the edge is contracted, keeping its chain: its two
+ * vertices are merged into \a preserved, which keeps its identity. Or it is
+ * deleted with its chain, a single edge attached by one end: the free end
+ * \a removed is deleted, and the junction \a preserved loses the edge,
+ * keeping its other edges, though possibly as a new vertex. The deletion
+ * moves the edge having the last graph-wide index to the index of the deleted
+ * edge. See plan.h.
+ */
+template<typename G>
+struct Plan {
+    using Vertex = G::Vertex;
+
+    EgIdG edge {EgIdG::undefined};  ///< The deleted edge.
+    bool isChainDeleted {};         ///< Whether its chain is deleted.
+    const Vertex* preserved {};     ///< Vertex of the edge which remains.
+    const Vertex* removed {};       ///< Vertex of the edge which is removed.
+
+    template<typename PP>
+    static constexpr auto hooks(PP& pp) -> decltype((pp.edgeDeletion))
+    {
+        return pp.edgeDeletion;
+    }
+};
 
 }  // namespace edge_deletion
 }  // namespace graffine::transforms

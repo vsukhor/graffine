@@ -61,6 +61,7 @@ struct Functor
     using Graph = Trait::Graph;
     using ResT = Trait::ResT;
     using Res = Trait::Res;
+    using PropertyProcessor = PP;
 
     /**
      * Constructs the Functor object based on a Graph instance.
@@ -82,6 +83,20 @@ struct Functor
     /// functor deleting it does: DeletingHostChain for a single-edge chain
     /// attached by a single end, PreservingHostChain otherwise.
     auto applicability(EgIdG ind) const -> Applicability;
+
+    /// Outcome of the deletion of edge \p ind, by the functor it dispatches
+    /// to (see plan.h).
+    auto plan(const EgIdG ind) const -> Plan<G>
+    {
+        const auto& m = gr.chain(ind);
+
+        return m.length() == 1 && m.has_single_leaf_vertex()
+            ? withChain.plan(ind)
+            : withoutChain.plan(ind);
+    }
+
+    /// Processor of non-topological properties.
+    auto processor() const noexcept -> PP* { return withChain.processor(); }
 
 protected:
 

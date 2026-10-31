@@ -119,6 +119,23 @@ struct To<Deg1, Deg2, G, PP>
     /// degree 3.
     auto applicability(const EndSlot& s) const -> Applicability;
 
+    /// Outcome of detaching edge \p s from vertex \p v (see plan.h).
+    auto plan(const Vertex& v,
+              const EdgeInVertex& s) const -> Plan<G>
+    {
+        return plan(gr.compt(v.get_c()).end_slot(s));
+    }
+
+    /// Outcome of detaching chain end \p s from its junction (see plan.h).
+    /// \details The edge at \p s goes to the first resulting vertex.
+    auto plan(const EndSlot& s) const -> Plan<G>
+    {
+        return make_plan(gr, plans::vertex_at(gr, s), {gr.slot2ind(s)});
+    }
+
+    /// Processor of non-topological properties.
+    auto processor() const noexcept -> PP* { return updateProperties.get(); }
+
 private:
 
     Graph& gr;  ///< Reference to the modified graph object.

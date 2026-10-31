@@ -32,11 +32,13 @@ limitations under the License.
 #include "graffine/definitions.h"
 #include "graffine/transforms/common.h"
 #include "graffine/transforms/context.h"
+#include "graffine/transforms/plan.h"
 #include "graffine/transforms/vertex_merger/common.h"
 
 #include <type_traits>
 
 #include <array>
+#include <vector>
 
 
 namespace graffine::transforms {
@@ -93,6 +95,45 @@ concept Processor =
         hooks::on_start(pp.vertexSplit, es, es);
         hooks::on_end(pp.vertexSplit, res);
     };
+
+
+/**
+ * Outcome of a vertex split, in terms of the graph before it.
+ * \details See plan.h.
+ */
+template<typename G>
+struct Plan {
+    using Vertex = G::Vertex;
+
+    const Vertex* vertex {};  ///< The vertex split.
+
+    /// Edges of the resulting vertices, in the order of the result.
+    /// \details Either resulting vertex may be \a vertex itself, or a new
+    /// one: the plan does not tell.
+    std::array<std::vector<EgIdG>, 2> edges;
+
+    template<typename PP>
+    static constexpr auto hooks(PP& pp) -> decltype((pp.vertexSplit))
+    {
+        return pp.vertexSplit;
+    }
+};
+
+/**
+ * Plan of the split of vertex \p v of graph \p gr, giving edges \p ii to
+ * the first resulting vertex and the others to the second one.
+ */
+template<typename G>
+auto make_plan(
+    const G& gr,
+    const typename G::Vertex& v,
+    std::vector<EgIdG> ii
+) -> Plan<G>
+{
+    auto oo = plans::edges_at_other_than(gr, v, ii);
+
+    return {&v, {std::move(ii), std::move(oo)}};
+}
 
 
 /**

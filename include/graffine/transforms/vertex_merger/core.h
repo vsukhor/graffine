@@ -125,6 +125,9 @@ struct Core
      */
     auto to_cycle(ChIdG w) -> Res;
 
+    /// Processor of non-topological properties.
+    auto processor() const noexcept -> PP* { return updateProperties.get(); }
+
 protected:
 
     Graph& gr;  ///< Reference to the modified graph object.

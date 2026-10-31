@@ -126,6 +126,34 @@ struct InExistingChain
     template<structure::descriptors::slot S>
     auto applicability(const S& s) const -> Applicability;
 
+    /// Outcome of the insertion of a new edge at vertex \p v (see plan.h).
+    auto plan(const Vertex& v) const -> Plan<G>
+    {
+        if (v.deg() == Deg2) {
+            const auto s = locate::bulk_slot(gr, v);
+            const auto [w, a] = s.we();
+            return plan(a == 0 ? BulkSlot {w, gr.chain(w).length()} : s);
+        }
+
+        return plan(locate::end_slot(gr, v));
+    }
+
+    /// Outcome of the insertion of a new edge at slot \p s (see plan.h).
+    /// \details At a chain end, the end edge moves its end to the new vertex;
+    /// inside the chain, the edge before \p s does.
+    template<structure::descriptors::slot S>
+    auto plan(const S& s) const -> Plan<G>
+    {
+        const auto& m = gr.chain(s.w);
+        if constexpr (std::is_same_v<S, EndSlot>)
+            return {&plans::vertex_at(gr, s), m.end_edge(s.e).ind};
+        else
+            return {&plans::vertex_at(gr, s), m.g[std::get<1>(s.we()) - 1].ind};
+    }
+
+    /// Processor of non-topological properties.
+    auto processor() const noexcept -> PP* { return updateProperties.get(); }
+
 protected:
 
     Graph& gr;  ///< Reference to the modified graph object.

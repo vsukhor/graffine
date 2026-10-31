@@ -116,6 +116,27 @@ struct From<Deg1, Deg3, G, PP>
     auto applicability(const EndSlot& s1,
                        const EndSlot& s2) const -> Applicability;
 
+    /// Outcome of the merger of vertices \p v1 and \p v2 (see plan.h).
+    /// \details The vertex of degree 3 is preserved.
+    auto plan(const Vertex& v1,
+              const Vertex& v2) const -> Plan<G>
+    {
+        const auto& leaf = v1.deg() == I1 ? v1 : v2;
+        const auto& junction = v1.deg() == I1 ? v2 : v1;
+
+        return {&junction, &leaf};
+    }
+
+    /// Outcome of the merger of the vertices at \p s1 and \p s2 (see plan.h).
+    auto plan(const EndSlot& s1,
+              const EndSlot& s2) const -> Plan<G>
+    {
+        return {&plans::vertex_at(gr, s2), &plans::vertex_at(gr, s1)};
+    }
+
+    /// Processor of non-topological properties.
+    auto processor() const noexcept -> PP* { return updateProperties.get(); }
+
 protected:
 
     Graph& gr;  ///< Reference to the modified graph object.

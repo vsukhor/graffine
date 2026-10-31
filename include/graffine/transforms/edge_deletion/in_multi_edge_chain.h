@@ -73,6 +73,7 @@ struct InMultiEdgeChain
     using BulkSlot = Chain::BulkSlot;
     using ResT = Trait::ResT;
     using Res = Trait::Res;
+    using PropertyProcessor = PP;
 
     /// This is a single-edge chain, so one of the edge ends has degree 1.
     static constexpr auto I = Deg1;
@@ -97,6 +98,20 @@ struct InMultiEdgeChain
     /// then checks it as the PreservingHostChain functor for the degree at
     /// its non-bulk end does.
     auto applicability(EgIdG ind) const -> Applicability;
+
+    /// Outcome of the contraction of edge \p ind (see plan.h).
+    auto plan(const EgIdG ind) const -> Plan<G>
+    {
+        switch (end_degree(ind)) {
+            case Deg1: return deg1.plan(ind);
+            case Deg2: return deg2.plan(ind);
+            case Deg3: return deg3.plan(ind);
+            default:   return deg4.plan(ind);
+        }
+    }
+
+    /// Processor of non-topological properties.
+    auto processor() const noexcept -> PP* { return deg1.processor(); }
 
 private:
 

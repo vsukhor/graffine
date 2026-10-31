@@ -59,6 +59,7 @@ struct Functor
     using Vertex = Graph::Vertex;
     using ResT = Vertex*;
     using Res = std::array<ResT, 2>;
+    using PropertyProcessor = PP;
 
     /**
      * Constructs a functor for vertex split operation acting on a Graph.
@@ -87,6 +88,23 @@ struct Functor
         const Vertex& v,
         const std::vector<typename Vertex::EgDescr>& ss
     ) const -> Applicability;
+
+    /// Outcome of the split of vertex \p v detaching edges \p ss, by the
+    /// degree-specific split it dispatches to (see plan.h).
+    auto plan(
+        const Vertex& v,
+        const std::vector<typename Vertex::EgDescr>& ss
+    ) const -> Plan<G>
+    {
+        const auto d = v.deg();
+        if (d == Deg2)      return to_1_1.plan(v);
+        if (d == Deg3)      return to_1_2.plan(v, ss[0]);
+        /* if (d == Deg4)*/ return ss.size() == 1 ? to_1_3.plan(v, ss[0])
+                                                  : to_2_2.plan(v, ss);
+    }
+
+    /// Processor of non-topological properties.
+    auto processor() const noexcept -> PP* { return to_1_1.processor(); }
 
 protected:
 

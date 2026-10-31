@@ -133,6 +133,33 @@ struct From<Deg1, Deg1, G, PP>
     auto applicability(const EndSlot& s1,
                        const EndSlot& s2) const -> Applicability;
 
+    /// Outcome of the merger of vertices \p v1 and \p v2 (see plan.h).
+    auto plan(const Vertex& v1,
+              const Vertex& v2) const -> Plan<G>
+    {
+        return plan(slot_of(v1), slot_of(v2));
+    }
+
+    /// Outcome of the merger of the vertices at \p s1 and \p s2 (see plan.h).
+    /// \details The vertex at end A of a chain closed into a cycle is
+    /// preserved; of two chains, the vertex at s1 if \p s1 is at end B and
+    /// \p s2 at end A, and the vertex at \p s2 otherwise.
+    auto plan(const EndSlot& s1,
+              const EndSlot& s2) const -> Plan<G>
+    {
+        const auto& v1 = plans::vertex_at(gr, s1);
+        const auto& v2 = plans::vertex_at(gr, s2);
+
+        if (s1.w == s2.w)
+            return s1.e == End::A ? Plan<G> {&v1, &v2} : Plan<G> {&v2, &v1};
+        if (s1.e == End::B && s2.e == End::A)
+            return {&v1, &v2};
+        return {&v2, &v1};
+    }
+
+    /// Processor of non-topological properties.
+    auto processor() const noexcept -> PP* { return merge.processor(); }
+
 private:
 
     /// Free end slot of a vertex of degree 1 belonging to the graph.

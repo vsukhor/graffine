@@ -33,6 +33,7 @@ limitations under the License.
 #include "graffine/structure/elements/graph.h"
 #include "graffine/transforms/common.h"
 #include "graffine/transforms/context.h"
+#include "graffine/transforms/plan.h"
 
 #include <memory>
 #include <type_traits>
@@ -64,6 +65,20 @@ namespace component_creation {
 
 template<typename G>
 using Trait = transforms::Trait<TransformType::ComponentCreation, G>;
+
+/**
+ * Outcome of a component creation. See plan.h.
+ */
+template<typename G>
+struct Plan {
+    std::size_t length {};  ///< Number of edges of its single chain.
+
+    template<typename PP>
+    static constexpr auto hooks(PP& pp) -> decltype((pp.componentCreation))
+    {
+        return pp.componentCreation;
+    }
+};
 
 /**
  * Processor of non-topological properties usable by the component creations.
@@ -127,6 +142,12 @@ struct Functor
      * \details Rejects \p s shorter than Chain::minLength.
      */
     auto applicability(std::size_t s = 1) const -> Applicability;
+
+    /// Outcome of the transformation (see plan.h).
+    auto plan(std::size_t s = 1) const -> Plan<G> { return {s}; }
+
+    /// Processor of non-topological properties.
+    auto processor() const noexcept -> PP* { return updateProperties.get(); }
 
 protected:
 

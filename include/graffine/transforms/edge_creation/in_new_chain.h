@@ -142,6 +142,25 @@ struct InNewChain
     /// does not exist or is not an unconnected cycle.
     auto applicability(ChIdG w) const -> Applicability;
 
+    /// Outcome of the creation of a new chain at vertex \p v (see plan.h).
+    auto plan(const Vertex& v) const -> Plan<G> { return {&v}; }
+
+    /// Outcome of the creation of a new chain at slot \p s (see plan.h).
+    auto plan(const Slot& s) const -> Plan<G>
+    {
+        return {&plans::vertex_at(gr, s)};
+    }
+
+    /// Outcome of the creation of a new chain at the boundary vertex of
+    /// cycle \p w (see plan.h).
+    auto plan(ChIdG w) const -> Plan<G>
+    {
+        return {&plans::vertex_at(gr, w)};
+    }
+
+    /// Processor of non-topological properties.
+    auto processor() const noexcept -> PP* { return updateProperties.get(); }
+
 protected:
 
     Graph& gr;  ///< Reference to the modified graph object.

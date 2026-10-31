@@ -72,6 +72,23 @@ namespace edge_merger {
 template<typename G>
 using Trait = transforms::Trait<TransformType::EdgeMerger, G>;
 
+/**
+ * Outcome of an edge merger, in terms of the graph before it.
+ * \details One of the edges is deleted as by an edge deletion, the other one
+ * is kept. See plan.h.
+ */
+template<typename G>
+struct Plan {
+    EgIdG kept {EgIdG::undefined};       ///< The edge which remains.
+    edge_deletion::Plan<G> deletion;     ///< Deletion of the other edge.
+
+    template<typename PP>
+    static constexpr auto hooks(PP& pp) -> decltype((pp.edgeMerger))
+    {
+        return pp.edgeMerger;
+    }
+};
+
 /// Performs merger of two incident edges.
 /**
  * Processor of non-topological properties usable by the edge mergers.
@@ -146,6 +163,25 @@ struct Functor
     /// of \p ind2.
     auto applicability(EgIdG ind1,
                        EgIdG ind2) const -> Applicability;
+
+    /// Outcome of the merger of edges \p ind1 and \p ind2 (see plan.h).
+    /// \details The edge deleted is \p ind1 if its chain is shrinkable,
+    /// otherwise \p ind2.
+    auto plan(const EgIdG ind1,
+              const EgIdG ind2) const -> Plan<G>
+    {
+        const auto [indDel, indKept] = gr.chain(ind1).is_shrinkable()
+                                     ? std::pair {ind1, ind2}
+                                     : std::pair {ind2, ind1};
+        const auto& m = gr.chain(indDel);
+
+        return {indKept, m.length() == 1 && m.has_single_leaf_vertex()
+                             ? remSE.plan(indDel)
+                             : remME.plan(indDel)};
+    }
+
+    /// Processor of non-topological properties.
+    auto processor() const noexcept -> PP* { return updateProperties.get(); }
 
 protected:
 

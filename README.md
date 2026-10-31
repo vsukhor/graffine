@@ -145,6 +145,20 @@ Some transformations are composed of others, whose hooks then run between the `o
 
 A hook learns inside what it runs by taking a trailing `const graffine::transforms::Context&` after its usual arguments, e.g. `void on_start(const EndSlot& s, const Context& ctx)`. The transformations pass the context to each hook overload accepting it, and call the others as before, so that hooks opt in one by one. The context lists the composed transformations under way as `Frame`s, from the outermost one: each holds the `TransformType` and degrees identifying the transformation, e.g. `Frame {TransformType::VertexSplit, Deg2, Deg2}`. It is empty for the hooks of a transformation applied by the client, including those of a composed transformation itself. `ctx.is_inside(TransformType::EdgeDeletion)`, `ctx.innermost()` and `ctx.depth()` query it. The context is kept per thread, and only by transformations having a processor; see [context.h](include/graffine/transforms/context.h).
 
+A processor may also plan, and veto, the transformations before they change the graph. Each transformation describes its outcome, in terms of the graph before it, by a const member function `plan` taking the same arguments as `applicability` and `apply`; it returns the `Plan` of its family, e.g. `graffine::transforms::vertex_split::Plan<G>`. The plan resolves the arguments as `apply` does: a vertex to its slot, and the dispatching functors (`vertex_split::Functor`, `vertex_merger::Functor`, `edge_deletion::Functor`, `pulling::Functor`...) to the transformation they dispatch to. A processor opts in, family by family, with a hook `bool plan(const Plan&)` beside `on_start` and `on_end`, which `operator()` and `try_apply` call after the applicability check. If it returns `false`, the graph is left untouched, `try_apply` returns the rejection `graffine::transforms::vetoed`, and `operator()` throws `precondition_error`; `apply` skips the hook, as it skips the check. The hook is called once per transformation applied by the client: the plan of a composed transformation describes its whole outcome, and its inner transformations are not planned. Edge splits are planned by the `edgeCreation` hook, as the edge creations performing them.
+
+| Plan | Describes |
+| --- | --- |
+| `vertex_split::Plan` | the vertex split, and the edges of each resulting vertex, in the order of the result |
+| `vertex_merger::Plan` | the merged vertices: the one `preserved` as the result, and the one `removed` |
+| `edge_creation::Plan` | the existing `vertex` of the new edge, and the edge `moved` from it to the new vertex: the end edge of a chain, the edge before a bulk slot, or none for a new chain |
+| `edge_deletion::Plan` | the `edge`, whether its chain is deleted, and its vertex `preserved` and `removed`: contracted, the two vertices merge; with its chain, the free end is removed and the junction keeps its other edges |
+| `edge_merger::Plan` | the edge `kept`, and the edge deletion of the other one |
+| `pulling::Plan` | the path vertices, the edges off the path at each of them, and the number of leading steps shifting these branches by one vertex towards the source |
+| `component_creation::Plan`, `component_deletion::Plan` | the length of the new chain; the component deleted |
+
+See [plan.h](include/graffine/transforms/plan.h) and the plan types for the details.
+
 ### Error handling
 
 ***graffine*** never terminates the program on its own. Errors are reported by exceptions derived from `graffine::error` (itself a `std::runtime_error`), declared in [errors.h](include/graffine/utils/errors.h):

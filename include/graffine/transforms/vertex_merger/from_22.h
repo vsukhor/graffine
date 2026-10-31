@@ -158,6 +158,60 @@ struct From<Deg2, Deg2, G, PP>
     auto applicability(ChIdG w1,
                        ChIdG w2) const -> Applicability;
 
+    /// Outcome of the merger of vertices \p v1 and \p v2 (see plan.h).
+    auto plan(const Vertex& v1,
+              const Vertex& v2) const -> Plan<G>
+    {
+        const auto b1 = locate::bulk_slot(gr, v1);
+        const auto b2 = locate::bulk_slot(gr, v2);
+        const auto isCB1 = !checks::is_valid(gr, b1);  // cycle boundary
+        const auto isCB2 = !checks::is_valid(gr, b2);
+
+        if (isCB1 && isCB2) return plan(b1.w, b2.w);
+        if (isCB1)          return plan(b2, b1.w);
+        if (isCB2)          return plan(b1, b2.w);
+        /* else */          return plan(b1, b2);
+    }
+
+    /// Outcome of the merger of the vertices at \p b1 and \p b2 (see plan.h).
+    /// \details In a single chain, the vertex nearer to end A is preserved,
+    /// or that nearer to end B in an unconnected cycle. Of two chains, the
+    /// vertex at \p b1 is preserved if its chain is an unconnected cycle,
+    /// otherwise that at \p b2.
+    auto plan(const BulkSlot& b1,
+              const BulkSlot& b2) const -> Plan<G>
+    {
+        const auto* v1 = &plans::vertex_at(gr, b1);
+        const auto* v2 = &plans::vertex_at(gr, b2);
+        const auto isCycle1 = gr.chain(b1.w).is_unconnected_cycle();
+        const auto first = b1.w == b2.w
+                         ? (std::get<1>(b1.we()) < std::get<1>(b2.we())) != isCycle1
+                         : isCycle1;
+
+        return first ? Plan<G> {v1, v2} : Plan<G> {v2, v1};
+    }
+
+    /// Outcome of the merger of the vertex at \p b1 with the boundary vertex
+    /// of cycle \p w2 (see plan.h).
+    /// \details The vertex at \p b1 is preserved.
+    auto plan(const BulkSlot& b1,
+              ChIdG w2) const -> Plan<G>
+    {
+        return {&plans::vertex_at(gr, b1), &plans::vertex_at(gr, w2)};
+    }
+
+    /// Outcome of the merger of the boundary vertices of cycles \p w1 and
+    /// \p w2 (see plan.h).
+    /// \details The boundary vertex of \p w2 is preserved.
+    auto plan(ChIdG w1,
+              ChIdG w2) const -> Plan<G>
+    {
+        return {&plans::vertex_at(gr, w2), &plans::vertex_at(gr, w1)};
+    }
+
+    /// Processor of non-topological properties.
+    auto processor() const noexcept -> PP* { return updateProperties.get(); }
+
 private:
 
     /**
@@ -366,6 +420,16 @@ apply(
     const auto isCycle1 = cn[w1].is_unconnected_cycle();
     const auto isCycle2 = cn[w2].is_unconnected_cycle();
 
+    // Two internal vertices of an unconnected cycle: the cycle is rotated to
+    // have the one nearer to end A as its boundary vertex, to which the other
+    // one is merged.
+    if (w1 == w2 && isCycle1) {
+        const auto aS = a1 < a2 ? a1 : a2;
+        const auto aL = a1 < a2 ? a2 : a1;
+        gr.rotate_chain(cn[w1], aS());
+        return apply(BulkSlot {w1, EgIdA {aL() - aS()}}, w1);
+    }
+
     const auto c1 = cn[w1].c;
     const auto c2 = cn[w2].c;
 
@@ -393,13 +457,12 @@ apply(
             aL = a2;
             aS = a1;
         }
-        const auto w = w1;
-        const auto isCycle = isCycle1;
+        const auto w = w1;  // not an unconnected cycle, handled above
 
         const EndSlot wA {w, End::A};
         const EndSlot wB {w, End::B};
 
-        if (!isCycle) {
+        {
 
             if constexpr (verboseF)
                 report.branch(1,
@@ -431,34 +494,6 @@ apply(
             s2 = wA;
             s3 = wB;
             s4 = pA;
-        }
-        else {
-
-            if constexpr (verboseF)
-                report.branch(2,
-                    "w1 == w2 : w is unconnected cycle: \n", report.indent,
-                    "two internal vertices of the same unconnected chain");
-
-            ct[c1].rem_chain_internal_vertex(w, aS);
-
-            auto& n = ct[c1].create_chain();  // to hold w[aS...aL-1]
-            auto& m = cn[w];                  // assigned AFTER create_chain
-
-            const EndSlot nA {n.idw, End::A};
-            const EndSlot nB {n.idw, End::B};
-
-            auto u = cn[w].vertex_at_bulk(aL);
-            m.g[aL-1].disconnect_end_outer(End::B);
-            m.g[aS-1].connect_to_outer(End::B, *u);
-
-            gr.move_edges(m, aS(), aL(), n, 0);   // move internal part of m to n
-
-            res0 = deg4_vertex(wA, nA, nB);
-
-            s1 = wA;
-            s2 = wB;
-            s3 = nA;
-            s4 = nB;
         }
     }
     else {  // w1 != w2

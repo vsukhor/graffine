@@ -22,6 +22,7 @@ list(APPEND cpps
     hook_context.cpp
     io.cpp
     paths.cpp
+    plan.cpp
     preconditions.cpp
     property_processor.cpp
     vertex_merger_core.cpp

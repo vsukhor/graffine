@@ -33,6 +33,7 @@ limitations under the License.
 #include "graffine/structure/elements/graph.h"
 #include "graffine/transforms/common.h"
 #include "graffine/transforms/context.h"
+#include "graffine/transforms/plan.h"
 #include "graffine/transforms/vertex_merger/common.h"
 
 #include <type_traits>
@@ -102,6 +103,27 @@ concept Processor =
 
 template<typename G>
 using Trait = transforms::Trait<TransformType::EdgeCreation, G>;
+
+/**
+ * Outcome of an edge creation, in terms of the graph before it.
+ * \details The new edge joins \a vertex to a new vertex. Inserted in an
+ * existing chain, the new edge takes the place of the end of edge \a moved
+ * at \a vertex : that end moves to the new vertex. Packed in a new chain,
+ * the new vertex is a free end, and \a moved is undefined. See plan.h.
+ */
+template<typename G>
+struct Plan {
+    using Vertex = G::Vertex;
+
+    const Vertex* vertex {};  ///< Existing vertex of the new edge.
+    EgIdG moved {EgIdG::undefined};  ///< Edge whose end moves to the new vertex.
+
+    template<typename PP>
+    static constexpr auto hooks(PP& pp) -> decltype((pp.edgeCreation))
+    {
+        return pp.edgeCreation;
+    }
+};
 
 }
 

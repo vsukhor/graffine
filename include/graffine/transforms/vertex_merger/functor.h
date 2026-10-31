@@ -60,6 +60,7 @@ struct Functor
     using Trait = vertex_merger::Trait<G>;
     using Graph = Trait::Graph;
     using Vertex = Graph::Vertex;
+    using PropertyProcessor = PP;
     using ResT = Trait::ResT;
     using Res = Trait::Res;
 
@@ -86,6 +87,23 @@ struct Functor
     /// degree-specific functor does.
     auto applicability(const Vertex& v1,
                        const Vertex& v2) const -> Applicability;
+
+    /// Outcome of the merger of vertices \p v1 and \p v2, by the
+    /// degree-specific merger it dispatches to (see plan.h).
+    auto plan(const Vertex& v1,
+              const Vertex& v2) const -> Plan<G>
+    {
+        const auto d1 = v1.deg();
+        const auto d2 = v2.deg();
+
+        if (d1 == Deg1 && d2 == Deg1)   return from11.plan(v1, v2);
+        if (d1 == Deg2 && d2 == Deg2)   return from22.plan(v1, v2);
+        if (d1 == Deg3 || d2 == Deg3)   return from13.plan(v1, v2);
+        /* 1 + 2 */                     return from12.plan(v1, v2);
+    }
+
+    /// Processor of non-topological properties.
+    auto processor() const noexcept -> PP* { return from11.processor(); }
 
     From<Deg1, Deg1, G, PP> from11;
     From<Deg1, Deg2, G, PP> from12;

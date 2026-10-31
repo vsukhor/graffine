@@ -134,6 +134,35 @@ struct From<Deg1, Deg2, G, PP>
     auto applicability(const EndSlot& s1,
                        ChIdG w2) const -> Applicability;
 
+    /// Outcome of the merger of vertices \p v1 and \p v2 (see plan.h).
+    /// \details The vertex of degree 2 is preserved.
+    auto plan(const Vertex& v1,
+              const Vertex& v2) const -> Plan<G>
+    {
+        const auto& leaf = v1.is_leaf() ? v1 : v2;
+        const auto& bulk = v1.is_leaf() ? v2 : v1;
+
+        return {&bulk, &leaf};
+    }
+
+    /// Outcome of the merger of the vertices at \p s1 and \p s2 (see plan.h).
+    auto plan(const EndSlot& s1,
+              const BulkSlot& s2) const -> Plan<G>
+    {
+        return {&plans::vertex_at(gr, s2), &plans::vertex_at(gr, s1)};
+    }
+
+    /// Outcome of the merger of the vertex at \p s1 with the boundary vertex
+    /// of cycle \p w2 (see plan.h).
+    auto plan(const EndSlot& s1,
+              ChIdG w2) const -> Plan<G>
+    {
+        return {&plans::vertex_at(gr, w2), &plans::vertex_at(gr, s1)};
+    }
+
+    /// Processor of non-topological properties.
+    auto processor() const noexcept -> PP* { return updateProperties.get(); }
+
 private:
 
     /// Checks of the free end \p s1.

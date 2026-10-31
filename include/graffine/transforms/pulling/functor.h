@@ -97,6 +97,16 @@ struct Functor
     auto applicability(const Path<Compt>& path,
                        int n) const -> Applicability;
 
+    /// Outcome of pulling \p path by \p n steps (see plan.h).
+    auto plan(const Path<Compt>& path,
+              const int n) const -> pulling::Plan<G>
+    {
+        return on_1.plan(path, n);
+    }
+
+    /// Processor of non-topological properties.
+    auto processor() const noexcept -> PP* { return on_1.processor(); }
+
 protected:
 
     Graph& gr;  ///< Reference to the modified graph object.

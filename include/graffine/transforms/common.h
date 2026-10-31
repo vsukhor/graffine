@@ -62,6 +62,15 @@ constexpr auto reject(const char* reason) noexcept -> std::unexpected<Rejection>
     return std::unexpected(Rejection {reason});
 }
 
+namespace plans {
+
+// Defined in plan.h, which the transformations include.
+template<typename D,
+         typename... A>
+auto vet(const D& d, const A&... args) -> Applicability;
+
+}  // namespace plans
+
 /**
  * Interface shared by the transformation functors.
  * \details A transformation \p D implements, for each of its argument lists:
@@ -75,6 +84,10 @@ constexpr auto reject(const char* reason) noexcept -> std::unexpected<Rejection>
  * - \c is_applicable(args): checks only;
  * - \c try_apply(args): checks, then applies; returns the rejection instead
  *   of throwing if the transformation is not applicable.
+ *
+ * Between the check and the application, operator() and try_apply() call
+ * the planning hook of the property processor, if any, which may veto the
+ * transformation (see plan.h).
  *
  * Calling \c apply directly is only valid for arguments for which
  * \c is_applicable is true: it spares the check when this is known.
@@ -92,6 +105,12 @@ struct Applicable
         -> decltype(std::declval<DD&>().apply(std::forward<A>(args)...))
     {
         if (const auto ok = self().applicability(std::as_const(args)...);
+            !ok) [[unlikely]]
+            utils::raise<precondition_error>(
+                nullptr, std::source_location::current(),
+                name(), ": ", ok.error().reason);
+
+        if (const auto ok = plans::vet(self(), std::as_const(args)...);
             !ok) [[unlikely]]
             utils::raise<precondition_error>(
                 nullptr, std::source_location::current(),
@@ -116,6 +135,8 @@ struct Applicable
                          Rejection>
     {
         if (const auto ok = self().applicability(std::as_const(args)...); !ok)
+            return std::unexpected(ok.error());
+        if (const auto ok = plans::vet(self(), std::as_const(args)...); !ok)
             return std::unexpected(ok.error());
 
         return self().apply(std::forward<A>(args)...);

@@ -143,6 +143,25 @@ struct DeletingHostChain
     /// of degree other than D.
     auto applicability(const EndSlot& s) const -> Applicability;
 
+    /// Outcome of the deletion of edge \p ind with its chain (see plan.h).
+    auto plan(const EgIdG ind) const -> Plan<G>
+    {
+        const auto& m = gr.chain(ind);
+
+        return plan(EndSlot {m.idw, m.get_single_connected_end()});
+    }
+
+    /// Outcome of the deletion of the single-edge chain attached at \p s
+    /// (see plan.h).
+    auto plan(const EndSlot& s) const -> Plan<G>
+    {
+        return {gr.slot2ind(s), true, &plans::vertex_at(gr, s),
+                &plans::vertex_at(gr, s.opp())};
+    }
+
+    /// Processor of non-topological properties.
+    auto processor() const noexcept -> PP* { return updateProperties.get(); }
+
 protected:
 
     Graph& gr;  ///< Reference to the modified graph object.
