@@ -66,3 +66,20 @@ add_custom_command(
     POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${alltests}> ${bindir}
 )
+
+# Opt-in compile check of the hooks dispatch under nvcc (see
+# nvcc/hook_dispatch.cu); set CMAKE_CUDA_COMPILER, and CMAKE_CUDA_HOST_COMPILER
+# if the default host compiler lacks C++23.
+option(GRAFFINE_TEST_NVCC "Compile check of the hooks dispatch under nvcc" OFF)
+if(GRAFFINE_TEST_NVCC)
+    enable_language(CUDA)
+    add_executable(hook_dispatch_nvcc nvcc/hook_dispatch.cu)
+    target_link_libraries(hook_dispatch_nvcc PRIVATE graffine::graffine)
+    set_target_properties(hook_dispatch_nvcc PROPERTIES
+        CUDA_STANDARD 23
+        CUDA_STANDARD_REQUIRED ON
+        # only nvcc options: those of the directory may target the C++ compiler
+        COMPILE_OPTIONS "--expt-relaxed-constexpr"
+    )
+    add_test(NAME hook_dispatch_nvcc COMMAND hook_dispatch_nvcc)
+endif()

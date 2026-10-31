@@ -214,18 +214,65 @@ constexpr auto nested(
  * as in h.template on_start<B>(a...). The functions are constrained on the
  * hook being callable, so that the Processor concepts use them to accept
  * hooks either with or without the context.
+ * \note The checks are named concepts rather than requires-expressions
+ * written inline: nvcc (13.4) evaluates the inline ones to false in some
+ * instantiation contexts, e.g. a hook object member of a class template in
+ * another namespace, and then calls the hook without the context.
  */
 namespace hooks {
 
+/// Whether hook objects accept the call with, or without, the context.
+namespace detail {
+
+template<typename H, typename... A>
+concept StartsWithContext = requires (H& h, A&&... a) {
+    h.on_start(std::forward<A>(a)..., std::declval<const Context&>()); };
+
+template<typename H, typename... A>
+concept Starts = requires (H& h, A&&... a) {
+    h.on_start(std::forward<A>(a)...); };
+
+template<bool B, typename H, typename... A>
+concept StartsWithContextB = requires (H& h, A&&... a) {
+    h.template on_start<B>(std::forward<A>(a)..., std::declval<const Context&>()); };
+
+template<bool B, typename H, typename... A>
+concept StartsB = requires (H& h, A&&... a) {
+    h.template on_start<B>(std::forward<A>(a)...); };
+
+template<typename T, typename H, typename... A>
+concept StartsWithContextT = requires (H& h, A&&... a) {
+    h.template on_start<T>(std::forward<A>(a)..., std::declval<const Context&>()); };
+
+template<typename T, typename H, typename... A>
+concept StartsT = requires (H& h, A&&... a) {
+    h.template on_start<T>(std::forward<A>(a)...); };
+
+template<typename H, typename... A>
+concept EndsWithContext = requires (H& h, A&&... a) {
+    h.on_end(std::forward<A>(a)..., std::declval<const Context&>()); };
+
+template<typename H, typename... A>
+concept Ends = requires (H& h, A&&... a) {
+    h.on_end(std::forward<A>(a)...); };
+
+template<bool B, typename H, typename... A>
+concept EndsWithContextB = requires (H& h, A&&... a) {
+    h.template on_end<B>(std::forward<A>(a)..., std::declval<const Context&>()); };
+
+template<bool B, typename H, typename... A>
+concept EndsB = requires (H& h, A&&... a) {
+    h.template on_end<B>(std::forward<A>(a)...); };
+
+}  // namespace detail
+
 template<typename H,
          typename... A>
-    requires requires (H& h, A&&... a) {
-                 h.on_start(std::forward<A>(a)..., current_context()); } ||
-             requires (H& h, A&&... a) {
-                 h.on_start(std::forward<A>(a)...); }
+    requires detail::StartsWithContext<H, A...> ||
+             detail::Starts<H, A...>
 constexpr void on_start(H& h, A&&... a)
 {
-    if constexpr (requires { h.on_start(std::forward<A>(a)..., current_context()); })
+    if constexpr (detail::StartsWithContext<H, A...>)
         h.on_start(std::forward<A>(a)..., current_context());
     else
         h.on_start(std::forward<A>(a)...);
@@ -234,14 +281,11 @@ constexpr void on_start(H& h, A&&... a)
 template<bool B,
          typename H,
          typename... A>
-    requires requires (H& h, A&&... a) {
-                 h.template on_start<B>(std::forward<A>(a)..., current_context()); } ||
-             requires (H& h, A&&... a) {
-                 h.template on_start<B>(std::forward<A>(a)...); }
+    requires detail::StartsWithContextB<B, H, A...> ||
+             detail::StartsB<B, H, A...>
 constexpr void on_start(H& h, A&&... a)
 {
-    if constexpr (requires {
-                      h.template on_start<B>(std::forward<A>(a)..., current_context()); })
+    if constexpr (detail::StartsWithContextB<B, H, A...>)
         h.template on_start<B>(std::forward<A>(a)..., current_context());
     else
         h.template on_start<B>(std::forward<A>(a)...);
@@ -250,14 +294,11 @@ constexpr void on_start(H& h, A&&... a)
 template<typename T,
          typename H,
          typename... A>
-    requires requires (H& h, A&&... a) {
-                 h.template on_start<T>(std::forward<A>(a)..., current_context()); } ||
-             requires (H& h, A&&... a) {
-                 h.template on_start<T>(std::forward<A>(a)...); }
+    requires detail::StartsWithContextT<T, H, A...> ||
+             detail::StartsT<T, H, A...>
 constexpr void on_start(H& h, A&&... a)
 {
-    if constexpr (requires {
-                      h.template on_start<T>(std::forward<A>(a)..., current_context()); })
+    if constexpr (detail::StartsWithContextT<T, H, A...>)
         h.template on_start<T>(std::forward<A>(a)..., current_context());
     else
         h.template on_start<T>(std::forward<A>(a)...);
@@ -265,13 +306,11 @@ constexpr void on_start(H& h, A&&... a)
 
 template<typename H,
          typename... A>
-    requires requires (H& h, A&&... a) {
-                 h.on_end(std::forward<A>(a)..., current_context()); } ||
-             requires (H& h, A&&... a) {
-                 h.on_end(std::forward<A>(a)...); }
+    requires detail::EndsWithContext<H, A...> ||
+             detail::Ends<H, A...>
 constexpr void on_end(H& h, A&&... a)
 {
-    if constexpr (requires { h.on_end(std::forward<A>(a)..., current_context()); })
+    if constexpr (detail::EndsWithContext<H, A...>)
         h.on_end(std::forward<A>(a)..., current_context());
     else
         h.on_end(std::forward<A>(a)...);
@@ -280,14 +319,11 @@ constexpr void on_end(H& h, A&&... a)
 template<bool B,
          typename H,
          typename... A>
-    requires requires (H& h, A&&... a) {
-                 h.template on_end<B>(std::forward<A>(a)..., current_context()); } ||
-             requires (H& h, A&&... a) {
-                 h.template on_end<B>(std::forward<A>(a)...); }
+    requires detail::EndsWithContextB<B, H, A...> ||
+             detail::EndsB<B, H, A...>
 constexpr void on_end(H& h, A&&... a)
 {
-    if constexpr (requires {
-                      h.template on_end<B>(std::forward<A>(a)..., current_context()); })
+    if constexpr (detail::EndsWithContextB<B, H, A...>)
         h.template on_end<B>(std::forward<A>(a)..., current_context());
     else
         h.template on_end<B>(std::forward<A>(a)...);
