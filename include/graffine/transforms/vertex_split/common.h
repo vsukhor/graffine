@@ -31,6 +31,7 @@ limitations under the License.
 
 #include "graffine/definitions.h"
 #include "graffine/transforms/common.h"
+#include "graffine/transforms/context.h"
 #include "graffine/transforms/vertex_merger/common.h"
 
 #include <type_traits>
@@ -86,11 +87,11 @@ concept Processor =
               const typename G::BulkSlot& bs,
               const typename Trait<G>::Res& res)
     {
-        pp.vertexSplit.on_start(w);
-        pp.vertexSplit.on_start(es);
-        pp.vertexSplit.on_start(bs);
-        pp.vertexSplit.on_start(es, es);
-        pp.vertexSplit.on_end(res);
+        hooks::on_start(pp.vertexSplit, w);
+        hooks::on_start(pp.vertexSplit, es);
+        hooks::on_start(pp.vertexSplit, bs);
+        hooks::on_start(pp.vertexSplit, es, es);
+        hooks::on_end(pp.vertexSplit, res);
     };
 
 

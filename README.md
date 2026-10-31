@@ -131,6 +131,20 @@ Transformations take an optional processor of non-topological properties (positi
 
 The hooks are grouped by transformation family in members of the processor: `vertexMerger`, `vertexSplit`, `edgeCreation`, `edgeDeletion`, `edgeMerger`, `componentCreation`, `componentDeletion` and `pulling`, each with `on_start` and `on_end` overloads. Each family specifies the hooks it requires, with their arguments, as a concept `Processor` in its namespace, e.g. `graffine::transforms::vertex_merger::Processor<PP, G>`; [property_processor.h](include/graffine/transforms/property_processor.h) defines the concept `graffine::transforms::PropertyProcessor<PP, G>` of a processor usable by all transformations. A transformation instantiated with an unsuitable processor fails to compile with a report of the unsatisfied requirement. A processor implementing all the hooks is in [tests/property_processor.cpp](tests/property_processor.cpp).
 
+Some transformations are composed of others, whose hooks then run between the `on_start` and `on_end` of the composed one:
+
+| Composed transformation | Inner transformations |
+| --- | --- |
+| vertex split 2+2 | splits 1+3 and 1+2, merger 1+1 |
+| vertex split 1+2 | merger of the two chains left at the junction |
+| edge deletion with its host chain (`DeletingHostChain<D>`) | split of the junction, deletion of the component of the edge |
+| edge creation in a new chain (`InNewChain<D>`) | merger of the new chain to the source vertex |
+| edge merger | edge deletion |
+| edge split | edge creation |
+| pulling (`On<D>`) | edge creation and deletion with its host chain (dissolving the source chain), splits and mergers |
+
+A hook learns inside what it runs by taking a trailing `const graffine::transforms::Context&` after its usual arguments, e.g. `void on_start(const EndSlot& s, const Context& ctx)`. The transformations pass the context to each hook overload accepting it, and call the others as before, so that hooks opt in one by one. The context lists the composed transformations under way as `Frame`s, from the outermost one: each holds the `TransformType` and degrees identifying the transformation, e.g. `Frame {TransformType::VertexSplit, Deg2, Deg2}`. It is empty for the hooks of a transformation applied by the client, including those of a composed transformation itself. `ctx.is_inside(TransformType::EdgeDeletion)`, `ctx.innermost()` and `ctx.depth()` query it. The context is kept per thread, and only by transformations having a processor; see [context.h](include/graffine/transforms/context.h).
+
 ### Error handling
 
 ***graffine*** never terminates the program on its own. Errors are reported by exceptions derived from `graffine::error` (itself a `std::runtime_error`), declared in [errors.h](include/graffine/utils/errors.h):

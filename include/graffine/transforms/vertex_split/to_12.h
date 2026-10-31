@@ -76,6 +76,9 @@ struct To<Deg1, Deg2, G, PP>
     static constexpr auto I2 = undefined<Degree>;  ///< No 2nd input vertex.
     static constexpr auto I = I1;                  ///< Input vertex degree.
 
+    /// Context of the hooks of the inner vertex merger.
+    static constexpr Frame frame {Trait::Type, J1, J2};
+
     static_assert(areCompatibleDegrees<J1, J2>);
 
     const std::string dd {degrees_to_string(J1, J2)};
@@ -215,7 +218,7 @@ apply(const EndSlot& s) -> Res
     const auto ngs = gr.ngs_at(s).as_vector(); // copy
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->vertexSplit.on_start(s);
+        hooks::on_start(updateProperties->vertexSplit, s);
 
     GRAFFINE_ASSERT(ngs.size() == structure::containers::numNeigs<I>,
            shortName, ": input vertex degree ", ngs.size() + 1, " != I ", I);
@@ -271,7 +274,7 @@ apply(const EndSlot& s) -> Res
 
             gr.split_component(gr.compt(c), cn[w]);
 
-            res[1] = merge.to_linear(ng0, ng1)[0];
+            res[1] = nested<PP>(frame, [&] { return merge.to_linear(ng0, ng1); })[0];
         }
         else if (!cn[w].is_connected()) {
 
@@ -287,7 +290,7 @@ apply(const EndSlot& s) -> Res
 
             gr.split_component(gr.compt(c), cn[w]);
 
-            res[1] = merge.to_linear(ng0, ng1)[0];
+            res[1] = nested<PP>(frame, [&] { return merge.to_linear(ng0, ng1); })[0];
         }
         else {
 
@@ -318,14 +321,14 @@ apply(const EndSlot& s) -> Res
             if (isSeparable)
                 gr.compt_last().set_chis();
 
-            res[1] = merge.to_linear(ng0, ng1)[0];
+            res[1] = nested<PP>(frame, [&] { return merge.to_linear(ng0, ng1); })[0];
         }
     }
 
     gr.update_vertex_descriptors();
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->vertexSplit.on_end(res);
+        hooks::on_end(updateProperties->vertexSplit, res);
 
     const auto w1 = gr.chid(indS);
     [[maybe_unused]] const auto w2 = gr.chid(ind0);

@@ -19,6 +19,7 @@ list(APPEND cpps
     component.cpp
     connectivity.cpp
     graph.cpp
+    hook_context.cpp
     io.cpp
     paths.cpp
     preconditions.cpp

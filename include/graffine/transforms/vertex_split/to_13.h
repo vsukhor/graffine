@@ -216,7 +216,7 @@ apply(const EndSlot& s) -> Res
     const auto ngs = gr.ngs_at(s).as_vector();
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->vertexSplit.on_start(s);
+        hooks::on_start(updateProperties->vertexSplit, s);
 
     std::array<Edge*, I> eg;
     eg[0] = &cn[w].end_edge(e);
@@ -259,7 +259,7 @@ apply(const EndSlot& s) -> Res
     gr.update_vertex_descriptors();
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->vertexSplit.on_end(res);
+        hooks::on_end(updateProperties->vertexSplit, res);
 
     const auto w1 = gr.chid(ind[0]);
     [[maybe_unused]] const auto w2 = gr.chid(ind[1]);

@@ -32,6 +32,7 @@ limitations under the License.
 #include "graffine/definitions.h"
 #include "graffine/structure/elements/graph.h"
 #include "graffine/transforms/common.h"
+#include "graffine/transforms/context.h"
 #include "graffine/transforms/vertex_merger/common.h"
 #include "graffine/transforms/vertex_split/common.h"
 #include "graffine/transforms/edge_deletion/common.h"
@@ -87,8 +88,8 @@ concept Processor =
     requires (PP& pp,
               typename G::Edge& eg)
     {
-        pp.edgeMerger.on_start(eg, eg);
-        pp.edgeMerger.on_end(eg);
+        hooks::on_start(pp.edgeMerger, eg, eg);
+        hooks::on_end(pp.edgeMerger, eg);
     };
 
 
@@ -114,6 +115,9 @@ struct Functor
 
     static constexpr auto fullName = Trait::fullName;
     static constexpr auto shortName = Trait::shortName;
+
+    /// Context of the hooks of the inner edge deletion.
+    static constexpr Frame frame {Trait::Type};
 
     /**
      * Constructs a Functor object based on the Graph instance.
@@ -240,7 +244,7 @@ apply(const EgIdG ind1,
     }
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->edgeMerger.on_start(eg1, eg2);
+        hooks::on_start(updateProperties->edgeMerger, eg1, eg2);
 
     const auto remove = [this](const EgIdG ind)
     {
@@ -258,14 +262,14 @@ apply(const EgIdG ind1,
     const auto [indDel, indKept] = m1.is_shrinkable()
                                  ? std::pair{ind1, ind2}
                                  : std::pair{ind2, ind1};
-    remove(indDel);
+    nested<PP>(frame, [&] { remove(indDel); });
 
     Edge* eg = &gr.edge(indKept == indLast ? indDel : indKept);
 
     Res res {eg};
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->edgeMerger.on_end(*eg);
+        hooks::on_end(updateProperties->edgeMerger, *eg);
 
     if constexpr (verboseF) {
         gr.chain(eg->w).print(shortName, "  produces ");

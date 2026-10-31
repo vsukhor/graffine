@@ -32,6 +32,9 @@ limitations under the License.
  * transformation requires the hooks of its family, and those of the families
  * of the transformations it uses, as specified by the concept Processor of
  * each family.
+ *
+ * Each hook may take a trailing <tt>const Context&</tt> after its arguments,
+ * listing the composed transformations in which it runs: see context.h.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 

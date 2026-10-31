@@ -252,7 +252,7 @@ apply(const BulkSlot& s) -> Res
     const auto c = m.c;
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->edgeDeletion.template on_start<isChainDeleteded>(m.g[a]);
+        hooks::on_start<isChainDeleteded>(updateProperties->edgeDeletion, m.g[a]);
 
     // Topology is not affected because the chain is not destroyed
 
@@ -261,7 +261,7 @@ apply(const BulkSlot& s) -> Res
     gr.remove_edge(m.g[a].ind);  // gr.update() functionality is included
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->edgeDeletion.template on_end<isChainDeleteded>(
+        hooks::on_end<isChainDeleteded>(updateProperties->edgeDeletion,
             a < m.length() ? *m.g[a].vertex_at_outer(End::A)
                            : *m.g[a-1].vertex_at_outer(End::B)
         );

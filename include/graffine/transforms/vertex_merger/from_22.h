@@ -375,7 +375,7 @@ apply(
         report.before(b1, b2);
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->vertexMerger.on_start(b1, b2);  // not always (preserved, removed)
+        hooks::on_start(updateProperties->vertexMerger, b1, b2);  // not always (preserved, removed)
 
     // Define slots to get merged.
 
@@ -599,7 +599,7 @@ apply(
     gr.update();
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->vertexMerger.on_end(*res0);
+        hooks::on_end(updateProperties->vertexMerger, *res0);
 
     // Print out summary after the operation.
 
@@ -636,7 +636,7 @@ apply(
                       {}, {}, "an unconnected CYCLE ");
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->vertexMerger.on_start(b1, w2A);  // (preserved, removed)
+        hooks::on_start(updateProperties->vertexMerger, b1, w2A);  // (preserved, removed)
 
     // Define component, chain and end indexes of the merging ends:
 
@@ -731,7 +731,7 @@ apply(
     gr.update();
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->vertexMerger.on_end(*res0);
+        hooks::on_end(updateProperties->vertexMerger, *res0);
 
     // Print out summary after the operation.
 
@@ -778,7 +778,7 @@ apply(
     const EndSlot b2 {w2, End::B};
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->vertexMerger.on_start(a1, a2);  // (preserved, removed)
+        hooks::on_start(updateProperties->vertexMerger, a1, a2);  // (preserved, removed)
 
     // Produce an unconnected intermediary:
 
@@ -798,7 +798,7 @@ apply(
     gr.update();
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->vertexMerger.on_end(*v2);
+        hooks::on_end(updateProperties->vertexMerger, *v2);
 
     // Print out summary after the operation.
 

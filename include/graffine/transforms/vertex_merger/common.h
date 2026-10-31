@@ -32,6 +32,7 @@ limitations under the License.
 #include "graffine/definitions.h"
 #include "graffine/structure/descriptors/end.h"
 #include "graffine/transforms/common.h"
+#include "graffine/transforms/context.h"
 
 #include <type_traits>
 
@@ -77,10 +78,10 @@ concept Processor =
               const typename G::BulkSlot& bs,
               typename G::Vertex& v)
     {
-        pp.vertexMerger.on_start(es, es);
-        pp.vertexMerger.on_start(bs, es);
-        pp.vertexMerger.on_start(bs, bs);
-        pp.vertexMerger.on_end(v);
+        hooks::on_start(pp.vertexMerger, es, es);
+        hooks::on_start(pp.vertexMerger, bs, es);
+        hooks::on_start(pp.vertexMerger, bs, bs);
+        hooks::on_end(pp.vertexMerger, v);
     };
 
 

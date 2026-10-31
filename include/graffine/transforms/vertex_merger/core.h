@@ -209,7 +209,7 @@ antiparallel(
         report.before(s1, s2, "a");
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->vertexMerger.on_start(s2, s1);  // (preserved, removed)
+        hooks::on_start(updateProperties->vertexMerger, s2, s1);  // (preserved, removed)
 
     auto& eg1 = m1.end_edge(end);
     auto ind1 = eg1.ind;
@@ -275,7 +275,7 @@ antiparallel(
     const auto w = w1 == gr.num_chains() ? w2 : w1;
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->vertexMerger.on_end(*v2);
+        hooks::on_end(updateProperties->vertexMerger, *v2);
 
     // Print out summary after the operation.
 
@@ -336,7 +336,7 @@ parallel(
         report.before(s2, s1, "p");
 
     if constexpr(!std::is_void_v<PP>)
-        updateProperties->vertexMerger.on_start(s2, s1);  // (preserved, removed)
+        hooks::on_start(updateProperties->vertexMerger, s2, s1);  // (preserved, removed)
 
     gr.compt(c1).remove_vertex_at_edge_outer(eg1, e1);
 
@@ -379,7 +379,7 @@ parallel(
     gr.update_vertex_descriptors();  // final update
 
     if constexpr(!std::is_void_v<PP>)
-        updateProperties->vertexMerger.on_end(*v2);
+        hooks::on_end(updateProperties->vertexMerger, *v2);
 
     // Print out summary after the operation.
 
@@ -435,7 +435,7 @@ to_cycle(const ChIdG w) -> Res
         report.before(sA, sB, "c");
 
     if constexpr(!std::is_void_v<PP>)
-        updateProperties->vertexMerger.on_start(sA, sB);  // (preserved, removed)
+        hooks::on_start(updateProperties->vertexMerger, sA, sB);  // (preserved, removed)
 
     // Update the neighbor information of the merging chain:
 
@@ -462,7 +462,7 @@ to_cycle(const ChIdG w) -> Res
     gr.update({w});
 
     if constexpr(!std::is_void_v<PP>)
-        updateProperties->vertexMerger.on_end(*vA);
+        hooks::on_end(updateProperties->vertexMerger, *vA);
 
     // Print out summary after the operation.
 

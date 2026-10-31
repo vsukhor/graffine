@@ -32,6 +32,7 @@ limitations under the License.
 #include "graffine/definitions.h"
 #include "graffine/structure/elements/graph.h"
 #include "graffine/transforms/common.h"
+#include "graffine/transforms/context.h"
 #include "graffine/transforms/vertex_merger/common.h"
 #include "graffine/transforms/vertex_split/common.h"
 #include "graffine/transforms/edge_deletion/common.h"
@@ -79,8 +80,8 @@ concept Processor =
     requires (PP& pp,
               Path<typename G::Compt>& path)
     {
-        pp.pulling.on_start(path);
-        pp.pulling.on_end(path);
+        hooks::on_start(pp.pulling, path);
+        hooks::on_end(pp.pulling, path);
     };
 
 

@@ -135,7 +135,7 @@ template<typename G,
 On<Deg1, G, PP>::
 On(Graph& gr,
    std::shared_ptr<PP> pp)
-    : Base {gr, pp}
+    : Base {gr, pp, D}
 {
     GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
 }
@@ -174,7 +174,7 @@ apply(
     check_path(path, steps);
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->pulling.on_start(path);
+        hooks::on_start(updateProperties->pulling, path);
 
     this->pull_leaf_vertex(path, steps);
 

@@ -83,9 +83,11 @@ struct FunctorBase
      * Base class for deriving functors handling degree-specific vertex pulling.
      * \param[in] gr Graph to which the transformation is applied.
      * \param[in] pp Processor for non-topological properties.
+     * \param[in] d Degree of the driver vertex of the derived functor.
      */
-    explicit FunctorBase(Graph& gr,
-                         std::shared_ptr<PP> pp = nullptr);
+    FunctorBase(Graph& gr,
+                std::shared_ptr<PP> pp,
+                Degree d);
 
 protected:
 
@@ -132,6 +134,9 @@ protected:
 
     /// Processor for non-topological properties.
     std::shared_ptr<PP> updateProperties;
+
+    /// Context of the hooks of the inner transformations.
+    const Frame frame;
 
     /**
      * Pull \p steps times a sequence of consecutive edges defined by \p path .
@@ -303,11 +308,13 @@ template<typename G,
              vertex_merger::Processor<PP, G>
 FunctorBase<G, PP>::
 FunctorBase(Graph& gr,
-            std::shared_ptr<PP> pp)
+            std::shared_ptr<PP> pp,
+            const Degree d)
     : gr {gr}
     , cn {gr.chains()}
     , egl {gr.get_egl()}
     , updateProperties {pp}
+    , frame {Trait::Type, d}
     , create_edge {gr, pp}
     , delete_edge_3 {gr, pp}
     , delete_edge_4 {gr, pp}
@@ -366,7 +373,7 @@ pull_leaf_vertex(Path& path)
     if (path.d.w == wS) {  // driver and source belong to the same chain
 
         if constexpr (notify && !std::is_void_v<PP>)
-            updateProperties->pulling.on_end(path);
+            hooks::on_end(updateProperties->pulling, path);
 
         return false;      // no dissolving of the source edge
     }
@@ -400,7 +407,7 @@ pull_leaf_vertex(Path& path)
         path.set_src(source_at(iS, egeS, true));
 
     if constexpr (notify && !std::is_void_v<PP>)
-        updateProperties->pulling.on_end(path);
+        hooks::on_end(updateProperties->pulling, path);
 
     if constexpr (verboseF) {
 
@@ -440,7 +447,7 @@ dissolve_single_edge_chain(Path& path)
     auto& cnS = path.cmp->chain(wS);
     const auto egeS = cnS.g[egl[iS].a].inner_endId(path.s.e);
 
-    create_edge(path.s.end_slot());  // create an edge at the free end of the source chain
+    nested<PP>(frame, [&] { create_edge(path.s.end_slot()); });  // create an edge at the free end of the source chain
 
     const auto connectedSlot = path.s.opp();  // the only connected source slot
 
@@ -460,8 +467,10 @@ dissolve_single_edge_chain(Path& path)
     GRAFFINE_ASSERT(nnS == 2 || nnS == 3,
            "trailing chain connection degree is not correct: ", nnS);
 
-    nnS == 2 ? delete_edge_3(connectedSlot)
-             : delete_edge_4(connectedSlot);
+    nested<PP>(frame, [&] {
+        nnS == 2 ? delete_edge_3(connectedSlot)
+                 : delete_edge_4(connectedSlot);
+    });
 
     // Update the path based on the original edge index of the source
     wS = egl[iS].w;

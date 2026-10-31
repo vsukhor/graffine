@@ -32,6 +32,7 @@ limitations under the License.
 #include "graffine/definitions.h"
 #include "graffine/structure/elements/graph.h"
 #include "graffine/transforms/common.h"
+#include "graffine/transforms/context.h"
 #include "graffine/transforms/vertex_merger/common.h"
 #include "graffine/transforms/vertex_split/common.h"
 
@@ -82,10 +83,10 @@ concept Processor =
               typename G::Edge& eg,
               typename G::Vertex& v)
     {
-        pp.edgeDeletion.template on_start<true>(eg);
-        pp.edgeDeletion.template on_start<false>(eg);
-        pp.edgeDeletion.template on_end<true>(v);
-        pp.edgeDeletion.template on_end<false>(v);
+        hooks::on_start<true>(pp.edgeDeletion, eg);
+        hooks::on_start<false>(pp.edgeDeletion, eg);
+        hooks::on_end<true>(pp.edgeDeletion, v);
+        hooks::on_end<false>(pp.edgeDeletion, v);
     };
 
 

@@ -124,6 +124,7 @@ protected:
     using Base::egl;
     using Base::source_at;
     using Base::source_egEnd;
+    using Base::frame;
     using Base::updateProperties;
 
     /**
@@ -179,7 +180,7 @@ template<typename G,
 On<Deg2, G, PP>::
 On(Graph& gr,
    std::shared_ptr<PP> pp)
-    : Base {gr, pp}
+    : Base {gr, pp, D}
     , vertex_split_11 {gr, pp}
     , vertex_merge_11 {gr, pp}
     , vertex_merge_12 {gr, pp}
@@ -241,7 +242,7 @@ apply(
     check_path(path, steps);
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->pulling.on_start(path);
+        hooks::on_start(updateProperties->pulling, path);
 
     // pull on a chain internal node: special procedures producing a free end
     (path.length() == 1) ? pull_1(path)
@@ -294,7 +295,7 @@ pull_N(Path& path)
     const auto icQ = cnD.g[aQ].indc;
     const auto iQ = path.cmp->get_egl(icQ).i;
 
-    vertex_split_11(bsDe);
+    nested<PP>(frame, [&] { vertex_split_11(bsDe); });
 
     auto wS = egl[iS].w;
 
@@ -312,8 +313,10 @@ pull_N(Path& path)
                                                        : End::opp(egeQ);
     auto wD = egl[iD].w;  // index of the chain containing the driver edge
 
-    vertex_merge_12(EndSlot{wQ, eQ},
-                    cn[wD].egEnd_to_bulkslot(End::opp(egeD), egl[iD].a));
+    nested<PP>(frame, [&] {
+        vertex_merge_12(EndSlot{wQ, eQ},
+                        cn[wD].egEnd_to_bulkslot(End::opp(egeD), egl[iD].a));
+    });
 
     wS = egl[iS].w;
 
@@ -328,7 +331,7 @@ pull_N(Path& path)
                  path.pthw};
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->pulling.on_end(path);
+        hooks::on_end(updateProperties->pulling, path);
 }
 
 
@@ -353,7 +356,7 @@ pull_1(Path& path)
     egD.template reverse<true>();
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->pulling.on_end(path);
+        hooks::on_end(updateProperties->pulling, path);
 }
 
 

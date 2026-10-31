@@ -132,6 +132,7 @@ private:
     using Base::gr;
     using Base::source_at;
     using Base::source_egEnd;
+    using Base::frame;
     using Base::updateProperties;
 
     // Auxiliary functors for vertex transformations
@@ -153,7 +154,7 @@ template<typename G,
 On<Deg3, G, PP>::
 On(Graph& gr,
    std::shared_ptr<PP> pp)
-    : Base {gr, pp}
+    : Base {gr, pp, D}
     , vertex_split_12 {gr, pp}
     , vertex_merge_12 {gr, pp}
     , vertex_merge_22 {gr, pp}
@@ -197,7 +198,7 @@ apply(
     check_path(path, steps);
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->pulling.on_start(path);
+        hooks::on_start(updateProperties->pulling, path);
 
     // single step at a chain end connected via a 3-way junction;
     // forms a leaf node
@@ -241,7 +242,7 @@ pull(Path& path)
                    cn[nww[1]].end2ind(nee[1])};
 
     // disconnect iD at the branching (i.e. wD at eD)
-    vertex_split_12(EndSlot{wD, eD});
+    nested<PP>(frame, [&] { vertex_split_12(EndSlot{wD, eD}); });
 
     wD = egl[iD].w;
     if (iD != iS)
@@ -289,14 +290,16 @@ pull(Path& path)
     const auto a1 = std::max(egl[ni[0]].a,
                              egl[ni[1]].a);
 
-    if (iD == iS)
-        cn[w1].is_unconnected_cycle()
-            ? vertex_merge_12(EndSlot{wD, End::opp(eD)}, w1)
-            : vertex_merge_12(EndSlot{wD, End::opp(eD)}, BulkSlot{w1, a1});
-    else
-        cn[w1].is_unconnected_cycle()
-            ? vertex_merge_22(BulkSlot{wD, a0}, w1)
-            : vertex_merge_22(BulkSlot{wD, a0}, BulkSlot{w1, a1});
+    nested<PP>(frame, [&] {
+        if (iD == iS)
+            cn[w1].is_unconnected_cycle()
+                ? vertex_merge_12(EndSlot{wD, End::opp(eD)}, w1)
+                : vertex_merge_12(EndSlot{wD, End::opp(eD)}, BulkSlot{w1, a1});
+        else
+            cn[w1].is_unconnected_cycle()
+                ? vertex_merge_22(BulkSlot{wD, a0}, w1)
+                : vertex_merge_22(BulkSlot{wD, a0}, BulkSlot{w1, a1});
+    });
 
     wS = egl[iS].w;
 
@@ -307,7 +310,7 @@ pull(Path& path)
                  path.pthw};
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->pulling.on_end(path);
+        hooks::on_end(updateProperties->pulling, path);
 }
 
 

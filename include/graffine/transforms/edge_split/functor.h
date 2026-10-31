@@ -32,6 +32,7 @@ limitations under the License.
 #include "graffine/definitions.h"
 #include "graffine/structure/elements/graph.h"
 #include "graffine/transforms/common.h"
+#include "graffine/transforms/context.h"
 #include "graffine/transforms/vertex_merger/common.h"
 #include "graffine/transforms/edge_creation/common.h"
 #include "graffine/transforms/edge_creation/in_existing_chain.h"
@@ -94,6 +95,9 @@ struct Functor
 
     static constexpr auto fullName = Trait::fullName;
     static constexpr auto shortName = Trait::shortName;
+
+    /// Context of the hooks of the inner edge creation.
+    static constexpr Frame frame {Trait::Type};
 
 // public methods
 
@@ -176,9 +180,10 @@ apply(const EgIdG ind) -> Res
     // source edge is the chain head, appended at chain end B. Both keep the
     // vertex at end B of the source edge in place, so that the chain
     // connectivity is preserved. Note: 'eg0' is invalidated by the insertion.
-    const auto res = m.is_headind(ind)
-                   ? create(EndSlot{w, End::B})
-                   : create(BulkSlot{w, a + 1});
+    const auto res = nested<PP>(frame, [&] {
+        return m.is_headind(ind) ? create(EndSlot{w, End::B})
+                                 : create(BulkSlot{w, a + 1});
+    });
 
     if constexpr (verboseF) {
         m.print(shortName, "  produces ");

@@ -32,6 +32,7 @@ limitations under the License.
 #include "graffine/definitions.h"
 #include "graffine/structure/elements/graph.h"
 #include "graffine/transforms/common.h"
+#include "graffine/transforms/context.h"
 
 #include <memory>
 #include <type_traits>
@@ -77,8 +78,8 @@ concept Processor =
     std::is_void_v<PP> ||
     requires (PP& pp)
     {
-        pp.componentCreation.on_start();
-        pp.componentCreation.on_end();
+        hooks::on_start(pp.componentCreation);
+        hooks::on_end(pp.componentCreation);
     };
 
 
@@ -177,14 +178,14 @@ apply(const std::size_t s) -> Res
     }
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->componentCreation.on_start();
+        hooks::on_start(updateProperties->componentCreation);
 
     gr.add_single_chain_component(s);     // calls gr.update() inside
 
     Res res {gr.ind_last_cmpt()};
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->componentCreation.on_end();
+        hooks::on_end(updateProperties->componentCreation);
 
     if constexpr (verboseF) {
         gr.chain(gr.ind_last_chain()).print(shortName, s, " produces");

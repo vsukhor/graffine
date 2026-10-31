@@ -87,6 +87,9 @@ struct InNewChain
     static constexpr auto J1 = Deg1;  ///< Degree of the 1st output vertex.
     static constexpr auto J2 = I2 + Deg1;  ///< Degree of the 2nd output vertex.
 
+    /// Context of the hooks of the inner vertex merger.
+    static constexpr Frame frame {Trait::Type, D};
+
     const std::string d {std::to_string(I2)};
     const std::string shortName {"ec_n"s + d};
     static constexpr const char* fullName  {"edge_creation_new_chain"};
@@ -279,17 +282,17 @@ apply(const Slot& s) -> Res
     gr.add_single_chain_component(1);
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->edgeCreation.template on_start<Slot>(s);
+        hooks::on_start<Slot>(updateProperties->edgeCreation, s);
 
     constexpr auto e = End::A;  // end of the new chain to get connected
 
-    merge_vertices(EndSlot{cn.back().idw, e}, s);
+    nested<PP>(frame, [&] { merge_vertices(EndSlot{cn.back().idw, e}, s); });
 
     const auto u = gr.edge(gr.num_edges()-1).w;  // ChIdG of the new chain
     const auto ep = &cn[u].g[0];                 // pointer to the new edge
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->edgeCreation.template on_end<isNewChain>(*ep);
+        hooks::on_end<isNewChain>(updateProperties->edgeCreation, *ep);
 
     if constexpr (verboseF)
         log_after(EndSlot{u, e});
@@ -319,17 +322,17 @@ apply(const ChIdG w) -> Res
 
     // As in the slot overload, the hook sees the new chain already added.
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->edgeCreation.on_start(w);
+        hooks::on_start(updateProperties->edgeCreation, w);
 
     constexpr auto e = End::A;
 
-    merge_vertices(EndSlot{cn.back().idw, e}, w);
+    nested<PP>(frame, [&] { merge_vertices(EndSlot{cn.back().idw, e}, w); });
 
     const auto u = gr.edge(gr.num_edges()-1).w;
     const auto ep = &cn[u].g[0];                 // pointer to the new edge
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->edgeCreation.template on_end<isNewChain>(*ep);
+        hooks::on_end<isNewChain>(updateProperties->edgeCreation, *ep);
 
     if constexpr (verboseF)
         log_after(EndSlot{u, e});

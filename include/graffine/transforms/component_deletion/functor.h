@@ -32,6 +32,7 @@ limitations under the License.
 #include "graffine/definitions.h"
 #include "graffine/structure/elements/graph.h"
 #include "graffine/transforms/common.h"
+#include "graffine/transforms/context.h"
 
 #include <memory>
 #include <type_traits>
@@ -78,8 +79,8 @@ concept Processor =
     std::is_void_v<PP> ||
     requires (PP& pp)
     {
-        pp.componentDeletion.on_start();
-        pp.componentDeletion.on_end();
+        hooks::on_start(pp.componentDeletion);
+        hooks::on_end(pp.componentDeletion);
     };
 
 
@@ -189,7 +190,7 @@ apply(const CmpId c) -> Res
 
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->componentDeletion.on_start();
+        hooks::on_start(updateProperties->componentDeletion);
 
     auto ww = ct[c].ww;  // copy
     while (ww.size()) {
@@ -252,7 +253,7 @@ apply(const CmpId c) -> Res
     Res res {c};
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->componentDeletion.on_end();
+        hooks::on_end(updateProperties->componentDeletion);
 
     if constexpr (verboseF) {
         jot(

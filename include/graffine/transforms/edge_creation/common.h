@@ -32,6 +32,7 @@ limitations under the License.
 #include "graffine/definitions.h"
 #include "graffine/structure/elements/graph.h"
 #include "graffine/transforms/common.h"
+#include "graffine/transforms/context.h"
 #include "graffine/transforms/vertex_merger/common.h"
 
 #include <type_traits>
@@ -90,12 +91,12 @@ concept Processor =
               const bool atChainEnd,
               typename G::Edge& eg)
     {
-        pp.edgeCreation.on_start(w);
-        pp.edgeCreation.template on_start<typename G::EndSlot>(es);
-        pp.edgeCreation.template on_start<typename G::BulkSlot>(bs);
-        pp.edgeCreation.on_start(w, a, atChainEnd);
-        pp.edgeCreation.template on_end<true>(eg);
-        pp.edgeCreation.template on_end<false>(eg);
+        hooks::on_start(pp.edgeCreation, w);
+        hooks::on_start<typename G::EndSlot>(pp.edgeCreation, es);
+        hooks::on_start<typename G::BulkSlot>(pp.edgeCreation, bs);
+        hooks::on_start(pp.edgeCreation, w, a, atChainEnd);
+        hooks::on_end<true>(pp.edgeCreation, eg);
+        hooks::on_end<false>(pp.edgeCreation, eg);
     };
 
 

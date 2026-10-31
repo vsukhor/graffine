@@ -77,6 +77,9 @@ struct To<Deg2, Deg2, G, PP>
     static constexpr auto I2 = undefined<Degree>;  ///< No 2nd input vertex.
     static constexpr auto I = I1;                  ///< Input vertex degree.
 
+    /// Context of the hooks of the inner splits and merger.
+    static constexpr Frame frame {Trait::Type, J1, J2};
+
     const std::string dd {degrees_to_string(J1, J2)};
     const std::string shortName {make_name(Trait::shortName, dd)};
     const std::string fullName  {make_name(Trait::fullName, dd)};
@@ -301,7 +304,7 @@ apply(const EndSlot& _s1,
         check_validity<toDisconnectedCycle1, toDisconnectedCycle2>(s1, s2);
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->vertexSplit.on_start(s1, s2);
+        hooks::on_start(updateProperties->vertexSplit, s1, s2);
 
     const auto ngs = gr.ngs_at(s1).as_vector();
 
@@ -320,14 +323,14 @@ apply(const EndSlot& _s1,
         }
     }
 
-    [[maybe_unused]] auto [va, vb] = split_to_13(s1);
+    [[maybe_unused]] auto [va, vb] = nested<PP>(frame, [&] { return split_to_13(s1); });
 
     GRAFFINE_ASSERT(!gr.compt(va->get_c()).template check<verboseF>(),
            "split_to_13 failed on component ", va->get_c());
     GRAFFINE_ASSERT(!gr.compt(vb->get_c()).template check<verboseF>(),
            "split_to_13 failed on component ", vb->get_c());
 
-    auto [vc, v2] = split_to_12(s2);
+    auto [vc, v2] = nested<PP>(frame, [&] { return split_to_12(s2); });
 
     GRAFFINE_ASSERT(!gr.compt(vc->get_c()).template check<verboseF>(),
            "split_to_12 failed on component ", vc->get_c());
@@ -337,13 +340,15 @@ apply(const EndSlot& _s1,
     const auto ww0 = gr.chid(ind[0]);
     const auto ww1 = gr.chid(ind[1]);
 
-    auto v1 = merge(EndSlot{ww0, gr.chain(ww0).ind2end(ind[0], end[0])},
-                    EndSlot{ww1, gr.chain(ww1).ind2end(ind[1], end[1])});
+    auto v1 = nested<PP>(frame, [&] {
+        return merge(EndSlot{ww0, gr.chain(ww0).ind2end(ind[0], end[0])},
+                     EndSlot{ww1, gr.chain(ww1).ind2end(ind[1], end[1])});
+    });
 
     Res res {v1[0], v2};
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->vertexSplit.on_end(res);
+        hooks::on_end(updateProperties->vertexSplit, res);
 
     if constexpr (verboseF)
         report.after(res, {ind[0],ind[1]}, {ind[2], ind[3]});

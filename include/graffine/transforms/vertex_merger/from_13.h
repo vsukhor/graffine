@@ -236,7 +236,7 @@ apply(
         report.before(s1, s2);
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->vertexMerger.on_start(s2, s1);  // (preserved, removed)
+        hooks::on_start(updateProperties->vertexMerger, s2, s1);  // (preserved, removed)
 
     auto& eg1 = cn[w1].end_edge(e1);
     gr.compt(c1).remove_vertex_at_edge_outer(eg1, e1);
@@ -267,7 +267,7 @@ apply(
     gr.update();
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->vertexMerger.on_end(*v2);
+        hooks::on_end(updateProperties->vertexMerger, *v2);
 
     // Print out summary after the operation:
 

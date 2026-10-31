@@ -248,7 +248,7 @@ operator()(
                                  EndSlot {w1, End::B}};
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->vertexMerger.on_start(s2, slots1[0]);  // (preserved, removed)
+        hooks::on_start(updateProperties->vertexMerger, s2, slots1[0]);  // (preserved, removed)
 
     auto [eg11, eg12] = ct[c1].rem_unconnected_cycle_boundary_vertex();
 
@@ -288,7 +288,7 @@ operator()(
     gr.update();
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->vertexMerger.on_end(*v2);
+        hooks::on_end(updateProperties->vertexMerger, *v2);
 
     // Print out summary after the operation.
 

@@ -263,7 +263,7 @@ disconnected_cycle(const ChIdG w) -> Res
            "vs11_cyc: length of chain ", w, " is below minCycleLength");
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->vertexSplit.on_start(w);
+        hooks::on_start(updateProperties->vertexSplit, w);
 
     const auto ind1 = m.g.front().ind;
     const auto ind2 = m.g.back().ind;
@@ -293,7 +293,7 @@ disconnected_cycle(const ChIdG w) -> Res
     Res res {vA, vB};
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->vertexSplit.on_end(res);
+        hooks::on_end(updateProperties->vertexSplit, res);
 
     if constexpr (verboseF)
         // Print out summary after the split:
@@ -325,7 +325,7 @@ disconnected_cycle(const BulkSlot& s) -> Res
            "vs11_dic: 'a' ", a, " at the chain end: use cycle() instead");
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->vertexSplit.on_start(s);
+        hooks::on_start(updateProperties->vertexSplit, s);
 
     const auto ind2 = m.g[a].ind;
 
@@ -334,7 +334,7 @@ disconnected_cycle(const BulkSlot& s) -> Res
     auto res = disconnected_cycle(w);
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->vertexSplit.on_end(res);
+        hooks::on_end(updateProperties->vertexSplit, res);
 
     if constexpr (verboseF)
         // Print out summary after the split
@@ -368,7 +368,7 @@ linear(const BulkSlot& s) -> Res
     const auto c = mm.c;
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->vertexSplit.on_start(s);
+        hooks::on_start(updateProperties->vertexSplit, s);
 
     auto& eg1 = mm.g[a-1];
     auto& eg2 = mm.g[a];
@@ -419,7 +419,7 @@ linear(const BulkSlot& s) -> Res
     Res res {vA, vB};
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->vertexSplit.on_end(res);
+        hooks::on_end(updateProperties->vertexSplit, res);
 
     if constexpr (verboseF)
         // Print out summary after the split

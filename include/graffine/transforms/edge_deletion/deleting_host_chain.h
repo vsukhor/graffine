@@ -92,6 +92,9 @@ struct DeletingHostChain
     /// Degree of the connection vertex after the chain deletion.
     static constexpr auto J2 = I2 - 1;
 
+    /// Context of the hooks of the inner split and component deletion.
+    static constexpr Frame frame {Trait::Type, D};
+
     const std::string dd {std::to_string(I2)};
 
     /**
@@ -261,7 +264,7 @@ apply(const EndSlot& s) -> Res
            s.ea_str(), " has incorrect degree ", ngs.num() + 1, " != D ", D);
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->edgeDeletion.template on_start<isChainDeleteded>(m.g[0]);
+        hooks::on_start<isChainDeleteded>(updateProperties->edgeDeletion, m.g[0]);
 
     // The deleted chain has a connected end because otherwise a component
     // deletion rather than edge deletion should have been active.
@@ -269,7 +272,7 @@ apply(const EndSlot& s) -> Res
     // edge (and hence, chain) removal would induce topology
     // change by vertex merger on the chain ends.
 
-    const auto [v1, v2] = split(s);
+    const auto [v1, v2] = nested<PP>(frame, [&] { return split(s); });
 
     // index of the connected component holding the edge
     const auto vRemove = gr.compt(v1->get_c()).get_egl(0).i == ind
@@ -280,10 +283,10 @@ apply(const EndSlot& s) -> Res
 
     GRAFFINE_ASSERT(gr.compt(cr).num_edges() == 1, "component to remove is too big");
 
-    clrem(cr);    // calls gr.update() inside
+    nested<PP>(frame, [&] { clrem(cr); });    // calls gr.update() inside
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->edgeDeletion.template on_end<isChainDeleteded>(*vStay);
+        hooks::on_end<isChainDeleteded>(updateProperties->edgeDeletion, *vStay);
 
     if constexpr (verboseF)
         jot(shortName, " ends with success \n");

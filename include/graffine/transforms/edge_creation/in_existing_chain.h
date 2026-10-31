@@ -242,7 +242,7 @@ apply(const S& s) -> Res
     }
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->edgeCreation.on_start(w, a, atChainEnd);
+        hooks::on_start(updateProperties->edgeCreation, w, a, atChainEnd);
 
     if constexpr (!atChainEnd) {
         GRAFFINE_ASSERT(a > 0 && a <= m.length(),
@@ -270,7 +270,7 @@ apply(const S& s) -> Res
     gr.update({w});  // the new edge, and the edges after it, are in w
 
     if constexpr (!std::is_void_v<PP>)
-        updateProperties->edgeCreation.template on_end<isNewChain>(*ep);
+        hooks::on_end<isNewChain>(updateProperties->edgeCreation, *ep);
 
     if constexpr (verboseF) {
         m.print(shortName, "  produces ");
