@@ -44,6 +44,7 @@ limitations under the License.
 #include <memory>
 #include <string>
 #include <type_traits>
+#include <utility>  // swap
 
 namespace graffine::transforms::vertex_split {
 
@@ -106,6 +107,14 @@ struct To<Deg1, Deg1, G, PP>
      */
     auto apply(const BulkSlot& s) -> Res;
 
+    /**
+     * Divides the graph chain at a vertex of degree 2, the vertex object
+     * becoming resulting vertex \p k (see Keep).
+     * \param[in] s Slot on internal chain vertex, as for apply(s).
+     * \param[in] k Resulting vertex which is the object of the split vertex.
+     */
+    auto apply(const BulkSlot& s, Keep k) -> Res;
+
     /// Checks that vertex \p v can be split.
     /// \details Rejects \p v if it does not belong to the graph or its
     /// degree is not 2, then checks its slot as the slot overload does.
@@ -116,6 +125,12 @@ struct To<Deg1, Deg1, G, PP>
     /// and a position at a chain end unless the chain is an unconnected
     /// cycle, whose boundary vertex it then denotes.
     auto applicability(const BulkSlot& s) const -> Applicability;
+
+    /// Checks that the vertex at \p s can be split, as applicability(s).
+    auto applicability(const BulkSlot& s, Keep) const -> Applicability
+    {
+        return applicability(s);
+    }
 
     /// Outcome of the split of vertex \p v (see plan.h).
     auto plan(const Vertex& v) const -> Plan<G>
@@ -134,6 +149,12 @@ struct To<Deg1, Deg1, G, PP>
                                : *m.g[a - 1].vertex_at_outer(End::B);
 
         return make_plan(gr, v, {m.g[a() % m.length()].ind});
+    }
+
+    /// Outcome of the split of the vertex at \p s, as plan(s).
+    auto plan(const BulkSlot& s, Keep) const -> Plan<G>
+    {
+        return plan(s);
     }
 
     /// Processor of non-topological properties.
@@ -175,6 +196,15 @@ private:
 
     /// Auxiliary functor for intermediate vertex merger.
     vertex_merger::Core<Graph, PP> merge;
+
+    /// Object of the split vertex and the resulting vertex to become it,
+    /// set by apply(s, k).
+    const Vertex* kept {};
+    Keep keptAs {};
+
+    /// Places the object of the split vertex as resulting vertex keptAs,
+    /// if asked for by apply(s, k).
+    void settle(Res& res);
 };
 
 
@@ -263,6 +293,35 @@ apply(const BulkSlot& s) -> Res
 }
 
 
+template<typename G,
+         typename PP>
+auto To<Deg1, Deg1, G, PP>::
+apply(const BulkSlot& s,
+      const Keep k) -> Res
+{
+    kept = &plans::vertex_at(gr, s);
+    keptAs = k;
+
+    return apply(s);
+}
+
+
+template<typename G,
+         typename PP>
+void To<Deg1, Deg1, G, PP>::
+settle(Res& res)
+{
+    if (!kept)
+        return;
+
+    if (res[keptAs == Keep::First ? 0 : 1] != kept) {
+        gr.exchange_vertices(*res[0], *res[1]);
+        std::swap(res[0], res[1]);
+    }
+    kept = {};
+}
+
+
 // -- protected functions ------------------------------------------------------
 
 
@@ -313,6 +372,7 @@ disconnected_cycle(const ChIdG w) -> Res
     gr.update_vertex_descriptors();
 
     Res res {vA, vB};
+    settle(res);
 
     if constexpr (!std::is_void_v<PP>)
         hooks::on_end(updateProperties->vertexSplit, res);
@@ -439,6 +499,7 @@ linear(const BulkSlot& s) -> Res
     gr.update_vertex_descriptors();
 
     Res res {vA, vB};
+    settle(res);
 
     if constexpr (!std::is_void_v<PP>)
         hooks::on_end(updateProperties->vertexSplit, res);

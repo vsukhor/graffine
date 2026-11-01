@@ -40,8 +40,10 @@ limitations under the License.
 
 #include <array>
 #include <memory>
+#include <optional>
 #include <string>
 #include <type_traits>
+#include <utility>  // swap
 
 namespace graffine::transforms::vertex_split {
 
@@ -107,6 +109,14 @@ struct To<Deg1, Deg2, G, PP>
      */
     auto apply(const EndSlot& s) -> Res;
 
+    /**
+     * Divides the graph at a vertex of degree 3, the vertex object becoming
+     * resulting vertex \p k (see Keep).
+     * \param[in] s End slot disconnected from the divided vertex.
+     * \param[in] k Resulting vertex which is the object of the split vertex.
+     */
+    auto apply(const EndSlot& s, Keep k) -> Res;
+
     /// Checks that edge \p s can be detached from vertex \p v.
     /// \details Rejects \p v if it does not belong to the graph, its degree
     /// is not 3, or \p s is not connected to it, then checks the chain end
@@ -118,6 +128,12 @@ struct To<Deg1, Deg2, G, PP>
     /// \details Rejects an invalid slot and a chain end not at a vertex of
     /// degree 3.
     auto applicability(const EndSlot& s) const -> Applicability;
+
+    /// Checks that chain end \p s can be detached, as applicability(s).
+    auto applicability(const EndSlot& s, Keep) const -> Applicability
+    {
+        return applicability(s);
+    }
 
     /// Outcome of detaching edge \p s from vertex \p v (see plan.h).
     auto plan(const Vertex& v,
@@ -131,6 +147,12 @@ struct To<Deg1, Deg2, G, PP>
     auto plan(const EndSlot& s) const -> Plan<G>
     {
         return make_plan(gr, plans::vertex_at(gr, s), {gr.slot2ind(s)});
+    }
+
+    /// Outcome of detaching chain end \p s, as plan(s).
+    auto plan(const EndSlot& s, Keep) const -> Plan<G>
+    {
+        return plan(s);
     }
 
     /// Processor of non-topological properties.
@@ -148,6 +170,10 @@ private:
 
     /// Pretty-printer of the initial and final configurations.
     Reporter<Graph> report;
+
+    /// Resulting vertex to be the object of the split vertex, set by
+    /// apply(s, k).
+    std::optional<Keep> keep;
 };
 
 
@@ -223,6 +249,20 @@ apply(Vertex& v,
 template<typename G,
          typename PP>
 auto To<Deg1, Deg2, G, PP>::
+apply(const EndSlot& s,
+      const Keep k) -> Res
+{
+    keep = k;
+    auto res = apply(s);
+    keep.reset();
+
+    return res;
+}
+
+
+template<typename G,
+         typename PP>
+auto To<Deg1, Deg2, G, PP>::
 apply(const EndSlot& s) -> Res
 {
     if constexpr (verboseF)
@@ -261,6 +301,22 @@ apply(const EndSlot& s) -> Res
     auto vS = &vv.create_vertex(c);  // new free end of chain 'w'
     egS.connect_to_outer(e, *vS);
 
+    // the vertex object stays with the detached edge, if asked for
+    if (keep == Keep::First) {
+        gr.exchange_vertices(*v01, *vS);
+        std::swap(v01, vS);
+    }
+
+    // the vertex object stays with the remaining edges, if asked for:
+    // Core::to_linear(ng0, ng1) keeps the vertex at ng1, unless it joins
+    // end B of n0 to end A of n1
+    const auto to_linear = [&](Vertex* const v1) {
+        if (keep == Keep::Second && !(e0 == End::B && e1 == End::A))
+            gr.exchange_vertices(*v01, *v1);
+
+        return nested<PP>(frame, [&] { return merge.to_linear(ng0, ng1); })[0];
+    };
+
     gr.remove_slot_from_neigs(s);  // chain 'w' is now disconnected, but is
                                    // still part of the component
 
@@ -291,7 +347,7 @@ apply(const EndSlot& s) -> Res
 
             gr.split_component(gr.compt(c), cn[w]);
 
-            res[1] = nested<PP>(frame, [&] { return merge.to_linear(ng0, ng1); })[0];
+            res[1] = to_linear(v1);
         }
         else if (!cn[w].is_connected()) {
 
@@ -307,7 +363,7 @@ apply(const EndSlot& s) -> Res
 
             gr.split_component(gr.compt(c), cn[w]);
 
-            res[1] = nested<PP>(frame, [&] { return merge.to_linear(ng0, ng1); })[0];
+            res[1] = to_linear(v1);
         }
         else {
 
@@ -338,7 +394,7 @@ apply(const EndSlot& s) -> Res
             if (isSeparable)
                 gr.compt_last().set_chis();
 
-            res[1] = nested<PP>(frame, [&] { return merge.to_linear(ng0, ng1); })[0];
+            res[1] = to_linear(v1);
         }
     }
 

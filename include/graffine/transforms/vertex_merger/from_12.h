@@ -113,6 +113,22 @@ struct From<Deg1, Deg2, G, PP>
     auto apply(const EndSlot& s1,
                ChIdG w2) -> Res;
 
+    /**
+     * Merges the vertices at \p s1 and \p s2 as apply(s1, s2), keeping
+     * vertex \p k (see Keep).
+     */
+    auto apply(const EndSlot& s1,
+               const BulkSlot& s2,
+               Keep k) -> Res;
+
+    /**
+     * Merges the vertex at \p s1 to the boundary vertex of cycle \p w2 as
+     * apply(s1, w2), keeping vertex \p k (see Keep).
+     */
+    auto apply(const EndSlot& s1,
+               ChIdG w2,
+               Keep k) -> Res;
+
     /// Checks that vertices \p v1 and \p v2 can be merged.
     /// \details Rejects vertices not belonging to the graph, or whose
     /// degrees are not 1 and 2, in either order, then checks their slots as
@@ -133,6 +149,15 @@ struct From<Deg1, Deg2, G, PP>
     /// which does not exist or is not an unconnected cycle.
     auto applicability(const EndSlot& s1,
                        ChIdG w2) const -> Applicability;
+
+    /// Checks the merger as applicability(s1, s2).
+    template<typename S>
+    auto applicability(const EndSlot& s1,
+                       const S& s2,
+                       Keep) const -> Applicability
+    {
+        return applicability(s1, s2);
+    }
 
     /// Outcome of the merger of vertices \p v1 and \p v2 (see plan.h).
     /// \details The vertex of degree 2 is preserved.
@@ -160,6 +185,16 @@ struct From<Deg1, Deg2, G, PP>
         return {&plans::vertex_at(gr, w2), &plans::vertex_at(gr, s1)};
     }
 
+    /// Outcome of the merger as plan(s1, s2), keeping vertex \p k.
+    template<typename S>
+    auto plan(const EndSlot& s1,
+              const S& s2,
+              const Keep k) const -> Plan<G>
+    {
+        return Keeper<G>::plan(plan(s1, s2), plans::vertex_at(gr, s1),
+                               plans::vertex_at(gr, s2), k);
+    }
+
     /// Processor of non-topological properties.
     auto processor() const noexcept -> PP* { return updateProperties.get(); }
 
@@ -178,6 +213,9 @@ private:
 
     /// Pretty-printer of the initial and final configurations.
     Reporter<Graph> report;
+
+    /// Keeping of the vertex asked for by the Keep overloads.
+    Keeper<G> keep;
 };
 
 
@@ -302,6 +340,37 @@ apply(
 }
 
 
+template<typename G,
+         typename PP>
+auto From<Deg1, Deg2, G, PP>::
+apply(
+    const EndSlot& s1,
+    const BulkSlot& s2,
+    const Keep k
+) -> Res
+{
+    keep.ask(plan(s1, s2), *gr.vertex(s1), *gr.vertex(s2), k);
+
+    return apply(s1, s2);
+}
+
+
+template<typename G,
+         typename PP>
+auto From<Deg1, Deg2, G, PP>::
+apply(
+    const EndSlot& s1,
+    const ChIdG w2,
+    const Keep k
+) -> Res
+{
+    keep.ask(plan(s1, w2), *gr.vertex(s1),
+             *gr.vertex(EndSlot {w2, UnconnectedCycleEnd}), k);
+
+    return apply(s1, w2);
+}
+
+
 // Merges a vertex of degree 1 to a chain internal vertex.
 template<typename G,
          typename PP>
@@ -333,6 +402,8 @@ apply(
 
     if constexpr (!std::is_void_v<PP>)
         hooks::on_start(updateProperties->vertexMerger, s2, s1);  // (preserved, removed)
+
+    keep(gr);
 
     // cn[mi] is produced by the split:
 
@@ -479,6 +550,8 @@ apply(
 
     if constexpr (!std::is_void_v<PP>)
         hooks::on_start(updateProperties->vertexMerger, s2A, s1);  // (preserved, removed)
+
+    keep(gr);
 
     auto& eg1 = cn[w1].end_edge(e1);
     gr.compt(c1).remove_vertex_at_edge_outer(eg1, e1);

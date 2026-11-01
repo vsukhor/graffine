@@ -36,6 +36,7 @@ limitations under the License.
 #include "graffine/transforms/plan.h"
 
 #include <type_traits>
+#include <utility>  // swap
 
 #include <array>
 
@@ -106,6 +107,53 @@ struct Plan {
     static constexpr auto hooks(PP& pp) -> decltype((pp.vertexMerger))
     {
         return pp.vertexMerger;
+    }
+};
+
+/**
+ * Keeping of a given one of the merged vertices (see Keep).
+ * \details The merger exchanges the two vertices, if it would keep the
+ * other one, right after its on_start hook: its hooks see the vertices in
+ * place before the merger, and the kept one as the result.
+ * \tparam G Graph to which the merger is applied.
+ */
+template<typename G>
+struct Keeper {
+    using Vertex = G::Vertex;
+
+    /// The vertex to keep and the other one, if to exchange.
+    std::array<Vertex*, 2> vv {};
+
+    /// Plan \p p of the merger of \p v1 and \p v2, keeping vertex \p k.
+    static auto plan(Plan<G> p,
+                     const Vertex& v1,
+                     const Vertex& v2,
+                     const Keep k) -> Plan<G>
+    {
+        if (p.preserved != (k == Keep::First ? &v1 : &v2))
+            std::swap(p.preserved, p.removed);
+
+        return p;
+    }
+
+    /// Prepares the merger of \p v1 and \p v2, planned \p p, to keep vertex
+    /// \p k.
+    void ask(const Plan<G>& p,
+             Vertex& v1,
+             Vertex& v2,
+             const Keep k) noexcept
+    {
+        auto* const kept = k == Keep::First ? &v1 : &v2;
+        if (p.preserved != kept)
+            vv = {kept, kept == &v1 ? &v2 : &v1};
+    }
+
+    /// Exchanges the vertices, if asked for.
+    void operator()(G& gr)
+    {
+        if (vv[0])
+            gr.exchange_vertices(*vv[0], *vv[1]);
+        vv = {};
     }
 };
 

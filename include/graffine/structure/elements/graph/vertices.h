@@ -206,6 +206,36 @@ num_vertices() const noexcept -> std::size_t
 
 
 template<typename CC>
+void Graph<CC>::
+exchange_vertices(Vertex& a, Vertex& b)
+{
+    if (&a == &b)
+        return;
+
+    const auto ca = a.get_c();
+    const auto cb = b.get_c();
+    const std::vector ea (a.edges().begin(), a.edges().end());
+    const std::vector eb (b.edges().begin(), b.edges().end());
+
+    for (const auto& s : ea)
+        ct[ca].edge(s.indc()).disconnect_end_inner(s.e);
+    for (const auto& s : eb)
+        ct[cb].edge(s.indc()).disconnect_end_inner(s.e);
+    for (const auto& s : ea)
+        ct[ca].edge(s.indc()).connect_to_inner(s.e, b);
+    for (const auto& s : eb)
+        ct[cb].edge(s.indc()).connect_to_inner(s.e, a);
+
+    if (ca != cb) {
+        ct[ca].vertices().move_to(ct[cb], &a);
+        ct[cb].vertices().move_to(ct[ca], &b);
+    }
+
+    update_vertex_descriptors();
+}
+
+
+template<typename CC>
 constexpr
 auto Graph<CC>::
 edge_vertices(const EgIdG ind) const noexcept -> const Edge::Vertices&

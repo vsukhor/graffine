@@ -35,7 +35,7 @@ Two major parts of ***graffine*** are **structure** which defines and holds grap
 - Splitting and merging of edges
 - Splitting and merging of vertices for each combination of degrees.
 
-On top of these, ***graffine*** defines "pull" operations. These modify graph components by shifting an entire path of edges — spanned between two preselected vertices (a "driver" and a "source") — relative to the rest of the component.
+On top of these, ***graffine*** defines "pull" operations. These modify graph components by shifting an entire path of edges — spanned between two preselected vertices (a "driver" and a "source") — relative to the rest of the component. The path keeps its vertex objects: the junctions move along it by their branches moving from one path vertex to the next.
 
 Internally, all transformations are implemented as function object templates under [include/graffine/transforms/](include/graffine/transforms/).
 
@@ -141,7 +141,7 @@ Some transformations are composed of others, whose hooks then run between the `o
 | edge creation in a new chain (`InNewChain<D>`) | merger of the new chain to the source vertex |
 | edge merger | edge deletion |
 | edge split | edge creation |
-| pulling (`On<D>`) | edge creation and deletion with its host chain (dissolving the source chain), splits and mergers |
+| pulling (`On<D>`) | edge creation and deletion with its host chain (dissolving the source chain), splits and mergers keeping the path vertex objects |
 
 A hook learns inside what it runs by taking a trailing `const graffine::transforms::Context&` after its usual arguments, e.g. `void on_start(const EndSlot& s, const Context& ctx)`. The transformations pass the context to each hook overload accepting it, and call the others as before, so that hooks opt in one by one. The context lists the composed transformations under way as `Frame`s, from the outermost one: each holds the `TransformType` and degrees identifying the transformation, e.g. `Frame {TransformType::VertexSplit, Deg2, Deg2}`. It is empty for the hooks of a transformation applied by the client, including those of a composed transformation itself. `ctx.is_inside(TransformType::EdgeDeletion)`, `ctx.innermost()` and `ctx.depth()` query it. The context is kept per thread, and only by transformations having a processor; see [context.h](include/graffine/transforms/context.h).
 
@@ -152,12 +152,24 @@ A processor may also plan, and veto, the transformations before they change the 
 | `vertex_split::Plan` | the vertex split, and the edges of each resulting vertex, in the order of the result |
 | `vertex_merger::Plan` | the merged vertices: the one `preserved` as the result, and the one `removed` |
 | `edge_creation::Plan` | the existing `vertex` of the new edge, and the edge `moved` from it to the new vertex: the end edge of a chain, the edge before a bulk slot, or none for a new chain |
-| `edge_deletion::Plan` | the `edge`, whether its chain is deleted, and its vertex `preserved` and `removed`: contracted, the two vertices merge; with its chain, the free end is removed and the junction keeps its other edges |
+| `edge_deletion::Plan` | the `edge`, whether its chain is deleted, and its vertex `preserved` and `removed`: contracted, the two vertices merge; with its chain, the free end is removed and the junction keeps its other edges, as the same vertex object |
 | `edge_merger::Plan` | the edge `kept`, and the edge deletion of the other one |
-| `pulling::Plan` | the path vertices, the edges off the path at each of them, and the number of leading steps shifting these branches by one vertex towards the source |
+| `pulling::Plan` | the path vertices, which remain the same objects, the edges off the path at each of them, and the number of leading steps shifting these branches by one vertex towards the source |
 | `component_creation::Plan`, `component_deletion::Plan` | the length of the new chain; the component deleted |
 
 See [plan.h](include/graffine/transforms/plan.h) and the plan types for the details.
+
+Vertices are owned by their component through `std::unique_ptr`, so a vertex object, and its id, `get_id()`, identify a vertex across transformations for as long as it exists. The transformations keep the vertex objects as follows:
+
+| Transformation | Vertex objects |
+| --- | --- |
+| vertex merger | the planned `preserved` vertex is the result; the `removed` one is deleted |
+| vertex split | the split vertex is one of the resulting vertices, or neither for some splits 1+2 and 2+2; the splits given a `Keep` place it as asked |
+| edge deletion | the planned `preserved` vertex remains, for a contracted edge and for an edge deleted with its chain |
+| edge creation, edge split | the existing vertices remain; the new edge brings one new vertex |
+| pulling | each path vertex remains the same object, at the same path index, after each step: the driver stays the driver, and a junction moves along the path by its branches moving to the next path vertex. The source chain dissolved by a step leaves the source vertex on the path, as the junction |
+
+The splits and mergers used by pulling take a trailing `graffine::transforms::Keep`, `Keep::First` or `Keep::Second`, telling which vertex object to keep: for a merger, the vertex at its first or second argument; for a split, the resulting vertex which is to be the split vertex. The topology is that without it; the merger hooks still receive their slot arguments as before, and the kept vertex in `on_end`. They are `vertex_split::To<Deg1, Deg1>` at a `BulkSlot`, `To<Deg1, Deg2>` at an `EndSlot`, `vertex_merger::From<Deg1, Deg2>` of an `EndSlot` with a `BulkSlot` or an unconnected cycle, and `From<Deg2, Deg2>` of a `BulkSlot` with a `BulkSlot` or an unconnected cycle; `Graph::exchange_vertices` underlies them.
 
 ### Error handling
 

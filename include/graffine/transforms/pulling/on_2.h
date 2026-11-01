@@ -200,13 +200,15 @@ applicability(
     if (const auto ok = check_path_basics(path, steps); !ok)
         return ok;
 
+    // checked before correcting the driver, which would not find the edge next
+    // to the boundary vertex of the cycle; the correction stays in the cycle
+    if (omitUnconnectedCycles && cn[path.d.w].is_unconnected_cycle())
+        return reject("pulling deg 2 from an unconnected cycle chain");
+
     // apply() corrects the driver before pulling: check the corrected path.
     auto corrected = path;
     if (corrected.length() > 1)
         correct_driver(corrected);
-
-    if (omitUnconnectedCycles && cn[corrected.d.w].is_unconnected_cycle())
-        return reject("pulling deg 2 from an unconnected cycle chain");
 
     if (corrected.src().is_bulk()) {
         if (corrected.length() == 1)
@@ -295,7 +297,12 @@ pull_N(Path& path)
     const auto icQ = cnD.g[aQ].indc;
     const auto iQ = path.cmp->get_egl(icQ).i;
 
-    nested<PP>(frame, [&] { vertex_split_11(bsDe); });
+    // the driver keeps its vertex object: the split leaves it on the driver
+    // edge, which is the first resulting vertex if it follows the slot; the
+    // merger below then keeps the vertex next to it on the path
+    const auto keepD = cnD.g[bsDe.a()() % cnD.length()].ind == iD ? Keep::First
+                                                                 : Keep::Second;
+    nested<PP>(frame, [&] { vertex_split_11(bsDe, keepD); });
 
     auto wS = egl[iS].w;
 
@@ -353,7 +360,12 @@ pull_1(Path& path)
     GRAFFINE_ASSERT(!cnD.is_unconnected_cycle() || !omitUnconnectedCycles,
            "pulling deg 2 from an unconnected cycle chain");
 
+    // the driver becomes the free end, and the source vertex joins the chain
     egD.template reverse<true>();
+
+    // the vertices exchange their places, so that each keeps its path index
+    gr.exchange_vertices(*egD.vertex_at_inner(End::A),
+                         *egD.vertex_at_inner(End::B));
 
     if constexpr (!std::is_void_v<PP>)
         hooks::on_end(updateProperties->pulling, path);

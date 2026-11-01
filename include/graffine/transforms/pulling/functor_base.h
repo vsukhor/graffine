@@ -54,6 +54,11 @@ namespace graffine::transforms::pulling {
  * unchanged. A pull by \a steps repeats the step \a steps times; the
  * degree-specific functors deriving from this class prepare the driver for
  * the steps.
+ *
+ * The path keeps its vertex objects: a junction shifts by its branches
+ * moving to the next path vertex, the splits and mergers preparing the driver
+ * keep the objects of the path vertices (see Keep), and the dissolution of a
+ * source chain leaves the source vertex on the path, as the junction.
  * \tparam G Graph to which the transformation is applied.
  * \tparam PP Processor of non-topological properties, or void.
  */
@@ -457,7 +462,14 @@ dissolve_single_edge_chain(Path& path)
     auto& cnS = path.cmp->chain(wS);
     const auto egeS = cnS.g[egl[iS].a].inner_endId(path.s.e);
 
+    auto& vS = path.source_vertex();
+
     nested<PP>(frame, [&] { create_edge(path.s.end_slot()); });  // create an edge at the free end of the source chain
+
+    // The new edge separates the source vertex, still the free end, from the
+    // source edge: they exchange their places, so that the source vertex stays
+    // on the path, and the new vertex is deleted with the new edge below.
+    gr.exchange_vertices(vS, *gr.edge(iS).vertex_at_inner(egeS));
 
     const auto connectedSlot = path.s.opp();  // the only connected source slot
 

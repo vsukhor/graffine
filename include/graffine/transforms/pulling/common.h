@@ -101,7 +101,14 @@ using Trait = transforms::Trait<TransformType::Pulling, G>;
  * i + min(k, shifts). The steps after the first \a shifts leave the topology
  * unchanged: the source chain is dissolved in step \a shifts if a branch
  * then reaches the source. Edges off the path at the source stay there.
- * See plan.h.
+ *
+ * The path keeps its vertex objects, and so their ids: after each step,
+ * path vertex i is the same object as before the pulling, the driver
+ * included. A junction moves along the path by its branches moving to the
+ * next path vertex, not by the vertex objects moving. This holds for every
+ * driver degree, and when the source chain is dissolved, the source then
+ * becoming the junction. The pulling hooks, and those of the inner splits
+ * and mergers, receive the path vertices as these objects. See plan.h.
  */
 template<typename G>
 struct Plan {

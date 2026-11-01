@@ -127,6 +127,28 @@ struct From<Deg2, Deg2, G, PP>
     auto apply(ChIdG w1,
                ChIdG w2) -> Res;
 
+    /**
+     * Merges the vertices at \p b1 and \p s2, given by a BulkSlot or by
+     * the chain of an unconnected cycle, as apply(b1, s2), keeping vertex
+     * \p k (see Keep).
+     */
+    template<typename S>
+        requires std::is_same_v<S, BulkSlot> || std::is_same_v<S, ChIdG>
+    auto apply(const BulkSlot& b1,
+               const S& s2,
+               const Keep k) -> Res
+    {
+        auto& v2 = [&]() -> Vertex& {
+            if constexpr (std::is_same_v<S, ChIdG>)
+                return *gr.vertex(EndSlot {s2, UnconnectedCycleEnd});
+            else
+                return *gr.vertex(s2);
+        }();
+        keep.ask(plan(b1, s2), *gr.vertex(b1), v2, k);
+
+        return apply(b1, s2);
+    }
+
     /// Checks that vertices \p v1 and \p v2 can be merged.
     /// \details Rejects vertices not belonging to the graph or not of
     /// degree 2, and a vertex merged with itself, then checks their slots, or
@@ -157,6 +179,15 @@ struct From<Deg2, Deg2, G, PP>
     /// cycles, and \p w1 equal to \p w2 .
     auto applicability(ChIdG w1,
                        ChIdG w2) const -> Applicability;
+
+    /// Checks the merger as applicability(b1, s2).
+    template<typename S>
+    auto applicability(const BulkSlot& b1,
+                       const S& s2,
+                       Keep) const -> Applicability
+    {
+        return applicability(b1, s2);
+    }
 
     /// Outcome of the merger of vertices \p v1 and \p v2 (see plan.h).
     auto plan(const Vertex& v1,
@@ -209,6 +240,16 @@ struct From<Deg2, Deg2, G, PP>
         return {&plans::vertex_at(gr, w2), &plans::vertex_at(gr, w1)};
     }
 
+    /// Outcome of the merger as plan(b1, s2), keeping vertex \p k.
+    template<typename S>
+    auto plan(const BulkSlot& b1,
+              const S& s2,
+              const Keep k) const -> Plan<G>
+    {
+        return Keeper<G>::plan(plan(b1, s2), plans::vertex_at(gr, b1),
+                               plans::vertex_at(gr, s2), k);
+    }
+
     /// Processor of non-topological properties.
     auto processor() const noexcept -> PP* { return updateProperties.get(); }
 
@@ -231,6 +272,9 @@ private:
 
     /// Pretty-printer of the initial and final configurations.
     Reporter<Graph> report;
+
+    /// Keeping of the vertex asked for by the Keep overloads.
+    Keeper<G> keep;
 
     constexpr auto deg4_vertex(
         Chain& m, EndId em,
@@ -440,6 +484,8 @@ apply(
 
     if constexpr (!std::is_void_v<PP>)
         hooks::on_start(updateProperties->vertexMerger, b1, b2);  // not always (preserved, removed)
+
+    keep(gr);
 
     // Define slots to get merged.
 
@@ -673,6 +719,8 @@ apply(
     if constexpr (!std::is_void_v<PP>)
         hooks::on_start(updateProperties->vertexMerger, b1, w2A);  // (preserved, removed)
 
+    keep(gr);
+
     // Define component, chain and end indexes of the merging ends:
 
     ResT res0 {};
@@ -814,6 +862,8 @@ apply(
 
     if constexpr (!std::is_void_v<PP>)
         hooks::on_start(updateProperties->vertexMerger, a1, a2);  // (preserved, removed)
+
+    keep(gr);
 
     // Produce an unconnected intermediary:
 

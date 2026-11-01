@@ -97,10 +97,11 @@ using Trait = transforms::Trait<TransformType::EdgeDeletion, G>;
 /**
  * Outcome of an edge deletion, in terms of the graph before it.
  * \details Either the edge is contracted, keeping its chain: its two
- * vertices are merged into \a preserved, which keeps its identity. Or it is
+ * vertices are merged into \a preserved. Or it is
  * deleted with its chain, a single edge attached by one end: the free end
  * \a removed is deleted, and the junction \a preserved loses the edge,
- * keeping its other edges, though possibly as a new vertex. The deletion
+ * keeping its other edges. Either way, \a preserved remains the same vertex
+ * object, and so keeps its id. The deletion
  * moves the edge having the last graph-wide index to the index of the deleted
  * edge. See plan.h.
  */

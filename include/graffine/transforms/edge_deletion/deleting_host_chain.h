@@ -291,7 +291,14 @@ apply(const EndSlot& s) -> Res
     // edge (and hence, chain) removal would induce topology
     // change by vertex merger on the chain ends.
 
-    const auto [v1, v2] = nested<PP>(frame, [&] { return split(s); });
+    // the junction keeps its vertex object: a split (1, 2) is asked for it,
+    // and a split (1, 3) keeps it anyway
+    const auto [v1, v2] = nested<PP>(frame, [&] {
+        if constexpr (D == Deg3)
+            return split(s, Keep::Second);
+        else
+            return split(s);
+    });
 
     // index of the connected component holding the edge
     const auto vRemove = gr.compt(v1->get_c()).get_egl(0).i == ind

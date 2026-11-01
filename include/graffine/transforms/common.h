@@ -62,6 +62,19 @@ constexpr auto reject(const char* reason) noexcept -> std::unexpected<Rejection>
     return std::unexpected(Rejection {reason});
 }
 
+/**
+ * Vertex object which a vertex split or merger keeps, when given.
+ * \details For a merger, the vertex at its first or second argument, which
+ * becomes the merged vertex; for a split, the first or second resulting
+ * vertex, which then is the object of the split vertex. The topology is that
+ * of the transformation without it; only the vertex objects, and so their
+ * ids, are placed as asked. The hooks of the transformation see them so
+ * placed: the merger hooks receive their slot arguments as without it, then
+ * the kept vertex in on_end. Pulling uses it to keep the vertex objects of
+ * the path.
+ */
+enum class Keep { First, Second };
+
 namespace plans {
 
 // Defined in plan.h, which the transformations include.

@@ -242,7 +242,9 @@ pull(Path& path)
                    cn[nww[1]].end2ind(nee[1])};
 
     // disconnect iD at the branching (i.e. wD at eD)
-    nested<PP>(frame, [&] { vertex_split_12(EndSlot{wD, eD}); });
+    // the driver keeps its vertex object, which stays on the driver edge; the
+    // merger below keeps the vertex next to it on the path
+    nested<PP>(frame, [&] { vertex_split_12(EndSlot{wD, eD}, Keep::First); });
 
     wD = egl[iD].w;
     if (iD != iS)
@@ -293,12 +295,14 @@ pull(Path& path)
     nested<PP>(frame, [&] {
         if (iD == iS)
             cn[w1].is_unconnected_cycle()
-                ? vertex_merge_12(EndSlot{wD, End::opp(eD)}, w1)
-                : vertex_merge_12(EndSlot{wD, End::opp(eD)}, BulkSlot{w1, a1});
+                ? vertex_merge_12(EndSlot{wD, End::opp(eD)}, w1, Keep::First)
+                : vertex_merge_12(EndSlot{wD, End::opp(eD)}, BulkSlot{w1, a1},
+                                  Keep::First);
         else
             cn[w1].is_unconnected_cycle()
-                ? vertex_merge_22(BulkSlot{wD, a0}, w1)
-                : vertex_merge_22(BulkSlot{wD, a0}, BulkSlot{w1, a1});
+                ? vertex_merge_22(BulkSlot{wD, a0}, w1, Keep::First)
+                : vertex_merge_22(BulkSlot{wD, a0}, BulkSlot{w1, a1},
+                                  Keep::First);
     });
 
     wS = egl[iS].w;

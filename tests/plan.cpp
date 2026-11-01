@@ -128,6 +128,10 @@ struct Log {
     int starts {};  ///< Calls of on_start hooks.
     /// Number of edges off the path at each path vertex, after each step.
     std::vector<std::vector<std::size_t>> pulled;
+    /// Ids of the path vertices at the start of a pulling, and after each step.
+    std::vector<VId> pathIds;
+    std::vector<std::vector<VId>> pulledIds;
+    Degree driverDeg {};
 };
 
 inline auto to_record(const G& gr,
@@ -152,10 +156,21 @@ inline auto branches(const G& gr, const Path& path) -> std::vector<std::size_t>
     return bb;
 }
 
+/// Ids of the vertices of \p path, from the driver to the source.
+inline auto ids(const Path& path) -> std::vector<VId>
+{
+    std::vector<VId> ii;
+    for (const auto* v : path.vertices())
+        ii.push_back(v->get_id());
+
+    return ii;
+}
+
 /**
  * Property processor recording the plans, and vetoing them unless \a allow.
  * \details Its other hooks count the calls of on_start, and record the
- * branches of the path after each step of a pulling.
+ * branches of the path after each step of a pulling, and the ids of the path
+ * vertices.
  */
 struct Planner {
 
@@ -245,8 +260,17 @@ struct Planner {
     } componentDeletion;
 
     struct : Hooks {
-        void on_start(Path&) { start(); }
-        void on_end(Path& path) { log->pulled.push_back(branches(*gr, path)); }
+        void on_start(Path& path)
+        {
+            start();
+            log->pathIds = ids(path);
+            log->driverDeg = path.driver_vertex().deg();
+        }
+        void on_end(Path& path)
+        {
+            log->pulled.push_back(branches(*gr, path));
+            log->pulledIds.push_back(ids(path));
+        }
         bool plan(const trs::pulling::Plan<G>& p)
         {
             PullingPlan r {{}, p.steps, p.shifts};
@@ -328,17 +352,10 @@ inline void check(const G& gr, const DeletionPlan& p)
     for (const auto i : p.edges)
         ee.insert(after_deletion(p, i));
 
-    if (!p.isChainDeleted) {
-        ASSERT_TRUE(vv.contains(p.preserved)) << "preserved vertex is removed";
-        EXPECT_EQ(edges_at(gr, *vv.at(p.preserved)), ee);
-    }
-    else {  // the junction keeps its other edges, possibly as a new vertex
-        ASSERT_FALSE(ee.empty());
-        const auto& eg = gr.edge(*ee.begin());
-        const auto* vA = eg.vertex_at_outer(End::A);
-        const auto* vB = eg.vertex_at_outer(End::B);
-        EXPECT_TRUE(edges_at(gr, *vA) == ee || edges_at(gr, *vB) == ee);
-    }
+    // contracted, the vertices merge; deleted with its chain, the junction
+    // keeps its other edges
+    ASSERT_TRUE(vv.contains(p.preserved)) << "preserved vertex is removed";
+    EXPECT_EQ(edges_at(gr, *vv.at(p.preserved)), ee);
 }
 
 inline void check(const G& gr, const EdgeMergerPlan& p, const Edge& eg)
@@ -611,6 +628,11 @@ private:
         run("pulling", veto, pull,
             [&](const auto&) {
                 EXPECT_EQ(pp->log.pulled, expected_pulled(*pp->log.pulling));
+                const auto& l = pp->log;
+                for (std::size_t k {}; k < l.pulledIds.size(); ++k)
+                    EXPECT_EQ(l.pulledIds[k], l.pathIds)
+                        << "path vertex ids after step " << k + 1
+                        << " of pulling at degree " << l.driverDeg;
             }, path, steps);
     }
 };

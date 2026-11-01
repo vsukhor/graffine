@@ -310,6 +310,15 @@ public:
     constexpr auto vertex(const BulkSlot& s) const noexcept -> const Vertex*;
     constexpr auto vertex(const BulkSlot& s)       noexcept ->       Vertex*;
 
+    /**
+     * Exchanges the places of vertices \p a and \p b in the graph: each takes
+     * over the edges, and the component, of the other.
+     * \details Changes the topology only up to vertex identity: the vertex
+     * objects, with their ids and other attributes, remain valid. Used by
+     * the transformations keeping given vertex objects (see Keep).
+     */
+    void exchange_vertices(Vertex& a, Vertex& b);
+
     constexpr auto get_egl() const noexcept -> const EdgeDescriptors& { return egl; }
     constexpr auto get_egl()       noexcept ->       EdgeDescriptors& { return egl; }
     constexpr auto get_egl(EgIdG ind) const noexcept -> const EdgeDescr&;
