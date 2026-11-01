@@ -76,8 +76,6 @@ struct EdgeDescriptorsInGraph
     void append(EdgeDescriptorsInGraph&& egl) noexcept;
     void clear() { m_data.clear(); }
 
-//    using containers::Sequence<std::vector<EdgeDescr>>::m_data;
-
 private:
 
     using Base::m_data;
@@ -95,6 +93,7 @@ set(const Graph& gr)
             m_data[g.ind()].set(m.idw, g.indw, g.id);
 
 }
+
 template<typename G>
 void EdgeDescriptorsInGraph<G>::
 set(
@@ -108,7 +107,6 @@ set(
             for (const auto& g : gr.cn[w].g)
                 m_data[g.ind()].set(w, g.indw, g.id);
 }
-
 
 template<typename G>
 void EdgeDescriptorsInGraph<G>::
@@ -131,7 +129,6 @@ append(const Edge& g)
 {
     m_data.push_back(EdgeDescr{g});
 }
-
 
 }  // namespace graffine::structure::containers
 

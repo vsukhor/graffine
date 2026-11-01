@@ -45,8 +45,7 @@ limitations under the License.
 namespace graffine::structure::containers {
 
 /** Container for managing collections of chains in the graph.
- *
- * Derives from Sequence container class adding to it chain-specific
+ * \details Derives from Sequence container class adding to it chain-specific
  * functionality.
  * \tparam Eg Container element type.Should be derived from core::elements::Edge.
  */
@@ -60,8 +59,7 @@ struct Edges
     using value_type = Base::value_type;
     using EdgeDescr = descriptors::EdgeInGraph;
 
-    /** Actual number of chains in the container.
-     */
+    /// Actual number of chains in the container.
     constexpr auto num() const noexcept -> size_type;
     constexpr auto ind_last() const noexcept -> size_type;
 
@@ -102,7 +100,6 @@ num() const noexcept -> size_type
     return this->size();
 }
 
-
 template<typename Eg>
 constexpr
 auto Edges<Eg>::
@@ -114,7 +111,6 @@ ind_last() const noexcept -> size_type
              : utils::undefined<size_type>;
 }
 
-
 template<typename Eg>
 constexpr
 auto Edges<Eg>::
@@ -122,7 +118,6 @@ edge(const EdgeDescr& egd) const noexcept -> const Edge&
 {
     return m_data[egd.a()];
 }
-
 
 template<typename Eg>
 constexpr
@@ -132,7 +127,6 @@ edge(const EdgeDescr& egd) noexcept -> Edge&
     return m_data[egd.a()];
 }
 
-
 template<typename Eg>
 void Edges<Eg>::
 print(const std::string_view tag) const
@@ -140,7 +134,6 @@ print(const std::string_view tag) const
     for (const auto& eg : m_data)
         eg.print(tag);
 }
-
 
 template<typename Eg>
 template<typename... T>
