@@ -155,9 +155,6 @@ if(PROJECT_IS_TOP_LEVEL)
         add_link_options("--coverage")
     endif()
 
-    # Add the cmake folder so the FindSphinx module is found
-    set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
-
     # Support folders in IDE's
     set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 

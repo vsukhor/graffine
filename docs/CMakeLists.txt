@@ -1,73 +1,34 @@
-# Docs with Doxygen
+# Documentation site: the Doxygen API reference, embedded in the pages built
+# by Zensical. The output goes to docs/site/; see docs/README.md.
 find_package(Doxygen REQUIRED)
-if(Doxygen_FOUND)
-    # Find all the public headers
+find_program(ZENSICAL_EXECUTABLE zensical REQUIRED)
 
-    list(APPEND documented_dirs
-        ${PROJECT_SOURCE_DIR}/include
-        ${PROJECT_SOURCE_DIR}/external/tinyply
-    )
+file(GLOB_RECURSE GRAFFINE_PUBLIC_HEADERS ${PROJECT_SOURCE_DIR}/include/*.h)
+file(GLOB_RECURSE GRAFFINE_DOC_PAGES ${CMAKE_CURRENT_SOURCE_DIR}/content/*.md)
 
-    file(GLOB_RECURSE GRAFFINE_PUBLIC_HEADERS ${documented_dirs}/*.h)
+set(DOXYGEN_INDEX_FILE ${CMAKE_CURRENT_SOURCE_DIR}/content/api/reference/index.html)
+set(SITE_INDEX_FILE ${CMAKE_CURRENT_SOURCE_DIR}/site/index.html)
 
-    # set input and output files
-    set(DOXYFILE_IN ${CMAKE_CURRENT_SOURCE_DIR}/doxyfile.in)
-    set(DOXYFILE_OUT ${CMAKE_CURRENT_BINARY_DIR}/doxyfile)
-#    set(DOXYGEN_INPUT_DIR ${PROJECT_SOURCE_DIR}/include/graffine)
-    set(DOXYGEN_OUTPUT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/doxygen)
-    set(DOXYGEN_INDEX_FILE ${DOXYGEN_OUTPUT_DIR}/html/index.html)
+# Only regenerate the API reference when the Doxyfile or the headers change.
+add_custom_command(
+    OUTPUT ${DOXYGEN_INDEX_FILE}
+    DEPENDS ${GRAFFINE_PUBLIC_HEADERS}
+    COMMAND ${CMAKE_COMMAND} -E env GRAFFINE_VERSION=${PROJECT_VERSION}
+            ${DOXYGEN_EXECUTABLE} Doxyfile
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile
+    COMMENT "Generating API reference with Doxygen"
+    VERBATIM
+)
 
-    # request to configure the file
-    configure_file(${DOXYFILE_IN} ${DOXYFILE_OUT} @ONLY)
-    message("Doxygen build started: ${CMAKE_CURRENT_SOURCE_DIR}")
+add_custom_command(
+    OUTPUT ${SITE_INDEX_FILE}
+    DEPENDS ${DOXYGEN_INDEX_FILE} ${GRAFFINE_DOC_PAGES}
+    COMMAND ${ZENSICAL_EXECUTABLE} build --clean
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/zensical.toml
+    COMMENT "Building the documentation site with Zensical"
+    VERBATIM
+)
 
-    file(MAKE_DIRECTORY ${DOXYGEN_OUTPUT_DIR}) #Doxygen won't create this for us
-
-    # Only regenerate Doxygen when the Doxyfile or public headers change
-    add_custom_command(
-        OUTPUT ${DOXYGEN_INDEX_FILE}
-        DEPENDS ${GRAFFINE_PUBLIC_HEADERS}
-        COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYFILE_OUT}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-        MAIN_DEPENDENCY ${DOXYFILE_OUT} ${DOXYFILE_IN}
-        COMMENT "Generating API documentation with Doxygen"
-        VERBATIM
-    )
-
-    # note the option ALL which allows to build the docs together with
-    # the application
-    add_custom_target(doc_doxygen ALL DEPENDS ${DOXYGEN_INDEX_FILE})
-
-    find_package(Sphinx REQUIRED)
-    if(Sphinx_FOUND)
-        set(SPHINX_SOURCE ${CMAKE_CURRENT_SOURCE_DIR})
-        set(SPHINX_BUILD ${CMAKE_CURRENT_BINARY_DIR}/docs/sphinx)
-        set(SPHINX_INDEX_FILE ${SPHINX_BUILD}/index.html)
-
-        add_custom_command(
-            OUTPUT ${SPHINX_INDEX_FILE}
-            COMMAND ${SPHINX_EXECUTABLE} -b html
-            # Tell Breathe where to find the Doxygen output
-            -Dbreathe_projects.graffine=${DOXYGEN_OUTPUT_DIR}/xml
-            ${SPHINX_SOURCE} ${SPHINX_BUILD}
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-            DEPENDS
-                # Other docs files to track
-                ${CMAKE_CURRENT_SOURCE_DIR}/index.rst
-                ${DOXYGEN_INDEX_FILE}
-            MAIN_DEPENDENCY ${SPHINX_SOURCE}/conf.py
-            COMMENT "Generating documentation with Sphinx"
-        )
-
-        add_custom_target(Sphinx ALL DEPENDS ${SPHINX_INDEX_FILE})
-
-        # Add an install target to install the docs
-        include(GNUInstallDirs)
-        install(DIRECTORY ${SPHINX_BUILD}
-        DESTINATION ${CMAKE_INSTALL_DOCDIR})
-    else()
-        message(STATUS "Sphinx not found, not building sphinx docs")
-    endif()
-else()
-    message(STATUS "Doxygen not found, not building docs")
-endif()
+add_custom_target(docs ALL DEPENDS ${SITE_INDEX_FILE})

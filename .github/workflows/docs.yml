@@ -1,0 +1,48 @@
+name: Documentation
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+      - 'include/**'
+      - 'CMakeLists.txt'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: docs
+    steps:
+      - uses: actions/configure-pages@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: 3.x
+      - run: sudo apt-get update && sudo apt-get install -y doxygen
+      - run: pip install zensical
+      - name: Generate API reference
+        run: |
+          export GRAFFINE_VERSION="$(sed -n 's/^ *VERSION \([0-9.]*\).*/\1/p' ../CMakeLists.txt | head -1)"
+          doxygen Doxyfile
+      - run: zensical build --clean
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: docs/site
+      - uses: actions/deploy-pages@v4
+        id: deployment

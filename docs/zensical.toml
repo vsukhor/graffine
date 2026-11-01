@@ -1,0 +1,132 @@
+[project]
+site_name = "graffine"
+site_description = "Elementary transformations of low-degree graphs: a header-only C++23 library."
+site_author = "Valerii Sukhorukov"
+site_url = "https://vsukhor.github.io/graffine/"
+
+# Markdown sources; the built site goes to site/, next to this file.
+docs_dir = "content"
+
+copyright = "Copyright &copy; 2021-2026 Valerii Sukhorukov &middot; Apache License 2.0"
+
+repo_url = "https://github.com/vsukhor/graffine"
+repo_name = "vsukhor/graffine"
+
+nav = [
+  { "Home" = "index.md" },
+  { "Build & Install" = [
+    "build_install/index.md",
+    { "Requirements" = "build_install/requirements.md" },
+    { "Using in a CMake Project" = "build_install/cmake.md" },
+    { "Building from Source" = "build_install/building.md" },
+    { "Configuration Options" = "build_install/configuration.md" },
+    { "Building the Docs" = "build_install/docs.md" },
+  ] },
+  { "Tutorial" = [
+    "tutorial/index.md",
+    { "Concepts" = "tutorial/concepts.md" },
+    { "Identifiers" = "tutorial/identifiers.md" },
+    { "First Graph" = "tutorial/first_graph.md" },
+    { "Applying Transformations" = "tutorial/transformations.md" },
+    { "Vertex Merger & Split" = "tutorial/vertex_ops.md" },
+    { "Edges & Components" = "tutorial/edge_component_ops.md" },
+    { "Pulling" = "tutorial/pulling.md" },
+    { "Property Processors" = "tutorial/property_processors.md" },
+    { "PLY Input/Output" = "tutorial/ply_io.md" },
+    { "Errors & Integrity" = "tutorial/errors.md" },
+  ] },
+  { "API Documentation" = [
+    "api/index.md",
+    { "Header Map" = "api/headers.md" },
+    { "Transformation Catalogue" = "api/transforms.md" },
+    { "Full Reference (Doxygen)" = "api/reference/index.html" },
+  ] },
+  { "Development" = [
+    "development/index.md",
+    { "Testing" = "development/testing.md" },
+    { "Benchmarks" = "development/benchmarks.md" },
+  ] },
+  { "Third-Party Libraries" = "third_party.md" },
+]
+
+extra_css = ["stylesheets/extra.css"]
+
+[project.theme]
+language = "en"
+features = [
+  "announce.dismiss",
+  "content.code.annotate",
+  "content.code.copy",
+  "content.code.select",
+  "content.footnote.tooltips",
+  "content.tabs.link",
+  "content.tooltips",
+  "navigation.footer",
+  "navigation.indexes",
+  "navigation.instant",
+  "navigation.instant.prefetch",
+  "navigation.path",
+  "navigation.sections",
+  "navigation.top",
+  "navigation.tracking",
+  "search.highlight",
+]
+
+[project.theme.icon]
+logo = "lucide/share-2"
+repo = "fontawesome/brands/github"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme)"
+toggle.icon = "lucide/sun-moon"
+toggle.name = "Switch to light mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+primary = "indigo"
+accent = "indigo"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+primary = "indigo"
+accent = "indigo"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to system preference"
+
+[[project.extra.social]]
+icon = "fontawesome/brands/github"
+link = "https://github.com/vsukhor/graffine"
+
+[project.markdown_extensions]
+abbr = {}
+admonition = {}
+attr_list = {}
+def_list = {}
+footnotes = {}
+md_in_html = {}
+tables = {}
+toc.permalink = true
+pymdownx.betterem = {}
+pymdownx.caret = {}
+pymdownx.details = {}
+pymdownx.emoji.emoji_generator = "zensical.extensions.emoji.to_svg"
+pymdownx.emoji.emoji_index = "zensical.extensions.emoji.twemoji"
+pymdownx.highlight.anchor_linenums = true
+pymdownx.highlight.line_spans = "__span"
+pymdownx.highlight.pygments_lang_class = true
+pymdownx.inlinehilite = {}
+pymdownx.keys = {}
+pymdownx.magiclink = {}
+pymdownx.mark = {}
+pymdownx.smartsymbols = {}
+pymdownx.superfences.custom_fences = [
+  { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" },
+]
+pymdownx.tabbed.alternate_style = true
+pymdownx.tabbed.combine_header_slug = true
+pymdownx.tasklist.custom_checkbox = true
+pymdownx.tilde = {}

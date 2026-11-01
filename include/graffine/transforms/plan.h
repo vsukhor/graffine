@@ -37,7 +37,7 @@ limitations under the License.
  * Transformations applied with operator() or try_apply() call it after their
  * applicability check and before changing the graph. If it returns false,
  * the transformation is vetoed: the graph is left untouched, try_apply()
- * returns the rejection \ref vetoed, and operator() throws precondition_error.
+ * returns the vetoed rejection, and operator() throws precondition_error.
  * apply(), which skips the checks, skips the planning hook too.
  *
  * The hook is called for transformations applied by the client only: the

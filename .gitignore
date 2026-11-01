@@ -2,6 +2,10 @@
 build*/**
 .vscode/**
 docs/doxygen/**
+docs/site/
+docs/.cache/
+docs/.venv/
+docs/content/api/reference/
 app/**
 graffine_qt/**
 examples/graph*

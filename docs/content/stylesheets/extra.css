@@ -1,0 +1,10 @@
+/* Home page logo: limit its width on wide screens. */
+.graffine-logo {
+  max-width: 28rem;
+  width: 100%;
+}
+
+/* Compact tables of options and exceptions. */
+.md-typeset table:not([class]) td code {
+  white-space: nowrap;
+}

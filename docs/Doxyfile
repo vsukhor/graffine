@@ -1,0 +1,48 @@
+# Doxygen configuration for the API reference embedded in the documentation
+# site. It reads the library headers in ../include and writes HTML to
+# content/api/reference/, which zensical copies into the site unchanged.
+# Run it from this directory; GRAFFINE_VERSION is optional:
+#
+#   GRAFFINE_VERSION=1.2.3 doxygen Doxyfile
+#
+# Only settings differing from the Doxygen defaults are listed.
+
+PROJECT_NAME           = "graffine"
+PROJECT_BRIEF          = "Elementary transformations of low-degree graphs"
+PROJECT_NUMBER         = $(GRAFFINE_VERSION)
+
+INPUT                  = ../include
+FILE_PATTERNS          = *.h *.h.in
+EXCLUDE_PATTERNS       = _*.h
+RECURSIVE              = YES
+STRIP_FROM_PATH        = ../include
+STRIP_FROM_INC_PATH    = ../include
+
+OUTPUT_DIRECTORY       = content/api
+HTML_OUTPUT            = reference
+CREATE_SUBDIRS         = NO
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+GENERATE_XML           = NO
+GENERATE_TREEVIEW      = YES
+HTML_COLORSTYLE        = TOGGLE
+SEARCHENGINE           = YES
+
+EXTRACT_ALL            = YES
+EXTRACT_STATIC         = YES
+JAVADOC_AUTOBRIEF      = YES
+BUILTIN_STL_SUPPORT    = YES
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = NO
+REFERENCED_BY_RELATION = NO
+REFERENCES_RELATION    = NO
+
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = YES
+
+HAVE_DOT               = NO
+CLASS_GRAPH            = YES
+
+QUIET                  = YES
+WARN_IF_UNDOCUMENTED   = NO
+WARN_IF_DOC_ERROR      = YES

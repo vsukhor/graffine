@@ -10,8 +10,11 @@
 ![build](https://github.com/vsukhor/graffine/actions/workflows/cmake.yml/badge.svg)
 [![codecov](https://codecov.io/gh/vsukhor/graffine/graph/badge.svg)](https://codecov.io/gh/vsukhor/graffine)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![docs](https://github.com/vsukhor/graffine/actions/workflows/docs.yml/badge.svg)](https://vsukhor.github.io/graffine/)
 
 Elementary transformations of graphs.
+
+Documentation: tutorial, API reference and build guide at **<https://vsukhor.github.io/graffine/>**.
 
 ## Overview
 
@@ -77,7 +80,7 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ```
 
-The CMake options `BUILD_TESTS` (default `ON`), `BUILD_EXAMPLES` (default `ON`) and `BUILD_DOCS` (default `OFF`) control which targets are built. Setting `GRAFFINE_NATIVE_ARCH=ON` (default `OFF`) compiles with `-march=native`, which tunes the binaries for the build machine at the cost of portability.
+The CMake options `BUILD_TESTS` (default `ON`), `BUILD_EXAMPLES` (default `ON`) and `BUILD_DOCS` (default `OFF`, builds the [documentation site](docs/README.md); needs Doxygen and Zensical) control which targets are built. Setting `GRAFFINE_NATIVE_ARCH=ON` (default `OFF`) compiles with `-march=native`, which tunes the binaries for the build machine at the cost of portability.
 
 Library configuration is passed through the following CMake variables, which are written into the generated `config_cmake.h`:
 
