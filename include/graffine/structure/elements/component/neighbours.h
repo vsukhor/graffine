@@ -95,8 +95,9 @@ ngs_at(const EndSlot& s) const noexcept -> const Chain::Neigs&
     return cn[s.w].ngs[s.e];
 }
 
-/// slots connected to 'nov' will be checked, and if there is 'old',
-/// it will be replaced by 'nov'
+/** slots connected to 'nov' will be checked, and if there is 'old',
+ * it will be replaced by 'nov'
+ */
 template <typename Ch>
 void Component<Ch>::
 replace_slot_in_neigs(

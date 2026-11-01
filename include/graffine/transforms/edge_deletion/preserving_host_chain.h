@@ -38,16 +38,14 @@ limitations under the License.
 #include <string>
 #include <type_traits>
 
-/**
- * Contains operations handling edge deletion in a graph.
+/** Contains operations handling edge deletion in a graph.
  * These are functors for deleting edges based on chain lengths and vertex
  * degrees.
  */
 namespace graffine::transforms::edge_deletion {
 
 
-/**
- * Template for deletion of graph edges without deleting their host chain.
+/** Template for deletion of graph edges without deleting their host chain.
  * \details Handles the case of multi-edge chains. Notably, because the chain
  * contains more than a single edge, at least one of the edge ends is a vertex
  * of degree 2.
@@ -78,16 +76,12 @@ struct PreservingHostChain
 
     static constexpr auto isChainDeleteded = false;
 
-    /**
-     * Vertex degree at the first end of the deleted edge.
-     * \note This is a multi-edge chain, so this vertex has degree 2.
-     */
+    /// Vertex degree at the first end of the deleted edge.
+    /// \note This is a multi-edge chain, so this vertex has degree 2.
     static constexpr auto I1 = Deg2;
 
-    /**
-     * Vertex degree at the second end of the deleted edge.
-     * \note This vertex can have arbitrary implemented degree.
-     */
+    /// Vertex degree at the second end of the deleted edge.
+    /// \note This vertex can have arbitrary implemented degree.
     static constexpr auto I2 = D;
 
     static constexpr auto J1 = undefined<Degree>;
@@ -95,24 +89,19 @@ struct PreservingHostChain
 
     const std::string dd {std::to_string(I2)};
 
-    /**
-     * Short form of human-readable name of edge deletion functors.
-     * \note Is used for naming conventions in the code.
-     */
+    /// Short form of human-readable name of edge deletion functors.
+    /// \note Is used for naming conventions in the code.
     const std::string shortName {make_name("edph_", dd)};
 
-    /**
-     * Full form of human-readable name of edge deletion functors.
-     * \note Is used for more descriptive naming conventions in the code.
-     */
+    /// Full form of human-readable name of edge deletion functors.
+    /// \note Is used for more descriptive naming conventions in the code.
     const std::string fullName {
         make_name("edge_deletion_without_host_chain_", dd)
     };
 
 // public methods
 
-    /**
-     * Constructs the Functor object based on a Graph instance.
+    /** Constructs the Functor object based on a Graph instance.
      * \param[in] gr Graph to which the transformation is applied.
      * \param[in] pp Processor for non-topological properties. If null, no
      *               processing is intended
@@ -120,40 +109,42 @@ struct PreservingHostChain
     constexpr explicit PreservingHostChain(Graph& gr,
                                            std::shared_ptr<PP> pp = nullptr);
 
-    /**
-     * Function call operator executing the deletion using edge index.
+    /** Function call operator executing the deletion using edge index.
      * \param[in] ind Graph-wide index of the deleted edge.
      */
     auto apply(EgIdG ind) -> Res;
 
-    /**
-     * Delete edge using its position.
+    /** Delete edge using its position.
      * \param[in] s Slot incident to a chain internal vertex.
      */
     auto apply(const BulkSlot& s) -> Res;
 
-    /// Checks that edge \p ind can be deleted, keeping its chain.
-    /// \details Rejects an invalid edge index, then checks the edge as the
-    /// slot overload does.
+    /** Checks that edge \p ind can be deleted, keeping its chain.
+     * \details Rejects an invalid edge index, then checks the edge as the
+     * slot overload does.
+     */
     auto applicability(EgIdG ind) const -> Applicability;
 
-    /// Checks that the edge at chain position \p s can be deleted, keeping
-    /// its chain.
-    /// \details Rejects a position outside the chain, a single-edge chain,
-    /// a chain which is not shrinkable, and an edge not having a vertex of
-    /// degree D at its end opposite to a degree 2 vertex.
+    /** Checks that the edge at chain position \p s can be deleted, keeping
+     * its chain.
+     * \details Rejects a position outside the chain, a single-edge chain,
+     * a chain which is not shrinkable, and an edge not having a vertex of
+     * degree D at its end opposite to a degree 2 vertex.
+     */
     auto applicability(const BulkSlot& s) const -> Applicability;
 
-    /// Outcome of the contraction of edge \p ind (see plan.h).
+    /** Outcome of the contraction of edge \p ind (see plan.h).
+     */
     auto plan(const EgIdG ind) const -> Plan<G>
     {
         return plan(gr.ind2bslot(ind));
     }
 
-    /// Outcome of the contraction of the edge at chain position \p s
-    /// (see plan.h).
-    /// \details The vertex of the edge towards chain end A is preserved,
-    /// that towards end B if the edge is the last one of the chain.
+    /** Outcome of the contraction of the edge at chain position \p s
+     * (see plan.h).
+     * \details The vertex of the edge towards chain end A is preserved,
+     * that towards end B if the edge is the last one of the chain.
+     */
     auto plan(const BulkSlot& s) const -> Plan<G>
     {
         const auto [w, a] = s.we();
@@ -166,7 +157,8 @@ struct PreservingHostChain
                             : Plan<G> {eg.ind, false, vA, vB};
     }
 
-    /// Processor of non-topological properties.
+    /** Processor of non-topological properties.
+     */
     auto processor() const noexcept -> PP* { return updateProperties.get(); }
 
 protected:  // Data

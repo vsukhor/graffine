@@ -54,8 +54,7 @@ limitations under the License.
 
 namespace graffine::transforms {
 
-/**
- * Processor of non-topological properties usable by all transformations.
+/** Processor of non-topological properties usable by all transformations.
  * \details Either void, for no processing, or a type providing the hooks
  * of all the transformation families.
  * \tparam PP Property processor type.

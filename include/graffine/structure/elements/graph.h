@@ -66,14 +66,13 @@ struct Graph
 {};
 
 
-/**
- * Implementation of a multicomponent Graph.
+/** Implementation of a multicomponent Graph.
  * \details Implements major structure-related properties important for
  * topological transformations, such as collections and classifications of
  * graph Chains, but is unaware of any physical or geometric properties.
  * Forms base for classes adding graph-specific characteristics.
  * \tparam CC Type of connected components forming the graph object.
-*/
+ */
 template<typename CC>
 struct Graph<CC>
 {
@@ -128,11 +127,9 @@ protected:
     /// Map of graph-wide edge indexes to chain indexes and in-chain positions.
     EdgeDescriptors egl;
 
-    /**
-     * Graph-wide collection of vertex data.
-     * \details Rebuilt lazily, on first access after a change of the graph:
-     * transformations only mark it stale, see update_vertex_descriptors().
-     */
+    /// Graph-wide collection of vertex data.
+    /// \details Rebuilt lazily, on first access after a change of the graph:
+    /// transformations only mark it stale, see update_vertex_descriptors().
     mutable VertexDescriptors ved;
     mutable bool vedStale {true};  ///< Whether ved needs a rebuild.
 
@@ -143,8 +140,7 @@ public:
     constexpr Graph() = default;
     constexpr ~Graph() = default;
 
-    /**
-     * Moves the graph.
+    /** Moves the graph.
      * \details The chains, components and vertices keep their addresses, so
      * references to them remain valid. Objects referring to the graph itself,
      * such as transformation functors, keep referring to the moved-from
@@ -162,8 +158,7 @@ public:
 
     explicit constexpr Graph(Chains&& gr);
 
-    /**
-     * Generate initial set of the graph components.
+    /** Generate initial set of the graph components.
      * \details The components are single chains of equal length 'len'.
      * \param[in] num Desired number of components.
      * \param[in] len Component length.
@@ -173,14 +168,15 @@ public:
         std::size_t len
     );
 
-    /// Appends an unconnected chain to the graph.
+    /** Appends an unconnected chain to the graph.
+     */
     void add_single_chain_component(std::size_t len);
 
-    /// Appends component \p cmp to the graph and updates the graph data.
+    /** Appends component \p cmp to the graph and updates the graph data.
+     */
     void add_component(Compt&& cmp);
 
-    /**
-     * Removes edge \p ind from the graph.
+    /** Removes edge \p ind from the graph.
      * \details Removes the edge from its chain as Component::remove_edge()
      * does, merging the two vertices of the edge, and updates the graph data.
      * \note The formerly last edge of the graph takes over index \p ind:
@@ -189,8 +185,7 @@ public:
      */
     void remove_edge(EgIdG ind);
 
-    /**
-     * Appends \p donor component to \p acceptor component.
+    /** Appends \p donor component to \p acceptor component.
      * \details The place of \p donor is filled by the last component of
      * \a ct, which is reindexed, unless \p donor is the last one itself.
      * Hence, if \p acceptor is the last component, the merged component
@@ -207,8 +202,7 @@ public:
         Compt& donor
     ) -> Compt&;
 
-    /**
-     * Appends \p donor component to \p acceptor component.
+    /** Appends \p donor component to \p acceptor component.
      * \details The place of \p donor is filled by the last component of
      * \a ct, which is reindexed, unless \p donor is the last one itself.
      * Hence, if \p acceptor is the last component, the merged component
@@ -225,8 +219,7 @@ public:
         CmpId donor
     ) -> Compt&;
 
-    /**
-     * Moves the chains of \p cmp unreachable from slot \p s to a new
+    /** Moves the chains of \p cmp unreachable from slot \p s to a new
      * component.
      * \details The chains are classified by
      * PathsOverEndSlots::classify_chains_by_connectivity(), so that \p pp
@@ -241,8 +234,7 @@ public:
         const EndSlot& s
     )-> Compt&;
 
-    /**
-     * Moves chains \p rm of \p cmp to a new component.
+    /** Moves chains \p rm of \p cmp to a new component.
      * \details The new component is appended to the components: this may
      * reallocate them, invalidating references to the components,
      * \p cmp included.
@@ -255,8 +247,7 @@ public:
         ChIdGs&& rm
     ) -> Compt&;
 
-    /**
-     * Moves chain \p m of \p cmp to a new component.
+    /** Moves chain \p m of \p cmp to a new component.
      * \details As split_component(Compt&, ChIdGs&&), for a single chain.
      * \return Reference to the new component.
      */
@@ -310,8 +301,7 @@ public:
     constexpr auto vertex(const BulkSlot& s) const noexcept -> const Vertex*;
     constexpr auto vertex(const BulkSlot& s)       noexcept ->       Vertex*;
 
-    /**
-     * Exchanges the places of vertices \p a and \p b in the graph: each takes
+    /** Exchanges the places of vertices \p a and \p b in the graph: each takes
      * over the edges, and the component, of the other.
      * \details Changes the topology only up to vertex identity: the vertex
      * objects, with their ids and other attributes, remain valid. Used by
@@ -332,15 +322,16 @@ public:
     auto get_ved(VIdH h) const -> const VertexDescr& { refresh_vertex_descriptors(); return ved[h]; }
     auto get_ved(VIdH h)       ->       VertexDescr& { refresh_vertex_descriptors(); return ved[ved.find(h)]; }
 
-    /// Rotates the edges of chain \p m by \p n positions, as
-    /// Component::rotate_chain(), also updating the graph-wide descriptors.
+    /** Rotates the edges of chain \p m by \p n positions, as
+     * Component::rotate_chain(), also updating the graph-wide descriptors.
+     */
     constexpr void rotate_chain(Chain& m, std::size_t n);
 
     /**
      * \note Does not update edge connectivity.
      *       Does not update chain connectivity and 'ngs'.
      *       Does not remove source chain if it is emptied.
-    */
+     */
     constexpr void move_edges(
         Chain& fr,
         std::size_t posFrBegin,
@@ -349,26 +340,31 @@ public:
         std::size_t posTo  // position of the first inserted element
     );
 
-    /// Position in its chain of the edge at chain end \p s .
+    /** Position in its chain of the edge at chain end \p s .
+     */
     constexpr auto slot2a(const EndSlot& s) const noexcept -> EgIdA;
 
-    /// Graph-wide index of the edge at chain end \p s .
+    /** Graph-wide index of the edge at chain end \p s .
+     */
     constexpr auto slot2ind(const EndSlot& s) const noexcept -> EgIdG;
-    /// BulkSlot {chain, position} of edge \p ind : the internal vertex at
-    /// the outer end A of the edge, if the edge is not the chain tail.
+    /** BulkSlot {chain, position} of edge \p ind : the internal vertex at
+     * the outer end A of the edge, if the edge is not the chain tail.
+     */
     constexpr auto ind2bslot(EgIdG ind) const noexcept -> BulkSlot;
 
-    /// Inner end, of the edge at chain end \p s , facing that chain end.
+    /** Inner end, of the edge at chain end \p s , facing that chain end.
+     */
     constexpr auto edge_end(const EndSlot& s) const noexcept -> EndId;
 
-    /// Updates internal data related to edge 'ind'.
+    /** Updates internal data related to edge 'ind'.
+     */
     void update_adjacency_edges(EgIdG ind) noexcept;
 
-    /// Updates internal data.
+    /** Updates internal data.
+     */
     void update_adjacency() noexcept;
 
-    /**
-     * Updates internal vectors.
+    /** Updates internal vectors.
      * \details Calls update_edge_descriptors(), then update_adjacency() if
      * the graph keeps an adjacency list (\a useAgl), and finally
      * update_vertex_descriptors(), which only marks the vertex descriptors
@@ -378,8 +374,7 @@ public:
     template<bool withVertices = true>
     void update();
 
-    /**
-     * Updates internal vectors after changes limited to chains \p ww.
+    /** Updates internal vectors after changes limited to chains \p ww.
      * \details Like update(), but updates only the descriptors of the edges
      * of chains \p ww: these must comprise every chain whose edges changed
      * position, chain or index. Chains no longer in the graph are skipped.
@@ -387,35 +382,30 @@ public:
     template<bool withVertices = true>
     void update(std::initializer_list<ChIdG> ww);
 
-    /**
-     * Initializes or updates vector of graph-wide edge descriptors.
+    /** Initializes or updates vector of graph-wide edge descriptors.
      */
     void update_edge_descriptors();
 
-    /**
-     * Updates the graph-wide edge descriptors of the edges of chains \p ww.
+    /** Updates the graph-wide edge descriptors of the edges of chains \p ww.
      * \details In DEBUG builds, the result is checked against a full update.
      */
     void update_edge_descriptors(std::initializer_list<ChIdG> ww);
 
-    /**
-     * Marks the graph-wide vertex descriptors as stale.
+    /** Marks the graph-wide vertex descriptors as stale.
      * \details Called by the transformations: the descriptors are rebuilt,
      * at linear cost, on their first access after a change, rather than
      * after every transformation.
      */
     void update_vertex_descriptors() noexcept;
 
-    /**
-     * Rebuilds the graph-wide vertex descriptors if they are stale.
+    /** Rebuilds the graph-wide vertex descriptors if they are stale.
      * \note The accessors of the descriptors call it, so that reading them
      * from a const graph may modify this cache: call it beforehand to read
      * the descriptors of a graph from several threads.
      */
     void refresh_vertex_descriptors() const;
 
-    /**
-     * Builds an edge adjacency list.
+    /** Builds an edge adjacency list.
      * \tparam F Type of element of the generated list.
      * \param[in] f pointer to the function used for the element generation.
      * \return For each graph-wide edge index, the elements generated by \p f
@@ -428,20 +418,25 @@ public:
 
     constexpr auto max_degree() const noexcept -> Degree;
 
-    /// Number of vertices for the specific vertex degree \p d.
+    /** Number of vertices for the specific vertex degree \p d.
+     */
     constexpr auto num_vertices(Degree d) const noexcept -> std::size_t;
 
-    /// Total number of vertices.
+    /** Total number of vertices.
+     */
     constexpr auto num_vertices() const noexcept -> std::size_t;
 
-    /// Current number of components.
+    /** Current number of components.
+     */
     constexpr auto num_compts() const noexcept -> std::size_t { return ct.size(); };
     constexpr auto num_components() const noexcept -> std::size_t { return num_compts(); };
 
-    /// Current number of chains.
+    /** Current number of chains.
+     */
     constexpr auto num_chains() const noexcept -> std::size_t { return cn.num(); };
 
-    /// Current number of edges.
+    /** Current number of edges.
+     */
     constexpr auto num_edges() const noexcept -> std::size_t { return numEdges; };
     constexpr auto set_num_edges() noexcept { numEdges = cn.num_edges(); }
     constexpr auto set_num_edges(const std::size_t n) noexcept { numEdges = n; }
@@ -449,8 +444,7 @@ public:
     constexpr auto ind_last_cmpt() const noexcept -> CmpId;
     constexpr auto ind_last_chain() const noexcept -> ChIdG;
 
-    /**
-     * Records chain ends \p s1 and \p s2 as joined.
+    /** Records chain ends \p s1 and \p s2 as joined.
      * \details Adds each slot to the neighbour list (Chain::ngs) of the
      * other.
      * \note Only updates the chain connectivity: the vertices at the two
@@ -467,8 +461,7 @@ public:
     constexpr auto edge_vertices(EgIdG ind) const noexcept -> const Edge::Vertices&;
     constexpr auto edge_vids(EgIdG ind) const noexcept -> Edge::VIDs;
 
-    /**
-     * Chain end slots by which the end edges \p ind1 and \p ind2 of two
+    /** Chain end slots by which the end edges \p ind1 and \p ind2 of two
      * chains are joined.
      * \return The end slots of the chains of \p ind1 and \p ind2 at their
      * common vertex, or a pair of undefined slots if they are not joined.
@@ -478,8 +471,7 @@ public:
         EgIdG ind2
     ) const noexcept -> std::array<EndSlot, 2>;
 
-    /**
-     * Updates graph chain indexes.
+    /** Updates graph chain indexes.
      * \details The indexes are updated so that the chain indexed as source
      * will acquire the identity of the target:
      * - connections of the source become connections of the target (end to end).
@@ -493,8 +485,7 @@ public:
     template<bool updateChis=true>
     void rename_chain(ChIdG f, ChIdG t);
 
-    /**
-     * Copies connection partners to a new chain.
+    /** Copies connection partners to a new chain.
      * \details Copies assigning the connected slots of \p f to \p t and
      * updates neigs of \p f to become neigs of \p t . Previous neigs of \p t
      * are deleted; \p f neigs are not cleared.
@@ -506,14 +497,13 @@ public:
         const EndSlot& t
     );
 
-    /**
-     * Removes chain end slot \p s from list of \a neigs in slots connected to it.
+    /** Removes chain end slot \p s from list of \a neigs in slots connected
+     * to it.
      * \param[in] s Chain end slot to be removed.
      */
     void remove_slot_from_neigs(const EndSlot& s);
 
-    /**
-     * Replaces \p old with \p nov in the neighbour lists of the slots
+    /** Replaces \p old with \p nov in the neighbour lists of the slots
      * connected to \p nov .
      * \details To be called once \p nov holds the neighbours of \p old,
      * e.g. after copy_neigs(): each of these must list \p old, which is
@@ -532,21 +522,18 @@ public:
         const EndSlot& s2
     ) const noexcept;
 
-    /**
-     * Checks if the graph is equilibrated.
+    /** Checks if the graph is equilibrated.
      * \note Placeholder: not implemented, always returns \a true.
      * \return \a true.
      */
     bool is_equilibrated() const noexcept;
 
-    /**
-     * Prints the graph chains using prefix \p tag.
+    /** Prints the graph chains using prefix \p tag.
      * \param[in] tag Human-readable description common to all records.
      */
     void print_chains(const std::string& tag) const;
 
-    /**
-     * Prints the graph components using prefix \p tag.
+    /** Prints the graph components using prefix \p tag.
      * \param[in] tag Human-readable description common to all records.
      */
     void print_components(std::string_view tag="") const;
@@ -559,8 +546,7 @@ public:
         std::string_view tag=" "
     ) const;
 
-    /**
-     * Outputs the graph components to a text-formatted stream.
+    /** Outputs the graph components to a text-formatted stream.
      * \param[in] ofs Output stream.
      */
     void report(std::ostream& ofs) const;

@@ -44,8 +44,7 @@ limitations under the License.
 namespace graffine::transforms::vertex_merger {
 
 
-/**
- * Template specialization for V2 + V2 -> V4 vertex merger.
+/** Template specialization for V2 + V2 -> V4 vertex merger.
  * \details Adds vertex type-specific vertex merger capability and updates the
  * graph for it.
  * \tparam G Graph to which the merger operation is applied.
@@ -81,32 +80,28 @@ struct FromN<Deg2, G, PP>
     const std::string shortName {make_name(Trait::shortName, dd)};
     const std::string fullName  {make_name(Trait::fullName, dd)};
 
-    /**
-     * Constructs a Functor object based on the Graph instance.
+    /** Constructs a Functor object based on the Graph instance.
      * \param[in] gr Graph to which the transformation is applied.
      * \param[in] pp Processor for non-topological properties.
      */
     explicit FromN(Graph& gr,
                    std::shared_ptr<PP> pp = nullptr);
 
-    /**
-     * Merges two degree 2 vertices.
+    /** Merges two degree 2 vertices.
      * \param[in] v1 1st input vertex.
      * \param[in] v2 2nd input vertex.
      */
     auto operator()(const Vertex& v1,
                     const Vertex& v2) noexcept -> Res;
 
-    /**
-     * Merges a boundary vertex on a cycle chain to a junction vertex.
+    /** Merges a boundary vertex on a cycle chain to a junction vertex.
      * \param[in] w1 Chain index of the cycle chain.
      * \param[in] s2 Slot incident to the junction vertex.
      */
     auto operator()(ChIdG w1,
                     const EndSlot& s2) noexcept -> Res;
 
-    /**
-     * Merges a chain inner vertex to a junction vertex.
+    /** Merges a chain inner vertex to a junction vertex.
      * \param[in] b1 Slot connected to a chain inner vertex.
      * \param[in] s2 Slot connected to the junction vertex.
      */

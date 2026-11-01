@@ -44,8 +44,7 @@ limitations under the License.
 namespace graffine::structure::modifiers {
 
 
-/**
- * Assembles a graph from its vertices and edges.
+/** Assembles a graph from its vertices and edges.
  * \details The input edges must be connected to the input vertices
  * (Edge::connect_to_outer()). The factory groups the edges into chains,
  * which run through the vertices of degree 2, joins the chains at the other
@@ -64,8 +63,7 @@ struct GraphFactory
     using EndSlot = Chain::EndSlot;
     using EdgeInVertex = Vertex::EgDescr;
 
-    /**
-     * Creates the graph assembled from \p globalVertices and
+    /** Creates the graph assembled from \p globalVertices and
      * \p globalEdges .
      * \param[in] globalVertices All vertices of the graph.
      * \param[in] globalEdges All edges, connected to the vertices.
@@ -77,8 +75,7 @@ struct GraphFactory
         std::vector<Edge>&& globalEdges
     ) -> Graph;
 
-    /**
-     * Assembles the graph in place, in the existing empty graph \p gr.
+    /** Assembles the graph in place, in the existing empty graph \p gr.
      * \details Suits graphs referred to by other objects, which therefore
      * cannot be replaced by a newly created one.
      * \param[out] gr Empty graph to be filled.

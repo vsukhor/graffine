@@ -44,8 +44,7 @@ limitations under the License.
 /// Functionality enabling transformations of the graph topology
 namespace graffine::transforms {
 
-/**
- * Reason why a transformation is not applicable to its arguments.
+/** Reason why a transformation is not applicable to its arguments.
  * \details Holds a static string, so that rejections cost no allocation:
  * they are part of the regular flow of simulations proposing random moves.
  */
@@ -56,14 +55,14 @@ struct Rejection {
 /// Outcome of checking whether a transformation can be applied.
 using Applicability = std::expected<void, Rejection>;
 
-/// Rejection of a transformation for \p reason.
+/** Rejection of a transformation for \p reason.
+ */
 constexpr auto reject(const char* reason) noexcept -> std::unexpected<Rejection>
 {
     return std::unexpected(Rejection {reason});
 }
 
-/**
- * Vertex object which a vertex split or merger keeps, when given.
+/** Vertex object which a vertex split or merger keeps, when given.
  * \details For a merger, the vertex at its first or second argument, which
  * becomes the merged vertex; for a split, the first or second resulting
  * vertex, which then is the object of the split vertex. The topology is that
@@ -84,8 +83,7 @@ auto vet(const D& d, const A&... args) -> Applicability;
 
 }  // namespace plans
 
-/**
- * Interface shared by the transformation functors.
+/** Interface shared by the transformation functors.
  * \details A transformation \p D implements, for each of its argument lists:
  * - \c applicability(args) const: checks the preconditions, at a cost
  *   independent of the graph size;
@@ -109,8 +107,9 @@ auto vet(const D& d, const A&... args) -> Applicability;
 template<typename D>
 struct Applicable
 {
-    /// Applies the transformation, after checking its preconditions.
-    /// \throws precondition_error If the transformation is not applicable.
+    /** Applies the transformation, after checking its preconditions.
+     * \throws precondition_error If the transformation is not applicable.
+     */
     // DD defers the use of D, incomplete when this class is instantiated.
     template<typename... A,
              typename DD = D>
@@ -132,15 +131,17 @@ struct Applicable
         return self().apply(std::forward<A>(args)...);
     }
 
-    /// Whether the transformation is applicable to \p args.
+    /** Whether the transformation is applicable to \p args.
+     */
     template<typename... A>
     auto is_applicable(const A&... args) const -> bool
     {
         return self().applicability(args...).has_value();
     }
 
-    /// Applies the transformation if it is applicable to \p args.
-    /// \return The result of the transformation, or the reason of rejection.
+    /** Applies the transformation if it is applicable to \p args.
+     * \return The result of the transformation, or the reason of rejection.
+     */
     template<typename... A,
              typename DD = D>
     auto try_apply(A&&... args)
@@ -177,7 +178,8 @@ private:
 /// Checks of the transformation arguments, shared by the transformations.
 namespace checks {
 
-/// Whether \p s refers to an end of an existing chain of \p gr.
+/** Whether \p s refers to an end of an existing chain of \p gr.
+ */
 template<typename G>
 constexpr auto is_valid(
     const G& gr,
@@ -187,7 +189,8 @@ constexpr auto is_valid(
     return s.w < gr.num_chains() && G::End::is_valid(s.e);
 }
 
-/// Whether \p s refers to an internal vertex of an existing chain of \p gr.
+/** Whether \p s refers to an internal vertex of an existing chain of \p gr.
+ */
 template<typename G>
 constexpr auto is_valid(
     const G& gr,
@@ -198,7 +201,8 @@ constexpr auto is_valid(
     return w < gr.num_chains() && a > 0 && a < gr.chain(w).length();
 }
 
-/// Whether \p w refers to an existing chain of \p gr.
+/** Whether \p w refers to an existing chain of \p gr.
+ */
 template<typename G>
 constexpr auto is_valid(
     const G& gr,
@@ -208,7 +212,8 @@ constexpr auto is_valid(
     return w < gr.num_chains();
 }
 
-/// Whether \p ind refers to an existing edge of \p gr.
+/** Whether \p ind refers to an existing edge of \p gr.
+ */
 template<typename G>
 constexpr auto is_valid_edge(
     const G& gr,
@@ -218,8 +223,7 @@ constexpr auto is_valid_edge(
     return ind < gr.num_edges();
 }
 
-/**
- * Whether vertex \p v belongs to graph \p gr.
+/** Whether vertex \p v belongs to graph \p gr.
  * \details Follows the first edge of \p v back to its vertex: constant cost.
  */
 template<typename G>
@@ -250,8 +254,7 @@ constexpr auto is_in_graph(
 /// Slots of vertices. The vertices must belong to the graph.
 namespace locate {
 
-/**
- * Chain end slot at vertex \p v, through the first edge of \p v.
+/** Chain end slot at vertex \p v, through the first edge of \p v.
  * \return Undefined slot if \p v is not at an end of that edge's chain.
  */
 template<typename G>
@@ -266,8 +269,7 @@ constexpr auto end_slot(
     return gr.chain(egl.w).end_slot(egl.a, egs.e);
 }
 
-/**
- * Bulk slot at vertex \p v, through the first edge of \p v.
+/** Bulk slot at vertex \p v, through the first edge of \p v.
  * \details Accounts for the orientation of the edge. Positions 0 and the
  * chain length denote the boundary vertex of an unconnected cycle.
  */

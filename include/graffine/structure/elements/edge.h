@@ -45,8 +45,7 @@ limitations under the License.
 namespace graffine::structure {
 namespace detail {
 
-/**
- * Minimal edge: a run-wide identifier, a graph-wide index and the vertices
+/** Minimal edge: a run-wide identifier, a graph-wide index and the vertices
  * at its two ends.
  * \details Base of Edge, which adds the chain and component data and the
  * orientation; the ends of a Bond2 are its inner ends (see Edge).
@@ -78,8 +77,7 @@ public:  // functions
 
     constexpr Bond2() noexcept;  // Id is initialized, rest is undefined
 
-    /**
-     * Constructor leaving chain and component data undefined.
+    /** Constructor leaving chain and component data undefined.
      * \param[in] ind Index graph-wide.
      */
     explicit constexpr Bond2(EgIdG ind) noexcept;
@@ -95,17 +93,17 @@ public:  // functions
         const EndId e
     ) const noexcept -> DescrInVertex;
 
-    /**
-     * Formatted printing out of the edge data.
+    /** Formatted printing out of the edge data.
      * \tparam ENDL Flag to end current line after the print.
      * \param[in] tag Prefix preceding the output.
-    */
+     */
     template<bool ENDL=true>
     void print(std::string_view tag) const;
 
 protected:  // functions
 
-    /// Create identifier unique over the program run.
+    /** Create identifier unique over the program run.
+     */
     static auto create_id() noexcept -> EgIdH;
 };
 
@@ -210,8 +208,9 @@ print(const std::string_view prefix) const
 
 // /////////////////////////////////////////////////////////////////////////////
 
-/// Generic template for edges with additional properties \p Props;
-/// see the specialization Edge<V> for the implemented edge.
+/** Generic template for edges with additional properties \p Props;
+ * see the specialization Edge<V> for the implemented edge.
+ */
 template<typename V,
          typename... Props>
 struct Edge
@@ -223,8 +222,7 @@ struct Edge
 
 template<typename, typename...> struct Chain;
 
-/**
- * The graph Edge.
+/** The graph Edge.
  * \details Edge is a minimal structural unit of a graph.
  * The struct implements the tasks and properties specific to a single edge
  * and its relation to other components.
@@ -291,8 +289,7 @@ public:  // functions
 
     constexpr Edge() : Base{} {}  // Id is initialized, rest is undefined
 
-    /**
-     * Constructor leaving chain and component data undefined.
+    /** Constructor leaving chain and component data undefined.
      * \param[in] ind Index graph-wide.
      */
     explicit constexpr Edge(EgIdG ind) noexcept;
@@ -308,8 +305,7 @@ public:  // functions
         weight_t weight
     ) noexcept;
 
-    /**
-     * Constructor of a chain-embedded edge without component specs.
+    /** Constructor of a chain-embedded edge without component specs.
      * \param[in] ind Index graph-wide.
      * \param[in] indw Index in the host chain.
      * \param[in] w Index of the host chain.
@@ -320,8 +316,7 @@ public:  // functions
         ChIdG w
     ) noexcept;
 
-    /**
-     * Constructor setting all data members.
+    /** Constructor setting all data members.
      * \param[in] ind Index graph-wide.
      * \param[in] indc Index component-wide.
      * \param[in] indw Index in the host chain.
@@ -340,8 +335,7 @@ public:  // functions
 
     constexpr void set_cmp(CmpId cc, EgIdC indcc) noexcept;
 
-    /**
-     * Reverses the edge orientation.
+    /** Reverses the edge orientation.
      * \details With \p swapVV, also swaps the inner ends: the vertices and
      * their descriptors of the edge are relabelled, so that each outer end
      * keeps its vertex. Without, only \a ornt is flipped, which swaps the
@@ -350,18 +344,23 @@ public:  // functions
      */
     template<bool swapVV> void reverse();
 
-    /// Get edge orientation.
+    /** Get edge orientation.
+     */
     constexpr auto orientation() const noexcept -> Orientation;
 
-    /// Whether the inner and outer ends of the edge coincide.
+    /** Whether the inner and outer ends of the edge coincide.
+     */
     constexpr bool points_forwards() const noexcept;
 
-    /// Outer end corresponding to inner end \p innerE.
+    /** Outer end corresponding to inner end \p innerE.
+     */
     constexpr auto outer_endId(EndId innerE) const noexcept -> EndId;
-    /// Inner end corresponding to outer end \p outerE.
+    /** Inner end corresponding to outer end \p outerE.
+     */
     constexpr auto inner_endId(EndId outerE) const noexcept -> EndId;
 
-    /// Return index of the edge end opposite to 'e'.
+    /** Return index of the edge end opposite to 'e'.
+     */
     static constexpr auto opp_end(EndId e) noexcept -> EndId;
 
     constexpr void connect_to_inner(EndId e, Vertex& v);
@@ -390,24 +389,22 @@ public:  // functions
     ) const noexcept -> DescrInVertex;
 
 
-    /**
-     * Formatted printing out of the edge data.
+    /** Formatted printing out of the edge data.
      * \tparam ENDL Flag to end current line after the print.
      * \param[in] tag Prefix preceding the output.
-    */
+     */
     template<bool ENDL=true>
     void print(std::string_view tag) const;
 
     // Testing
 
-    /**
-     * Ensures that the edge indexes are consistent within the graph.
+    /** Ensures that the edge indexes are consistent within the graph.
      * \param[in] nInd Total number of edges in the graph.
      * \param[in] nIndC Number of edges in the component.
      * \param[in] nIndW Number of edges in the chain.
      * \param[in] nCh Number of chains in the graph.
      * \param[in] nCmpt Number of connected components in the graph.
-    */
+     */
     void check(std::size_t nInd,
                std::size_t nIndC,
                std::size_t nIndW,

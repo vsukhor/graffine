@@ -36,8 +36,7 @@ limitations under the License.
 #include <string>
 #include <type_traits>
 
-/**
- * Defines identifiers for graph structural elements.
+/** Defines identifiers for graph structural elements.
  * \details An identifier is typed by the kind of element it identifies and
  * by its scope, i.e. the range over which it is unique. The alias names
  * encode both: \c EgId, \c ChId, \c VId for edges, chains and vertices,
@@ -89,7 +88,8 @@ enum class IdScope {
     CHAIN       ///< Position along a chain.
 };
 
-/// Struct template for element ids.
+/** Struct template for element ids.
+ */
 template<ElementType T,
          IdScope S>
 struct Id

@@ -65,8 +65,7 @@ struct EdgeDescriptorsInGraph
 
     void set(const Graph& gr);
 
-    /**
-     * Updates the descriptors of the edges of chains \p ww only.
+    /** Updates the descriptors of the edges of chains \p ww only.
      * \details The descriptors of the other edges must be up to date.
      * Chains not in the graph are skipped.
      */

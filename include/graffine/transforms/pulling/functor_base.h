@@ -40,8 +40,7 @@ limitations under the License.
 
 namespace graffine::transforms::pulling {
 
-/**
- * Base for deriving functor classes pulling a specific graph edge.
+/** Base for deriving functor classes pulling a specific graph edge.
  * \details Pulling shifts the edges of a Path relative to the rest of the
  * component, from the source towards the driver. A pull by one step shifts
  * each chain junction along the path by one edge towards the source: the
@@ -84,8 +83,8 @@ struct FunctorBase
     using PathW = typename Path::PathW;
     using Source = typename Path::Source;
 
-    /**
-     * Base class for deriving functors handling degree-specific vertex pulling.
+    /** Base class for deriving functors handling degree-specific vertex
+     * pulling.
      * \param[in] gr Graph to which the transformation is applied.
      * \param[in] pp Processor for non-topological properties.
      * \param[in] d Degree of the driver vertex of the derived functor.
@@ -94,27 +93,27 @@ struct FunctorBase
                 std::shared_ptr<PP> pp,
                 Degree d);
 
-    /// Outcome of pulling \p path by \p steps (see plan.h).
+    /** Outcome of pulling \p path by \p steps (see plan.h).
+     */
     auto plan(const Path& path,
               const int steps) const -> Plan<G>
     {
         return make_plan(gr, path, steps);
     }
 
-    /// Processor of non-topological properties.
+    /** Processor of non-topological properties.
+     */
     auto processor() const noexcept -> PP* { return updateProperties.get(); }
 
 protected:
 
-    /**
-     * Checks that \p path refers to this graph, with valid chains, and that
+    /** Checks that \p path refers to this graph, with valid chains, and that
      * \p steps is positive.
      */
     auto check_path_basics(const Path& path,
                            int steps) const -> Applicability;
 
-    /**
-     * Checks that the source end of \p path is free, unless the source is a
+    /** Checks that the source end of \p path is free, unless the source is a
      * cycle, and that the source chain is long enough for \p steps.
      * \details A degree 2 source should end the path, which should cover at
      * least \p steps edges of the source chain, and the source chain should
@@ -123,15 +122,13 @@ protected:
     auto check_source(const Path& path,
                       int steps) const -> Applicability;
 
-    /**
-     * End of the last edge of \p path at the source vertex.
+    /** End of the last edge of \p path at the source vertex.
      * \details Is the end of the edge itself, so remains valid as the edge
      * moves between chains.
      */
     auto source_egEnd(const Path& path) const -> End::Id;
 
-    /**
-     * Source at end \p egeS of the edge \p iS, which is the last path edge.
+    /** Source at end \p egeS of the edge \p iS, which is the last path edge.
      * \details A degree 2 source which is reached by the junction becomes the
      * chain end at this junction.
      * \param[in] iS Graph-wide index of the source edge.
@@ -153,13 +150,11 @@ protected:
     /// Context of the hooks of the inner transformations.
     const Frame frame;
 
-    /**
-     * Pull \p steps times a sequence of consecutive edges defined by \p path .
+    /** Pull \p steps times a sequence of consecutive edges defined by \p path .
      * \note The driver vertex is expected to be a leaf node.
      */
     bool pull_leaf_vertex(Path& path, int steps);
-    /**
-     * Pull once a sequence of consecutive edges defined by \p path .
+    /** Pull once a sequence of consecutive edges defined by \p path .
      * \overload
      * \tparam notify Calls pulling.on_end after the step. False for a step
      * which the caller completes with further topology changes, and so calls
@@ -560,7 +555,8 @@ shift_edges_to_target_chain(const Path& path)
 }
 
 
-/// on return, \p rit points to the last edge of the current chain in \p path
+/** on return, \p rit points to the last edge of the current chain in \p path
+ */
 template<typename G,
          typename PP>
     requires pulling::Processor<PP, G> &&

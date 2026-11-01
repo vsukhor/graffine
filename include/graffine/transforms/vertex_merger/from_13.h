@@ -42,8 +42,7 @@ limitations under the License.
 
 namespace graffine::transforms::vertex_merger {
 
-/**
- * Template specialization for V1 + V3 -> V4 vertex merger.
+/** Template specialization for V1 + V3 -> V4 vertex merger.
  * \details Adds vertex type-specific vertex merger capability and updates the
  * graph for it.
  * \tparam G Graph to which the merger operation is applied.
@@ -74,16 +73,14 @@ struct From<Deg1, Deg3, G, PP>
     const std::string shortName {make_name(Trait::shortName, dd)};
     const std::string fullName  {make_name(Trait::fullName, dd)};
 
-    /**
-     * Constructs a Functor object based on the Graph instance.
+    /** Constructs a Functor object based on the Graph instance.
      * \param[in] gr Graph to which the transformation is applied.
      * \param[in] pp Processor for non-topological properties.
      */
     explicit From(Graph& gr,
                   std::shared_ptr<PP> pp = nullptr);
 
-    /**
-     * Merges a vertex of degree 1 to a vertex of degree 3.
+    /** Merges a vertex of degree 1 to a vertex of degree 3.
      * \details Unchecked: see Applicable. The vertices may be given in any
      * order.
      * \param[in] v1 Degree 1 input vertex.
@@ -92,8 +89,7 @@ struct From<Deg1, Deg3, G, PP>
     auto apply(const Vertex& v1,
                const Vertex& v2) -> Res;
 
-    /**
-     * Merges a vertex of degree 1 to a vertex of degree 3.
+    /** Merges a vertex of degree 1 to a vertex of degree 3.
      * \details Unchecked: see Applicable.
      * \param[in] s1 Slot on degree 1 input vertex.
      * \param[in] s2 Slot on degree 3 input vertex.
@@ -101,23 +97,26 @@ struct From<Deg1, Deg3, G, PP>
     auto apply(const EndSlot& s1,
                const EndSlot& s2) -> Res;
 
-    /// Checks that vertices \p v1 and \p v2 can be merged.
-    /// \details Rejects vertices not belonging to the graph, or whose
-    /// degrees are not 1 and 3, in either order, then checks their slots as
-    /// the slot overload does.
+    /** Checks that vertices \p v1 and \p v2 can be merged.
+     * \details Rejects vertices not belonging to the graph, or whose
+     * degrees are not 1 and 3, in either order, then checks their slots as
+     * the slot overload does.
+     */
     auto applicability(const Vertex& v1,
                        const Vertex& v2) const -> Applicability;
 
-    /// Checks that the vertices at \p s1 and \p s2 can be merged.
-    /// \details Rejects invalid slots, a chain of \p s1 having no edges or
-    /// not free at \p s1 , a slot \p s2 not at a 3-way junction, and, if the
-    /// other end of the chain of \p s1 is at that junction, a merger closing
-    /// a loop shorter than Chain::minCycleLength.
+    /** Checks that the vertices at \p s1 and \p s2 can be merged.
+     * \details Rejects invalid slots, a chain of \p s1 having no edges or
+     * not free at \p s1 , a slot \p s2 not at a 3-way junction, and, if the
+     * other end of the chain of \p s1 is at that junction, a merger closing
+     * a loop shorter than Chain::minCycleLength.
+     */
     auto applicability(const EndSlot& s1,
                        const EndSlot& s2) const -> Applicability;
 
-    /// Outcome of the merger of vertices \p v1 and \p v2 (see plan.h).
-    /// \details The vertex of degree 3 is preserved.
+    /** Outcome of the merger of vertices \p v1 and \p v2 (see plan.h).
+     * \details The vertex of degree 3 is preserved.
+     */
     auto plan(const Vertex& v1,
               const Vertex& v2) const -> Plan<G>
     {
@@ -127,14 +126,16 @@ struct From<Deg1, Deg3, G, PP>
         return {&junction, &leaf};
     }
 
-    /// Outcome of the merger of the vertices at \p s1 and \p s2 (see plan.h).
+    /** Outcome of the merger of the vertices at \p s1 and \p s2 (see plan.h).
+     */
     auto plan(const EndSlot& s1,
               const EndSlot& s2) const -> Plan<G>
     {
         return {&plans::vertex_at(gr, s2), &plans::vertex_at(gr, s1)};
     }
 
-    /// Processor of non-topological properties.
+    /** Processor of non-topological properties.
+     */
     auto processor() const noexcept -> PP* { return updateProperties.get(); }
 
 protected:
@@ -300,8 +301,7 @@ apply(
 
 // /////////////////////////////////////////////////////////////////////////////
 
-/**
- * Vertex merger of vertices of degrees 1 and 3.
+/** Vertex merger of vertices of degrees 1 and 3.
  * \details The same functor as From<Deg1, Deg3, G, PP>, addressed
  * by the degree of the second vertex only.
  */

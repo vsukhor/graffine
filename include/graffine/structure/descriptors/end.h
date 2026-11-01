@@ -43,8 +43,7 @@ enum EndType
     A, B, undefined
 };
 
-/**
- * Represents the ends of an edge or those of a chain.
+/** Represents the ends of an edge or those of a chain.
  */
 struct End
 {

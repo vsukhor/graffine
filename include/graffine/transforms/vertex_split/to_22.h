@@ -45,8 +45,7 @@ limitations under the License.
 
 namespace graffine::transforms::vertex_split {
 
-/**
- * Template specialization for producing a pair of degree 2 vertices.
+/** Template specialization for producing a pair of degree 2 vertices.
  * \details Adds vertex type-specific split capability and updates
  * the graph for it. This Functor template specialization operates
  * on vertices of degree 4 to produce two vertices of degree 2: V4 -> 2V2.
@@ -84,24 +83,21 @@ struct To<Deg2, Deg2, G, PP>
     const std::string shortName {make_name(Trait::shortName, dd)};
     const std::string fullName  {make_name(Trait::fullName, dd)};
 
-    /**
-     * Constructs a Functor object based on the Graph instance.
+    /** Constructs a Functor object based on the Graph instance.
      * \param[in] gr Graph to which the transformation is applied.
      * \param[in] pp Processor for non-topological properties.
      */
     explicit To(Graph& gr,
                 std::shared_ptr<PP> pp = nullptr);
 
-    /**
-     * Divides the graph chain at a vertex of degree 2.
+    /** Divides the graph chain at a vertex of degree 2.
      * \param[in] v Degree 3 vertex.
      * \param[in] s Descriptors of incident edges to get disconnected.
      */
     auto apply(Vertex& v,
                const std::vector<EdgeInVertex>& s) -> Res;
 
-    /**
-     * Divides the component at a vertex of degree 4.
+    /** Divides the component at a vertex of degree 4.
      * Template parameters are used for testing of output chain types, their
      * default values may be accepted in most cases.
      * \param[in] s Slots defining the vertex to split.
@@ -111,8 +107,7 @@ struct To<Deg2, Deg2, G, PP>
              bool toDisconnectedCycle2 = false>
     auto apply(const std::array<EndSlot, J1>& s) -> Res;
 
-    /**
-     * Divides the component at a vertex of degree 4.
+    /** Divides the component at a vertex of degree 4.
      * Template parameters are used for testing of output chain types, their
      * default values may be accepted in most cases.
      * \param[in] s1 Slot defining the vertex to split and its 1st edge.
@@ -124,25 +119,29 @@ struct To<Deg2, Deg2, G, PP>
     auto apply(const EndSlot& s1,
                const EndSlot& s2) -> Res;
 
-    /// Checks that edges \p s can be detached together from vertex \p v.
-    /// \details Rejects \p v if it does not belong to the graph or its
-    /// degree is not 4, and \p s not holding two edges connected to \p v ,
-    /// then checks their chain ends as the slot overloads do.
+    /** Checks that edges \p s can be detached together from vertex \p v.
+     * \details Rejects \p v if it does not belong to the graph or its
+     * degree is not 4, and \p s not holding two edges connected to \p v ,
+     * then checks their chain ends as the slot overloads do.
+     */
     auto applicability(const Vertex& v,
                        const std::vector<EdgeInVertex>& s) const -> Applicability;
 
-    /// Checks that chain ends \p s can be detached together from their
-    /// junction.
+    /** Checks that chain ends \p s can be detached together from their
+     * junction.
+     */
     auto applicability(const std::array<EndSlot, J1>& s) const -> Applicability;
 
-    /// Checks that chain ends \p s1 and \p s2 can be detached together from
-    /// their junction.
-    /// \details Rejects invalid slots, \p s1 equal to \p s2 , a chain end
-    /// not at a vertex of degree 4, and chain ends not at the same vertex.
+    /** Checks that chain ends \p s1 and \p s2 can be detached together from
+     * their junction.
+     * \details Rejects invalid slots, \p s1 equal to \p s2 , a chain end
+     * not at a vertex of degree 4, and chain ends not at the same vertex.
+     */
     auto applicability(const EndSlot& s1,
                        const EndSlot& s2) const -> Applicability;
 
-    /// Outcome of detaching edges \p s together from vertex \p v (see plan.h).
+    /** Outcome of detaching edges \p s together from vertex \p v (see plan.h).
+     */
     auto plan(const Vertex& v,
               const std::vector<EdgeInVertex>& s) const -> Plan<G>
     {
@@ -151,16 +150,18 @@ struct To<Deg2, Deg2, G, PP>
         return plan(cmp.end_slot(s[0]), cmp.end_slot(s[1]));
     }
 
-    /// Outcome of detaching chain ends \p s together (see plan.h).
+    /** Outcome of detaching chain ends \p s together (see plan.h).
+     */
     auto plan(const std::array<EndSlot, J1>& s) const -> Plan<G>
     {
         return plan(s[0], s[1]);
     }
 
-    /// Outcome of detaching chain ends \p s1 and \p s2 together from their
-    /// junction (see plan.h).
-    /// \details The edges at \p s1 and \p s2 go to the first resulting
-    /// vertex, the other two to the second one.
+    /** Outcome of detaching chain ends \p s1 and \p s2 together from their
+     * junction (see plan.h).
+     * \details The edges at \p s1 and \p s2 go to the first resulting
+     * vertex, the other two to the second one.
+     */
     auto plan(const EndSlot& s1,
               const EndSlot& s2) const -> Plan<G>
     {
@@ -168,7 +169,8 @@ struct To<Deg2, Deg2, G, PP>
                          {gr.slot2ind(s1), gr.slot2ind(s2)});
     }
 
-    /// Processor of non-topological properties.
+    /** Processor of non-topological properties.
+     */
     auto processor() const noexcept -> PP* { return updateProperties.get(); }
 
 private:
@@ -186,8 +188,7 @@ private:
     /// Pretty-printer of the initial and final configurations.
     Reporter<Graph> report;
 
-    /**
-     * Do explicit check of the expected chain types.
+    /** Do explicit check of the expected chain types.
      * Is not necessary in most cases.
      */
     template<bool toDisconnectedCycle1,
@@ -456,8 +457,7 @@ check_validity(
 
 // /////////////////////////////////////////////////////////////////////////////
 
-/**
- * Vertex split producing vertices of degrees 2 and 2.
+/** Vertex split producing vertices of degrees 2 and 2.
  * \details The same functor as To<Deg2, Deg2, G, PP>, addressed
  * by the degree of the second vertex only.
  */

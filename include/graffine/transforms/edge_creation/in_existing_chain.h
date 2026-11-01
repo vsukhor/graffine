@@ -42,8 +42,7 @@ limitations under the License.
 
 namespace graffine::transforms::edge_creation {
 
-/**
- * Creates an edge adjoint to a vertex, putting it into an existing chain.
+/** Creates an edge adjoint to a vertex, putting it into an existing chain.
  * \details Creates a graph edge inserted into an existing chain, at a vertex
  * of any degree. That vertex keeps its degree. Because the edge extends an
  * already existing chain, the chain gains a new vertex of degree 2.
@@ -79,16 +78,14 @@ struct InExistingChain
     static constexpr const char* shortName {"ec_oc"};
     static constexpr const char* fullName  {"edge_creation_old_chain"};
 
-    /**
-     * Constructs a Functor object based on the Graph instance.
+    /** Constructs a Functor object based on the Graph instance.
      * \param[in] gr Graph to which the transformation is applied.
      * \param[in] pp Processor for non-topological properties.
      */
     explicit InExistingChain(Graph& gr,
                              std::shared_ptr<PP> pp = nullptr);
 
-    /**
-     * Executes the transformation at vertex \p v.
+    /** Executes the transformation at vertex \p v.
      * \details Calls its overload using the slot of \p v: its bulk slot if
      * \p v has degree 2, otherwise a chain end slot at \p v .
      * Unchecked: see Applicable.
@@ -97,8 +94,7 @@ struct InExistingChain
      */
     auto apply(Vertex& v) -> Res;
 
-    /**
-     * Executes the transformation.
+    /** Executes the transformation.
      * The new edge is appended/inserted at vertex defined by slot \p s.
      * If the vertex is internal, the new edge will become spanned between its
      * incident edges. Otherwise the new edge is appended to the chain, becoming
@@ -110,15 +106,13 @@ struct InExistingChain
     template<structure::descriptors::slot S>
     auto apply(const S& s) -> Res;
 
-    /**
-     * Checks that a new edge can be inserted at vertex \p v.
+    /** Checks that a new edge can be inserted at vertex \p v.
      * \details Rejects \p v if it does not belong to the graph, then checks
      * its slot as the slot overload does.
      */
     auto applicability(const Vertex& v) const -> Applicability;
 
-    /**
-     * Checks that a new edge can be inserted at slot \p s.
+    /** Checks that a new edge can be inserted at slot \p s.
      * \details Rejects an end slot of a nonexistent chain or having an
      * undefined end, and a bulk slot of a nonexistent chain or at a position
      * outside (0, chain length].
@@ -126,7 +120,8 @@ struct InExistingChain
     template<structure::descriptors::slot S>
     auto applicability(const S& s) const -> Applicability;
 
-    /// Outcome of the insertion of a new edge at vertex \p v (see plan.h).
+    /** Outcome of the insertion of a new edge at vertex \p v (see plan.h).
+     */
     auto plan(const Vertex& v) const -> Plan<G>
     {
         if (v.deg() == Deg2) {
@@ -138,9 +133,10 @@ struct InExistingChain
         return plan(locate::end_slot(gr, v));
     }
 
-    /// Outcome of the insertion of a new edge at slot \p s (see plan.h).
-    /// \details At a chain end, the end edge moves its end to the new vertex;
-    /// inside the chain, the edge before \p s does.
+    /** Outcome of the insertion of a new edge at slot \p s (see plan.h).
+     * \details At a chain end, the end edge moves its end to the new vertex;
+     * inside the chain, the edge before \p s does.
+     */
     template<structure::descriptors::slot S>
     auto plan(const S& s) const -> Plan<G>
     {
@@ -151,7 +147,8 @@ struct InExistingChain
             return {&plans::vertex_at(gr, s), m.g[std::get<1>(s.we()) - 1].ind};
     }
 
-    /// Processor of non-topological properties.
+    /** Processor of non-topological properties.
+     */
     auto processor() const noexcept -> PP* { return updateProperties.get(); }
 
 protected:

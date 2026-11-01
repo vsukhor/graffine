@@ -42,8 +42,7 @@ limitations under the License.
 namespace graffine::structure::containers {
 
 
-/**
- * Ordered set of slots connected at a common vertex.
+/** Ordered set of slots connected at a common vertex.
  * \details Holds, for a chain end (Chain::ngs), the end slots of the other
  * chains joined at its boundary vertex, and, for a vertex
  * (Vertex::edges()), the descriptors of its incident edge ends. It provides
@@ -126,13 +125,17 @@ struct Neigs
         return ss.contains(u);
     }
 
-    /// \return Whether \p u was present: the callers check it.
+    /**
+     * \return Whether \p u was present: the callers check it.
+     */
     bool erase(const Slot& u)
     {
         return ss.erase(u) > 0;
     }
 
-    /// \return Whether \p f was present: the callers check it.
+    /**
+     *  \return Whether \p f was present: the callers check it.
+     */
     bool replace(const Slot& f, const Slot& t)
     {
         auto node = ss.extract(f);

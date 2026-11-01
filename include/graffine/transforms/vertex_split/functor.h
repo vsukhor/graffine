@@ -44,8 +44,7 @@ limitations under the License.
 
 namespace graffine::transforms::vertex_split {
 
-/**
- * Wrapper functor for vertex degree-independent vertex split operations.
+/** Wrapper functor for vertex degree-independent vertex split operations.
  * \tparam G Graph to which the transformation is applied.
  */
 template<typename G,
@@ -61,16 +60,14 @@ struct Functor
     using Res = std::array<ResT, 2>;
     using PropertyProcessor = PP;
 
-    /**
-     * Constructs a functor for vertex split operation acting on a Graph.
+    /** Constructs a functor for vertex split operation acting on a Graph.
      * \param[in] gr Graph to which the transformation is applied.
      * \param[in] pp Processor for non-topological properties.
      */
     explicit constexpr Functor(Graph& gr,
                                std::shared_ptr<PP> pp = nullptr);
 
-    /**
-     * Divides the graph chain at given vertex \p v.
+    /** Divides the graph chain at given vertex \p v.
      * This is a wrapper operator able to process all implemented vertex degrees.
      * Unchecked: see Applicable.
      * \param[in] v Internal chain vertex.
@@ -79,18 +76,20 @@ struct Functor
     auto apply(Vertex& v,
                const std::vector<typename Vertex::EgDescr>& ss) -> Res;
 
-    /// Checks that vertex \p v can be split, detaching edges \p ss.
-    /// \details Dispatches on the degree of \p v and the size of \p ss :
-    /// degree 2 (\p ss ignored), degree 3 with one edge, degree 4 with one or
-    /// two edges. Rejects other combinations, then checks as the
-    /// degree-specific functor does.
+    /** Checks that vertex \p v can be split, detaching edges \p ss.
+     * \details Dispatches on the degree of \p v and the size of \p ss :
+     * degree 2 (\p ss ignored), degree 3 with one edge, degree 4 with one or
+     * two edges. Rejects other combinations, then checks as the
+     * degree-specific functor does.
+     */
     auto applicability(
         const Vertex& v,
         const std::vector<typename Vertex::EgDescr>& ss
     ) const -> Applicability;
 
-    /// Outcome of the split of vertex \p v detaching edges \p ss, by the
-    /// degree-specific split it dispatches to (see plan.h).
+    /** Outcome of the split of vertex \p v detaching edges \p ss, by the
+     * degree-specific split it dispatches to (see plan.h).
+     */
     auto plan(
         const Vertex& v,
         const std::vector<typename Vertex::EgDescr>& ss
@@ -103,7 +102,8 @@ struct Functor
                                                   : to_2_2.plan(v, ss);
     }
 
-    /// Processor of non-topological properties.
+    /** Processor of non-topological properties.
+     */
     auto processor() const noexcept -> PP* { return to_1_1.processor(); }
 
 protected:

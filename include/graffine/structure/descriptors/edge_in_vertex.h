@@ -41,8 +41,7 @@ limitations under the License.
 namespace graffine::structure::descriptors {
 
 
-/**
- * Descriptor of an edge known to vertex connected to it.
+/** Descriptor of an edge known to vertex connected to it.
  */
 template<IdScope Sc>
 struct EdgeInVertex

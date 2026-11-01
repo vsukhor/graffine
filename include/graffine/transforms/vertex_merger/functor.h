@@ -42,13 +42,11 @@ limitations under the License.
 #include <memory>
 #include <type_traits>
 
-/**
- * Contains operations handling fusion of two vertices in a graph.
+/** Contains operations handling fusion of two vertices in a graph.
  */
 namespace graffine::transforms::vertex_merger {
 
-/**
- * Wrapper functor for vertex degree-independent vertex merger.
+/** Wrapper functor for vertex degree-independent vertex merger.
  * \tparam G Graph to which the transformation is applied.
  */
 template<typename G,
@@ -64,16 +62,14 @@ struct Functor
     using ResT = Trait::ResT;
     using Res = Trait::Res;
 
-    /**
-     * Constructs a Functor object based on the Graph instance.
+    /** Constructs a Functor object based on the Graph instance.
      * \param[in] gr Graph to which the transformation is applied.
      * \param[in] pp Processor for non-topological properties.
      */
     explicit Functor(Graph& gr,
                      std::shared_ptr<PP> pp = nullptr);
 
-    /**
-     * Merges two vertices into one.
+    /** Merges two vertices into one.
      * \details Unchecked: see Applicable.
      * \param[in] v1 The 1st parent vertex.
      * \param[in] v2 The 2nd parent vertex.
@@ -81,15 +77,17 @@ struct Functor
     auto apply(Vertex& v1,
                Vertex& v2) -> Res;
 
-    /// Checks that vertices \p v1 and \p v2 can be merged.
-    /// \details Rejects pairs of degrees other than (1, 1), (1, 2), (1, 3)
-    /// and (2, 2), in either order, then checks the pair as the
-    /// degree-specific functor does.
+    /** Checks that vertices \p v1 and \p v2 can be merged.
+     * \details Rejects pairs of degrees other than (1, 1), (1, 2), (1, 3)
+     * and (2, 2), in either order, then checks the pair as the
+     * degree-specific functor does.
+     */
     auto applicability(const Vertex& v1,
                        const Vertex& v2) const -> Applicability;
 
-    /// Outcome of the merger of vertices \p v1 and \p v2, by the
-    /// degree-specific merger it dispatches to (see plan.h).
+    /** Outcome of the merger of vertices \p v1 and \p v2, by the
+     * degree-specific merger it dispatches to (see plan.h).
+     */
     auto plan(const Vertex& v1,
               const Vertex& v2) const -> Plan<G>
     {
@@ -102,7 +100,8 @@ struct Functor
         /* 1 + 2 */                     return from12.plan(v1, v2);
     }
 
-    /// Processor of non-topological properties.
+    /** Processor of non-topological properties.
+     */
     auto processor() const noexcept -> PP* { return from11.processor(); }
 
     From<Deg1, Deg1, G, PP> from11;

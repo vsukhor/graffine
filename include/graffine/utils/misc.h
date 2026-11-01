@@ -99,8 +99,9 @@ struct Adder
     }
 };
 
-/// Find index of the last minimal vector element.
-/// \return Index of the last minimal element of vector \b v
+/** Find index of the last minimal vector element.
+ * \return Index of the last minimal element of vector \b v
+ */
 template<typename T> constexpr
 std::size_t index_min( const std::vector<T>& v ) noexcept
 {
@@ -114,10 +115,11 @@ std::size_t index_min( const std::vector<T>& v ) noexcept
     return k;
 }
 
-/// Remove from a vector all instances of an element a.
-/// \tparam T Data type (must be EqualityComparable).
-/// \param v The vector.
-/// \param a The value to remove.
+/** Remove from a vector all instances of an element a.
+ * \tparam T Data type (must be EqualityComparable).
+ * \param v The vector.
+ * \param a The value to remove.
+ */
 template<typename T>
 void remove_vector_element( std::vector<T>& v,
                             const T& a )

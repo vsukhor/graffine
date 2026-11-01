@@ -67,8 +67,7 @@ namespace pulling {
 template<typename C>
 struct Path;
 
-/**
- * Processor of non-topological properties usable by the pullings.
+/** Processor of non-topological properties usable by the pullings.
  * \details Either void, for no processing, or a type providing the hooks
  * called with the path: on_start once before pulling along it, and on_end
  * after each of the steps of the pull.
@@ -90,8 +89,7 @@ concept Processor =
 template<typename G>
 using Trait = transforms::Trait<TransformType::Pulling, G>;
 
-/**
- * Outcome of a pulling, in terms of the graph before it.
+/** Outcome of a pulling, in terms of the graph before it.
  * \details The path keeps its vertices and edges, in number and order: the
  * driver gains an edge and the source loses one. In each of the first
  * \a shifts steps, the edges off the path at its vertices other than the
@@ -130,8 +128,7 @@ struct Plan {
     }
 };
 
-/**
- * Plan of pulling \p path of graph \p gr by \p steps.
+/** Plan of pulling \p path of graph \p gr by \p steps.
  * \details The branch nearest to the source, at path vertex j, reaches the
  * source in n - j steps.
  */
@@ -174,8 +171,7 @@ concept pullable_degree =
 /// Whether pulling from a degree 2 driver on an unconnected cycle is rejected.
 inline constexpr bool omitUnconnectedCycles = true;
 
-/**
- * Generic template for specifying vertex degree-specific pulling classes.
+/** Generic template for specifying vertex degree-specific pulling classes.
  * \details See FunctorBase for the pulling transformation, and Path for its
  * driver and source.
  * \tparam D Degree of the driver vertex, from which the pull operation is

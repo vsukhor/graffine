@@ -34,7 +34,8 @@ limitations under the License.
 
 namespace graffine::structure::descriptors {
 
-/// Descriptor of an edge.
+/** Descriptor of an edge.
+ */
 struct EdgeInGraph
 {
     ChIdG w {ChIdG::undefined};  ///< Index of the edge hosting chain.

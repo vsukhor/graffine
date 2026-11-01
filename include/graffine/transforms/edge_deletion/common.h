@@ -61,15 +61,13 @@ struct Trait<TransformType::EdgeDeletion, G>
     static constexpr auto Type = TransformType::EdgeDeletion;
 };
 
-/**
- * Enables edge deletion operations on a graph.
+/** Enables edge deletion operations on a graph.
  * \details These are functors for deleting edges based on chain lengths and
  * vertex degrees.
  */
 namespace edge_deletion {
 
-/**
- * Processor of non-topological properties usable by the edge deletions.
+/** Processor of non-topological properties usable by the edge deletions.
  * \details Either void, for no processing, or a type providing the hooks
  * called by the edge deletions: on_start<isChainDeleted> with the edge to
  * delete, and on_end<isChainDeleted> with a vertex at its former position.
@@ -94,8 +92,7 @@ concept Processor =
 template<typename G>
 using Trait = transforms::Trait<TransformType::EdgeDeletion, G>;
 
-/**
- * Outcome of an edge deletion, in terms of the graph before it.
+/** Outcome of an edge deletion, in terms of the graph before it.
  * \details Either the edge is contracted, keeping its chain: its two
  * vertices are merged into \a preserved. Or it is
  * deleted with its chain, a single edge attached by one end: the free end

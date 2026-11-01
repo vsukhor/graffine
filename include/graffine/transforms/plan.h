@@ -68,8 +68,7 @@ inline constexpr const char* vetoed {"vetoed by the property processor"};
 
 namespace plans {
 
-/**
- * Whether processor \p PP has the planning hook for plans of type \p P.
+/** Whether processor \p PP has the planning hook for plans of type \p P.
  * \details P::hooks(pp) selects the hooks of the family of P in \p pp.
  * A named concept, as nvcc misjudges some inline requires-expressions
  * (see hooks in context.h).
@@ -79,8 +78,7 @@ template<typename PP,
 concept Hooked = requires (PP& pp, const P& p) {
     { P::hooks(pp).plan(p) } -> std::convertible_to<bool>; };
 
-/**
- * Calls the planning hook of the processor of transformation \p d for its
+/** Calls the planning hook of the processor of transformation \p d for its
  * arguments \p args, if the processor has one and \p d is applied by the
  * client.
  * \return The rejection \ref vetoed if the hook vetoes the transformation.
@@ -106,7 +104,8 @@ auto vet(
     return {};
 }
 
-/// Vertex at chain end \p s of graph \p gr.
+/** Vertex at chain end \p s of graph \p gr.
+ */
 template<typename G>
 auto vertex_at(
     const G& gr,
@@ -116,8 +115,9 @@ auto vertex_at(
     return *gr.chain(s.w).vertex_at_end(s.e);
 }
 
-/// Vertex at position \p s inside a chain of graph \p gr; positions 0 and
-/// the chain length denote the chain ends.
+/** Vertex at position \p s inside a chain of graph \p gr; positions 0 and
+ * the chain length denote the chain ends.
+ */
 template<typename G>
 auto vertex_at(
     const G& gr,
@@ -132,7 +132,8 @@ auto vertex_at(
                   : *m.g[a - 1].vertex_at_outer(End::B);
 }
 
-/// Boundary vertex of unconnected cycle \p w of graph \p gr.
+/** Boundary vertex of unconnected cycle \p w of graph \p gr.
+ */
 template<typename G>
 auto vertex_at(
     const G& gr,
@@ -142,7 +143,8 @@ auto vertex_at(
     return *gr.chain(w).vertex_at_end(G::Chain::End::A);
 }
 
-/// Graph-wide indexes of the edges at vertex \p v of graph \p gr.
+/** Graph-wide indexes of the edges at vertex \p v of graph \p gr.
+ */
 template<typename G>
 auto edges_at(
     const G& gr,
@@ -158,7 +160,8 @@ auto edges_at(
     return ii;
 }
 
-/// Edges at vertex \p v of graph \p gr, other than those in range \p ii.
+/** Edges at vertex \p v of graph \p gr, other than those in range \p ii.
+ */
 template<typename G,
          typename R>
 auto edges_at_other_than(

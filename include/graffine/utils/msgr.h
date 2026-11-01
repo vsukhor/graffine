@@ -82,9 +82,7 @@ void failure_message(
 
 // /////////////////////////////////////////////////////////////////////////////
 
-/**
- * \class Msgr msgr.h
- * \brief Convenient formatted text output to the screen and a logfile.
+/** Convenient formatted text output to the screen and a logfile.
  * \details Implements convenience class for formatted text output
  * to std::cout and to a logfile.
  */
@@ -99,11 +97,11 @@ public:
     outstream* so {};  ///< Screen out stream.
     logstream* sl {};  ///< Logfile stream.
 
-    /// Default constructor.
+    /** Default constructor.
+     */
     Msgr() = default;
 
-    /**
-     * \brief Constructs This object given streams to the screen and to file.
+    /** Constructs This object given streams to the screen and to file.
      * \param so Screen out stream.
      * \param sl File out stream.
      * \param precision Precision of real numbers.
@@ -114,14 +112,12 @@ public:
         int precision
     );
 
-    /**
-     * \brief Set formatting parameters.
+    /** Set formatting parameters.
      * \param precision Precision of real numbers
      */
     void set_formats(int precision) noexcept;
 
-    /**
-     * \brief Print std::array.
+    /** Print std::array.
      * \tparam V Data type of array elements.
      * \tparam N Number of array elements.
      * \param name Name/title.
@@ -133,8 +129,7 @@ public:
         const std::array<V,N>& v
     ) const noexcept;
 
-    /**
-     * \brief Print named std::vector .
+    /** Print named std::vector .
      * \tparam V Data type of vector elements.
      * \param name Name/title.
      * \param v Vector data.
@@ -145,8 +140,7 @@ public:
         const std::vector<V>& v
     ) const noexcept;
 
-    /**
-     * \brief Print a data series of various types.
+    /** Print a data series of various types.
      * \details Based on proposition stackoverflow.com proposition by geza:
      * https://stackoverflow.com/questions/51647834/printf-like-utility-in-c-without-format-specifier/51648068#51648068
      * \tparam endline Finish with line end.
@@ -155,35 +149,30 @@ public:
     template<bool endline=true, typename... T>
     void print(T... values) const;
 
-    /**
-     * \brief ostream operator with the same functionality as the print method.
+    /** ostream operator with the same functionality as the print method.
      * \note The output is not terminated by a \a newline .
      */
     template<typename... T>
     Msgr& operator<<(T... values);
 
-    /**
-     * \brief Packs \p values into an output stringstream.
+    /** Packs \p values into an output stringstream.
      */
     template<typename... T>
     static auto oss(T... values) -> std::ostringstream;
 
 private:
 
-    /**
-     * \brief Check that the stream used is valid.
+    /** Check that the stream used is valid.
      * \tparam S Stream type.
      */
     template<typename S>
     static constexpr auto is_valid_stream() noexcept;
 
-    /**
-     * \brief Removes color codes from the stream directed to a file.
+    /** Removes color codes from the stream directed to a file.
      */
     auto rm_colorcode(std::string&& v) const -> std::string;
 
-    /**
-     * \brief Print to a stream \p io.
+    /** Print to a stream \p io.
      * \tparam IO Stream type.
      * \param io Stream object.
      * \param v String to print.

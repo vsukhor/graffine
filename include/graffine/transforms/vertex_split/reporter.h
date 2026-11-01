@@ -43,8 +43,7 @@ limitations under the License.
 
 namespace graffine::transforms::vertex_split {
 
-/**
- * Structure responsible for outputting formatted summary of vertex split.
+/** Structure responsible for outputting formatted summary of vertex split.
  * \details The summary is printed out in standardized form before, during and
  * after the transform.
  */

@@ -72,7 +72,8 @@ namespace edge_split {
 template<typename G>
 using Trait = transforms::Trait<TransformType::EdgeSplit, G>;
 
-/// Performs split of an edge.
+/** Performs split of an edge.
+ */
 template<typename G,
          typename PP = void>
     requires edge_creation::Processor<PP, G> &&
@@ -101,26 +102,26 @@ struct Functor
 
 // public methods
 
-    /**
-     * Constructs a Functor object based on the Graph instance.
+    /** Constructs a Functor object based on the Graph instance.
      * \param[in] gr Graph to which the transformation is applied.
      * \param[in] pp Processor for non-topological properties.
      */
     explicit Functor(Graph& gr,
                      std::shared_ptr<PP> pp = nullptr);
 
-    /**
-     * Function call operator executing the transformation.
+    /** Function call operator executing the transformation.
      * \param[in] ind Graph-wide index of the source edge.
      */
     auto apply(const EgIdG ind) -> Res;
 
-    /// Checks that edge \p ind can be split.
-    /// \details Rejects an invalid edge index only.
+    /** Checks that edge \p ind can be split.
+     * \details Rejects an invalid edge index only.
+     */
     auto applicability(EgIdG ind) const -> Applicability;
 
-    /// Outcome of the split of edge \p ind, as the edge creation performing
-    /// it: the end of \p ind at its end B moves to the new vertex (see plan.h).
+    /** Outcome of the split of edge \p ind, as the edge creation performing
+     * it: the end of \p ind at its end B moves to the new vertex (see plan.h).
+     */
     auto plan(const EgIdG ind) const -> edge_creation::Plan<G>
     {
         const auto& eg = gr.edge(ind);
@@ -130,7 +131,8 @@ struct Functor
                                  : create.plan(BulkSlot {eg.w, eg.indw + 1});
     }
 
-    /// Processor of non-topological properties.
+    /** Processor of non-topological properties.
+     */
     auto processor() const noexcept -> PP* { return create.processor(); }
 
 protected:

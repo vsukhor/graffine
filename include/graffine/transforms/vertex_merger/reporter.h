@@ -44,8 +44,7 @@ limitations under the License.
 
 namespace graffine::transforms::vertex_merger {
 
-/**
- * Structure responsible for outputting formatted summary of vertex merger.
+/** Structure responsible for outputting formatted summary of vertex merger.
  * \details The summary is printed out in standardized form before, during and
  * after the transform.
  */

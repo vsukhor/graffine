@@ -44,8 +44,7 @@ limitations under the License.
 
 namespace graffine::transforms::vertex_merger {
 
-/**
- * Template specialization for V2 + V2 -> V4 vertex merger.
+/** Template specialization for V2 + V2 -> V4 vertex merger.
  * \details Adds vertex type-specific vertex merger capability and updates the
  * graph for it.
  * \tparam G Graph to which the merger operation is applied.
@@ -83,16 +82,14 @@ struct From<Deg2, Deg2, G, PP>
     const std::string shortName {make_name(Trait::shortName, dd)};
     const std::string fullName  {make_name(Trait::fullName, dd)};
 
-    /**
-     * Constructs a Functor object based on the Graph instance.
+    /** Constructs a Functor object based on the Graph instance.
      * \param[in] gr Graph to which the transformation is applied.
      * \param[in] pp Processor for non-topological properties.
      */
     explicit From(Graph& gr,
                   std::shared_ptr<PP> pp = nullptr);
 
-    /**
-     * Merges two degree 2 vertices.
+    /** Merges two degree 2 vertices.
      * \details Unchecked: see Applicable.
      * \param[in] v1 1st input vertex.
      * \param[in] v2 2nd input vertex.
@@ -100,8 +97,7 @@ struct From<Deg2, Deg2, G, PP>
     auto apply(const Vertex& v1,
                const Vertex& v2) -> Res;
 
-    /**
-     * Merges two chain internal vertices.
+    /** Merges two chain internal vertices.
      * \details Unchecked: see Applicable.
      * \param[in] s1 Slot on the 1st input vertex.
      * \param[in] s2 Slot on the 2nd input vertex.
@@ -109,8 +105,7 @@ struct From<Deg2, Deg2, G, PP>
     auto apply(const BulkSlot& s1,
                const BulkSlot& s2) -> Res;
 
-    /**
-     * Merges a chain internal vertex to a boundary vertex on a cycle chain.
+    /** Merges a chain internal vertex to a boundary vertex on a cycle chain.
      * \details Unchecked: see Applicable.
      * \param[in] b1 Slot incident to degree 2 vertex.
      * \param[in] w2 Chain index of the cycle chain.
@@ -118,8 +113,7 @@ struct From<Deg2, Deg2, G, PP>
     auto apply(const BulkSlot& b1,
                ChIdG w2) -> Res;
 
-    /**
-     * Merges two unconnected cycles on their boundary vertices.
+    /** Merges two unconnected cycles on their boundary vertices.
      * \details Unchecked: see Applicable.
      * \param[in] w1 Chain index of the 1st cycle chain.
      * \param[in] w2 Chain index of the 2nd cycle chain.
@@ -127,8 +121,7 @@ struct From<Deg2, Deg2, G, PP>
     auto apply(ChIdG w1,
                ChIdG w2) -> Res;
 
-    /**
-     * Merges the vertices at \p b1 and \p s2, given by a BulkSlot or by
+    /** Merges the vertices at \p b1 and \p s2, given by a BulkSlot or by
      * the chain of an unconnected cycle, as apply(b1, s2), keeping vertex
      * \p k (see Keep).
      */
@@ -149,38 +142,43 @@ struct From<Deg2, Deg2, G, PP>
         return apply(b1, s2);
     }
 
-    /// Checks that vertices \p v1 and \p v2 can be merged.
-    /// \details Rejects vertices not belonging to the graph or not of
-    /// degree 2, and a vertex merged with itself, then checks their slots, or
-    /// their cycles for boundary vertices of cycles, as the other overloads
-    /// do.
+    /** Checks that vertices \p v1 and \p v2 can be merged.
+     * \details Rejects vertices not belonging to the graph or not of
+     * degree 2, and a vertex merged with itself, then checks their slots, or
+     * their cycles for boundary vertices of cycles, as the other overloads
+     * do.
+     */
     auto applicability(const Vertex& v1,
                        const Vertex& v2) const -> Applicability;
 
-    /// Checks that the vertices at \p b1 and \p b2 can be merged.
-    /// \details Rejects invalid slots, \p b1 equal to \p b2 , and, if both
-    /// are in the same chain, a merger closing a loop shorter than
-    /// Chain::minCycleLength (on an unconnected cycle, both parts become
-    /// loops).
+    /** Checks that the vertices at \p b1 and \p b2 can be merged.
+     * \details Rejects invalid slots, \p b1 equal to \p b2 , and, if both
+     * are in the same chain, a merger closing a loop shorter than
+     * Chain::minCycleLength (on an unconnected cycle, both parts become
+     * loops).
+     */
     auto applicability(const BulkSlot& b1,
                        const BulkSlot& b2) const -> Applicability;
 
-    /// Checks that the vertex at \p b1 can be merged to the boundary vertex
-    /// of the unconnected cycle \p w2.
-    /// \details Rejects an invalid \p b1 , a chain \p w2 which does not
-    /// exist or is not an unconnected cycle, and, if \p b1 is in \p w2 , a
-    /// merger closing a loop shorter than Chain::minCycleLength.
+    /** Checks that the vertex at \p b1 can be merged to the boundary vertex
+     * of the unconnected cycle \p w2.
+     * \details Rejects an invalid \p b1 , a chain \p w2 which does not
+     * exist or is not an unconnected cycle, and, if \p b1 is in \p w2 , a
+     * merger closing a loop shorter than Chain::minCycleLength.
+     */
     auto applicability(const BulkSlot& b1,
                        ChIdG w2) const -> Applicability;
 
-    /// Checks that the boundary vertices of unconnected cycles \p w1 and
-    /// \p w2 can be merged.
-    /// \details Rejects chains which do not exist or are not unconnected
-    /// cycles, and \p w1 equal to \p w2 .
+    /** Checks that the boundary vertices of unconnected cycles \p w1 and
+     * \p w2 can be merged.
+     * \details Rejects chains which do not exist or are not unconnected
+     * cycles, and \p w1 equal to \p w2 .
+     */
     auto applicability(ChIdG w1,
                        ChIdG w2) const -> Applicability;
 
-    /// Checks the merger as applicability(b1, s2).
+    /** Checks the merger as applicability(b1, s2).
+     */
     template<typename S>
     auto applicability(const BulkSlot& b1,
                        const S& s2,
@@ -189,7 +187,8 @@ struct From<Deg2, Deg2, G, PP>
         return applicability(b1, s2);
     }
 
-    /// Outcome of the merger of vertices \p v1 and \p v2 (see plan.h).
+    /** Outcome of the merger of vertices \p v1 and \p v2 (see plan.h).
+     */
     auto plan(const Vertex& v1,
               const Vertex& v2) const -> Plan<G>
     {
@@ -204,11 +203,12 @@ struct From<Deg2, Deg2, G, PP>
         /* else */          return plan(b1, b2);
     }
 
-    /// Outcome of the merger of the vertices at \p b1 and \p b2 (see plan.h).
-    /// \details In a single chain, the vertex nearer to end A is preserved,
-    /// or that nearer to end B in an unconnected cycle. Of two chains, the
-    /// vertex at \p b1 is preserved if its chain is an unconnected cycle,
-    /// otherwise that at \p b2.
+    /** Outcome of the merger of the vertices at \p b1 and \p b2 (see plan.h).
+     * \details In a single chain, the vertex nearer to end A is preserved,
+     * or that nearer to end B in an unconnected cycle. Of two chains, the
+     * vertex at \p b1 is preserved if its chain is an unconnected cycle,
+     * otherwise that at \p b2.
+     */
     auto plan(const BulkSlot& b1,
               const BulkSlot& b2) const -> Plan<G>
     {
@@ -222,25 +222,28 @@ struct From<Deg2, Deg2, G, PP>
         return first ? Plan<G> {v1, v2} : Plan<G> {v2, v1};
     }
 
-    /// Outcome of the merger of the vertex at \p b1 with the boundary vertex
-    /// of cycle \p w2 (see plan.h).
-    /// \details The vertex at \p b1 is preserved.
+    /** Outcome of the merger of the vertex at \p b1 with the boundary vertex
+     * of cycle \p w2 (see plan.h).
+     * \details The vertex at \p b1 is preserved.
+     */
     auto plan(const BulkSlot& b1,
               ChIdG w2) const -> Plan<G>
     {
         return {&plans::vertex_at(gr, b1), &plans::vertex_at(gr, w2)};
     }
 
-    /// Outcome of the merger of the boundary vertices of cycles \p w1 and
-    /// \p w2 (see plan.h).
-    /// \details The boundary vertex of \p w2 is preserved.
+    /** Outcome of the merger of the boundary vertices of cycles \p w1 and
+     * \p w2 (see plan.h).
+     * \details The boundary vertex of \p w2 is preserved.
+     */
     auto plan(ChIdG w1,
               ChIdG w2) const -> Plan<G>
     {
         return {&plans::vertex_at(gr, w2), &plans::vertex_at(gr, w1)};
     }
 
-    /// Outcome of the merger as plan(b1, s2), keeping vertex \p k.
+    /** Outcome of the merger as plan(b1, s2), keeping vertex \p k.
+     */
     template<typename S>
     auto plan(const BulkSlot& b1,
               const S& s2,
@@ -250,13 +253,13 @@ struct From<Deg2, Deg2, G, PP>
                                plans::vertex_at(gr, s2), k);
     }
 
-    /// Processor of non-topological properties.
+    /** Processor of non-topological properties.
+     */
     auto processor() const noexcept -> PP* { return updateProperties.get(); }
 
 private:
 
-    /**
-     * Checks the loops closed by merging two vertices of the same chain.
+    /** Checks the loops closed by merging two vertices of the same chain.
      * \param[in] m The chain.
      * \param[in] d Number of edges between the vertices along the chain.
      */

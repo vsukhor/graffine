@@ -67,8 +67,7 @@ namespace component_deletion {
 template<typename G>
 using Trait = transforms::Trait<TransformType::ComponentDeletion, G>;
 
-/**
- * Outcome of a component deletion. See plan.h.
+/** Outcome of a component deletion. See plan.h.
  */
 template<typename G>
 struct Plan {
@@ -81,8 +80,7 @@ struct Plan {
     }
 };
 
-/**
- * Processor of non-topological properties usable by the component deletions.
+/** Processor of non-topological properties usable by the component deletions.
  * \details Either void, for no processing, or a type providing the hooks
  * called before and after the transformation.
  * \tparam PP Property processor type.
@@ -99,8 +97,7 @@ concept Processor =
     };
 
 
-/**
- * Functor class deleting specific graph component.
+/** Functor class deleting specific graph component.
  * \details The last component of the graph is moved to the index of the
  * deleted one, unless the deleted component was the last.
  * \tparam G Graph to which the transformation is applied.
@@ -124,16 +121,14 @@ struct Functor
     static constexpr auto fullName = Trait::fullName;
     static constexpr auto shortName = Trait::shortName;
 
-    /**
-     * Constructs a Functor object based on the Graph instance.
+    /** Constructs a Functor object based on the Graph instance.
      * \param[in] gr Graph to which the transformation is applied.
      * \param[in] pp Processor for non-topological properties.
      */
     explicit Functor(Graph& gr,
                      std::shared_ptr<PP> pp = nullptr);
 
-    /**
-     * Executes the transformation.
+    /** Executes the transformation.
      * \details Unchecked: see Applicable.
      * \param[in] c Index of the connected component to be deleted.
      * \return \p c , which now holds the formerly last component, unless
@@ -141,16 +136,17 @@ struct Functor
      */
     auto apply(CmpId c) -> Res;
 
-    /**
-     * Checks that component \p c can be deleted.
+    /** Checks that component \p c can be deleted.
      * \details Rejects \p c not indexing a component of the graph.
      */
     auto applicability(CmpId c) const -> Applicability;
 
-    /// Outcome of the transformation (see plan.h).
+    /** Outcome of the transformation (see plan.h).
+     */
     auto plan(const CmpId c) const -> Plan<G> { return {c}; }
 
-    /// Processor of non-topological properties.
+    /** Processor of non-topological properties.
+     */
     auto processor() const noexcept -> PP* { return updateProperties.get(); }
 
 protected:

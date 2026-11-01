@@ -63,8 +63,7 @@ struct Trait<TransformType::VertexMerger, G>
 
 namespace vertex_merger {
 
-/**
- * Processor of non-topological properties usable by the vertex mergers.
+/** Processor of non-topological properties usable by the vertex mergers.
  * \details Either void, for no processing, or a type providing the hooks
  * called by the mergers: with the slots of the preserved and the removed
  * vertex before a merger, and with the resulting vertex after it.
@@ -90,8 +89,7 @@ concept Processor =
 template<typename G>
 using Trait = transforms::Trait<TransformType::VertexMerger, G>;
 
-/**
- * Outcome of a vertex merger, in terms of the graph before it.
+/** Outcome of a vertex merger, in terms of the graph before it.
  * \details See plan.h.
  */
 template<typename G>
@@ -110,8 +108,7 @@ struct Plan {
     }
 };
 
-/**
- * Keeping of a given one of the merged vertices (see Keep).
+/** Keeping of a given one of the merged vertices (see Keep).
  * \details The merger exchanges the two vertices, if it would keep the
  * other one, right after its on_start hook: its hooks see the vertices in
  * place before the merger, and the kept one as the result.
@@ -124,7 +121,8 @@ struct Keeper {
     /// The vertex to keep and the other one, if to exchange.
     std::array<Vertex*, 2> vv {};
 
-    /// Plan \p p of the merger of \p v1 and \p v2, keeping vertex \p k.
+    /** Plan \p p of the merger of \p v1 and \p v2, keeping vertex \p k.
+     */
     static auto plan(Plan<G> p,
                      const Vertex& v1,
                      const Vertex& v2,
@@ -136,8 +134,9 @@ struct Keeper {
         return p;
     }
 
-    /// Prepares the merger of \p v1 and \p v2, planned \p p, to keep vertex
-    /// \p k.
+    /** Prepares the merger of \p v1 and \p v2, planned \p p, to keep vertex
+     * \p k.
+     */
     void ask(const Plan<G>& p,
              Vertex& v1,
              Vertex& v2,
@@ -148,7 +147,8 @@ struct Keeper {
             vv = {kept, kept == &v1 ? &v2 : &v1};
     }
 
-    /// Exchanges the vertices, if asked for.
+    /** Exchanges the vertices, if asked for.
+     */
     void operator()(G& gr)
     {
         if (vv[0])
@@ -157,8 +157,7 @@ struct Keeper {
     }
 };
 
-/**
- * Generic template for vertex degree-specific merger executing classes.
+/** Generic template for vertex degree-specific merger executing classes.
  * \tparam D1 Degree of the 1st input vertex.
  * \tparam D2 Degree of the 2nd input vertex.
  * \tparam G Graph to which the transformation is applied.
@@ -171,8 +170,7 @@ template<Degree D1,
              vertex_merger::Processor<PP, G>
 struct From {};
 
-/**
- *  Template for vertex degree-specific merger with a vertex havingDegree 1.
+/** Template for vertex degree-specific merger with a vertex havingDegree 1.
  * \tparam D Degree of the 2nd input vertex.
  * \tparam G Graph to which the transformation is applied.
  */

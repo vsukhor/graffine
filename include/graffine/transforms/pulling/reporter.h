@@ -34,8 +34,7 @@ limitations under the License.
 
 namespace graffine::transforms::pulling {
 
-/**
- * Class handling printing out formatted summary at different stages of pulling
+/** Class handling printing out formatted summary at different stages of pulling
  * transformation.
  * \tparam F Functor class for the edge pulling initiated from a vertex of
  *           specific degree.

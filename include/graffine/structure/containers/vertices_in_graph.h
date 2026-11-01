@@ -67,7 +67,8 @@ struct VertexDescriptorsInGraph
     constexpr void set(const Graph& gr);
     constexpr void clear() { m_data.clear(); index.clear(); }
 
-    /// Position of the descriptor of vertex \p vid: constant time.
+    /** Position of the descriptor of vertex \p vid: constant time.
+     */
     constexpr auto find(const VIdH vid) const noexcept -> std::size_t;
     constexpr auto push_back(const VertexDescr& vd);
 
@@ -78,16 +79,16 @@ private:
 
     using Base::m_data;
 
-    /** Positions in m_data, indexed by the vertex id.
-     * \details The vertex ids are issued by a counter over the run (see
-     * Vertex::create_id()), so they are dense: a table indexed by them is
-     * faster than a hash map, and takes 4 bytes per vertex created in the
-     * run. Entries of vertices no longer in the graph are not cleared:
-     * find() confirms a hit by the id of the descriptor found.
-     */
+    /// Positions in m_data, indexed by the vertex id.
+    /// \details The vertex ids are issued by a counter over the run (see
+    /// Vertex::create_id()), so they are dense: a table indexed by them is
+    /// faster than a hash map, and takes 4 bytes per vertex created in the
+    /// run. Entries of vertices no longer in the graph are not cleared:
+    /// find() confirms a hit by the id of the descriptor found.
     std::vector<std::uint32_t> index;
 
-    /// Sets the index entry of the vertex \p id to the position \p pos.
+    /** Sets the index entry of the vertex \p id to the position \p pos.
+     */
     constexpr void set_index(std::uint32_t id, std::size_t pos);
 };
 

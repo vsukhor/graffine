@@ -41,8 +41,7 @@ limitations under the License.
 /// Classes defining collections of graph elements and their descriptors.
 namespace graffine::structure::containers {
 
-/**
- * Chain indexes classified according to end degrees.
+/** Chain indexes classified according to end degrees.
  * \details A chain is classified by the degrees of the vertices at its two
  * ends (Chain::degree_at_end()):
  * - a chain having degree \a d at both ends is listed by its id under key
@@ -64,6 +63,7 @@ struct ChainIndexes
     using ChIds = std::vector<ChId>;
     using Slots = std::vector<EndSlot>;
     using Key = std::array<Degree, 2>;  ///< End degrees, in ascending order.
+
     template<typename> friend struct Component;
     static constexpr ChIds emptyChids {};
     static constexpr Slots emptySlots {};
@@ -98,7 +98,8 @@ public:
     constexpr void insert(Degree k, ChId v);
     constexpr void insert(const Key& k, EndSlot&& v) noexcept;
 
-    /// Number of chains having end degrees \p k, equal or not.
+    /** Number of chains having end degrees \p k, equal or not.
+     */
     constexpr auto num(const Key& k) const -> std::size_t;
 
     constexpr auto num_chains() const noexcept -> std::size_t;
@@ -145,7 +146,6 @@ auto ChainIndexes<ES>::
 operator()(const Key& k) const -> const Slots&
 {
     GRAFFINE_ASSERT(k[0] < k[1], "Incorrect order of key elements.");
-//    GRAFFINE_ASSERT(asymmetric.contains(k), "Degree accessed is missing.");
 
     return asymmetric.contains(k)
         ? asymmetric.at(k)
@@ -199,8 +199,6 @@ append(ChainIndexes&& other)
         mv(v, symmetric[k]);
     for (auto& [k, v] : other.asymmetric)
         mv(v, asymmetric[k]);
-
-//    mv(other.cn_1_1, cn_1_1);
 }
 
 template<typename ES>

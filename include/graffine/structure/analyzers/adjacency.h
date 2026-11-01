@@ -38,8 +38,7 @@ limitations under the License.
 
 namespace graffine::structure {
 
-/**
- * Adjacency lists and adjacency checks of the elements of a host.
+/** Adjacency lists and adjacency checks of the elements of a host.
  * \details The host is a Graph or a Component: the elements are indexed
  * graph-wide or component-wide accordingly. Two vertices are adjacent if
  * they are the same or joined by an edge.
@@ -57,7 +56,7 @@ struct Adjacency
 
     // cpagl
     vec2<EgId> lg;   ///< Edge adjacency_list.
-    vec2<VIdH> lev;   ///< Vertex adjacency_list for end vertices.
+    vec2<VIdH> lev;  ///< Vertex adjacency_list for end vertices.
 
     vec2<ChId> lw;   ///< Chain adjacency_list.
     vec2<ChId> lwA;  ///< Chain adjacency_list in direction backwards.
@@ -67,8 +66,10 @@ struct Adjacency
         : h {h}
     {}
 
-    /// Takes over the lists of \p other, but refers to the new host \p h.
-    Adjacency(Adjacency&& other, const Host& h) noexcept
+    /** Takes over the lists of \p other, but refers to the new host \p h.
+     */
+    Adjacency(Adjacency&& other,
+              const Host& h) noexcept
         : lg {std::move(other.lg)}
         , lev {std::move(other.lev)}
         , lw {std::move(other.lw)}
@@ -77,7 +78,8 @@ struct Adjacency
         , h {h}
     {}
 
-    /// Takes over the lists of \p other, keeping the current host.
+    /** Takes over the lists of \p other, keeping the current host.
+     */
     void take_lists(Adjacency&& other) noexcept
     {
         lg = std::move(other.lg);
@@ -87,20 +89,20 @@ struct Adjacency
         lwB = std::move(other.lwB);
     }
 
-    /// Clears the edge and chain adjacency lists.
+    /** Clears the edge and chain adjacency lists.
+     */
     void clear();
 
-    /**
-     * Initializes adjacency list of edges of this component.
+    /** Initializes adjacency list of edges of this component.
      */
     void list_edges() noexcept;
 
-    /// Builds the adjacency list of the edges of \p h : for each edge, the
-    /// edges sharing a vertex with it.
+    /** Builds the adjacency list of the edges of \p h : for each edge, the
+     * edges sharing a vertex with it.
+     */
     static auto list_edges(const Host& h) -> vec2<EgId>;
 
-    /**
-     * Initializes the chain adjacency list \a lw of the host.
+    /** Initializes the chain adjacency list \a lw of the host.
      * \details See list_chains(const Host&).
      * \tparam dir Direction: chains connected at end A if Backwards, at
      * end B if Forwards.
@@ -108,15 +110,15 @@ struct Adjacency
     template<Orientation dir>
     void list_chains() noexcept;
 
+    /** Builds the adjacency list of the chains of \p h in direction \p dir .
+     * \details For each chain, the chains connected at its end A if \p dir is
+     * Backwards, at its end B if Forwards.
+     */
     template<Orientation dir>
-    /// Builds the adjacency list of the chains of \p h in direction \p dir :
-    /// for each chain, the chains connected at its end A if \p dir is
-    /// Backwards, at its end B if Forwards.
     static auto list_chains(const Host& h) noexcept -> vec2<ChId>;
 
-    /**
-     * Whether internal vertices \p a1 of chain \p w1 and \p a2 of chain
-     * \p w2 are adjacent.
+    /** Finds out whether internal vertices \p a1 of chain \p w1 and \p a2 of
+     * chain \p w2 are adjacent.
      * \note Requires internal positions: 0 < a < length().
      */
     constexpr bool are_adjacent(ChId w1,
@@ -124,30 +126,26 @@ struct Adjacency
                                 ChId w2,
                                 EgIdA a2) const noexcept;
 
-    /** Whether the vertices at the chain ends \p s1 and \p s2 are the same
-     * or joined by an edge.
+    /** Finds out whether the vertices at the chain ends \p s1 and \p s2 are
+     * the same or joined by an edge.
      * \details Independent of the order of the arguments.
      */
     constexpr bool are_adjacent(const EndSlot& s1,
                                 const EndSlot& s2) const noexcept;
 
-    /**
-     * Whether the vertex at chain end \p s1 and internal vertex \p a2 of
-     * chain \p w2 are adjacent.
+    /** Finds out whether the vertex at chain end \p s1 and internal vertex
+     * \p a2 of chain \p w2 are adjacent.
      * \note Requires an internal position: 0 < \p a2 < length().
      */
     constexpr bool are_adjacent(const EndSlot& s1,
                                 ChId w2,
                                 EgIdA a2) const noexcept;
 
-
-
     void print_list_edges(std::string_view tag) const;
     void print_list_chains(std::string_view tag) const;
     static void print_list_chains(std::string_view tag,
                                   const vec2<ChId>& l,
                                   const Host& h);
-
 
 protected:
 

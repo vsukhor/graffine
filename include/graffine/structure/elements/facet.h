@@ -44,8 +44,7 @@ template<typename V,
 struct Facet
 {};
 
-/**
- * Represents the ends of an edge or those of a chain.
+/** Represents the ends of an edge or those of a chain.
  */
 template<>
 struct Facet<core::Edge::Vertex,

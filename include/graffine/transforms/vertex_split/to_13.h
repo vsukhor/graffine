@@ -43,8 +43,7 @@ limitations under the License.
 
 namespace graffine::transforms::vertex_split {
 
-/**
- * Template specialization for a functor generating degree 1 and 3 vertices.
+/** Template specialization for a functor generating degree 1 and 3 vertices.
  * \details Adds vertex type-specific split capability and updates the
  * graph for it. This Functor template specialization operates on degree 4
  * vertices to produce vertices of degree 1 and 3: V4 -> V1 + V3.
@@ -80,55 +79,57 @@ struct To<Deg1, Deg3, G, PP>
     const std::string shortName {make_name(Trait::shortName, dd)};
     const std::string fullName  {make_name(Trait::fullName, dd)};
 
-    /**
-     * Constructs a Functor for vertex split operation acting on a Graph.
+    /** Constructs a Functor for vertex split operation acting on a Graph.
      * \param[in] gr Graph to which the transformation is applied.
      * \param[in] pp Processor for non-topological properties.
      */
     explicit To(Graph& gr,
                 std::shared_ptr<PP> pp = nullptr);
 
-    /**
-     * Divides the graph chain at a vertex of degree 2.
+    /** Divides the graph chain at a vertex of degree 2.
      * \param[in] v Degree 3 vertex.
      * \param[in] s Descriptor of the incident edge to get disconnected.
      */
     auto apply(Vertex& v,
                const EdgeInVertex& s) -> Res;
 
-    /**
-     * Divides the chain at a vertex of degree 4 to produce 1+3.
+    /** Divides the chain at a vertex of degree 4 to produce 1+3.
      * \param[in] s Slot on a boundary chain vertex.
      */
     auto apply(const EndSlot& s) -> Res;
 
-    /// Checks that edge \p s can be detached from vertex \p v.
-    /// \details Rejects \p v if it does not belong to the graph, its degree
-    /// is not 4, or \p s is not connected to it, then checks the chain end
-    /// of \p s as the slot overload does.
+    /** Checks that edge \p s can be detached from vertex \p v.
+     * \details Rejects \p v if it does not belong to the graph, its degree
+     * is not 4, or \p s is not connected to it, then checks the chain end
+     * of \p s as the slot overload does.
+     */
     auto applicability(const Vertex& v,
                        const EdgeInVertex& s) const -> Applicability;
 
-    /// Checks that chain end \p s can be detached from its junction.
-    /// \details Rejects an invalid slot and a chain end not at a vertex of
-    /// degree 4.
+    /** Checks that chain end \p s can be detached from its junction.
+     * \details Rejects an invalid slot and a chain end not at a vertex of
+     * degree 4.
+     */
     auto applicability(const EndSlot& s) const -> Applicability;
 
-    /// Outcome of detaching edge \p s from vertex \p v (see plan.h).
+    /** Outcome of detaching edge \p s from vertex \p v (see plan.h).
+     */
     auto plan(const Vertex& v,
               const EdgeInVertex& s) const -> Plan<G>
     {
         return plan(gr.compt(v.get_c()).end_slot(s));
     }
 
-    /// Outcome of detaching chain end \p s from its junction (see plan.h).
-    /// \details The edge at \p s goes to the first resulting vertex.
+    /** Outcome of detaching chain end \p s from its junction (see plan.h).
+     * \details The edge at \p s goes to the first resulting vertex.
+     */
     auto plan(const EndSlot& s) const -> Plan<G>
     {
         return make_plan(gr, plans::vertex_at(gr, s), {gr.slot2ind(s)});
     }
 
-    /// Processor of non-topological properties.
+    /** Processor of non-topological properties.
+     */
     auto processor() const noexcept -> PP* { return updateProperties.get(); }
 
 private:
@@ -296,8 +297,7 @@ apply(const EndSlot& s) -> Res
 
 // /////////////////////////////////////////////////////////////////////////////
 
-/**
- * Vertex split producing vertices of degrees 1 and 3.
+/** Vertex split producing vertices of degrees 1 and 3.
  * \details The same functor as To<Deg1, Deg3, G, PP>, addressed
  * by the degree of the second vertex only.
  */

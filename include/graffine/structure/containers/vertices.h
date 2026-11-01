@@ -48,8 +48,7 @@ limitations under the License.
 
 namespace graffine::structure::containers {
 
-/**
- * Collection of vertices.
+/** Collection of vertices.
  * \tparam V Vertex class
  * \tparam H Graph compartment class hosting the vertices.
  */
@@ -103,8 +102,9 @@ public:  // Functions
     constexpr void remove_disconnected(Vertex* vp) noexcept;
     constexpr void remove_connected_to_outer(Edge& eg,
                                              End::Id e) noexcept;
-    /// Disconnects vertex \p id from its edges, which are hosted by
-    /// \p hst , and deletes it.
+    /** Disconnects vertex \p id from its edges, which are hosted by
+     * \p hst , and deletes it.
+     */
     constexpr void remove(VIdH id, Host& hst) noexcept;
 
     constexpr void reind_edge(const Edge& from,
@@ -492,8 +492,7 @@ print_degree(
 //
 // /////////////////////////////////////////////////////////////////////////////
 
-/**
- * Deletes all elements.
+/** Deletes all elements.
  * \tparam V Class encapsulating vertex object.
  * \tparam H Host graph component.
  */
@@ -506,8 +505,7 @@ void clear(Vertices<V, H>& vcl) noexcept
 }
 
 
-/**
- * Finds a vertex inside a collection by one of its incident slots.
+/** Finds a vertex inside a collection by one of its incident slots.
  * \tparam V Class encapsulating vertex object.
  * \tparam H Host graph component.
  * \param[in] s Slot of the vertex to find.
@@ -528,8 +526,7 @@ auto find_vertex(
     return VIdH::undefined;
 }
 
-/**
- * Prints all the vertices held in the collection.
+/** Prints all the vertices held in the collection.
  * \tparam D Vertex degree.
  * \tparam V Class encapsulating vertex object.
  * \tparam H Host graph component.

@@ -39,8 +39,7 @@ limitations under the License.
 
 namespace graffine::structure::containers {
 
-/**
- * Wrapper around an std sequence container.
+/** Wrapper around an std sequence container.
  * \details This class provides a simple wrapper around an std sequence
  * container to manage elements of a specific type. It provides basic
  * functionalities such as accessing elements, checking size, and modifying

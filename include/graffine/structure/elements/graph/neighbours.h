@@ -72,8 +72,9 @@ remove_slot_from_neigs(const EndSlot& s)
 }
 
 
-/// slots connected to 'nov' will be checked, and if there is 'old',
-/// it will be replaced by 'nov'
+/** slots connected to 'nov' will be checked, and if there is 'old',
+ * it will be replaced by 'nov'
+ */
 template<typename CC>
 void Graph<CC>::
 replace_slot_in_neigs(

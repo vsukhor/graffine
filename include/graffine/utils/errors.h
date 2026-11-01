@@ -37,15 +37,15 @@ limitations under the License.
 
 namespace graffine {
 
-/// Base class of all exceptions thrown by graffine.
+/** Base class of all exceptions thrown by graffine.
+ */
 struct error
     : public std::runtime_error
 {
     using std::runtime_error::runtime_error;
 };
 
-/**
- * Internal bookkeeping of a graph was found inconsistent.
+/** Internal bookkeeping of a graph was found inconsistent.
  * \details Indicates a defect in graffine or a graph corrupted by direct
  * manipulation of its members. The graph is left in an unspecified state:
  * it can only be destroyed.
@@ -56,8 +56,7 @@ struct invariant_error
     using error::error;
 };
 
-/**
- * An operation was requested for graph elements not meeting its requirements.
+/** An operation was requested for graph elements not meeting its requirements.
  */
 struct precondition_error
     : public error
@@ -65,14 +64,16 @@ struct precondition_error
     using error::error;
 };
 
-/// Reading or writing a graph file failed, or the file content is invalid.
+/** Reading or writing a graph file failed, or the file content is invalid.
+ */
 struct io_error
     : public error
 {
     using error::error;
 };
 
-/// Description of a failed consistency check.
+/** Description of a failed consistency check.
+ */
 struct Violation {
     std::string message;
 };
@@ -82,8 +83,7 @@ using Validation = std::expected<void, Violation>;
 
 namespace utils {
 
-/**
- * Throws exception \p E with a message composed of \p args.
+/** Throws exception \p E with a message composed of \p args.
  * \details Out of line and cold, so that the checks calling it cost no more
  * than a predictable branch on the success path. The message is only
  * formatted when the check fails.

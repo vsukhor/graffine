@@ -71,8 +71,7 @@ namespace vertex_split {
 template<typename G>
 using Trait = transforms::Trait<TransformType::VertexSplit, G>;
 
-/**
- * Processor of non-topological properties usable by the vertex splits.
+/** Processor of non-topological properties usable by the vertex splits.
  * \details Either void, for no processing, or a type providing the hooks
  * called by the splits: with the split chain or slots before a split, and
  * with the resulting vertices after it.
@@ -97,8 +96,7 @@ concept Processor =
     };
 
 
-/**
- * Outcome of a vertex split, in terms of the graph before it.
+/** Outcome of a vertex split, in terms of the graph before it.
  * \details See plan.h.
  */
 template<typename G>
@@ -119,8 +117,7 @@ struct Plan {
     }
 };
 
-/**
- * Plan of the split of vertex \p v of graph \p gr, giving edges \p ii to
+/** Plan of the split of vertex \p v of graph \p gr, giving edges \p ii to
  * the first resulting vertex and the others to the second one.
  */
 template<typename G>
@@ -136,8 +133,7 @@ auto make_plan(
 }
 
 
-/**
- * Template for functors performing vertex split.
+/** Template for functors performing vertex split.
  * \details This class template is specialized for specific vertex degrees
  * and provides the functionality to split a vertex into two vertices of
  * specified degrees.
@@ -154,8 +150,8 @@ template<Degree D1,
 struct To
 {};
 
-/**
- * Template for functors performing vertex split which produce a degree 1 vertex.
+/** Template for functors performing vertex split which produce a degree 1
+ * vertex.
  * \details This class template is specialized for specific vertex degrees
  * and provides the functionality to split a vertex into two vertices of
  * specified degrees.
@@ -170,8 +166,8 @@ template<Degree D,
 struct To1
 {};
 
-/**
- * Template for functors performing vertex split which produce a degree 2 vertex.
+/** Template for functors performing vertex split which produce a degree 2
+ * vertex.
  * \details This class template is specialized for specific vertex degrees
  * and provides the functionality to split a vertex into two vertices of
  * specified degrees.

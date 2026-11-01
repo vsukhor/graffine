@@ -36,7 +36,8 @@ limitations under the License.
 
 namespace graffine::structure::descriptors {
 
-/// Descriptor of an edge.
+/** Descriptor of an edge.
+ */
 template<typename Edge>
 struct EdgeInComponent
 {
@@ -66,7 +67,8 @@ struct EdgeInComponent
         return *this != Undef;
     }
 
-    /// Checks that this descriptor is the one of edge \p eg.
+    /** Checks that this descriptor is the one of edge \p eg.
+     */
     constexpr bool matches(const Edge& eg) const noexcept
     {
         return w == eg.w &&

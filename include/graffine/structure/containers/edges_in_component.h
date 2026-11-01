@@ -139,7 +139,6 @@ remove(const Edge& eg,
     this->pop_back();
 }
 
-
 template<typename C>
 void EdgeDescriptorsInComponent<C>::
 check(const Edge& eg,

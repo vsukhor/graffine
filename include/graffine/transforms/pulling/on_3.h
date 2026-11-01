@@ -49,8 +49,7 @@ limitations under the License.
 namespace graffine::transforms::pulling {
 
 
-/**
- * Functor doing edge pulling initiated from a vertex of degree 3.
+/** Functor doing edge pulling initiated from a vertex of degree 3.
  * \tparam G Graph to which the pull operation is applied.
  * \tparam PP Processor of non-topological properties, or void.
  */
@@ -82,16 +81,14 @@ struct On<Deg3, G, PP>
     const std::string shortName {d + "pu"};
     const std::string fullName  {"Pulling from Vertex Deg "s + d};
 
-    /**
-     * Constructs this functor object based on the Graph instance.
+    /** Constructs this functor object based on the Graph instance.
      * \param[in] gr Graph to which the transformation is applied.
      * \param[in] pp Processor for non-topological properties.
      */
     explicit On(Graph& gr,
                 std::shared_ptr<PP> pp = nullptr);
 
-    /**
-     * Pulls a vertex of degree 3 along \p path by \p steps.
+    /** Pulls a vertex of degree 3 along \p path by \p steps.
      * \details Pulls vertex at the end of the path, converting it to a 4-node.
      * Unchecked: see Applicable.
      * \param[inout] path Path containing the string of edges to get pulled.
@@ -103,10 +100,11 @@ struct On<Deg3, G, PP>
         int steps
     ) -> Res;
 
-    /// Checks that \p path can be pulled by \p steps.
-    /// \details Rejects a path failing check_path_basics(), a driver end not
-    /// at a 3-way junction, a degree 2 source next to the driver, and a
-    /// source failing check_source().
+    /** Checks that \p path can be pulled by \p steps.
+     * \details Rejects a path failing check_path_basics(), a driver end not
+     * at a 3-way junction, a degree 2 source next to the driver, and a
+     * source failing check_source().
+     */
     auto applicability(
         const Path& path,
         int steps
@@ -213,7 +211,8 @@ apply(
 }
 
 
-/// Pulls at a connected chain end (converting a 3-node into 4-node)
+/** Pulls at a connected chain end (converting a 3-node into 4-node)
+ */
 template<typename G,
          typename PP>
 void On<Deg3, G, PP>::

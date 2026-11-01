@@ -39,15 +39,13 @@ limitations under the License.
 #include <memory>
 #include <type_traits>
 
-/**
- * Contains operations handling edge deletion in a graph.
+/** Contains operations handling edge deletion in a graph.
  * These are functors for deleting edges based on chain lengths and vertex
  * degrees.
  */
 namespace graffine::transforms::edge_deletion {
 
-/**
- * Vertex degree-independent wrapper class for edge deletion in chains
+/** Vertex degree-independent wrapper class for edge deletion in chains
  * consisting of multiple edges.
  * \details Handles the case of multi-edge chains. Notably, because the chain
  * contains more than a single edge, at least one of the edge ends is a vertex
@@ -78,28 +76,28 @@ struct InMultiEdgeChain
     /// This is a single-edge chain, so one of the edge ends has degree 1.
     static constexpr auto I = Deg1;
 
-    /**
-     * Constructs a Functor object based on the Graph instance.
+    /** Constructs a Functor object based on the Graph instance.
      * \param[in] gr Graph to which the transformation is applied.
      * \param[in] pp Processor for non-topological properties.
      */
     explicit constexpr InMultiEdgeChain(Graph& gr,
                                         std::shared_ptr<PP> pp = nullptr);
 
-    /**
-     * Function call operator executing the deletion using edge index.
+    /** Function call operator executing the deletion using edge index.
      * \param[in] ind Graph-wide index of the deleted edge.
      */
     auto apply(EgIdG ind) -> Res;
 
-    /// Checks that edge \p ind can be deleted from its multi-edge chain.
-    /// \details Rejects an invalid edge index, an edge of a single-edge
-    /// chain, and an edge at the boundary vertex of an unconnected cycle,
-    /// then checks it as the PreservingHostChain functor for the degree at
-    /// its non-bulk end does.
+    /** Checks that edge \p ind can be deleted from its multi-edge chain.
+     * \details Rejects an invalid edge index, an edge of a single-edge
+     * chain, and an edge at the boundary vertex of an unconnected cycle,
+     * then checks it as the PreservingHostChain functor for the degree at
+     * its non-bulk end does.
+     */
     auto applicability(EgIdG ind) const -> Applicability;
 
-    /// Outcome of the contraction of edge \p ind (see plan.h).
+    /** Outcome of the contraction of edge \p ind (see plan.h).
+     */
     auto plan(const EgIdG ind) const -> Plan<G>
     {
         switch (end_degree(ind)) {
@@ -110,12 +108,14 @@ struct InMultiEdgeChain
         }
     }
 
-    /// Processor of non-topological properties.
+    /** Processor of non-topological properties.
+     */
     auto processor() const noexcept -> PP* { return deg1.processor(); }
 
 private:
 
-    /// Degree of the end vertex of edge \p ind other than of degree 2.
+    /** Degree of the end vertex of edge \p ind other than of degree 2.
+     */
     auto end_degree(EgIdG ind) const -> Degree;
 
 protected:

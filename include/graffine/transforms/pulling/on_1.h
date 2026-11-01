@@ -44,8 +44,7 @@ limitations under the License.
 
 namespace graffine::transforms::pulling {
 
-/**
- * Functor for edge pulling initiated at a vertex of degree 1.
+/** Functor for edge pulling initiated at a vertex of degree 1.
  * \tparam G Graph to which the pull operation is applied.
  * \tparam PP Processor of non-topological properties, or void.
  */
@@ -74,16 +73,14 @@ struct On<Deg1, G, PP>
     const std::string shortName {d + "pu"};
     const std::string fullName  {"Pulling from Vertex Deg "s + d};
 
-    /**
-     * Constructs functor object based on the Graph instance.
+    /** Constructs functor object based on the Graph instance.
      * \param[in] gr Graph to which the transformation is applied.
      * \param[in] pp Processor for non-topological properties.
      */
     explicit On(Graph& gr,
                 std::shared_ptr<PP> pp = nullptr);
 
-    /**
-     * Pulls a vertex of degree 1 along \p path by \p steps.
+    /** Pulls a vertex of degree 1 along \p path by \p steps.
      * \details The path starts with a driver edge and ends with a source edge.
      * Unchecked: see Applicable.
      * \param[inout] path Path containing the string of edges to get pulled.
@@ -95,9 +92,10 @@ struct On<Deg1, G, PP>
         int steps
     ) -> Res;
 
-    /// Checks that \p path can be pulled by \p steps.
-    /// \details Rejects a path failing check_path_basics(), a driver end
-    /// which is not free, and a source failing check_source().
+    /** Checks that \p path can be pulled by \p steps.
+     * \details Rejects a path failing check_path_basics(), a driver end
+     * which is not free, and a source failing check_source().
+     */
     auto applicability(
         const Path& path,
         int steps
@@ -111,11 +109,10 @@ protected:
     using Base::check_source;
     using Base::updateProperties;
 
-    /**
-     * Checks that the path is valid for use in pulling.
+    /** Checks that the path is valid for use in pulling.
      * \param[in] path Path containing the string of edges to get pulled.
      * \param[in] steps Number of steps to pull over.
-    */
+     */
     void check_path(
         const Path& path,
         int steps

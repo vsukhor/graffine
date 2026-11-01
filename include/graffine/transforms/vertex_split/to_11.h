@@ -48,8 +48,7 @@ limitations under the License.
 
 namespace graffine::transforms::vertex_split {
 
-/**
- * Template specialization for a functor generating 2 degree 1 vertices.
+/** Template specialization for a functor generating 2 degree 1 vertices.
  * \details Adds vertex type-specific split capability and updates
  * the graph for it. This implementation operates on degree 2 vertices
  * at specific position to produce two degree 1 vertices: V2 -> 2V1.
@@ -85,62 +84,63 @@ struct To<Deg1, Deg1, G, PP>
     const std::string shortName {make_name(Trait::shortName, dd)};
     const std::string fullName  {make_name(Trait::fullName, dd)};
 
-    /**
-     * Constructs a functor for vertex split operation acting on a Graph.
+    /** Constructs a functor for vertex split operation acting on a Graph.
      * \param[in] gr Graph to which the transformation is applied.
      * \param[in] pp Processor for non-topological properties.
      */
     explicit To(Graph& gr,
                 std::shared_ptr<PP> pp = nullptr);
 
-    /**
-     * Divides the graph chain at a vertex of degree 2.
+    /** Divides the graph chain at a vertex of degree 2.
      * \param[in] v Internal chain vertex.
      */
     auto apply(Vertex& v) -> Res;
 
-    /**
-     * Divides the graph chain at a vertex of degree 2.
+    /** Divides the graph chain at a vertex of degree 2.
      * \param[in] s Slot on internal chain vertex. Location parameter \a s.a is
      *              counted from 1 and designates the last edge to remain in the
      *              original chain.
      */
     auto apply(const BulkSlot& s) -> Res;
 
-    /**
-     * Divides the graph chain at a vertex of degree 2, the vertex object
+    /** Divides the graph chain at a vertex of degree 2, the vertex object
      * becoming resulting vertex \p k (see Keep).
      * \param[in] s Slot on internal chain vertex, as for apply(s).
      * \param[in] k Resulting vertex which is the object of the split vertex.
      */
     auto apply(const BulkSlot& s, Keep k) -> Res;
 
-    /// Checks that vertex \p v can be split.
-    /// \details Rejects \p v if it does not belong to the graph or its
-    /// degree is not 2, then checks its slot as the slot overload does.
+    /** Checks that vertex \p v can be split.
+     * \details Rejects \p v if it does not belong to the graph or its
+     * degree is not 2, then checks its slot as the slot overload does.
+     */
     auto applicability(const Vertex& v) const -> Applicability;
 
-    /// Checks that the vertex at \p s can be split.
-    /// \details Rejects a nonexistent chain or a position past its length,
-    /// and a position at a chain end unless the chain is an unconnected
-    /// cycle, whose boundary vertex it then denotes.
+    /** Checks that the vertex at \p s can be split.
+     * \details Rejects a nonexistent chain or a position past its length,
+     * and a position at a chain end unless the chain is an unconnected
+     * cycle, whose boundary vertex it then denotes.
+     */
     auto applicability(const BulkSlot& s) const -> Applicability;
 
-    /// Checks that the vertex at \p s can be split, as applicability(s).
+    /** Checks that the vertex at \p s can be split, as applicability(s).
+     */
     auto applicability(const BulkSlot& s, Keep) const -> Applicability
     {
         return applicability(s);
     }
 
-    /// Outcome of the split of vertex \p v (see plan.h).
+    /** Outcome of the split of vertex \p v (see plan.h).
+     */
     auto plan(const Vertex& v) const -> Plan<G>
     {
         return plan(locate::bulk_slot(gr, v));
     }
 
-    /// Outcome of the split of the vertex at \p s (see plan.h).
-    /// \details The edge after the vertex goes to the first resulting
-    /// vertex.
+    /** Outcome of the split of the vertex at \p s (see plan.h).
+     * \details The edge after the vertex goes to the first resulting
+     * vertex.
+     */
     auto plan(const BulkSlot& s) const -> Plan<G>
     {
         const auto [w, a] = s.we();
@@ -151,33 +151,32 @@ struct To<Deg1, Deg1, G, PP>
         return make_plan(gr, v, {m.g[a() % m.length()].ind});
     }
 
-    /// Outcome of the split of the vertex at \p s, as plan(s).
+    /** Outcome of the split of the vertex at \p s, as plan(s).
+     */
     auto plan(const BulkSlot& s, Keep) const -> Plan<G>
     {
         return plan(s);
     }
 
-    /// Processor of non-topological properties.
+    /** Processor of non-topological properties.
+     */
     auto processor() const noexcept -> PP* { return updateProperties.get(); }
 
 protected:
 
-    /**
-     * Divides an unconnected cycle chain at its boundary vertex.
+    /** Divides an unconnected cycle chain at its boundary vertex.
      * \param[in] w Graph-wide chain index.
      */
     auto disconnected_cycle(ChIdG w) -> Res;
 
-    /**
-     * Divides an unconnected cycle chain at its internal vertex.
+    /** Divides an unconnected cycle chain at its internal vertex.
      * \param[in] s Slot on internal chain vertex. Location parameter \a s.a is
      *              counted from 1 and designates the last edge to remain in the
      *              original chain.
      */
     auto disconnected_cycle(const BulkSlot& s) -> Res;
 
-    /**
-     * Divides a linear chain at its internal vertex.
+    /** Divides a linear chain at its internal vertex.
      * \param[in] s Slot on internal chain vertex. Location parameter \a s.a is
      *              counted from 1 and designates the last edge to remain in the
      *              original chain.
@@ -202,8 +201,9 @@ private:
     const Vertex* kept {};
     Keep keptAs {};
 
-    /// Places the object of the split vertex as resulting vertex keptAs,
-    /// if asked for by apply(s, k).
+    /** Places the object of the split vertex as resulting vertex keptAs,
+     * if asked for by apply(s, k).
+     */
     void settle(Res& res);
 };
 
@@ -514,8 +514,7 @@ linear(const BulkSlot& s) -> Res
 
 // /////////////////////////////////////////////////////////////////////////////
 
-/**
- * Vertex split producing vertices of degrees 1 and 1.
+/** Vertex split producing vertices of degrees 1 and 1.
  * \details The same functor as To<Deg1, Deg1, G, PP>, addressed
  * by the degree of the second vertex only.
  */

@@ -43,8 +43,7 @@ limitations under the License.
 namespace graffine::transforms::vertex_merger {
 
 
-/**
- * Template specialization for V1 + VN vertex merger.
+/** Template specialization for V1 + VN vertex merger.
  * \details Adds vertex type-specific vertex merger capability and updates the
  * graph for it.
  * \tparam G Graph to which the merger operation is applied.
@@ -74,24 +73,21 @@ struct FromN<Deg1, G, PP>
     std::string shortName {};
     std::string fullName  {};
 
-    /**
-     * Constructs a Functor object based on the Graph instance.
+    /** Constructs a Functor object based on the Graph instance.
      * \param[in] gr Graph to which the transformation is applied.
      * \param[in] pp Processor for non-topological properties.
      */
     explicit FromN(Graph& gr,
                    std::shared_ptr<PP> pp = nullptr);
 
-    /**
-     * Merges a vertex of degree 1 to a vertex of degree 3.
+    /** Merges a vertex of degree 1 to a vertex of degree 3.
      * \param[in] v1 Degree 1 input vertex.
      * \param[in] v2 Degree 3 input vertex.
      */
     auto operator()(const Vertex& v1,
                     const Vertex& v2) noexcept -> Res;
 
-    /**
-     * Merges a vertex of degree 1 to a vertex of degree 3.
+    /** Merges a vertex of degree 1 to a vertex of degree 3.
      * \param[in] s1 Slot on degree 1 input vertex.
      * \param[in] s2 Slot on degree 3 input vertex.
      */

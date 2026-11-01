@@ -45,8 +45,7 @@ limitations under the License.
 namespace graffine::transforms::vertex_merger {
 
 
-/**
- * Merges two vertices of degree 1 to produce a vertex of degree 2.
+/** Merges two vertices of degree 1 to produce a vertex of degree 2.
  * \details Adds vertex type-specific vertex merger capability and updates the
  * graph for it.
  * \tparam G Graph to which the merger operation is applied.
@@ -76,16 +75,14 @@ struct From<Deg1, Deg1, G, PP>
     const std::string shortName {make_name(Trait::shortName, dd)};
     const std::string fullName  {make_name(Trait::fullName, dd)};
 
-    /**
-     * Constructs a Functor object based on the Graph instance.
+    /** Constructs a Functor object based on the Graph instance.
      * \param[in] gr Graph to which the transformation is applied.
      * \param[in] pp Processor for non-topological properties.
      */
     explicit From(Graph& gr,
                   std::shared_ptr<PP> pp = nullptr);
 
-    /**
-     * Merges two vertices of degree 1 to produce a vertex of degree 2.
+    /** Merges two vertices of degree 1 to produce a vertex of degree 2.
      * \details Calls its overload using chain free end slots.
      * Unchecked: see Applicable.
      * \param[in] v1 First merged vertex.
@@ -95,8 +92,7 @@ struct From<Deg1, Deg1, G, PP>
     auto apply(Vertex& v1,
                Vertex& v2) -> Res;
 
-    /**
-     * Merges two vertices of degree 1 to produce a vertex of degree 2.
+    /** Merges two vertices of degree 1 to produce a vertex of degree 2.
      * \details If \p s1 and \p s2 are the two ends of the same chain, the
      * chain is closed into a cycle.
      * \attention Important: when used for antiparallel merger (i.e. on equal
@@ -113,16 +109,14 @@ struct From<Deg1, Deg1, G, PP>
     auto apply(const EndSlot& s1,
                const EndSlot& s2) -> Res;
 
-    /**
-     * Checks that vertices \p v1 and \p v2 can be merged.
+    /** Checks that vertices \p v1 and \p v2 can be merged.
      * \details Rejects vertices not belonging to the graph, or not of degree
      * 1, then checks their slots as the slot overload does.
      */
     auto applicability(const Vertex& v1,
                        const Vertex& v2) const -> Applicability;
 
-    /**
-     * Checks that the vertices at slots \p s1 and \p s2 can be merged.
+    /** Checks that the vertices at slots \p s1 and \p s2 can be merged.
      * \details Rejects:
      * - invalid slots, or \p s1 equal to \p s2 ;
      * - slots of chains having no edges;
@@ -133,17 +127,19 @@ struct From<Deg1, Deg1, G, PP>
     auto applicability(const EndSlot& s1,
                        const EndSlot& s2) const -> Applicability;
 
-    /// Outcome of the merger of vertices \p v1 and \p v2 (see plan.h).
+    /** Outcome of the merger of vertices \p v1 and \p v2 (see plan.h).
+     */
     auto plan(const Vertex& v1,
               const Vertex& v2) const -> Plan<G>
     {
         return plan(slot_of(v1), slot_of(v2));
     }
 
-    /// Outcome of the merger of the vertices at \p s1 and \p s2 (see plan.h).
-    /// \details The vertex at end A of a chain closed into a cycle is
-    /// preserved; of two chains, the vertex at s1 if \p s1 is at end B and
-    /// \p s2 at end A, and the vertex at \p s2 otherwise.
+    /** Outcome of the merger of the vertices at \p s1 and \p s2 (see plan.h).
+     * \details The vertex at end A of a chain closed into a cycle is
+     * preserved; of two chains, the vertex at s1 if \p s1 is at end B and
+     * \p s2 at end A, and the vertex at \p s2 otherwise.
+     */
     auto plan(const EndSlot& s1,
               const EndSlot& s2) const -> Plan<G>
     {
@@ -157,12 +153,14 @@ struct From<Deg1, Deg1, G, PP>
         return {&v2, &v1};
     }
 
-    /// Processor of non-topological properties.
+    /** Processor of non-topological properties.
+     */
     auto processor() const noexcept -> PP* { return merge.processor(); }
 
 private:
 
-    /// Free end slot of a vertex of degree 1 belonging to the graph.
+    /** Free end slot of a vertex of degree 1 belonging to the graph.
+     */
     auto slot_of(const Vertex& v) const -> EndSlot;
 
 
@@ -278,8 +276,7 @@ apply(
 
 // /////////////////////////////////////////////////////////////////////////////
 
-/**
- * Vertex merger of vertices of degrees 1 and 1.
+/** Vertex merger of vertices of degrees 1 and 1.
  * \details The same functor as From<Deg1, Deg1, G, PP>, addressed
  * by the degree of the second vertex only.
  */

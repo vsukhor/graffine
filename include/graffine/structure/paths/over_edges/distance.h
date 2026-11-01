@@ -53,33 +53,31 @@ struct Distance
     static constexpr EdgeWeight zero {};
     static constexpr auto inf = Edge::maxWeight;
 
-    /**
-     * Default constructor.
+    /** Default constructor.
      * \details Initializes the distance with an undefined previous edge id
      * and infinite distance.
      */
     constexpr Distance() noexcept = default;
 
-    /** Copy constructor. */
+    /** Copy constructor.
+     */
     constexpr Distance(const Distance& all) noexcept = default;
 
-    /** Move constructor. */
+    /** Move constructor.
+     */
     constexpr Distance(Distance&& all) noexcept = default;
 
-    /**
-     * Copy assignment operator.
+    /** Copy assignment operator.
      * \return Reference to this object.
      */
     constexpr auto operator=(const Distance& all) -> Distance& = default;
 
-    /**
-     * Move assignment operator.
+    /** Move assignment operator.
      * \return Reference to this object.
      */
     constexpr auto operator=(Distance&& all) -> Distance& = default;
 
-    /**
-     * Constructs a distance object with a previous edge id and a distance.
+    /** Constructs a distance object with a previous edge id and a distance.
      * \param[in] pr Previous edge id in the path.
      * \param[in] d Distance to the edge.
      */
@@ -91,8 +89,7 @@ struct Distance
         , dist {d}
     {}
 
-    /**
-     * Compares two distance objects.
+    /** Compares two distance objects.
      * \param[in] c The other distance object to compare with.
      * \return True if this distance is less than the other, false otherwise.
      */
@@ -101,8 +98,7 @@ struct Distance
         return prev < c.prev;
     }
 
-    /**
-     * Sets the previous edge id and distance.
+    /** Sets the previous edge id and distance.
      * \param[in] pr Previous edge id in the path.
      * \param[in] d Distance to the edge measured in edge weights.
      */
@@ -113,8 +109,7 @@ struct Distance
         dist = d;
     }
 
-    /**
-     * Gets the previous edge id.
+    /** Gets the previous edge id.
      * \return Previous edge id in the path.
      */
     constexpr auto get_prev() const noexcept -> EgIdC
@@ -122,8 +117,7 @@ struct Distance
         return prev;
     }
 
-    /**
-     * Gets the distance to the edge.
+    /** Gets the distance to the edge.
      * \return Distance to the edge measured in edge weights.
      */
     [[nodiscard]]  // NOLINT(readability-convert-member-functions-to-static)
@@ -132,8 +126,7 @@ struct Distance
         return dist;
     }
 
-    /**
-     * Sets the distance to the edge.
+    /** Sets the distance to the edge.
      * \param[in] d Distance to the edge measured in edge weights.
      */
     constexpr void set_dist(const EdgeWeight d) noexcept
@@ -146,8 +139,7 @@ struct Distance
         return dist < inf;
     }
 
-    /**
-     * Resets the distance to the edge.
+    /** Resets the distance to the edge.
      * \details Sets the previous edge id to undefined
      * and sets the distance to infinity.
      */

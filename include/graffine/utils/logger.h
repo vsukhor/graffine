@@ -11,9 +11,10 @@ namespace graffine {
 inline thread_local graffine::utils::Msgr* msgr {};  ///< Output message processor.
 
 
-/// Prints a string to output streams of the Msgr object.
-/// The printed string is a formatted aggregation of \p args ending with an
-/// optional  \p endline .
+/** Prints a string to output streams of the Msgr object.
+ * The printed string is a formatted aggregation of \p args ending with an
+ * optional  \p endline .
+ */
 template<bool endline=true,
          typename ...Args>
 static void jot(Args... args)

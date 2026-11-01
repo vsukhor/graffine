@@ -43,8 +43,7 @@ limitations under the License.
 
 namespace graffine::transforms::vertex_merger {
 
-/**
- * Template specialization for V1 + V2 -> V3 vertex merger.
+/** Template specialization for V1 + V2 -> V3 vertex merger.
  * \details Adds vertex type-specific vertex merger capability and updates the
  * graph for it.
  * \tparam G Graph to which the merger operation is applied.
@@ -76,16 +75,14 @@ struct From<Deg1, Deg2, G, PP>
     const std::string shortName {make_name(Trait::shortName, dd)};
     const std::string fullName  {make_name(Trait::fullName, dd)};
 
-    /**
-     * Constructs a Functor object based on the Graph instance.
+    /** Constructs a Functor object based on the Graph instance.
      * \param[in] gr Graph to which the transformation is applied.
      * \param[in] pp Processor for non-topological properties.
      */
     explicit From(Graph& gr,
                   std::shared_ptr<PP> pp = nullptr);
 
-    /**
-     * Merges a vertex of degree 1 to a chain internal vertex.
+    /** Merges a vertex of degree 1 to a chain internal vertex.
      * \details Unchecked: see Applicable. The vertices may be given in any
      * order. The degree 2 vertex may also be the boundary vertex of an
      * unconnected cycle.
@@ -95,8 +92,7 @@ struct From<Deg1, Deg2, G, PP>
     auto apply(Vertex& v1,
                Vertex& v2) -> Res;
 
-    /**
-     * Merges a vertex of degree 1 to a chain internal vertex.
+    /** Merges a vertex of degree 1 to a chain internal vertex.
      * \details Unchecked: see Applicable.
      * \param[in] s1 Slot on the parent degree 1 vertex.
      * \param[in] s2 Slot on the parent degree 2 vertex.
@@ -104,8 +100,8 @@ struct From<Deg1, Deg2, G, PP>
     auto apply(const EndSlot& s1,
                const BulkSlot& s2) -> Res;
 
-    /**
-     * Merges a vertex of degree 1 to a boundary vertex in an unconnected cycle.
+    /** Merges a vertex of degree 1 to a boundary vertex in an unconnected
+     * cycle.
      * \details Unchecked: see Applicable.
      * \param[in] s1 Slot on the merged degree 1 vertex.
      * \param[in] w2 Chain index of the cycle chain.
@@ -113,44 +109,46 @@ struct From<Deg1, Deg2, G, PP>
     auto apply(const EndSlot& s1,
                ChIdG w2) -> Res;
 
-    /**
-     * Merges the vertices at \p s1 and \p s2 as apply(s1, s2), keeping
+    /** Merges the vertices at \p s1 and \p s2 as apply(s1, s2), keeping
      * vertex \p k (see Keep).
      */
     auto apply(const EndSlot& s1,
                const BulkSlot& s2,
                Keep k) -> Res;
 
-    /**
-     * Merges the vertex at \p s1 to the boundary vertex of cycle \p w2 as
+    /** Merges the vertex at \p s1 to the boundary vertex of cycle \p w2 as
      * apply(s1, w2), keeping vertex \p k (see Keep).
      */
     auto apply(const EndSlot& s1,
                ChIdG w2,
                Keep k) -> Res;
 
-    /// Checks that vertices \p v1 and \p v2 can be merged.
-    /// \details Rejects vertices not belonging to the graph, or whose
-    /// degrees are not 1 and 2, in either order, then checks their slots as
-    /// the slot overloads do.
+    /** Checks that vertices \p v1 and \p v2 can be merged.
+     * \details Rejects vertices not belonging to the graph, or whose
+     * degrees are not 1 and 2, in either order, then checks their slots as
+     * the slot overloads do.
+     */
     auto applicability(const Vertex& v1,
                        const Vertex& v2) const -> Applicability;
 
-    /// Checks that the vertices at \p s1 and \p s2 can be merged.
-    /// \details Rejects \p s1 failing check_free_end(), an invalid \p s2 ,
-    /// and, if both are in the same chain, a merger closing a loop shorter
-    /// than Chain::minCycleLength.
+    /** Checks that the vertices at \p s1 and \p s2 can be merged.
+     * \details Rejects \p s1 failing check_free_end(), an invalid \p s2 ,
+     * and, if both are in the same chain, a merger closing a loop shorter
+     * than Chain::minCycleLength.
+     */
     auto applicability(const EndSlot& s1,
                        const BulkSlot& s2) const -> Applicability;
 
-    /// Checks that the vertex at \p s1 can be merged to the boundary vertex
-    /// of the unconnected cycle \p w2.
-    /// \details Rejects \p s1 failing check_free_end(), and a chain \p w2
-    /// which does not exist or is not an unconnected cycle.
+    /** Checks that the vertex at \p s1 can be merged to the boundary vertex
+     * of the unconnected cycle \p w2.
+     * \details Rejects \p s1 failing check_free_end(), and a chain \p w2
+     * which does not exist or is not an unconnected cycle.
+     */
     auto applicability(const EndSlot& s1,
                        ChIdG w2) const -> Applicability;
 
-    /// Checks the merger as applicability(s1, s2).
+    /** Checks the merger as applicability(s1, s2).
+     */
     template<typename S>
     auto applicability(const EndSlot& s1,
                        const S& s2,
@@ -159,8 +157,9 @@ struct From<Deg1, Deg2, G, PP>
         return applicability(s1, s2);
     }
 
-    /// Outcome of the merger of vertices \p v1 and \p v2 (see plan.h).
-    /// \details The vertex of degree 2 is preserved.
+    /** Outcome of the merger of vertices \p v1 and \p v2 (see plan.h).
+     * \details The vertex of degree 2 is preserved.
+     */
     auto plan(const Vertex& v1,
               const Vertex& v2) const -> Plan<G>
     {
@@ -170,22 +169,25 @@ struct From<Deg1, Deg2, G, PP>
         return {&bulk, &leaf};
     }
 
-    /// Outcome of the merger of the vertices at \p s1 and \p s2 (see plan.h).
+    /** Outcome of the merger of the vertices at \p s1 and \p s2 (see plan.h).
+     */
     auto plan(const EndSlot& s1,
               const BulkSlot& s2) const -> Plan<G>
     {
         return {&plans::vertex_at(gr, s2), &plans::vertex_at(gr, s1)};
     }
 
-    /// Outcome of the merger of the vertex at \p s1 with the boundary vertex
-    /// of cycle \p w2 (see plan.h).
+    /** Outcome of the merger of the vertex at \p s1 with the boundary vertex
+     * of cycle \p w2 (see plan.h).
+     */
     auto plan(const EndSlot& s1,
               ChIdG w2) const -> Plan<G>
     {
         return {&plans::vertex_at(gr, w2), &plans::vertex_at(gr, s1)};
     }
 
-    /// Outcome of the merger as plan(s1, s2), keeping vertex \p k.
+    /** Outcome of the merger as plan(s1, s2), keeping vertex \p k.
+     */
     template<typename S>
     auto plan(const EndSlot& s1,
               const S& s2,
@@ -195,14 +197,16 @@ struct From<Deg1, Deg2, G, PP>
                                plans::vertex_at(gr, s2), k);
     }
 
-    /// Processor of non-topological properties.
+    /** Processor of non-topological properties.
+     */
     auto processor() const noexcept -> PP* { return updateProperties.get(); }
 
 private:
 
-    /// Checks of the free end \p s1.
-    /// \details Rejects an invalid slot, a chain having no edges, and a
-    /// chain end which is not free.
+    /** Checks of the free end \p s1.
+     * \details Rejects an invalid slot, a chain having no edges, and a
+     * chain end which is not free.
+     */
     auto check_free_end(const EndSlot& s1) const -> Applicability;
 
     Graph& gr;  ///< Reference to the modified graph object.
@@ -586,8 +590,7 @@ apply(
 
 // /////////////////////////////////////////////////////////////////////////////
 
-/**
- * Vertex merger of vertices of degrees 1 and 2.
+/** Vertex merger of vertices of degrees 1 and 2.
  * \details The same functor as From<Deg1, Deg2, G, PP>, addressed
  * by the degree of the second vertex only.
  */

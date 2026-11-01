@@ -43,8 +43,7 @@ limitations under the License.
 
 namespace graffine::structure {
 
-/**
- * Reachability of chains over their end connections.
+/** Reachability of chains over their end connections.
  * \details Searches the chains reachable from a chain end slot or chain,
  * moving between chains joined at their ends (Chain::ngs) and from one end
  * of a chain to the other. The searches reuse the auxiliary data of this
@@ -60,21 +59,21 @@ struct Connectivity
     using EndSlot = Chain::EndSlot;
 
 
-    /// Constructs the analyzer of the chains in \p cn, which it refers to.
+    /** Constructs the analyzer of the chains in \p cn, which it refers to.
+     */
     explicit constexpr Connectivity(const Chains& cn);
 
-    /**
-     * Chains reachable from the junction at \p source.
+    /** Chains reachable from the junction at \p source.
      * \details Chain \p source.w is not entered through \p source itself,
      * but is always included in the result.
      */
     auto find_connected_chains(const EndSlot& source) -> ChIdGs;
 
-    /// Chains of the connected set containing chain \p seed, sorted.
+    /** Chains of the connected set containing chain \p seed, sorted.
+     */
     auto find_connected_chains(ChIdG seed) -> ChIdGs;
 
-    /**
-     * Depth-first search over the chains reachable from the junction at
+    /** Depth-first search over the chains reachable from the junction at
      * \p source.
      * \details Chain \p source.w is not entered through \p source itself,
      * but may be reached from its opposite end along another path.
@@ -86,7 +85,6 @@ struct Connectivity
         const EndSlot& source,
         const EndSlot& target);
 
-
 protected:
 
     const Chains& cn;
@@ -95,17 +93,18 @@ protected:
     std::vector<std::uint32_t> mark;
     std::uint32_t epoch {};
 
-    ChIdGs reached;           ///< Auxiliary: chains visited by a search.
+    ChIdGs reached;             ///< Auxiliary: chains visited by a search.
     std::vector<EndSlot> todo;  ///< Auxiliary: slots awaiting expansion.
 
-    /// Starts a new search in O(1), unless the chain set has grown.
+    /** Starts a new search in O(1), unless the chain set has grown.
+     */
     void reset_search();
 
-    /// Marks chain \p w visited; returns false if it already was.
+    /** Marks chain \p w visited; returns false if it already was.
+     */
     bool visit(ChIdG w);
 
-    /**
-     * Iterative depth-first search over the chains.
+    /** Iterative depth-first search over the chains.
      * \note Continues the current search: chains visited by preceding
      * calls since the last reset_search() are not entered again.
      * \param[in] source Search starting slot.

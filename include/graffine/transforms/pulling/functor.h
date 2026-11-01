@@ -41,8 +41,7 @@ limitations under the License.
 
 namespace graffine::transforms::pulling {
 
-/**
- * Wrapper functor for vertex degree-independent pulling.
+/** Wrapper functor for vertex degree-independent pulling.
  * \details Dispatches to the On functor matching the degree of the driver
  * vertex: 1, 2 or 3. See FunctorBase for the transformation itself.
  * \tparam G Graph to which the transformation is applied.
@@ -71,16 +70,14 @@ struct Functor
     using ResT = Trait::ResT;
     using Res = Trait::Res;
 
-    /**
-     * Constructs a Functor object based on the Graph instance.
+    /** Constructs a Functor object based on the Graph instance.
      * \param[in] gr Graph to which the transformation is applied.
      * \param[in] pp Processor for non-topological properties.
      */
     explicit constexpr Functor(Graph& gr,
                                std::shared_ptr<PP> pp = nullptr);
 
-    /**
-     * Pulls over edge sequence \p path.
+    /** Pulls over edge sequence \p path.
      * This is a wrapper operator able to process all implemented degrees of
      * the driver vertices. Unchecked: see Applicable.
      * \param[inout] path Path containing the string of edges to get pulled.
@@ -90,21 +87,24 @@ struct Functor
     auto apply(Path<Compt>& path,
                int n) -> Res;
 
-    /// Checks that \p path can be pulled by \p n steps.
-    /// \details Rejects a path not referring to a component of the graph or
-    /// having no driver edge, and a driver vertex of degree 4, then checks
-    /// the path as the On functor for the driver degree does.
+    /** Checks that \p path can be pulled by \p n steps.
+     * \details Rejects a path not referring to a component of the graph or
+     * having no driver edge, and a driver vertex of degree 4, then checks
+     * the path as the On functor for the driver degree does.
+     */
     auto applicability(const Path<Compt>& path,
                        int n) const -> Applicability;
 
-    /// Outcome of pulling \p path by \p n steps (see plan.h).
+    /** Outcome of pulling \p path by \p n steps (see plan.h).
+     */
     auto plan(const Path<Compt>& path,
               const int n) const -> pulling::Plan<G>
     {
         return on_1.plan(path, n);
     }
 
-    /// Processor of non-topological properties.
+    /** Processor of non-topological properties.
+     */
     auto processor() const noexcept -> PP* { return on_1.processor(); }
 
 protected:

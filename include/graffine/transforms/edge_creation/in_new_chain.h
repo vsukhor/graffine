@@ -47,8 +47,7 @@ limitations under the License.
 namespace graffine::transforms::edge_creation {
 
 
-/**
- * Creates an edge adjoint to a vertex, branching a new chain.
+/** Creates an edge adjoint to a vertex, branching a new chain.
  * \details Creates a graph edge together with its host chain. The edge will
  * have as one of its ends a vertex whose initial degree \p D will be
  * incremented by addition of the new chain branching from it. Because the new
@@ -94,8 +93,8 @@ struct InNewChain
     const std::string shortName {"ec_n"s + d};
     static constexpr const char* fullName  {"edge_creation_new_chain"};
 
-    /**
-     * Constructs a functor for creating an edge and its host chain an in Graph.
+    /** Constructs a functor for creating an edge and its host chain an in
+     * Graph.
      * \param[in] gr Graph to which the transformation is applied.
      * \param[in] pp Processor for non-topological properties.
      */
@@ -104,8 +103,7 @@ struct InNewChain
 
     auto apply(Vertex& v) -> Res;
 
-    /**
-     * Creates a new edge packed into a single-edge chain.
+    /** Creates a new edge packed into a single-edge chain.
      * \details The source vertex may be either a chain internal vertex
      * (D == Deg2) or a three-way junction (D == Deg3).
      * Depending on the case, type Slot of the source corresponds to the
@@ -118,47 +116,53 @@ struct InNewChain
      */
     auto apply(const Slot& s) -> Res;
 
-    /**
-     * Creates a new edge packed into a single-edge chain.
+    /** Creates a new edge packed into a single-edge chain.
      * \details The source vertex is a boundary vertex of an unconnected chain.
      * \overload
      * \param[in] w Id of an unconnected cycle chain .
      */
     auto apply(ChIdG w) -> Res;
 
-    /// Checks that a new edge can be attached to vertex \p v.
-    /// \details Rejects \p v if it does not belong to the graph or its degree
-    /// is not D, then checks its slot as the slot overload does.
+    /** Checks that a new edge can be attached to vertex \p v.
+     * \details Rejects \p v if it does not belong to the graph or its degree
+     * is not D, then checks its slot as the slot overload does.
+     */
     auto applicability(const Vertex& v) const -> Applicability;
 
-    /// Checks that a new edge can be attached to the vertex at \p s.
-    /// \details Rejects an invalid slot and, for D == 3, a chain end not at a
-    /// vertex of degree 3.
+    /** Checks that a new edge can be attached to the vertex at \p s.
+     * \details Rejects an invalid slot and, for D == 3, a chain end not at a
+     * vertex of degree 3.
+     */
     auto applicability(const Slot& s) const -> Applicability;
 
-    /// Checks that a new edge can be attached to the boundary vertex of the
-    /// unconnected cycle \p w.
-    /// \details Rejects every \p w unless D == 2, and a chain \p w which
-    /// does not exist or is not an unconnected cycle.
+    /** Checks that a new edge can be attached to the boundary vertex of the
+     * unconnected cycle \p w.
+     * \details Rejects every \p w unless D == 2, and a chain \p w which
+     * does not exist or is not an unconnected cycle.
+     */
     auto applicability(ChIdG w) const -> Applicability;
 
-    /// Outcome of the creation of a new chain at vertex \p v (see plan.h).
+    /** Outcome of the creation of a new chain at vertex \p v (see plan.h).
+     */
     auto plan(const Vertex& v) const -> Plan<G> { return {&v}; }
 
-    /// Outcome of the creation of a new chain at slot \p s (see plan.h).
+    /** Outcome of the creation of a new chain at slot \p s (see plan.h).
+     */
     auto plan(const Slot& s) const -> Plan<G>
     {
         return {&plans::vertex_at(gr, s)};
     }
 
-    /// Outcome of the creation of a new chain at the boundary vertex of
-    /// cycle \p w (see plan.h).
+    /** Outcome of the creation of a new chain at the boundary vertex of
+     * cycle \p w (see plan.h).
+     */
     auto plan(ChIdG w) const -> Plan<G>
     {
         return {&plans::vertex_at(gr, w)};
     }
 
-    /// Processor of non-topological properties.
+    /** Processor of non-topological properties.
+     */
     auto processor() const noexcept -> PP* { return updateProperties.get(); }
 
 protected:

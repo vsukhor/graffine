@@ -36,15 +36,13 @@ limitations under the License.
 #include <memory>
 #include <type_traits>
 
-/**
- * Contains utilities for handling edge deletion operations in a graph.
+/** Contains utilities for handling edge deletion operations in a graph.
  * \details These are functors for deleting edges based on chain lengths and
  * vertex degrees.
  */
 namespace graffine::transforms::edge_deletion {
 
-/**
- * Vertex degree-independent wrapper class for edge deletion in chains
+/** Vertex degree-independent wrapper class for edge deletion in chains
  * consisting of single edge.
  * \details Handles the case of single-edge chains. Notably, because the chain
  * contains only one edge, at least one of the edge ends is a vertex
@@ -74,27 +72,27 @@ struct InSingleEdgeChain
     /// This is a single-edge chain, so one of the edge ends has degree 1.
     static constexpr auto I = Deg1;
 
-    /**
-     * Constructs a Functor object based on the Graph instance.
+    /** Constructs a Functor object based on the Graph instance.
      * \param[in] gr Graph to which the transformation is applied.
      * \param[in] pp Processor for non-topological properties.
      */
     explicit constexpr InSingleEdgeChain(Graph& gr,
                                          std::shared_ptr<PP> pp = nullptr);
 
-    /**
-     * Function call operator executing the deletion using edge index.
+    /** Function call operator executing the deletion using edge index.
      * \param[in] ind Graph-wide index of the deleted edge.
      */
     auto apply(EgIdG ind) -> Res;
 
-    /// Checks that edge \p ind can be deleted with its single-edge chain.
-    /// \details Rejects an invalid edge index, an edge which is not a
-    /// single-edge chain attached by a single end, and an end attached at a
-    /// vertex of degree other than 3 or 4.
+    /** Checks that edge \p ind can be deleted with its single-edge chain.
+     * \details Rejects an invalid edge index, an edge which is not a
+     * single-edge chain attached by a single end, and an end attached at a
+     * vertex of degree other than 3 or 4.
+     */
     auto applicability(EgIdG ind) const -> Applicability;
 
-    /// Outcome of the deletion of edge \p ind with its chain (see plan.h).
+    /** Outcome of the deletion of edge \p ind with its chain (see plan.h).
+     */
     auto plan(const EgIdG ind) const -> Plan<G>
     {
         const auto& m = gr.chain(ind);
@@ -104,7 +102,8 @@ struct InSingleEdgeChain
                          : deg4.plan(ind);
     }
 
-    /// Processor of non-topological properties.
+    /** Processor of non-topological properties.
+     */
     auto processor() const noexcept -> PP* { return deg3.processor(); }
 
 protected:

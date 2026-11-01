@@ -44,8 +44,7 @@ limitations under the License.
 
 namespace graffine::structure::paths::over_endslots {
 
-/**
- * Shortest paths over the chain end slots of a component.
+/** Shortest paths over the chain end slots of a component.
  * \details The paths run over chains: a path is the sequence of chain end
  * slots it passes, and its length the sum of the weights (Chain::weight())
  * of the chains it traverses, the slots joined at a vertex being at zero
@@ -74,8 +73,7 @@ struct Generic
 
     explicit constexpr Generic(const Component& cmp) noexcept;
 
-    /**
-     * Whether chain end slots \p s1 and \p s2 are connected by a path.
+    /** Whether chain end slots \p s1 and \p s2 are connected by a path.
      * \details Computes the distances from \p s1 with compute_from_source(),
      * except if the slots are on the same chain: then the distances are only
      * reset, and the slots are reported connected.
@@ -83,8 +81,7 @@ struct Generic
     bool are_connected(const EndSlot& s1,
                        const EndSlot& s2);
 
-    /**
-     * Computes shortest paths from chain end slot \p s.
+    /** Computes shortest paths from chain end slot \p s.
      * \details Computes the distances from \p s to every chain end slot of
      * the component, and the preceding slot of each on its shortest path.
      * The slots connected to \p s are at distance zero; traversing a chain
@@ -96,8 +93,7 @@ struct Generic
      */
     void compute_from_source(const EndSlot& s);
 
-    /**
-     * Computes the shortest path between two graph vertex slots.
+    /** Computes the shortest path between two graph vertex slots.
      * \details Calculates the shortest path between graph vertex slots \p s1
      * and \p s2 using the compute_from_source() member function.
      * \param[in] s1 The first slot of the path.
@@ -113,8 +109,7 @@ struct Generic
         const EndSlot& s2
     ) -> Path;
 
-    /**
-     * Classifies the chains of the component by their reachability.
+    /** Classifies the chains of the component by their reachability.
      * \note Relies on the distances computed beforehand by
      * compute_from_source(\p s) or are_connected(\p s, ...).
      * \param[in] s Source slot of the distances; only used for checking.
@@ -123,7 +118,8 @@ struct Generic
     auto classify_chains_by_connectivity(const EndSlot& s) const
         -> std::array<ChIdGs, 2>;
 
-    /// Chains traversed by \p path, and their total number of edges.
+    /** Chains traversed by \p path, and their total number of edges.
+     */
     auto path_chains_numedges(const Path& path) const noexcept
         -> std::tuple<std::set<ChIdG>, std::size_t>;
 
@@ -142,7 +138,8 @@ private:
 
     void reset();
 
-    /// Computes element indexes of the \a min_distance and \a previous.
+    /** Computes element indexes of the \a min_distance and \a previous.
+     */
     constexpr auto element_ind(const EndSlot& s) const noexcept -> std::size_t;
 
     constexpr auto element(std::size_t i) const noexcept -> EndSlot;

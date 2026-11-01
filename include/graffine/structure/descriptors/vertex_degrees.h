@@ -11,8 +11,7 @@
 
 // does not require definitions.h
 
-/**
- * Contains definitions and utilities for vertex degrees in the graph.
+/** Contains definitions and utilities for vertex degrees in the graph.
  * \details Defines the maximal degree, checks for implemented degrees,
  * and categorizes degrees into chain interior, leaf, junction, and end degrees.
  */
@@ -38,8 +37,7 @@ inline constexpr auto numDegrees = degrees.size();
 /// Maximal vertex degree.
 inline constexpr auto maxDegree {degrees.back()};
 
-/**
- * Checks if a degree is implemented.
+/** Checks if a degree is implemented.
  * \tparam D Degree to check.
  * \return True if implemented, false otherwise.
  * \details A degree is implemented if it is less than or equal to maxDegree.
@@ -92,8 +90,7 @@ constexpr auto isJunctionDegree =
     std::find(junctionDegrees.cbegin(), junctionDegrees.cend(), D) !=
     junctionDegrees.cend();
 
-/**
- * Checks if the vertices two degrees are compatible.
+/** Checks if the vertices two degrees are compatible.
  * \tparam D1 First degree.
  * \tparam D2 Second degree.
  */

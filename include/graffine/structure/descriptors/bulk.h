@@ -37,7 +37,8 @@ limitations under the License.
 /// Defines lightweight descriptors of the graph elements
 namespace graffine::structure::descriptors {
 
-/// Edge end connected at internal position inside a chain.
+/** Edge end connected at internal position inside a chain.
+ */
 struct Bulk
 {
     using Id = EgIdA;

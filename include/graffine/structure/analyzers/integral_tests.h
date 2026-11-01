@@ -34,8 +34,7 @@ limitations under the License.
 
 namespace graffine::structure {
 
-/**
- * Implements integral tests of the graph internal structure and its elements.
+/** Implements integral tests of the graph internal structure and its elements.
  * \tparam G Graph subjected to the tests.
  * \tparam beLoud Flag switching verbose reporting.
  */
@@ -50,16 +49,14 @@ struct IntegralTests
 
     constexpr explicit IntegralTests(const Graph& gr);
 
-    /**
-     * Runs consecutively all the specific tests implemented here.
+    /** Runs consecutively all the specific tests implemented here.
      * \param[in] it Index of the current iteration if used in a multi-step
      * sequence of transformations.
      * \throws invariant_error Describing the first inconsistency found.
      */
     void operator()(itT it = 0) const;
 
-    /**
-     * Runs the tests like operator(), but reports the outcome instead of
+    /** Runs the tests like operator(), but reports the outcome instead of
      * throwing.
      * \param[in] it Index of the current iteration if used in a multi-step
      * sequence of transformations.
@@ -67,44 +64,36 @@ struct IntegralTests
      */
     auto validate(itT it = 0) const -> Validation;
 
-    /**
-     * Tests component attributes and inter-component arrangement.
+    /** Tests component attributes and inter-component arrangement.
      * \param[in] it Index of the current iteration if used in a multi-step
      * sequence of transformations.
      */
     void components(itT it) const;
 
-    void paths(itT it) const;
-
-    /**
-     * Tests correspondence of current numbers of vertices.
+    /** Tests correspondence of current numbers of vertices.
      * \param[in] it Index of the current iteration if used in a multi-step
      * sequence of transformations.
      */
     void vertex_numbers(itT it) const;
 
-    /**
-     * Tests cycles.
+    /** Tests cycles.
      * \details Ensures that no inappropriate cycles are present.
      */
      void loops() const;
 
-    /**
-     * Tests consistency of inter-chain connections within components.
+    /** Tests consistency of inter-chain connections within components.
      * \param[in] it Index of the current iteration if used in a multi-step
      * sequence of transformations.
      */
     void consistency(itT it) const;
 
-    /**
-     * Tests correctness of chain indexes.
+    /** Tests correctness of chain indexes.
      * \param[in] it Index of the current iteration if used in a multi-step
      * sequence of transformations.
      */
     void chain_id(itT it) const;
 
-    /**
-     * Tests edge attributes.
+    /** Tests edge attributes.
      * \details Ensures that edge global and intracomponent indexes, as well as
      * component indexes are within the limits of the current graph size.
      * \param[in] it Index of the current iteration if used in a multi-step
@@ -112,8 +101,7 @@ struct IntegralTests
      */
     void edges(const itT it) const;
 
-    /**
-     * Tests correctness of edge positioning within a host chain.
+    /** Tests correctness of edge positioning within a host chain.
      * \param[in] it Index of the current iteration if used in a multi-step
      * sequence of transformations.
      */
@@ -152,7 +140,6 @@ void IntegralTests<G, beLoud>::
 operator()(const itT it) const
 {
     consistency(it);
-//    paths(it);
     components(it);
     loops();
     chain_id(it);
@@ -181,50 +168,6 @@ validate(const itT it) const -> Validation
     return {};
 }
 
-/*
-template<typename G,
-         bool beLoud>
-void IntegralTests<G, beLoud>::
-paths(const itT it) const
-{
-    if (!num_chains()) return;
-
-    typename G::Base::pathT pr_old;
-    std::vector<typename G::Base::weight_t> min_dist_old;
-
-    const auto ajl_old = gr.make_adjacency_list_old();
-
-    for (std::size_t j=0; j<gr.num_edges(); ++j) {
-        const auto c1 = cn[glm[j]].c;
-        gr.compute_paths(typename G::Base::vertex_t(j), ajl_old, min_dist_old, pr_old);
-
-        for (const auto& m : cn) {
-            const auto c2 = m.c;
-            for (const auto& o : m.g)
-                if (c2 == c1) {
-                    if (min_dist_old[o.ind] == G::Base::EdgeT::maxWeight) {
-                        gr.compt(c1).print("err_1");
-                        gr.compt(c1).print_adjacency_list_edges("err_1: ");
-                        abort("ERROR check.components: at iteration ", it,
-                              " edges ", j, " and ", o.ind,
-                              " belong to the same cluster ", c1,
-                              " but 'min_dist between them' == maxWeight");
-                    }
-                }
-                else
-                    if (min_dist_old[o.ind] != G::Base::EdgeT::maxWeight) {
-                        gr.compt(c1).print("err_2");
-                        gr.compt(c2).print("err_2");
-                        gr.compt(c1).print_adjacency_list_edges("err_2: ");
-                        gr.compt(c2).print_adjacency_list_edges("err_2: ");
-                        abort("ERROR check.components: at iteration ", it,
-                              " edges ", j, " (cl ", c1, ") ", " and ", o.ind,
-                              " (cl ", c2, ") have min_dist != maxWeight");
-                    }
-        }
-    }
-}
-*/
 
 template<typename G,
          bool beLoud>
@@ -252,58 +195,6 @@ components(const itT it) const
     GRAFFINE_ENSURE(minv == 0, "at iteration ", it, " min cn.c ", minv, " is not 0");
 
 
-//    using BaseEdgeType = utils::graph::EdgeType<real,
-//                                                EgId,
-//                                                utils::graph::EdgeMode::unweighted>;
-//    using BaseGraph = utils::graph::Graph<BaseEdgeType>;
-//    typename BaseGraph::pathT pr;
-//    typename G::Compt::pathT pr;
-//    std::vector<typename G::BaseEdgeType::vertex_t> pr;
-//    std::vector<typename G::Edge::weight_t> min_dist;
-
-//    auto egfun = [](const typename G::Base::EdgeT& eg)
-//    {
-//        return typename G::Base::EdgeT{eg.target};
-//    };
-
-//    const auto ajl =
-//        gr.template adjacency_list_edges<typename G::Base::EdgeT>(egfun);
-
-/*
-    typename G::Base::pathT pr;
-    std::vector<typename G::Base::weight_t> min_dist;
-    const auto ajl = gr.make_adjacency_list_old();
-
-    for (std::size_t j=0; j<gr.num_edges(); ++j) {
-        const auto c1 = cn[glm[j]].c;
-        gr.compute_paths(typename G::Base::vertex_t(j), ajl, min_dist, pr);
-        for (const auto& m : cn) {
-            const auto c2 = m.c;
-            for (const auto& o : m.g)
-                if (c2 == c1) {
-                    if (min_dist[o.ind] == G::Base::EdgeT::maxWeight) {
-                        gr.compt(c1).print("err_1");
-                        gr.compt(c1).print_adjacency_list_edges("err_1: ");
-                        abort("ERROR check.components: at iteration ", it,
-                              " edges ", j, " and ", o.ind,
-                              " belong to the same cluster ", c1,
-                              " but 'min_dist between them' == maxWeight");
-                    }
-                }
-                else
-                    if (min_dist[o.ind] != G::Base::EdgeT::maxWeight) {
-                        gr.compt(c1).print("err_2");
-                        gr.compt(c2).print("err_2");
-                        gr.compt(c1).print_adjacency_list_edges("err_2: ");
-                        gr.compt(c2).print_adjacency_list_edges("err_2: ");
-                        abort("ERROR check.components: at iteration ", it,
-                              " edges ", j, " (cl ", c1, ") ", " and ", o.ind,
-                              " (cl ", c2, ") have min_dist != maxWeight");
-                    }
-
-        }
-    }
-*/
     for (const auto& c : ct) {
         for (const auto& w : c.ww) {
 

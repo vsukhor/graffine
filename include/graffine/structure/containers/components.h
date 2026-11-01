@@ -43,8 +43,7 @@ limitations under the License.
 
 namespace graffine::structure::containers {
 
-/**
- * Implements class for managing collections of chains in the graph.
+/** Implements a manager for collections of chains in the graph.
  * \details Derives from Sequence container class adding to it chain-specific
  * functionality.
  * \tparam Cmp Container element type: Disconnected component.
@@ -57,7 +56,8 @@ struct Components
     using size_type = Base::size_type;
     using value_type = Base::value_type;
 
-    /// Actual number of chains in the container.
+    /** Actual number of chains in the container.
+     */
     constexpr auto num() const noexcept -> size_type;
 //    constexpr auto num_edges() const noexcept -> std::size_t;
     constexpr auto ind_last() const noexcept -> size_type;
@@ -70,8 +70,7 @@ struct Components
 
     void print(std::string_view tag) const;
 
-    /**
-     * Checks that \p cond is satisfied.
+    /** Checks that \p cond is satisfied.
      * \tparam T Types of the message arguments.
      * \param[in] cond Condition to be checked.
      * \param[in] message Arguments forming the message of the exception

@@ -34,7 +34,8 @@ limitations under the License.
 
 namespace graffine::structure::descriptors {
 
-/// Descriptor of a vertex.
+/** Descriptor of a vertex.
+ */
 struct VertexInGraph
 {
     uint ci {utils::undefined<uint>};   ///< Id of the host component.

@@ -66,8 +66,7 @@ namespace component_creation {
 template<typename G>
 using Trait = transforms::Trait<TransformType::ComponentCreation, G>;
 
-/**
- * Outcome of a component creation. See plan.h.
+/** Outcome of a component creation. See plan.h.
  */
 template<typename G>
 struct Plan {
@@ -80,8 +79,7 @@ struct Plan {
     }
 };
 
-/**
- * Processor of non-topological properties usable by the component creations.
+/** Processor of non-topological properties usable by the component creations.
  * \details Either void, for no processing, or a type providing the hooks
  * called before and after the transformation.
  * \tparam PP Property processor type.
@@ -98,8 +96,7 @@ concept Processor =
     };
 
 
-/**
- * Functor class creating specific graph component.
+/** Functor class creating specific graph component.
  * \details The component is created as a single chain.
  * \tparam G Graph to which the transformation is applied.
  * \tparam PP Processor of non-topological properties, or void.
@@ -120,8 +117,7 @@ struct Functor
     static constexpr auto fullName = Trait::fullName;
     static constexpr auto shortName = Trait::shortName;
 
-    /**
-     * Constructs a Functor object based on the Graph instance.
+    /** Constructs a Functor object based on the Graph instance.
      * \param[in] gr Graph to which the transformation is applied.
      * \param[in] pp Processor for non-topological properties. If null,
      *               no processing is intended
@@ -129,24 +125,24 @@ struct Functor
     explicit Functor(Graph& gr,
                      std::shared_ptr<PP> pp = nullptr);
 
-    /**
-     * Executes the transformation.
+    /** Executes the transformation.
      * \details Unchecked: see Applicable.
      * \param[in] s Length (in edges) of the chain forming the new component.
      * \return Index of the new component, which is the last one in the graph.
      */
     auto apply(std::size_t s = 1) -> Res;
 
-    /**
-     * Checks that a component of \p s edges can be created.
+    /** Checks that a component of \p s edges can be created.
      * \details Rejects \p s shorter than Chain::minLength.
      */
     auto applicability(std::size_t s = 1) const -> Applicability;
 
-    /// Outcome of the transformation (see plan.h).
+    /** Outcome of the transformation (see plan.h).
+     */
     auto plan(std::size_t s = 1) const -> Plan<G> { return {s}; }
 
-    /// Processor of non-topological properties.
+    /** Processor of non-topological properties.
+     */
     auto processor() const noexcept -> PP* { return updateProperties.get(); }
 
 protected:

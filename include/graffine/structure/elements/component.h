@@ -64,8 +64,7 @@ template <typename Ch,
 struct Component
 {};
 
-/**
- * Connected component of a graph.
+/** Connected component of a graph.
  * \tparam Ch Type of the Chain forming the graph.
  */
 template <typename Ch>
@@ -138,8 +137,7 @@ public: // Functions
     constexpr CmpId get_id() const noexcept { return ind; };
 
     void set_chains() noexcept;
-    /**
-     * Assigns chain \p m to this component.
+    /** Assigns chain \p m to this component.
      * \details Sets the component index and the component-wide chain index
      * \p idc of \p m, and numbers its edges consecutively from \p indc .
      * \param[in] m Chain to be assigned.
@@ -153,8 +151,7 @@ public: // Functions
         EgIdC& indc  // ref
     ) noexcept;
 
-    /**
-     * Renumbers the chains of this component and their edges.
+    /** Renumbers the chains of this component and their edges.
      * \details As set_chain() for each chain of \a ww in turn: the chains are
      * numbered from \p idc and the edges from \p indc . Used to append the
      * chains to another component's numbering.
@@ -165,8 +162,7 @@ public: // Functions
     template <bool updateChis = true>
     void rename_chain(ChIdG f, ChIdG t);
 
-    /**
-     * Change component index in internal records of all edges
+    /** Change component index in internal records of all edges
      * keeping the chain index unaltered.
      * \details Change connected graph component-related indexes of the
      * chain edges, keeping the chain index unaltered.
@@ -189,16 +185,16 @@ public: // Functions
     void update_edge_descriptors() noexcept;
 
     auto set_chis() -> Component&;
-    /// Moves the chain classification out of this component, leaving
-    /// \a chis in a moved-from state.
+    /** Moves the chain classification out of this component, leaving
+     * \a chis in a moved-from state.
+     */
     auto get_chis() noexcept -> Chis&&;
     void clear_chis() noexcept { chis.clear(); }
 
     void clear();
 
     //    constexpr void detect_facets() const noexcept;
-    /**
-     * Finds the chain triangles of the component and stores them in \a trs.
+    /** Finds the chain triangles of the component and stores them in \a trs.
      * \details A chain triangle is formed by three distinct chains, none a
      * cycle, joined end to end into a loop through three distinct junction
      * vertices. Each triangle is stored once, with its chains and vertices
@@ -212,21 +208,25 @@ public: // Functions
     constexpr auto num_edges() const noexcept -> std::size_t;
     constexpr auto num_chains() const noexcept -> std::size_t;
     //    constexpr auto num_facets() const noexcept -> std::size_t;
-    /// Number of chain triangles in \a trs, see detect_chain_triangles().
+    /** Number of chain triangles in \a trs, see detect_chain_triangles().
+     */
     constexpr auto num_triangles() const noexcept -> std::size_t;
 
     constexpr auto num_vertices(Degree d) const noexcept -> std::size_t;
     constexpr auto num_vertices() const noexcept -> std::size_t;
 
-    /// Whether the component holds an unconnected linear chain, i.e. a chain
-    /// classified by end degrees {1, 1}.
+    /** Whether the component holds an unconnected linear chain, i.e. a chain
+     * classified by end degrees {1, 1}.
+     */
     constexpr bool is_single_unconnected_chain() const;
-    /// Whether the component holds an unconnected cycle, i.e. a chain
-    /// classified by end degrees {2, 2}.
+    /** Whether the component holds an unconnected cycle, i.e. a chain
+     * classified by end degrees {2, 2}.
+     */
     constexpr bool is_unconnected_cycle() const;
 
-    /// Whether the component is a complete graph: an edge links every pair
-    /// of its vertices.
+    /** Whether the component is a complete graph: an edge links every pair
+     * of its vertices.
+     */
     constexpr bool is_complete() const noexcept;
 
     constexpr auto max_degree() const noexcept -> Degree;
@@ -237,8 +237,7 @@ public: // Functions
         EgIdG& indIni // ref
     ) -> Chain&;
 
-    /**
-     * Removes an edge having component ind \p indc .
+    /** Removes an edge having component ind \p indc .
      * \details Removes an edge at chain coordinate a = egl[indc].a while
      * shifting original g[a+1], g[a+2], ... backwards. These then become
      * g[a], g[a+1], ... .
@@ -255,8 +254,7 @@ public: // Functions
     template <bool preserveTopology = true>
     auto remove_edge(const EgIdC indc) -> Edge*;
 
-    /**
-     * Removes an edge at position \p a .
+    /** Removes an edge at position \p a .
      * \details Removes an edge g[a] while shifting original
      * g[a+1], g[a+2], ... backwards. These then become g[a], g[a+1], ... .
      * The two vertices of the removed edge are merged into one, and the
@@ -273,8 +271,7 @@ public: // Functions
     template <bool preserveTopology = true>
     auto remove_edge(ChIdG w, EgIdA a) -> Edge*;
 
-    /**
-     * Removes an edge at position \p a .
+    /** Removes an edge at position \p a .
      * \details Removes an edge g[a] while shifting original
      * g[a+1], g[a+2], ... backwards. These then become g[a], g[a+1], ... .
      * The two vertices of the removed edge are merged into one, and the
@@ -291,8 +288,7 @@ public: // Functions
     template <bool preserveTopology = true>
     auto remove_edge(Chain& m, EgIdA a) -> Edge*;
 
-    /**
-     * Inserts an edge at g[a].
+    /** Inserts an edge at g[a].
      * \note Original edges g[a], g[a+1], ... are shifted forwards,
      * becoming g[a+1], g[a+2], ....
      * Insertion is not limited to the chain internal:
@@ -306,8 +302,7 @@ public: // Functions
     auto insert_edge_into_chain(Edge&& e, ChIdG w, EgIdA a) -> Edge&;
     auto insert_edge_into_chain(Edge&& e, Chain& m, EgIdA a) -> Edge&;
 
-    /**
-     * Inserts an edge at g[a].
+    /** Inserts an edge at g[a].
      * \note Original edges g[a], g[a+1], ... are shifted forwards,
      * becoming g[a+1], g[a+2], ....
      * \note insertion is limited to the chain internal: 0 < a < m.length()
@@ -322,8 +317,7 @@ public: // Functions
     auto insert_first_edge_into_chain(Edge&& eg, ChIdG w) -> Edge&;
     auto insert_first_edge_into_chain(Edge&& eg, Chain& m) -> Edge&;
 
-    /**
-     * Appends an edge at the chain head, i.e. at the back of g.
+    /** Appends an edge at the chain head, i.e. at the back of g.
      * \param[in] e Edge object to be appended.
      * \param[in] w Graph-wide id of the chain to get processed.
      * \return Reference to the appended edge.
@@ -334,8 +328,7 @@ public: // Functions
     auto prepend_edge_to_chain(Edge&& e, ChIdG w) -> Edge&;
     auto prepend_edge_to_chain(Edge&& e, Chain& m) -> Edge&;
 
-    /**
-     * Rotates the edges of chain \p m by \p n positions, as Chain::rotate(),
+    /** Rotates the edges of chain \p m by \p n positions, as Chain::rotate(),
      * and updates their positions in the component-wide edge descriptors.
      * \note Meaningful for cycles, whose ends are at the same vertex.
      */
@@ -358,22 +351,30 @@ public: // Functions
      * @{
      */
 
-    /// Appends the chains, edges and vertices of component \p other, leaving
-    /// it empty. \p other must be a different component.
+    /** Appends the chains, edges and vertices of component \p other, leaving
+     * it empty. \p other must be a different component.
+     */
     void append(Component&& other);
-    /// \overload
+    /**
+     * \overload
+     */
     void append(Component& other);
-    /// Appends the chains \p vv, without their vertices.
+    /** Appends the chains \p vv, without their vertices.
+     */
     void append(const ChIdGs& vv);
-    /// Appends the chains \p mm, without their vertices.
+    /** Appends the chains \p mm, without their vertices.
+     */
     void append(Chains& mm);
-    /// Appends chain \p m, without its vertices: it must not be part of this
-    /// component.
+    /** Appends chain \p m, without its vertices: it must not be part of this
+     * component.
+     */
     void append(Chain& m);
-    /// As append(Edge&), for each edge of \p g .
+    /** As append(Edge&), for each edge of \p g .
+     */
     void append(Edges &g);
-    /// Assigns edge \p eg to this component, with the next component-wide
-    /// index, and rebuilds the edge descriptors.
+    /** Assigns edge \p eg to this component, with the next component-wide
+     * index, and rebuilds the edge descriptors.
+     */
     void append(Edge& eg);
 
     ///@}  // Appending to this component.
@@ -388,31 +389,38 @@ public: // Functions
      * @{
      */
 
-    /// As remove(const Edge&), for each edge of \p g .
+    /** As remove(const Edge&), for each edge of \p g .
+     */
     void remove(const Edges &g);
-    /// Removes edge \p eg from the component-wide edge descriptors.
+    /** Removes edge \p eg from the component-wide edge descriptors.
+     */
     void remove(const Edge& eg);
-    /// Removes chain \p m and its edges from the records of this component.
+    /** Removes chain \p m and its edges from the records of this component.
+     */
     void remove(const Chain& m);
-    /// Removes chains \p mm and their edges from the records of this
-    /// component.
+    /** Removes chains \p mm and their edges from the records of this
+     * component.
+     */
     void remove(const Chains& mm);
-    /// Removes chains \p vv and their edges from the records of this
-    /// component.
+    /** Removes chains \p vv and their edges from the records of this
+     * component.
+     */
     void remove(const ChIdGs& vv);
     ///@}  // Removal from the records of this component.
 
-    /// Deletes vertex \p vp, which must have no edges connected.
+    /** Deletes vertex \p vp, which must have no edges connected.
+     */
     void remove_disconnected(Vertex* vp);
-    /// Disconnects vertex \p vi from its edges and deletes it, leaving the
-    /// edge ends free. The chain connectivity (Chain::ngs) is not updated.
+    /** Disconnects vertex \p vi from its edges and deletes it, leaving the
+     * edge ends free. The chain connectivity (Chain::ngs) is not updated.
+     */
     void remove_vertex(const VIdH vi);
-    /// Disconnects outer end \p e of edge \p eg and deletes the vertex it
-    /// was connected to, which must have no other edges.
+    /** Disconnects outer end \p e of edge \p eg and deletes the vertex it
+     * was connected to, which must have no other edges.
+     */
     constexpr void remove_vertex_at_edge_outer(Edge& eg, EndId e) noexcept;
 
-    /**
-     * Deletes the boundary vertex of the unconnected cycle forming this
+    /** Deletes the boundary vertex of the unconnected cycle forming this
      * component.
      * \details Disconnects the edges at both chain ends from the vertex, then
      * deletes it, so that the chain ends become free. The chain connectivity
@@ -422,8 +430,7 @@ public: // Functions
      */
     constexpr auto rem_unconnected_cycle_boundary_vertex() noexcept
         -> std::array<Edge*, 2>;
-    /**
-     * Deletes internal vertex \p a of chain \p w .
+    /** Deletes internal vertex \p a of chain \p w .
      * \details Disconnects edges g[a-1] and g[a] from the vertex they share
      * (BulkSlot {w, a}), then deletes it, leaving the two edge ends free.
      * The chain itself is not split.
@@ -433,13 +440,11 @@ public: // Functions
     constexpr auto rem_chain_internal_vertex(ChIdG w, EgIdA a) noexcept
         -> std::array<Edge*, 2>;
 
-    /**
-     * Removes \p s from list of \a neigs in slots connected to it.
+    /** Removes \p s from list of \a neigs in slots connected to it.
      */
     void remove_slot_from_neigs(const EndSlot& s);
 
-    /**
-     * Replaces \p old with \p nov in the neighbour lists of the slots
+    /** Replaces \p old with \p nov in the neighbour lists of the slots
      * connected to \p nov .
      * \details To be called once \p nov holds the neighbours of \p old,
      * e.g. after copy_neigs(): each of these must list \p old, which is
@@ -452,8 +457,7 @@ public: // Functions
         const EndSlot& old,
         const EndSlot& nov);
 
-    /**
-     * Reconnect edges from vertex \p f to vertex \p t .
+    /** Reconnect edges from vertex \p f to vertex \p t .
      * \details Disconnect edges connected to vertex \p f and
      * connect them to vertex \p t
      */
@@ -466,12 +470,15 @@ public: // Functions
      * @{
      */
 
-    /// Moves chains \p vv, with their vertices, as move_to(Component&, Chain&)
-    /// does, in descending order of the chain indexes.
+    /** Moves chains \p vv, with their vertices, as move_to(Component&, Chain&)
+     * does, in descending order of the chain indexes.
+     */
     void move_to(Component& c, ChIdGs&& vv);
-    /// Moves chains \p mm, with their vertices.
+    /** Moves chains \p mm, with their vertices.
+     */
     void move_to(Component& c, Chains& mm);
-    /// Moves chain \p m, with its vertices.
+    /** Moves chain \p m, with its vertices.
+     */
     void move_to(Component& c, Chain& m);
 
     /**
@@ -497,7 +504,8 @@ public: // Functions
     constexpr auto edge_vertices(EgIdC indc) const noexcept -> const Edge::Vertices&;
     constexpr auto edge_vids(EgIdC indc) const noexcept -> Edge::VIDs;
 
-    /// The edges of the component, in the order of their component-wide index.
+    /** The edges of the component, in the order of their component-wide index.
+     */
     constexpr auto edges() const noexcept -> std::vector<const Edge*>;
     constexpr auto edge(EgIdC indc) const noexcept -> const Edge&;
     constexpr auto edge(EgIdC indc)       noexcept ->       Edge&;
@@ -507,7 +515,8 @@ public: // Functions
     constexpr auto edge(const BulkSlot& s)       noexcept ->       Edge&;
     constexpr auto edge(EgIdG i) const noexcept -> const Edge&;
 
-    /// The chains of the component, in the order of \a ww.
+    /** The chains of the component, in the order of \a ww.
+     */
     constexpr auto chains() const noexcept -> std::vector<const Chain*>;
     constexpr auto chain(ChIdC w) const noexcept -> const Chain&;
     constexpr auto chain(ChIdC w)       noexcept ->       Chain&;
@@ -532,16 +541,14 @@ public: // Functions
 
     constexpr bool ww_is_sorted() const noexcept;
 
-    /**
-     * Shift an edge from f.e end of f.w to t.e end of t.w
+    /** Shift an edge from f.e end of f.w to t.e end of t.w
      * \note Provides functionality similar to the one implemented by
      * functor structure::modifiers::JunctionShifter.
      */
     void shift_chain_junction(const EndSlot& f,
                               const EndSlot& t);
 
-    /**
-     * Checks that \p cond is satisfied.
+    /** Checks that \p cond is satisfied.
      * \tparam T Types of the message arguments.
      * \param[in] cond Condition to be checked.
      * \param[in] message Arguments forming the message of the exception
@@ -559,48 +566,54 @@ public: // Functions
      * @{
      */
 
-    /// Ensure that each edge descriptor of each vertex refers to an edge of
-    /// the component connected to the vertex at the recorded inner end.
-    /// \return The first vertex failing the check, or \a nullptr.
+    /** Ensure that each edge descriptor of each vertex refers to an edge of
+     * the component connected to the vertex at the recorded inner end.
+     * \return The first vertex failing the check, or \a nullptr.
+     */
     template<bool beLoud = true>
     auto check_connectivity_vertex_edge() const -> Vertex* ;
 
-    /// Ensure that the vertices record this component, and pass
-    /// check_connectivity_vertex_edge().
-    /// \return \a false iff all is ok.
+    /** Ensure that the vertices record this component, and pass
+     * check_connectivity_vertex_edge().
+     * \return \a false iff all is ok.
+     */
     template<bool beLoud = true>
     bool check_vertex_data() const;
 
-    /// Ensure correctness of chain indices component-wise.
-    /// \return \a false iff all is ok.
+    /** Ensure correctness of chain indices component-wise.
+     * \return \a false iff all is ok.
+     */
     template<bool beLoud = true>
     bool check_chain_idc() const;
 
-    /// Ensure correctness of edge indices component-wise.
-    /// \return \a false iff all is ok.
+    /** Ensure correctness of edge indices component-wise.
+     * \return \a false iff all is ok.
+     */
     template<bool beLoud = true>
     bool check_edge_indc() const;
 
-    /// Ensure correctness of edge descriptors.
-    /// \return \a false iff all is ok.
+    /** Ensure correctness of edge descriptors.
+     * \return \a false iff all is ok.
+     */
     template<bool beLoud = true>
     bool check_egl() const;
 
-    /// Ensure correctness of chain classification.
-    /// \return \a false iff all is ok.
+    /** Ensure correctness of chain classification.
+     * \return \a false iff all is ok.
+     */
     template<bool beLoud = true>
     bool check_chis() const;
 
-    /**
-     * Ensure that no cycle chain is shorter than Chain::minCycleLength.
+    /** Ensure that no cycle chain is shorter than Chain::minCycleLength.
      * \note Unlike the other checks, reports a failure in all builds.
      * \return \a false iff all is ok.
      */
     template<bool beLoud = true>
     bool check_chain_lengths() const;
 
-    /// Collection of tests of this component internal structures and indices.
-    /// \return \a false iff all is ok.
+    /** Collection of tests of this component internal structures and indices.
+     * \return \a false iff all is ok.
+     */
     template<bool beLoud = true>
     bool check(std::string_view s = "") const;
 

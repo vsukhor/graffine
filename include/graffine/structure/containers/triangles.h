@@ -40,8 +40,7 @@ limitations under the License.
 namespace graffine::structure {
 
 
-/**
- * A chain triangle: three chains joined end to end into a loop.
+/** A chain triangle: three chains joined end to end into a loop.
  * \details The chains meet pairwise at three distinct junction vertices.
  */
 struct Triangle
@@ -58,18 +57,21 @@ struct Triangle
 };
 
 
-/// Collection of chain triangles.
+/** Collection of chain triangles.
+ */
 struct Triangles
 {
     std::vector<Triangle> tris;  ///< The triangles.
 
-    /// Number of triangles.
+    /** Number of triangles.
+     */
     constexpr auto num() const noexcept -> std::size_t
     {
         return tris.size();
     }
 
-    /// Removes all triangles.
+    /** Removes all triangles.
+     */
     constexpr void clear() noexcept
     {
         tris.clear();

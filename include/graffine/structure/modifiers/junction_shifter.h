@@ -40,8 +40,7 @@ limitations under the License.
 
 namespace graffine::structure::modifiers {
 
-/**
- * Contains implementation of the mechanism enabling smooth shifting of
+/** Contains implementation of the mechanism enabling smooth shifting of
  * internal chain vertices over a junction node connecting the chains.
  */
 template<typename H>
@@ -59,7 +58,8 @@ struct JunctionShifter
 //        : host {host}
 //    {}
 
-    ///  Shift an edge from f.e end of f.w to t.e end of t.w
+    /**  Shift an edge from f.e end of f.w to t.e end of t.w
+     */
     void operator()(Host& host,
                     const EndSlot& f,
                     const EndSlot& t);

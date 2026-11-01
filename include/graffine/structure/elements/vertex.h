@@ -59,8 +59,7 @@ template <typename... Ligands>
 struct Vertex {};
 
 
-/**
- * A vertex having only an identifier, unique over the program run.
+/** A vertex having only an identifier, unique over the program run.
  */
 template<>
 struct Vertex<>
@@ -87,7 +86,8 @@ public:  // Functions
         : id {id}
     {}
 
-    /// Equality operator.
+    /** Equality operator.
+     */
     constexpr bool operator==(const Vertex& other) const noexcept
     {
         return id == other.id;
@@ -101,7 +101,8 @@ public:  // Functions
      * @{
      */
 
-    /// Prints attributes, preceded by \p s , to the message processor.
+    /** Prints attributes, preceded by \p s , to the message processor.
+     */
     template<bool endLine=true>
     void print(const std::string_view s="") const
     {
@@ -117,7 +118,8 @@ public:  // Functions
 
 protected: // Functions
 
-    /// Create identifier unique over the program run.
+    /** Create identifier unique over the program run.
+     */
     static constexpr auto create_id() noexcept -> VIdH
     {
         return ++h;
@@ -130,8 +132,7 @@ using VertexFeaturelessUnconnected = Vertex<>;
 
 using ED = descriptors::EdgeInVertex<IdScope::COMPONENT>;
 
-/**
- * A vertex knowing its incident edges and its host component.
+/** A vertex knowing its incident edges and its host component.
  * \details The edges are recorded by descriptors (Vertex::edges()) holding
  * their component-wide index and the inner end connected to the vertex;
  * the vertex degree is the number of descriptors. A vertex can be \a fixed:
@@ -171,14 +172,12 @@ public:  // Functions
     explicit Vertex(VIdH id);
     explicit Vertex(VIdH id, bool isFixed);
 
-    /**
-     * Constructor for an unconnected vertex.
+    /** Constructor for an unconnected vertex.
      * \param[in] c Id of the graph connected component hosting the vertex.
      */
     explicit Vertex(CmpId c);
 
-    /**
-     * Equality operator.
+    /** Equality operator.
      * \details Declared here rather than taken from the base, whose operator
      * makes `a == b` ambiguous with its reversed form `b == a` in C++20.
      */
@@ -187,7 +186,8 @@ public:  // Functions
         return Base::operator==(other);
     }
 
-    /// Vertex degree (number of incident edges).
+    /** Vertex degree (number of incident edges).
+     */
     constexpr auto deg() const noexcept -> Degree;
 
     constexpr auto get_c() const noexcept -> CmpId { return c; }
@@ -215,33 +215,41 @@ public:  // Functions
     constexpr auto edges() const noexcept -> const EgDescrors& { return egDescrors; }
     constexpr auto edges() noexcept -> EgDescrors&             { return egDescrors; }
 
-    /// Descriptors of the edges connected at their inner end B, i.e.
-    /// pointing into this vertex by their own orientation.
+    /** Descriptors of the edges connected at their inner end B, i.e.
+     * pointing into this vertex by their own orientation.
+     */
     auto edges_in() const noexcept -> EgDescrors;
-    /// Descriptors of the edges connected at their inner end A, i.e.
-    /// pointing out of this vertex by their own orientation.
+    /** Descriptors of the edges connected at their inner end A, i.e.
+     * pointing out of this vertex by their own orientation.
+     */
     auto edges_out() const noexcept -> EgDescrors;
 
-    /// Removes the descriptor \p g of an incident edge.
-    /// \return The number of descriptors removed: 1.
+    /** Removes the descriptor \p g of an incident edge.
+     * \return The number of descriptors removed: 1.
+     */
     auto erase(const EgDescr& g) noexcept -> EgDescrors::size_type;
 
-    /// Records the incident edge described by \p s, which must be new.
+    /** Records the incident edge described by \p s, which must be new.
+     */
     constexpr void insert(const EgDescr& s) noexcept;
-    /// \overload
+    /**
+     * \overload
+     */
     constexpr void insert(EgDescr&& s);
 
-    /// Whether the edge described by \p s is incident.
+    /** Whether the edge described by \p s is incident.
+     */
     constexpr bool is_connected_to(const EgDescr& s) const noexcept;
-    /// Whether any edge is incident.
+    /** Whether any edge is incident.
+     */
     constexpr bool is_connected() const noexcept;
 
-    /// Component-wide index of an edge joining this vertex and \p v, or
-    /// undefined if there is none.
+    /** Component-wide index of an edge joining this vertex and \p v, or
+     * undefined if there is none.
+     */
     auto common_edge(const Vertex& v) const noexcept -> EgIdC;
 
-    /**
-     * Changes the component-wide index recorded for an incident edge.
+    /** Changes the component-wide index recorded for an incident edge.
      * \param[in] from Descriptor of the edge, holding its former index.
      * \param[in] to New component-wide index of the edge.
      * \return \a true if the edge was found.
@@ -249,8 +257,9 @@ public:  // Functions
     bool reind_edge(EgDescr&& from,
                     EgIdC to) noexcept;
 
-    /// Degree tests: 2 (bulk), 1 (leaf), 3 (junctionY), 4 (junctionX), and
-    /// above 2 (junction).
+    /** Degree tests: 2 (bulk), 1 (leaf), 3 (junctionY), 4 (junctionX), and
+     * above 2 (junction).
+     */
     constexpr bool is_bulk() const noexcept;
     constexpr bool is_leaf() const noexcept;
     constexpr bool is_junctionY() const noexcept;
@@ -264,7 +273,8 @@ public:  // Functions
      * @{
      */
 
-    /// Whether the vertex is fixed (see the class description).
+    /** Whether the vertex is fixed (see the class description).
+     */
     constexpr bool is_fixed() const noexcept { return isFixed(); }
     constexpr void fix() noexcept   { isFixed() = true; }
     constexpr void unfix() noexcept { isFixed() = false; }
@@ -276,7 +286,8 @@ public:  // Functions
      * @{
      */
 
-    /// Prints attributes, preceded by \p s , to the message processor.
+    /** Prints attributes, preceded by \p s , to the message processor.
+     */
     template<bool endLine=true>
     void print(std::string_view s="") const;
 

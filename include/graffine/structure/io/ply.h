@@ -59,8 +59,7 @@ namespace graffine::structure::io {
 
 namespace ply = tinyply;
 
-/**
- * Reads and writes graphs as PLY files, in text or binary format.
+/** Reads and writes graphs as PLY files, in text or binary format.
  * \details A file holds two elements:
  * - \c vertex, with properties \c id and \c isFixed;
  * - \c edge, with properties \c vertex_index_at_outer_end_A and
@@ -93,8 +92,7 @@ struct Ply
 
     static constexpr const char* version {"11"};
 
-    /**
-     * Copies property data read from file into a vector of T.
+    /** Copies property data read from file into a vector of T.
      * If the file stores the property with a type different from that of
      * T elements (e.g. edge weights written as float but read with real set
      * to double), the values are converted element by element.
@@ -152,8 +150,7 @@ struct Ply
     Ply() {}
     explicit Ply(const Graph* gr) {}
 
-    /**
-     * Writes graph \p gr to \p file.
+    /** Writes graph \p gr to \p file.
      * \throws io_error If the file cannot be written.
      */
     template<bool beLoud = false>
@@ -161,8 +158,7 @@ struct Ply
                const std::filesystem::path& file,
                const bool asBinary) const;
 
-    /**
-     * Reads a graph from \p file.
+    /** Reads a graph from \p file.
      * \details The file content is validated before the graph is built.
      * \throws io_error If the file cannot be read, or does not describe
      * a valid graph.
@@ -183,15 +179,15 @@ struct Ply
 
 protected:
 
-    /// Registers an element and some of its properties for reading from file.
+    /** Registers an element and some of its properties for reading from file.
+     */
     auto register_for_import(
         const std::string& elementName,
         const std::vector<std::string>& properties,
         Reader& reader
     ) -> std::shared_ptr<Reader::Data>;
 
-    /**
-     * Renumbers the vertex ids \p vhs to 0, 1, ..., \p vhs.size() - 1, and
+    /** Renumbers the vertex ids \p vhs to 0, 1, ..., \p vhs.size() - 1, and
      * the vertex ids at the edge ends \p vIdA and \p vIdB accordingly.
      */
     void restore_consecutive_vids(

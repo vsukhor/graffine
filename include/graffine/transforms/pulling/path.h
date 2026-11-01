@@ -46,8 +46,7 @@ limitations under the License.
 namespace graffine::transforms::pulling {
 
 
-/**
- * Path of edges along which a component is pulled.
+/** Path of edges along which a component is pulled.
  * \details The path is a contiguous sequence of edges inside a component,
  * leading from a driver to a source:
  * - the driver is a chain end at the vertex initiating the pull, given by
@@ -77,8 +76,7 @@ struct Path
 //    using Skeleton = paths::Container<Driver>;
     using BulkSlot = Chain::BulkSlot;
 
-    /**
-     * Descriptor of the Path source.
+    /** Descriptor of the Path source.
      * \details Either a chain end: a free end, or the end of a cycle chain;
      * or a vertex of degree 2 inside a chain, given as a BulkSlot. Pulling
      * shifts the junctions on the path towards a degree 2 source, and so
@@ -109,16 +107,19 @@ struct Path
             return EndSlot::operator==(s) && pos == s.pos;
         }
 
-        /// Checks that the source is a degree 2 vertex inside a chain.
+        /** Checks that the source is a degree 2 vertex inside a chain.
+         */
         constexpr bool is_bulk() const noexcept { return pos.is_defined(); }
 
         constexpr auto bulk_slot() const noexcept -> BulkSlot { return {this->w, pos}; }
 
-        /// The chain end of a source which is not a degree 2 vertex.
+        /** The chain end of a source which is not a degree 2 vertex.
+         */
         constexpr auto end_slot() const noexcept -> EndSlot { return *this; }
     };
 
-    /// Descriptor of the Path driver.
+    /** Descriptor of the Path driver.
+     */
     struct Driver
     {
         EgIdG ind {EgIdG::undefined};  ///< Graph-wide ind of the driving edge.
@@ -227,29 +228,36 @@ struct Path
     static constexpr auto end_to_a_tip(const C::Chain& m,
                                        const End::Id e);
 
-    /// Checks that position \p a of chain \p m is a vertex inside it.
+    /** Checks that position \p a of chain \p m is a vertex inside it.
+     */
     static constexpr bool is_bulk_position(const Chain& m,
                                            EgIdA a) noexcept;
 
 //    void set_skeleton() const;
 
-    /// Id of the chain at the leading path end.
+    /** Id of the chain at the leading path end.
+     */
     constexpr auto driver_chid() const noexcept -> ChIdG;
 
-    /// Id of the chain boundary at the leading path end.
+    /** Id of the chain boundary at the leading path end.
+     */
     constexpr auto driver_chain_end() const -> End::Id;
 
-    /// Vertex at the leading path end.
+    /** Vertex at the leading path end.
+     */
     constexpr auto driver_vertex() const noexcept -> const Vertex&;
     constexpr auto driver_vertex()       noexcept ->       Vertex&;
 
-    /// Id of the chain at the trailing path end.
+    /** Id of the chain at the trailing path end.
+     */
     constexpr auto source_chid() const noexcept -> ChIdG;
 
-    /// Id of the chain boundary at the trailing path end.
+    /** Id of the chain boundary at the trailing path end.
+     */
     constexpr auto source_end() const noexcept -> End::Id;
 
-    /// Vertex at the trailing path end.
+    /** Vertex at the trailing path end.
+     */
     constexpr auto source_vertex() const noexcept -> const Vertex&;
     constexpr auto source_vertex()       noexcept ->       Vertex&;
 
@@ -266,16 +274,14 @@ struct Path
 
     constexpr auto length_over_source_chain() const noexcept -> std::size_t;
 
-    /**
-     * Vertices along the path, from the driver vertex to the source vertex.
+    /** Vertices along the path, from the driver vertex to the source vertex.
      * \details Vertex \a i is shared by path edges \a i-1 and \a i, so there
      * are length() + 1 of them.
      * \return Empty if the path is not contiguous.
      */
     constexpr auto vertices() const noexcept -> std::vector<Vertex*>;
 
-    /**
-     * Checks that \p pthc and \p pthw refer to the same edges, and that each
+    /** Checks that \p pthc and \p pthw refer to the same edges, and that each
      * path edge shares a vertex with the preceding one, starting from the
      * driver vertex.
      */
@@ -302,7 +308,8 @@ private:
         const Component* const cmp
     ) -> std::tuple<PathC, PathW>;
 
-    /// Component-wide index of the last path edge, the one at source \p sr.
+    /** Component-wide index of the last path edge, the one at source \p sr.
+     */
     static auto source_edge(
         const Driver& dr,
         const Source& sr,

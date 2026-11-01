@@ -59,8 +59,7 @@ limitations under the License.
 
 namespace graffine::transforms {
 
-/**
- * Composed transformation under way.
+/** Composed transformation under way.
  * \details The degrees identify the transformation within its family:
  * - VertexSplit: degrees of the resulting vertices, as in To<deg1, deg2>;
  * - VertexMerger: degrees of the merged vertices, as in From<deg1, deg2>;
@@ -80,8 +79,7 @@ struct Frame {
 };
 
 
-/**
- * Composed transformations enclosing a hook call, from the outermost one.
+/** Composed transformations enclosing a hook call, from the outermost one.
  * \details Hooks receive it as a trailing argument <tt>const Context&</tt>,
  * if they accept one (see context.h).
  */
@@ -92,13 +90,16 @@ public:
     /// Maximal nesting depth.
     static constexpr std::size_t capacity {16};
 
-    /// Number of enclosing composed transformations.
+    /** Number of enclosing composed transformations.
+     */
     constexpr auto depth() const noexcept -> std::size_t { return n; }
 
-    /// Whether the hook belongs to a transformation applied by the client.
+    /** Whether the hook belongs to a transformation applied by the client.
+     */
     constexpr auto empty() const noexcept -> bool { return n == 0; }
 
-    /// Enclosing composed transformations, from the outermost one.
+    /** Enclosing composed transformations, from the outermost one.
+     */
     constexpr auto frames() const noexcept -> std::span<const Frame>
     {
         return {ff.data(), n};
@@ -107,7 +108,9 @@ public:
     constexpr auto begin() const noexcept { return frames().begin(); }
     constexpr auto end() const noexcept { return frames().end(); }
 
-    /// \p i th enclosing transformation, the outermost one being 0.
+    /**
+     * \p i th enclosing transformation, the outermost one being 0.
+     */
     constexpr auto operator[](const std::size_t i) const -> const Frame&
     {
         GRAFFINE_REQUIRE(i < n, "context depth ", n, " <= ", i);
@@ -115,13 +118,16 @@ public:
         return ff[i];
     }
 
-    /// The transformation directly enclosing the hook.
+    /** The transformation directly enclosing the hook.
+     */
     constexpr auto innermost() const -> const Frame& { return (*this)[n - 1]; }
 
-    /// The transformation applied by the client.
+    /** The transformation applied by the client.
+     */
     constexpr auto outermost() const -> const Frame& { return (*this)[0]; }
 
-    /// Whether a transformation of type \p t encloses the hook.
+    /** Whether a transformation of type \p t encloses the hook.
+     */
     constexpr auto is_inside(const TransformType t) const noexcept -> bool
     {
         for (const auto& f : frames())
@@ -131,7 +137,8 @@ public:
         return false;
     }
 
-    /// Whether transformation \p f encloses the hook.
+    /** Whether transformation \p f encloses the hook.
+     */
     constexpr auto is_inside(const Frame& f) const noexcept -> bool
     {
         for (const auto& g : frames())
@@ -157,14 +164,16 @@ inline thread_local Context context;
 
 }  // namespace detail
 
-/// Context of the hooks running on this thread.
+/** Context of the hooks running on this thread.
+ */
 inline auto current_context() noexcept -> const Context&
 {
     return detail::context;
 }
 
 
-/// Adds \p f to the context during its lifetime.
+/** Adds \p f to the context during its lifetime.
+ */
 class Nesting {
 
 public:
@@ -184,8 +193,7 @@ public:
 };
 
 
-/**
- * Calls \p inner, a step of the composed transformation \p f performed by
+/** Calls \p inner, a step of the composed transformation \p f performed by
  * other transformations, in the context of \p f.
  * \details Leaves the context untouched if there is no property processor.
  * \tparam PP Property processor type of the composed transformation.
@@ -206,8 +214,7 @@ constexpr auto nested(
 }
 
 
-/**
- * Calls of the hooks, passing them the context if they accept it.
+/** Calls of the hooks, passing them the context if they accept it.
  * \details Each function calls hook object \p h with arguments \p a,
  * followed by the current context if \p h has an overload accepting it.
  * The overloads with a template parameter pass it explicitly to the hook,

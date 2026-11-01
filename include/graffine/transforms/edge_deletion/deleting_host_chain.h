@@ -44,8 +44,7 @@ limitations under the License.
 
 namespace graffine::transforms::edge_deletion {
 
-/**
- * Functor template for deletion of a graph edge along with its host chain.
+/** Functor template for deletion of a graph edge along with its host chain.
  * \details This template is specialized for different vertex degrees.
  * Handles the case of single-edge chains. Importantly, a single-edge chain is
  * suitable for deletion upon the edge removal only if one of its ends is
@@ -78,11 +77,9 @@ struct DeletingHostChain
     /// This is a single-edge chain, so one of the edge ends has degree 1.
     static constexpr auto I1 = Deg1;
 
-    /**
-     * This is a single-edge connected chain,
-     * \details One of the edge ends is a (3-way or 4-way) junction,
-     * because single-edge loops are not allowed.
-     */
+    /// This is a single-edge connected chain,
+    /// \details One of the edge ends is a (3-way or 4-way) junction,
+    /// because single-edge loops are not allowed.
     static constexpr auto I2 = D;  // Deg3 or Deg4
 
     // Output degrees.
@@ -97,53 +94,49 @@ struct DeletingHostChain
 
     const std::string dd {std::to_string(I2)};
 
-    /**
-     * Short name for edge deletion functors.
-     * \note Are used for naming conventions in the code.
-     */
+    /// Short name for edge deletion functors.
+    /// \note Are used for naming conventions in the code.
     const std::string shortName {make_name("edrh_", dd)};
 
-    /**
-     *  Full name for edge deletion functors.
-     * \note Are used for more descriptive naming conventions in the code.
-     */
+    /// Full name for edge deletion functors.
+    /// \note Are used for more descriptive naming conventions in the code.
     const std::string fullName {make_name("edge_deletion_with_host_chain_", dd)};
 
 // public methods
 
-    /**
-     * Constructs a Functor object based on the Graph instance.
+    /** Constructs a Functor object based on the Graph instance.
      * \param[in] gr Graph to which the transformation is applied.
      * \param[in] pp Processor for non-topological properties.
      */
     constexpr explicit DeletingHostChain(Graph& gr,
                                          std::shared_ptr<PP> pp = nullptr);
 
-    /**
-     * Deletion using edge index.
+    /** Deletion using edge index.
      * \param[in] ind Graph-wide index of the deleted edge.
      */
     auto apply(EgIdG ind) -> Res;
 
-    /**
-     * Deletion using edge position.
+    /** Deletion using edge position.
      * \param[in] s End slot connecting the deleted edge.
      */
     auto apply(const EndSlot& s) -> Res;
 
-    /// Checks that edge \p ind can be deleted with its single-edge chain.
-    /// \details Rejects an invalid edge index and an edge which is not a
-    /// single-edge chain attached by a single end, then checks the attached
-    /// end as the slot overload does.
+    /** Checks that edge \p ind can be deleted with its single-edge chain.
+     * \details Rejects an invalid edge index and an edge which is not a
+     * single-edge chain attached by a single end, then checks the attached
+     * end as the slot overload does.
+     */
     auto applicability(EgIdG ind) const -> Applicability;
 
-    /// Checks that the single-edge chain attached at \p s can be deleted.
-    /// \details Rejects an invalid slot, a chain which is not a single edge
-    /// attached by a single end or is not shrinkable, and an end at a vertex
-    /// of degree other than D.
+    /** Checks that the single-edge chain attached at \p s can be deleted.
+     * \details Rejects an invalid slot, a chain which is not a single edge
+     * attached by a single end or is not shrinkable, and an end at a vertex
+     * of degree other than D.
+     */
     auto applicability(const EndSlot& s) const -> Applicability;
 
-    /// Outcome of the deletion of edge \p ind with its chain (see plan.h).
+    /** Outcome of the deletion of edge \p ind with its chain (see plan.h).
+     */
     auto plan(const EgIdG ind) const -> Plan<G>
     {
         const auto& m = gr.chain(ind);
@@ -151,15 +144,17 @@ struct DeletingHostChain
         return plan(EndSlot {m.idw, m.get_single_connected_end()});
     }
 
-    /// Outcome of the deletion of the single-edge chain attached at \p s
-    /// (see plan.h).
+    /** Outcome of the deletion of the single-edge chain attached at \p s
+     * (see plan.h).
+     */
     auto plan(const EndSlot& s) const -> Plan<G>
     {
         return {gr.slot2ind(s), true, &plans::vertex_at(gr, s),
                 &plans::vertex_at(gr, s.opp())};
     }
 
-    /// Processor of non-topological properties.
+    /** Processor of non-topological properties.
+     */
     auto processor() const noexcept -> PP* { return updateProperties.get(); }
 
 protected:

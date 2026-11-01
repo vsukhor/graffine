@@ -37,16 +37,15 @@ limitations under the License.
 
 #include <memory>
 
-/**
- * Contains operations handling edge deletion in a graph.
+/** Contains operations handling edge deletion in a graph.
  * These are both functors for deleting edges based on chain lengths and vertex
  * degrees and their generic wrappers.
  */
 namespace graffine::transforms::edge_deletion {
 
 
-/**
- * Wrapper functor for edge deletion able to handle all possible configurations.
+/** Wrapper functor for edge deletion able to handle all possible
+ * configurations.
  * \tparam G Graph hosting the edge to be deleted.
  */
 template<typename G,
@@ -63,29 +62,29 @@ struct Functor
     using Res = Trait::Res;
     using PropertyProcessor = PP;
 
-    /**
-     * Constructs the Functor object based on a Graph instance.
+    /** Constructs the Functor object based on a Graph instance.
      * \param[in] gr Graph to which the transformation is applied.
      * \param[in] pp Processor for non-topological properties.
      */
     constexpr explicit Functor(Graph& gr,
                                std::shared_ptr<PP> pp = nullptr);
 
-    /**
-     * Function call operator executing the deletion using edge index.
+    /** Function call operator executing the deletion using edge index.
      * \param[in] ind Graph-wide index of the deleted edge.
      */
     auto apply(EgIdG ind) -> Res;
 
-    /// Checks that edge \p ind can be deleted.
-    /// \details Rejects an invalid edge index and an edge of a chain which is
-    /// not shrinkable (see Chain::is_shrinkable()), then checks it as the
-    /// functor deleting it does: DeletingHostChain for a single-edge chain
-    /// attached by a single end, PreservingHostChain otherwise.
+    /** Checks that edge \p ind can be deleted.
+     * \details Rejects an invalid edge index and an edge of a chain which is
+     * not shrinkable (see Chain::is_shrinkable()), then checks it as the
+     * functor deleting it does: DeletingHostChain for a single-edge chain
+     * attached by a single end, PreservingHostChain otherwise.
+     */
     auto applicability(EgIdG ind) const -> Applicability;
 
-    /// Outcome of the deletion of edge \p ind, by the functor it dispatches
-    /// to (see plan.h).
+    /** Outcome of the deletion of edge \p ind, by the functor it dispatches
+     * to (see plan.h).
+     */
     auto plan(const EgIdG ind) const -> Plan<G>
     {
         const auto& m = gr.chain(ind);
@@ -95,7 +94,8 @@ struct Functor
             : withoutChain.plan(ind);
     }
 
-    /// Processor of non-topological properties.
+    /** Processor of non-topological properties.
+     */
     auto processor() const noexcept -> PP* { return withChain.processor(); }
 
 protected:

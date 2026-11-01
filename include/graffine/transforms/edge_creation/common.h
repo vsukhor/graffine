@@ -60,14 +60,12 @@ struct Trait<TransformType::EdgeCreation, G>
     static constexpr auto Type = TransformType::EdgeCreation;
 };
 
-/**
- * Enables edge creation operations on a graph.
+/** Enables edge creation operations on a graph.
  * \details These are functors for creating edges at specific spots of the graph.
  */
 namespace edge_creation {
 
-/**
- * Processor of non-topological properties usable by the edge creations.
+/** Processor of non-topological properties usable by the edge creations.
  * \details Either void, for no processing, or a type providing the hooks
  * called by the edge creations. on_start receives the vertex receiving the
  * edge, or the position of the edge in an existing chain; on_end<isNewChain>
@@ -104,8 +102,7 @@ concept Processor =
 template<typename G>
 using Trait = transforms::Trait<TransformType::EdgeCreation, G>;
 
-/**
- * Outcome of an edge creation, in terms of the graph before it.
+/** Outcome of an edge creation, in terms of the graph before it.
  * \details The new edge joins \a vertex to a new vertex. Inserted in an
  * existing chain, the new edge takes the place of the end of edge \a moved
  * at \a vertex : that end moves to the new vertex. Packed in a new chain,

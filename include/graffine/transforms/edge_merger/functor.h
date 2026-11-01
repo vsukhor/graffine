@@ -72,8 +72,7 @@ namespace edge_merger {
 template<typename G>
 using Trait = transforms::Trait<TransformType::EdgeMerger, G>;
 
-/**
- * Outcome of an edge merger, in terms of the graph before it.
+/** Outcome of an edge merger, in terms of the graph before it.
  * \details One of the edges is deleted as by an edge deletion, the other one
  * is kept. See plan.h.
  */
@@ -89,9 +88,7 @@ struct Plan {
     }
 };
 
-/// Performs merger of two incident edges.
-/**
- * Processor of non-topological properties usable by the edge mergers.
+/** Processor of non-topological properties usable by the edge mergers.
  * \details Either void, for no processing, or a type providing the hooks
  * called with the two edges before a merger, and with the resulting edge
  * after it.
@@ -136,16 +133,14 @@ struct Functor
     /// Context of the hooks of the inner edge deletion.
     static constexpr Frame frame {Trait::Type};
 
-    /**
-     * Constructs a Functor object based on the Graph instance.
+    /** Constructs a Functor object based on the Graph instance.
      * \param[in] gr Graph to which the transformation is applied.
      * \param[in] pp Processor for non-topological properties.
      */
     explicit Functor(Graph& gr,
                      std::shared_ptr<PP> pp = nullptr);
 
-    /**
-     * Function call operator executing the transformation.
+    /** Function call operator executing the transformation.
      * \details \p ind1 will be merged into \p ind2 and disappear if 'ind2' has
      * other edges besides it; if it does not, 'ind2' will be merged into 'ind1'
      * and disappear.
@@ -155,18 +150,20 @@ struct Functor
     auto apply(const EgIdG ind1,
                const EgIdG ind2) -> Res;
 
-    /// Checks that edges \p ind1 and \p ind2 can be merged.
-    /// \details Rejects invalid edge indexes, an edge merged with itself,
-    /// edges which are not adjacent, and edges of chains of which neither is
-    /// shrinkable. Then checks the deletion of the edge which apply()
-    /// removes: that of \p ind1 if its chain is shrinkable, otherwise that
-    /// of \p ind2.
+    /** Checks that edges \p ind1 and \p ind2 can be merged.
+     * \details Rejects invalid edge indexes, an edge merged with itself,
+     * edges which are not adjacent, and edges of chains of which neither is
+     * shrinkable. Then checks the deletion of the edge which apply()
+     * removes: that of \p ind1 if its chain is shrinkable, otherwise that
+     * of \p ind2.
+     */
     auto applicability(EgIdG ind1,
                        EgIdG ind2) const -> Applicability;
 
-    /// Outcome of the merger of edges \p ind1 and \p ind2 (see plan.h).
-    /// \details The edge deleted is \p ind1 if its chain is shrinkable,
-    /// otherwise \p ind2.
+    /** Outcome of the merger of edges \p ind1 and \p ind2 (see plan.h).
+     * \details The edge deleted is \p ind1 if its chain is shrinkable,
+     * otherwise \p ind2.
+     */
     auto plan(const EgIdG ind1,
               const EgIdG ind2) const -> Plan<G>
     {
@@ -180,7 +177,8 @@ struct Functor
                              : remME.plan(indDel)};
     }
 
-    /// Processor of non-topological properties.
+    /** Processor of non-topological properties.
+     */
     auto processor() const noexcept -> PP* { return updateProperties.get(); }
 
 protected:

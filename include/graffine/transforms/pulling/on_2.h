@@ -48,8 +48,7 @@ limitations under the License.
 namespace graffine::transforms::pulling {
 
 
-/**
- * Functor for the edge pulling initiated from a vertex of degree 2.
+/** Functor for the edge pulling initiated from a vertex of degree 2.
  * \details The first step uses vertex splits and mergers to turn the driver
  * into a free chain end; the remaining steps then pull it as a leaf.
  * \tparam G Graph to which the pull operation is applied.
@@ -82,16 +81,14 @@ struct On<Deg2, G, PP>
     const std::string shortName {d + "pu"};
     const std::string fullName  {"Pulling from Vertex Deg "s + d};
 
-    /**
-     * Constructs this functor object based on the Graph instance.
+    /** Constructs this functor object based on the Graph instance.
      * \param[in] gr Graph to which the transformation is applied.
      * \param[in] pp Processor for non-topological properties.
      */
     explicit On(Graph& gr,
                 std::shared_ptr<PP> pp = nullptr);
 
-    /**
-     * Pulls a vertex of degree 2 along \p path by \p steps.
+    /** Pulls a vertex of degree 2 along \p path by \p steps.
      * \details Corrects the driver of \p path first, if the path has more
      * than one edge. Unchecked: see Applicable.
      * \param[inout] path Path containing the string of edges to get pulled.
@@ -103,13 +100,14 @@ struct On<Deg2, G, PP>
         int steps
     ) -> Res;
 
-    /// Checks that \p path can be pulled by \p steps.
-    /// \details Checks a copy of \p path with the driver corrected as by
-    /// apply(). Rejects a path failing check_path_basics(), a driver on an
-    /// unconnected cycle if such are omitted, and a degree 2 source next to
-    /// the driver. If the driver and the source are on the same chain, only
-    /// rejects a source end which is not free, unless the chain is a cycle;
-    /// otherwise, rejects a source failing check_source().
+    /** Checks that \p path can be pulled by \p steps.
+     * \details Checks a copy of \p path with the driver corrected as by
+     * apply(). Rejects a path failing check_path_basics(), a driver on an
+     * unconnected cycle if such are omitted, and a degree 2 source next to
+     * the driver. If the driver and the source are on the same chain, only
+     * rejects a source end which is not free, unless the chain is a cycle;
+     * otherwise, rejects a source failing check_source().
+     */
     auto applicability(
         const Path& path,
         int steps
@@ -127,8 +125,7 @@ protected:
     using Base::frame;
     using Base::updateProperties;
 
-    /**
-     * Pulls over path length 1 edge.
+    /** Pulls over path length 1 edge.
      * \details Pulls a vertex of degree 2 over a path of length 1 edge.
      * The path is expected to be a valid path of length 1 edge over the graph.
      * The path starts with a driver edge and ends with a source edge.
@@ -136,8 +133,7 @@ protected:
      */
     void pull_1(Path& path);
 
-    /**
-     * Pulls over path of length more than 1 edge.
+    /** Pulls over path of length more than 1 edge.
      * \details Pulls a vertex of degree 2 over a path of length more than 1 edge.
      * The path is expected to be a valid path over the graph.
      * The path starts with a driver edge and ends with a source edge.
@@ -145,8 +141,7 @@ protected:
      */
     void pull_N(Path& path);
 
-    /**
-     * Checks the validity of the path before pulling.
+    /** Checks the validity of the path before pulling.
      * \param[inout] path Path containing the string of edges to get pulled.
      * \param[in] steps Number of steps intended for pulling.
      * \details Checks that the path is valid for pulling, i.e., it starts with

@@ -44,8 +44,7 @@ limitations under the License.
 
 namespace graffine::transforms::vertex_merger {
 
-/**
- * Encapsulates core vertex merger operations.
+/** Encapsulates core vertex merger operations.
  * \details Elementary dynamics and updates the graph for it.
  * Forms base for classes adding more specific types of dynamics.
  * \tparam G Graph to which the transformation is applied.
@@ -68,8 +67,7 @@ struct Core
 
     const std::string dd {degrees_to_string(Deg1, Deg1)};
 
-    /**
-     * Constructs a Core object from the Graph class instance.
+    /** Constructs a Core object from the Graph class instance.
      * \param[in] gr Graph to which the transformation is applied.
      * \param[in] pp Processor for non-topological properties.
      * \param[in] shortName Human-readable name, short form.
@@ -78,8 +76,7 @@ struct Core
                             std::shared_ptr<PP> pp = nullptr,
                             std::string_view shortName = "");
 
-    /**
-     * Performs merger of free ends of two antiparallel oriented chains.
+    /** Performs merger of free ends of two antiparallel oriented chains.
      * \details Antiparallel orientation is defined as:
      * merging end 1 of the 1st chain with to end 1 of the 2nd chain, or
      * merging end 2 of the 1st chain with to end 2 of the 2nd chain.
@@ -98,8 +95,7 @@ struct Core
         ChIdG w2
     ) -> Res;
 
-    /**
-     * Performs merger of free ends of two parallel oriented chains.
+    /** Performs merger of free ends of two parallel oriented chains.
      * \details Parallel orientation is defined as:
      * merging end 1 of the 1st chain to end 2 of the 2nd chain, or
      * merging end 2 of the 1st chain to end 1 of the 2nd chain.
@@ -109,8 +105,7 @@ struct Core
      */
     auto parallel(ChIdG w1, ChIdG w2) -> Res;
 
-    /**
-     * Merges end vertices to form a linear chain.
+    /** Merges end vertices to form a linear chain.
      * \param[in] s1 Chain boundary slot at the 1st parent vertex.
      * \param[in] s2 Chain boundary slot on the 2nd parent vertex.
      */
@@ -119,13 +114,13 @@ struct Core
         const EndSlot& s2
     ) -> Res;
 
-    /**
-     * Merges end vertices an unconnected chain to form a cycle.
+    /** Merges end vertices an unconnected chain to form a cycle.
      * \param[in] w Chain index.
      */
     auto to_cycle(ChIdG w) -> Res;
 
-    /// Processor of non-topological properties.
+    /** Processor of non-topological properties.
+     */
     auto processor() const noexcept -> PP* { return updateProperties.get(); }
 
 protected:

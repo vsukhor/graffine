@@ -42,8 +42,7 @@ limitations under the License.
 
 namespace graffine::structure::containers {
 
-/**
- * Implements class for managing collections of chains in the graph.
+/** Implements a manager for collections of chains in the graph.
  * \details Derives from Sequence container adding to it chain-specific
  * functionality.
  * \tparam Ch Container element type: A chain of edges.
@@ -61,7 +60,8 @@ struct Chains
     using Edge = Ch::Edge;
     using EdgeDescr = descriptors::EdgeInGraph;
 
-    /// Actual number of chains in the container.
+    /** Actual number of chains in the container.
+     */
     constexpr auto num() const noexcept -> size_type;
     constexpr auto num_edges() const noexcept -> std::size_t;
     constexpr auto ind_last() const noexcept -> size_type;
@@ -79,8 +79,7 @@ struct Chains
 
     void print(std::string_view tag) const;
 
-    /**
-     * Checks that \p cond is satisfied.
+    /** Checks that \p cond is satisfied.
      * \tparam T Types of the message arguments.
      * \param[in] cond Condition to be checked.
      * \param[in] message Arguments forming the message of the exception
@@ -145,7 +144,6 @@ num_edges() const noexcept -> std::size_t
     return n;
 }
 
-
 template<typename Ch>
 constexpr
 void Chains<Ch>::
@@ -168,7 +166,6 @@ edge(const EdgeDescr& egd) const noexcept -> const Edge&
     return m_data[egd.w()].g[egd.a()];
 }
 
-
 template<typename Ch>
 constexpr
 auto Chains<Ch>::
@@ -176,7 +173,6 @@ edge(const EdgeDescr& egd) noexcept -> Edge&
 {
     return m_data[egd.w()].g[egd.a()];
 }
-
 
 template<typename Ch>
 constexpr
@@ -186,7 +182,6 @@ ngs_of(const EndSlot& s) const noexcept
     return m_data[s.w].ngs[s.e];
 }
 
-
 template<typename Ch>
 void Chains<Ch>::
 print(const std::string_view tag) const
@@ -194,7 +189,6 @@ print(const std::string_view tag) const
     for (const auto& m : m_data)
         m.print(tag);
 }
-
 
 template<typename Ch>
 template<typename... T>

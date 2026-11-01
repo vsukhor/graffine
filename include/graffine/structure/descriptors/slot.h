@@ -46,8 +46,7 @@ concept SlotCoord = std::is_same_v<T, End> ||
                     std::is_same_v<T, Bulk>;
 
 
-/**
- * Template for a slot representing a connection point in an edge or chain.
+/** Template for a slot representing a connection point in an edge or chain.
  * \details The slot is used to represent a connection point in a chain, which can
  * be either one of the ends or interior. The slot contains the host identifier
  * \a w and the location identifier \a e. It provides methods for comparison,
@@ -111,7 +110,8 @@ struct _Slot
         return std::tie(w, e);
     }
 
-    /// Location \a e; for a BulkSlot, the position in the host chain.
+    /** Location \a e; for a BulkSlot, the position in the host chain.
+     */
     constexpr auto a() const noexcept -> LocId { return e; }
 
     constexpr auto ea_str() const -> std::string
@@ -119,13 +119,16 @@ struct _Slot
         return Location::str(e);
     }
 
-    /// \return \p s.opp()
+    /**
+     * \return \p s.opp()
+     */
     static constexpr auto opp(const _Slot& s) noexcept -> _Slot
     {
         return s.opp();
     }
 
-    /// Slot at the opposite end of the same host; undefined for a BulkSlot.
+    /** Slot at the opposite end of the same host; undefined for a BulkSlot.
+     */
     constexpr auto opp() const noexcept -> _Slot
     {
         return isEnd
