@@ -296,7 +296,8 @@ oss(T... values) -> std::ostringstream  // static
 {
     std::ostringstream s;
 
-    (s << ... << values);
+    if constexpr (sizeof...(T))
+        (s << ... << values);
     s.flush();
 
     return s;

@@ -25,6 +25,7 @@ list(APPEND cpps
     plan.cpp
     preconditions.cpp
     property_processor.cpp
+    utils.cpp
     vertex_merger_core.cpp
     vertex_merger_11.cpp
     vertex_merger_12.cpp
