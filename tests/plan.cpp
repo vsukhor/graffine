@@ -601,8 +601,8 @@ private:
 
     void try_pull(const bool veto)
     {
-        // driver: a random edge end; source: a random free end or bulk vertex
-        // of its component
+        // driver: a random edge end; source: a random free end, cycle end or
+        // bulk vertex of its component
         const auto& d = gr.edge(random_edge());
         const auto ed = coin(0.5) ? End::A : End::B;
         const auto& cmp = gr.compt(d.c);
@@ -614,11 +614,11 @@ private:
         const typename Path::Source s = bulk
             ? typename Path::Source {BSlot {ws, EgIdA {pick(m.length() - 1) + 1}}}
             : typename Path::Source {ESlot {ws, es}};
-        if (!bulk && m.is_connected_at(es))
+        if (!bulk && m.is_connected_at(es) && !m.is_cycle())
             return;
         const auto& vs = bulk ? *m.g[s.pos - 1].vertex_at_outer(End::B)
                               : *m.vertex_at_end(es);
-        if (d.vertex_at_outer(ed) == &vs)
+        if (d.vertex_at_inner(ed) == &vs)  // the driver end is an inner end
             return;
 
         Path path {&cmp, typename Path::Driver {&d, ed}, s};

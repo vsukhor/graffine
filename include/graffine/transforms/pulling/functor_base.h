@@ -114,7 +114,9 @@ protected:
                            int steps) const -> Applicability;
 
     /** Checks that the source end of \p path is free, unless the source is a
-     * cycle, and that the source chain is long enough for \p steps.
+     * cycle, that the path ends at it over its end edge, elsewhere than at
+     * the driver vertex, and that the source chain is long enough for
+     * \p steps.
      * \details A degree 2 source should end the path, which should cover at
      * least \p steps edges of the source chain, and the source chain should
      * be shrinkable by \p steps edges.
@@ -233,8 +235,12 @@ check_source(
     const auto& m = cn[path.s.w];
     const auto sourceIsCycle = m.is_cycle();
 
+    // a path around a cycle back to the driver vertex, at its junction
+    const auto vv = path.vertices();
+    if (!vv.empty() && *vv.front() == *vv.back())
+        return reject("source is at the driver vertex");
+
     if (path.s.is_bulk()) {
-        const auto vv = path.vertices();
         const auto& vS = *m.vertex_at_bulk(path.s.pos);
         if (vv.empty() || !(*vv.back() == vS))
             return reject("path does not end at the source");
@@ -248,6 +254,12 @@ check_source(
 
     if (!sourceIsCycle && m.ngs[path.s.e].num())
         return reject("source end is not free");
+
+    // A path into a cycle may reach its end edge from the junction, and so
+    // end next to it.
+    if (vv.empty() || !(*vv.back() == *m.vertex_at_end(path.s.e)) ||
+        path.pthw.back() != m.end2ind(path.s.e))
+        return reject("path does not end at the source");
 
     const auto need = static_cast<std::size_t>(steps) +
                       (sourceIsCycle ? Chain::minCycleLength : 0);

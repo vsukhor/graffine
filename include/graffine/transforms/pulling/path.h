@@ -334,8 +334,10 @@ Path(
     , d {d}
     , s {s}
 {
-    GRAFFINE_ASSERT(s.is_bulk() || cmp->chain(s.w).ngs[s.e].num() == 0,
-           "Source end is not disconnected");
+    // A source end which is not free, other than a cycle end, makes a path
+    // which the functors reject: their applicability() reports it.
+    GRAFFINE_ASSERT(s.is_bulk() || End::is_valid(s.e),
+           "Source end is not valid");
     GRAFFINE_ASSERT(cmp->chain(s.w).c == cmp->ind,
            "Source compartment is different from cmp");
     GRAFFINE_ASSERT(cmp->chain(d.w).c == cmp->ind,
@@ -524,6 +526,18 @@ set_shortest()
 {
     // driver is at pthc.front(),
     // source is at pthc.back()
+
+    // A shortest path may pass the boundary vertex of a cycle, and so reach
+    // the source edge from beyond the source: on an unconnected cycle, and to
+    // an end of the cycle of the driver, the path stays inside the chain
+    // instead, towards the source end for an end source.
+    const auto& m = cmp->chain(s.w);
+    if (d.w == s.w && (m.is_unconnected_cycle() ||
+                       (m.is_cycle() && !s.is_bulk()))) {
+        std::tie(pthc, pthw) = set_shortest(d, s, cmp);
+        return;
+    }
+
     const auto icS = source_edge(d, s, *this);
     pthc = this->template find_shortest_path<true>(cmp->ind2indc(d.ind), icS);
     pthw = this->path_to_global_ind(pthc);

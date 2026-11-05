@@ -40,6 +40,7 @@ limitations under the License.
 #include "graffine/transforms/pulling/path.h"
 #include "graffine/transforms/pulling/reporter.h"
 
+#include <algorithm>  // ranges::sort, ranges::adjacent_find
 #include <array>
 #include <memory>
 #include<string>
@@ -165,6 +166,43 @@ private:
     Reporter<On<D, G, PP>> report {*this};
 
     void correct_driver(Path& path) const;
+
+    /** Applicability of a pull driven from a degree 2 vertex of an
+     * unconnected cycle.
+     * \details The split at the driver opens the cycle, and the merger after
+     * the first step closes it into a loop of one edge less, the driver edge
+     * becoming a tail at the next path vertex; the remaining steps pull the
+     * tail into the loop. Rejects a source off the cycle, a cycle which
+     * cannot shrink by \p steps, a path which is not a simple part of the
+     * cycle, ends elsewhere than at the source, or, for the boundary vertex
+     * as source, reaches it over the edge at the other end; also rejects a
+     * corrected path shorter than \p steps, or of a single edge.
+     */
+    auto check_unconnected_cycle(
+        const Path& path,
+        int steps
+    ) const -> Applicability;
+
+    /** For a driver at the boundary vertex of an unconnected cycle, the
+     * position of the edge at the other end; undefined otherwise.
+     * \param[in] m Chain of the driver.
+     * \param[in] a Position of the driver edge.
+     * \param[in] egEnd Inner end of the driver edge at the driver vertex.
+     */
+    static auto across_boundary(
+        const Chain& m,
+        EgIdA a,
+        End::Id egEnd
+    ) noexcept -> EgIdA;
+
+    /** Inner end of edge \p b at the vertex it shares with edge \p a, both in
+     * chain \p m, also across the boundary vertex of an unconnected cycle.
+     */
+    static auto shared_egEnd(
+        const Chain& m,
+        EgIdA a,
+        EgIdA b
+    ) noexcept -> End::Id;
 };
 
 
@@ -195,10 +233,12 @@ applicability(
     if (const auto ok = check_path_basics(path, steps); !ok)
         return ok;
 
-    // checked before correcting the driver, which would not find the edge next
-    // to the boundary vertex of the cycle; the correction stays in the cycle
-    if (omitUnconnectedCycles && cn[path.d.w].is_unconnected_cycle())
-        return reject("pulling deg 2 from an unconnected cycle chain");
+    if (cn[path.d.w].is_unconnected_cycle()) {
+        if constexpr (omitUnconnectedCycles)
+            return reject("pulling deg 2 from an unconnected cycle chain");
+        else
+            return check_unconnected_cycle(path, steps);
+    }
 
     // apply() corrects the driver before pulling: check the corrected path.
     auto corrected = path;
@@ -213,12 +253,80 @@ applicability(
 
     if (corrected.drv().w == corrected.src().w) {
         const auto& m = cn[corrected.s.w];
-        if (!m.is_cycle() && m.ngs[corrected.s.e].num())
-            return reject("source end is not free");
+        if (!m.is_cycle()) {
+            if (m.ngs[corrected.s.e].num())
+                return reject("source end is not free");
+            return {};
+        }
+
+        // An end of the connected cycle of the driver, at its junction: the
+        // split at the driver opens the cycle, the source chain then runs
+        // from the next path vertex to the junction, and cannot be dissolved
+        // there, its end not being free.
+        const auto vv = corrected.vertices();
+        if (vv.empty() || !(*vv.back() == *m.vertex_at_end(corrected.s.e)) ||
+            corrected.pthw.back() != m.end2ind(corrected.s.e))
+            return reject("path does not end at the source");
+        if (corrected.length() <= static_cast<std::size_t>(steps))
+            return reject("path to the junction of the cycle is too short for the steps");
         return {};
     }
 
     return check_source(corrected, steps);
+}
+
+
+template<typename G,
+         typename PP>
+auto On<Deg2, G, PP>::
+check_unconnected_cycle(
+    const Path& path,
+    const int steps
+) const -> Applicability
+{
+    const auto& m = cn[path.d.w];
+    const auto len = m.length();
+
+    if (path.s.w != path.d.w)
+        return reject("source is not on the cycle of the driver");
+
+    // the merger closing the opened cycle needs a loop of minCycleLength,
+    // and each further step shortens the loop by one edge
+    if (!m.is_shrinkable_by(static_cast<std::size_t>(steps)))
+        return reject("cycle is not shrinkable by the steps");
+
+    auto corrected = path;
+    if (corrected.length() > 1)
+        correct_driver(corrected);
+
+    if (!corrected.is_contiguous() || corrected.length() >= len)
+        return reject("path is not a contiguous part of the cycle");
+    {
+        auto pv = corrected.vertices();
+        std::ranges::sort(pv);
+        if (std::ranges::adjacent_find(pv) != pv.end())
+            return reject("path passes a vertex twice");
+    }
+
+    // pull_1() expects a free source end
+    if (corrected.length() == 1)
+        return reject("driver vertex is next to the source on an unconnected cycle");
+
+    if (corrected.length() < static_cast<std::size_t>(steps))
+        return reject("path is too short for the steps");
+
+    const auto vv = corrected.vertices();
+    const auto& s = corrected.s;
+    const auto* vS = s.is_bulk() ? m.vertex_at_bulk(s.pos)
+                                 : m.vertex_at_end(s.e);
+    if (vv.empty() || !vS || !(*vv.back() == *vS))
+        return reject("path does not end at the source");
+
+    // an end source is reached over its end edge, so as to be found from it
+    if (!s.is_bulk() && corrected.pthw.back() != m.end2ind(s.e))
+        return reject("path does not reach the source over its end edge");
+
+    return {};
 }
 
 
@@ -272,7 +380,12 @@ pull_N(Path& path)
     // BulkSlot to split for creating the branching vertex
     auto bsDe = cnD.egEnd_to_bulkslot(egeD, aD);
 
-    GRAFFINE_ASSERT(bsDe.a()() && bsDe.a()() < cnD.length(),
+    // the boundary vertex of an unconnected cycle is the other vertex of
+    // degree 2 at a chain end; the split at it opens the cycle in place
+    const auto aX = across_boundary(cnD, aD, egeD);
+
+    GRAFFINE_ASSERT(aX.is_defined() ||
+           (bsDe.a()() && bsDe.a()() < cnD.length()),
            "pulling deg 2 from a chain end");
     GRAFFINE_ASSERT(!cnD.is_unconnected_cycle() || !omitUnconnectedCycles,
            "pulling deg 2 from an unconnected cycle chain");
@@ -280,15 +393,19 @@ pull_N(Path& path)
     // source
     const auto iS = p.back();  // ind of the source edge
     const auto egeS = source_egEnd(path);
-    const auto isBulk = path.s.is_bulk();
+    // The split at the driver opens an unconnected cycle, and the merger
+    // closes it at the next path vertex, so the boundary vertex of the cycle,
+    // as a source, moves inside the chain: it is found from its edge as a
+    // degree 2 source is.
+    const auto isBulk = path.s.is_bulk() || cnD.is_unconnected_cycle();
 
     // non-path edge in front of the driver:
     // because driver end is at degree 2, there should be at least one such edge
-    auto aQ = cnD.neig_a_of_egEnd(aD, egeD);
+    auto aQ = aX.is_defined() ? aX : cnD.neig_a_of_egEnd(aD, egeD);
 
     GRAFFINE_ASSERT(aQ.is_defined(), "Vertex degree at the pulled edge is not 2.");
 
-    const auto egeQ = cnD.internal_egEnd(aD, aQ);
+    const auto egeQ = shared_egEnd(cnD, aD, aQ);
     const auto icQ = cnD.g[aQ].indc;
     const auto iQ = path.cmp->get_egl(icQ).i;
 
@@ -369,19 +486,59 @@ pull_1(Path& path)
 
 template<typename G,
          typename PP>
+auto On<Deg2, G, PP>::
+across_boundary(
+    const Chain& m,
+    const EgIdA a,
+    const End::Id egEnd
+) noexcept -> EgIdA  // static
+{
+    if (!m.is_unconnected_cycle())
+        return EgIdA::undefined;
+
+    const auto b = m.egEnd_to_bulkslot(egEnd, a).a()();
+
+    return b == 0            ? EgIdA {m.length() - 1}
+         : b == m.length()   ? EgIdA {0}
+                             : EgIdA::undefined;
+}
+
+
+template<typename G,
+         typename PP>
+auto On<Deg2, G, PP>::
+shared_egEnd(
+    const Chain& m,
+    const EgIdA a,
+    const EgIdA b
+) noexcept -> End::Id  // static
+{
+    if (a == b + 1 || b == a + 1)
+        return m.internal_egEnd(a, b);
+
+    // the end edges of an unconnected cycle, sharing its boundary vertex
+    return m.g[b].inner_endId(b == 0 ? End::A : End::B);
+}
+
+
+template<typename G,
+         typename PP>
 void On<Deg2, G, PP>::
 correct_driver(Path& path) const
 {
+    const auto& m = cn[path.d.w];
+    const auto a0 = path.cmp->get_egl(path.pthc[0]).a;
+    const auto aX = across_boundary(m, a0, path.d.egEnd);
+
     GRAFFINE_ASSERT(path.length() > 1,
            "Attempting to correct driver in a single-edge path.");
-    GRAFFINE_ASSERT(!cn[path.d.w].egEnd_is_head(path.d.ind, path.d.egEnd),
+    GRAFFINE_ASSERT(aX.is_defined() || !m.egEnd_is_head(path.d.ind, path.d.egEnd),
            "Driver in pull 2 is at chain head end.");
-    GRAFFINE_ASSERT(!cn[path.d.w].egEnd_is_tail(path.d.ind, path.d.egEnd),
+    GRAFFINE_ASSERT(aX.is_defined() || !m.egEnd_is_tail(path.d.ind, path.d.egEnd),
            "Driver in pull 2 is at chain tail end.");
 
-    const auto a0 = path.cmp->get_egl(path.pthc[0]).a;
-
-    const auto ce = cn[path.d.w].connected_edge(a0, path.d.egEnd);
+    const auto ce = aX.is_defined() ? &m.g[aX]
+                                    : m.connected_edge(a0, path.d.egEnd);
     GRAFFINE_ASSERT(ce, "Driver in pull 2 multi-edge path is at chain end.");
 
     if (ce->ind == path.pthw[1]) {
@@ -392,7 +549,7 @@ correct_driver(Path& path) const
 
         const auto w1 = path.cmp->get_egl(path.pthc[1]).w;
         const auto a1 = path.cmp->get_egl(path.pthc[1]).a;
-        const auto egeD = cn[w1].internal_egEnd(a0, a1);
+        const auto egeD = shared_egEnd(cn[w1], a0, a1);
         path.pthw.pop_front();
         path = Path {&gr.compt(w1),
                      typename Path::Driver {&cn[w1].g[a1], egeD},
@@ -428,13 +585,13 @@ check_path(
         const auto& g0 = c->get_egl(pc[0]);
         const auto& g1 = c->get_egl(pc[1]);
         if (g0.w == g1.w) {
-            GRAFFINE_ASSERT(End::opp(cn[wD].internal_egEnd(g1.a, g0.a)) == path.d.egEnd,
+            GRAFFINE_ASSERT(End::opp(shared_egEnd(cn[wD], g1.a, g0.a)) == path.d.egEnd,
                    "opp of driver's internal_egEnd is not d.egEnd");
         }
         const auto gS = c->get_egl(pc.back());
         const auto gT = c->get_egl(pc[pc.size()-2]);
         if (!path.s.is_bulk() && gS.w == gT.w) {
-            GRAFFINE_ASSERT(End::opp(cn[wS].internal_egEnd(gT.a, gS.a)) ==
+            GRAFFINE_ASSERT(End::opp(shared_egEnd(cn[wS], gT.a, gS.a)) ==
                    cn[wS].g[gS.a].inner_endId(eS),
                    "opp of source's internal_egEnd is not its inner_endId");
         }

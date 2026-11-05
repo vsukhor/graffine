@@ -439,28 +439,40 @@ TEST_F(PullingBulkSourceTest, CycleNotShrinkable)
 }
 
 
-/// Rejection of a degree 2 source inside an unconnected cycle.
+/**
+ * Degree 2 source inside an unconnected cycle.
+ * \details Only a degree 2 driver can share the component of the source; see
+ * pulling_unconnected_cycle.cpp for these pulls.
+ */
 TEST_F(PullingBulkSourceTest, UnconnectedCycle)
 {
     ++testCount;
 
     if constexpr (verboseT)
         print_description(
-            "Tests rejection of pulling inside an unconnected cycle");
+            "Tests pulling to a degree 2 source inside an unconnected cycle");
 
-    // Only a degree 2 driver can share the component of a degree 2 source
-    // inside an unconnected cycle; degree 2 pulls exclude unconnected cycles.
     G gr;
     gr.add_single_chain_component(5);
     VertexMerger<1, 1, G> merge11 {gr};
     merge11(ESlot{w0, eA}, ESlot{w0, eB});
     ASSERT_TRUE(gr.chain(w0).is_unconnected_cycle());
 
+    // path 1, 2, 3
     Path path {&gr.compt(CmpId{}), Driver {&gr.chain(w0).g[1], eA},
                Source {BSlot {w0, 4}}};
+    ASSERT_EQ(path.length(), 3);
 
-    EXPECT_FALSE(Pull<Deg2> {gr}.applicability(path, 1));
-    EXPECT_FALSE(trs::pulling::Functor<G> {gr}.applicability(path, 1));
+    const bool accepted = !trs::pulling::omitUnconnectedCycles;
+    for (int k {1}; k <= 3; ++k) {
+        EXPECT_EQ(static_cast<bool>(Pull<Deg2> {gr}.applicability(path, k)),
+                  accepted) << k;
+        EXPECT_EQ(static_cast<bool>(
+                      trs::pulling::Functor<G> {gr}.applicability(path, k)),
+                  accepted) << k;
+    }
+    // the loop would be too short
+    EXPECT_FALSE(Pull<Deg2> {gr}.applicability(path, 4));
 }
 
 

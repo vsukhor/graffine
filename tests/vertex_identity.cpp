@@ -414,7 +414,7 @@ TEST_F(VertexIdentityTest, PullingKeepsThePathVertices)
             for (ChIdG w {}; w < g.gr.num_chains(); ++w) {
                 const auto& m = g.gr.chain(w);
                 for (const auto e : End::Ids)
-                    if (!m.is_connected_at(e))
+                    if (!m.is_connected_at(e) || m.is_cycle())
                         sources.emplace_back(ESlot {w, e});
                 for (std::size_t a {1}; a < m.length(); ++a)
                     sources.emplace_back(BSlot {w, EgIdA {a}});
@@ -453,6 +453,10 @@ TEST_F(VertexIdentityTest, PullingKeepsThePathVertices)
                         kinds.push_back("bulk source");
                     if (gr.chain(s.w).is_cycle())
                         kinds.push_back("source in a cycle");
+                    if (gr.chain(s.w).is_cycle() && !s.is_bulk())
+                        kinds.push_back("source at a cycle end");
+                    if (gr.chain(s.w).is_unconnected_cycle())
+                        kinds.push_back("unconnected cycle");
                     if (!s.is_bulk() && gr.chain(s.w).length() <= std::size_t(steps) &&
                         path.drv().w != s.w)
                         kinds.push_back("source chain dissolved");
@@ -493,6 +497,9 @@ TEST_F(VertexIdentityTest, PullingKeepsThePathVertices)
                                  "over a junction"})
             EXPECT_GT((applied[{deg, kind}]), 0)
                 << "degree " << deg << ", " << kind;
+    // only a degree 2 driver reaches a source on an unconnected cycle
+    for (const auto* kind : {"source at a cycle end", "unconnected cycle"})
+        EXPECT_GT((applied[{Deg2, kind}]), 0) << "degree 2, " << kind;
 
     if constexpr (verboseT)
         for (const auto& [key, n] : applied)

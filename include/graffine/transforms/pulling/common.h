@@ -168,8 +168,13 @@ concept pullable_degree =
     std::find(pullableDegrees.begin(), pullableDegrees.end(), D) !=
     pullableDegrees.end();
 
-/// Whether pulling from a degree 2 driver on an unconnected cycle is rejected.
-inline constexpr bool omitUnconnectedCycles = true;
+/** Whether pulling from a degree 2 driver on an unconnected cycle is rejected.
+ * \details Such a driver is the only one which can reach a source on an
+ * unconnected cycle, a degree 2 vertex inside it or its boundary vertex.
+ * See On<Deg2, G, PP>::check_unconnected_cycle() for the pulls accepted
+ * otherwise.
+ */
+inline constexpr bool omitUnconnectedCycles = false;
 
 /** Generic template for specifying vertex degree-specific pulling classes.
  * \details See FunctorBase for the pulling transformation, and Path for its
