@@ -24,8 +24,11 @@ limitations under the License.
 #include "graffine/structure/elements/graph.h"
 #include "graffine/transforms/component_creation/functor.h"
 #include "graffine/transforms/component_deletion/functor.h"
+#include "graffine/transforms/vertex_merger/from_11.h"
+#include "graffine/transforms/vertex_merger/from_12.h"
 #include "sample_graph.h"
 
+#include <algorithm>
 #include <array>
 #include <iostream>
 
@@ -214,6 +217,77 @@ TEST_F(DeleteComponentTest, Test1)
 
     if constexpr (profuse)
         gr.print_components(tagAfter);
+}
+
+/**
+ * Deletion of a component holding a cycle of two chains, each joined at both
+ * ends to the other one.
+ * \details Once the chains branching off the cycle were deleted, the ends of
+ * a cycle chain had a single neighbour each, the two ends of the other cycle
+ * chain, so the chain was taken for an unconnected cycle and was not detached
+ * from it. Renaming the other chain then threw.
+ */
+TEST_F(DeleteComponentTest, TwoChainCycle)
+{
+    ++testCount;
+
+    if constexpr (verboseT)
+        print_description(
+            "Deletion of a component holding a cycle of two chains joined ",
+            "to each other at both ends");
+
+    using Merger11 = trs::vertex_merger::From<Deg1, Deg1, G>;
+    using Merger12 = trs::vertex_merger::From<Deg1, Deg2, G>;
+    using ESlot = G::Chain::EndSlot;
+    using BSlot = G::Chain::BulkSlot;
+
+    G gr;
+    const IntegrityCheck integrityCheck {gr};
+
+    CreateComponent<G> create {gr};
+    create(2);  // c0: a separate component, to keep after the deletion
+    create(2);  // c1: chain r, branched by l at its bulk vertex
+    create(2);  // c2: chain s, branched by l at its bulk vertex
+    create(2);  // c3: chain l, one side of the cycle
+    const ChIdG r {1};
+    const ChIdG s {2};
+    const ChIdG l {3};
+
+    // Attach the ends of l to the bulk vertices of r and s, splitting each
+    // into two chains, then join the free A ends of r and s: their A parts
+    // make the other side of the cycle, and their B parts branch off it.
+    Merger12 {gr}(ESlot {l, eA}, BSlot {r, EgIdA {1}});
+    Merger12 {gr}(ESlot {l, eB}, BSlot {s, EgIdA {1}});
+    Merger11 {gr}(ESlot {r, eA}, ESlot {s, eA});
+
+    ASSERT_EQ(gr.num_compts(), 2);
+    const auto c = gr.chain(l).c;
+    const auto& cmp = gr.compt(c);
+    ASSERT_EQ(cmp.num_chains(), 4);
+    ASSERT_EQ(cmp.num_edges(), 6);
+    // the other side of the cycle: the chain joined at both ends of l
+    const auto joins_l = [&](const ChIdG k) {
+        const auto& m = gr.chain(l);
+        return m.ngs[eA].contains(ESlot {k, eA}) !=
+               m.ngs[eA].contains(ESlot {k, eB}) &&
+               m.ngs[eB].contains(ESlot {k, eA}) !=
+               m.ngs[eB].contains(ESlot {k, eB});
+    };
+    ASSERT_EQ(std::ranges::count_if(cmp.ww, joins_l), 1);
+    // The branches are deleted first, then the other side of the cycle,
+    // l then being the last chain of the graph, renamed into its index.
+    ASSERT_EQ(cmp.ww.size(), 4);
+    ASSERT_FALSE(joins_l(cmp.ww[3]));
+    ASSERT_FALSE(joins_l(cmp.ww[2]));
+    ASSERT_TRUE(joins_l(cmp.ww[1]));
+    ASSERT_EQ(cmp.ww[0], l);
+
+    DeleteComponent del {gr};
+    del(c);
+
+    ASSERT_EQ(gr.num_compts(), 1);
+    ASSERT_EQ(gr.num_chains(), 1);
+    ASSERT_EQ(gr.num_edges(), 2);
 }
 
 

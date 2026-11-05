@@ -180,8 +180,11 @@ is_unconnected_cycle() const noexcept
 //    const auto vB = vertex_at_end(endB);
 
 //    return vA->deg() == 2 && vA == vB;
+    // The ends must be joined to each other only, not to the opposite ends
+    // of another chain: that is a cycle of two chains.
     return ngs[endA].num() == 1 &&
            ngs[endB].num() == 1 &&
+           (*ngs[endA].begin()).w == idw &&
            *ngs[endA].begin() ==
            (*ngs[endB].begin()).opp();
 }
