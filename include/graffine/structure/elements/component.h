@@ -30,7 +30,7 @@ limitations under the License.
 #define GRAFFINE_STRUCTURE_ELEMENTS_COMPONENT_H
 
 #include "graffine/definitions.h"
-#include "graffine/structure/containers/chain_indexes.h"
+#include "graffine/structure/containers/chain_classes.h"
 #include "graffine/structure/containers/chains.h"
 #include "graffine/structure/containers/edges_in_component.h"
 #include "graffine/structure/containers/triangles.h"
@@ -84,7 +84,7 @@ struct Component<Ch>
     using Vertices = containers::Vertices<Vertex, Component>;
     using EdgeInVertex = Vertex::EgDescr;
     using Triangles = structure::Triangles;
-    using Chis = containers::ChainIndexes<EndSlot>;
+    using Chis = containers::ChainClasses<EndSlot>;
 
     static constexpr auto Type = Elements::Component;
     static constexpr bool isMulticomponent{};
@@ -101,7 +101,7 @@ public: // Variables
     ChIdGs ww;   ///< Graph-wide ids of the chains hosted by this component.
     Vertices vv; ///< Container holding vertices of this connected component.
 
-    /// Chain indexes classified by degrees of their boundary vertices.
+    /// Chains classified by degrees of their boundary vertices.
     Chis chis;
 
     Adjacency<Component> adj;
@@ -207,7 +207,7 @@ public: // Functions
     constexpr auto egId_last() const noexcept -> EgIdC;
     constexpr auto num_edges() const noexcept -> std::size_t;
     constexpr auto num_chains() const noexcept -> std::size_t;
-    //    constexpr auto num_facets() const noexcept -> std::size_t;
+
     /** Number of chain triangles in \a trs, see detect_chain_triangles().
      */
     constexpr auto num_triangles() const noexcept -> std::size_t;

@@ -31,7 +31,9 @@ zensical serve       # http://localhost:8000
 ```
 
 Alternatively, configure the library with `-DBUILD_DOCS=ON` and build the
-`docs` target; the site is written to `site/`.
+`docs` target; the site is written to `site/`. CMake finds Zensical in
+`docs/.venv` without the venv being activated. If Doxygen or Zensical is
+missing, the configure step only warns and the `docs` target is left out.
 
 ## Publishing
 

@@ -1,7 +1,28 @@
 # Documentation site: the Doxygen API reference, embedded in the pages built
 # by Zensical. The output goes to docs/site/; see docs/README.md.
-find_package(Doxygen REQUIRED)
-find_program(ZENSICAL_EXECUTABLE zensical REQUIRED)
+#
+# Missing tools disable the `docs` target instead of failing the configure
+# step, so library and test builds are never blocked by them. Zensical is
+# also looked up in docs/.venv (see docs/README.md), with no need to activate it.
+find_package(Doxygen)
+find_program(ZENSICAL_EXECUTABLE zensical
+    HINTS ${CMAKE_CURRENT_SOURCE_DIR}/.venv/bin
+)
+
+if(NOT DOXYGEN_FOUND OR NOT ZENSICAL_EXECUTABLE)
+    set(_missing)
+    if(NOT DOXYGEN_FOUND)
+        list(APPEND _missing "Doxygen")
+    endif()
+    if(NOT ZENSICAL_EXECUTABLE)
+        list(APPEND _missing "Zensical")
+    endif()
+    list(JOIN _missing " and " _missing)
+    message(WARNING
+        "BUILD_DOCS is ON, but ${_missing} not found: the 'docs' target is "
+        "disabled. See docs/README.md for installing the documentation tools.")
+    return()
+endif()
 
 file(GLOB_RECURSE GRAFFINE_PUBLIC_HEADERS ${PROJECT_SOURCE_DIR}/include/*.h)
 file(GLOB_RECURSE GRAFFINE_DOC_PAGES ${CMAKE_CURRENT_SOURCE_DIR}/content/*.md)

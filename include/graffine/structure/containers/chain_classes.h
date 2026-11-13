@@ -21,13 +21,13 @@ limitations under the License.
 */
 
 /**
- * \file chain_indexes.h
+ * \file chain_classes.h
  * \brief Contains collections of chain ids classified by end degrees.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
-#ifndef GRAFFINE_STRUCTURE_CONTAINERS_CHAIN_INDEXES_H
-#define GRAFFINE_STRUCTURE_CONTAINERS_CHAIN_INDEXES_H
+#ifndef GRAFFINE_STRUCTURE_CONTAINERS_CHAIN_CLASSES_H
+#define GRAFFINE_STRUCTURE_CONTAINERS_CHAIN_CLASSES_H
 
 #include "graffine/definitions.h"
 #include "graffine/structure/descriptors/slot.h"
@@ -41,7 +41,7 @@ limitations under the License.
 /// Classes defining collections of graph elements and their descriptors.
 namespace graffine::structure::containers {
 
-/** Chain indexes classified according to end degrees.
+/** Chains classified according to end degrees.
  * \details A chain is classified by the degrees of the vertices at its two
  * ends (Chain::degree_at_end()):
  * - a chain having degree \a d at both ends is listed by its id under key
@@ -55,7 +55,7 @@ namespace graffine::structure::containers {
  * \tparam ES Type of end slot.
  */
 template<typename ES>
-struct ChainIndexes
+struct ChainClasses
 {
     using End = descriptors::End;
     using EndSlot = ES;  ///< Type of end slot.
@@ -75,14 +75,14 @@ private:
 
 public:
 
-    constexpr ChainIndexes() = default;
-    constexpr ChainIndexes(const ChainIndexes& other) = default;
-    constexpr ChainIndexes(ChainIndexes&& other) = default;
-    constexpr auto operator=(const ChainIndexes& other) -> ChainIndexes& = default;
-    constexpr auto operator=(ChainIndexes&& other) -> ChainIndexes& = default;
-    ~ChainIndexes() = default;
+    constexpr ChainClasses() = default;
+    constexpr ChainClasses(const ChainClasses& other) = default;
+    constexpr ChainClasses(ChainClasses&& other) = default;
+    constexpr auto operator=(const ChainClasses& other) -> ChainClasses& = default;
+    constexpr auto operator=(ChainClasses&& other) -> ChainClasses& = default;
+    ~ChainClasses() = default;
 
-    bool operator==(const ChainIndexes& other) const noexcept = default;
+    bool operator==(const ChainClasses& other) const noexcept = default;
 
     constexpr auto operator()(Degree d) const -> const ChIds&;
     constexpr auto operator()(const Key& k) const -> const Slots&;
@@ -108,7 +108,7 @@ public:
     constexpr void clear(const Key& k) noexcept;
     constexpr void clear() noexcept;
 
-    void append(ChainIndexes&& other);
+    void append(ChainClasses&& other);
 
     template<typename Chain>
     void include(const Chain& m);
@@ -132,7 +132,7 @@ public:
 
 template<typename ES>
 constexpr
-auto ChainIndexes<ES>::
+auto ChainClasses<ES>::
 operator()(const Degree d) const -> const ChIds&
 {
     return symmetric.contains(d)
@@ -142,7 +142,7 @@ operator()(const Degree d) const -> const ChIds&
 
 template<typename ES>
 constexpr
-auto ChainIndexes<ES>::
+auto ChainClasses<ES>::
 operator()(const Key& k) const -> const Slots&
 {
     GRAFFINE_ASSERT(k[0] < k[1], "Incorrect order of key elements.");
@@ -154,7 +154,7 @@ operator()(const Key& k) const -> const Slots&
 
 template<typename ES>
 constexpr
-void ChainIndexes<ES>::
+void ChainClasses<ES>::
 clear() noexcept
 {
     symmetric.clear();
@@ -163,7 +163,7 @@ clear() noexcept
 
 template<typename ES>
 constexpr
-void ChainIndexes<ES>::
+void ChainClasses<ES>::
 clear(const Key& k) noexcept
 {
     if (k[0] == k[1]) {
@@ -178,7 +178,7 @@ clear(const Key& k) noexcept
 
 template<typename ES>
 constexpr
-void ChainIndexes<ES>::
+void ChainClasses<ES>::
 clear(const Degree d)
 {
     if (symmetric.contains(d))
@@ -186,8 +186,8 @@ clear(const Degree d)
 }
 
 template<typename ES>
-void ChainIndexes<ES>::
-append(ChainIndexes&& other)
+void ChainClasses<ES>::
+append(ChainClasses&& other)
 {
     auto mv = [](auto& from, auto& to)
     {
@@ -203,7 +203,7 @@ append(ChainIndexes&& other)
 
 template<typename ES>
 constexpr
-void ChainIndexes<ES>::
+void ChainClasses<ES>::
 insert(const Degree k, const ChId v)
 {
     symmetric[k].push_back(v);
@@ -211,7 +211,7 @@ insert(const Degree k, const ChId v)
 
 template<typename ES>
 constexpr
-void ChainIndexes<ES>::
+void ChainClasses<ES>::
 insert(const Key& k, EndSlot&& v) noexcept
 {
     asymmetric[k].push_back(std::move(v));
@@ -219,7 +219,7 @@ insert(const Key& k, EndSlot&& v) noexcept
 
 template<typename ES>
 template<typename Chains>
-void ChainIndexes<ES>::
+void ChainClasses<ES>::
 populate(const Chains& cn)
 {
     clear();
@@ -230,7 +230,7 @@ populate(const Chains& cn)
 
 template<typename ES>
 template<typename Chains>
-void ChainIndexes<ES>::
+void ChainClasses<ES>::
 populate(const Chains& cn,
          const ChIds& ww)
 {
@@ -242,7 +242,7 @@ populate(const Chains& cn,
 
 template<typename ES>
 template<typename Chain>
-void ChainIndexes<ES>::
+void ChainClasses<ES>::
 include(const Chain& m)
 {
     const auto degA = m.degree_at_end(End::A);
@@ -257,7 +257,7 @@ include(const Chain& m)
 
 template<typename ES>
 template<typename Chain>
-void ChainIndexes<ES>::
+void ChainClasses<ES>::
 remove(const Chain& m)
 {
     const auto degA = m.degree_at_end(End::A);
@@ -272,7 +272,7 @@ remove(const Chain& m)
 
 template<typename ES>
 constexpr
-auto ChainIndexes<ES>::
+auto ChainClasses<ES>::
 num_chains() const noexcept -> std::size_t
 {
     std::size_t n {};
@@ -286,7 +286,7 @@ num_chains() const noexcept -> std::size_t
 
 template<typename ES>
 constexpr
-auto ChainIndexes<ES>::
+auto ChainClasses<ES>::
 num(const Key& k) const -> std::size_t
 {
     GRAFFINE_ASSERT(k[0] <= k[1], "Incorrect order of key elements.");
@@ -297,7 +297,7 @@ num(const Key& k) const -> std::size_t
 }
 
 template<typename ES>
-void ChainIndexes<ES>::
+void ChainClasses<ES>::
 report(std::ostream& ofs) const
 {
     auto formatted = [](const auto& k, const auto& v) -> std::string_view
@@ -314,7 +314,7 @@ report(std::ostream& ofs) const
 
 template<typename ES>
 template<typename... Args>
-void ChainIndexes<ES>::
+void ChainClasses<ES>::
 print(Args&&...args) const
 {
     if constexpr (sizeof...(Args))
@@ -342,4 +342,4 @@ print(Args&&...args) const
 
 }  // namespace graffine::structure::containers
 
-#endif  // GRAFFINE_STRUCTURE_CONTAINERS_CHAIN_INDEXES_H
+#endif  // GRAFFINE_STRUCTURE_CONTAINERS_CHAIN_CLASSES_H

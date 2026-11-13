@@ -95,6 +95,7 @@ struct Graph<CC>
     using VertexDescr = descriptors::VertexInGraph;
     using VertexDescriptors = structure::containers::VertexDescriptorsInGraph<Self>;
     using PathsOverEndSlots = paths::over_endslots::Generic<Compt>;
+    using ChainClasses = Compt::Chis;  ///< Chains classified by end degrees.
 
     static constexpr auto Type = Elements::Graph;
     static constexpr bool isSpatial {};
@@ -435,6 +436,13 @@ public:
      */
     constexpr auto num_chains() const noexcept -> std::size_t { return cn.num(); };
 
+    /** Current number of chains having end degrees \p k.
+     * \param k End degrees in ascending order, see ChainClasses::Key.
+     */
+    constexpr auto num_chains(
+        const ChainClasses::Key& k
+    ) const noexcept -> std::size_t;
+
     /** Current number of edges.
      */
     constexpr auto num_edges() const noexcept -> std::size_t { return numEdges; };
@@ -521,12 +529,6 @@ public:
         const EndSlot& s1,
         const EndSlot& s2
     ) const noexcept;
-
-    /** Checks if the graph is equilibrated.
-     * \note Placeholder: not implemented, always returns \a true.
-     * \return \a true.
-     */
-    bool is_equilibrated() const noexcept;
 
     /** Prints the graph chains using prefix \p tag.
      * \param[in] tag Human-readable description common to all records.
@@ -698,6 +700,20 @@ chain(const EgIdG ind) const noexcept -> const Chain&
 template<typename CC>
 constexpr
 auto Graph<CC>::
+num_chains(
+    const ChainClasses::Key& kk
+) const noexcept -> std::size_t
+{
+    std::size_t n {};
+    for (const auto& c : ct)
+        n += c.chis.num(kk);
+
+    return n;
+}
+
+template<typename CC>
+constexpr
+auto Graph<CC>::
 slot2a(const EndSlot& s) const noexcept -> EgIdA
 {
     return cn[s.w].end2a(s.e);
@@ -732,42 +748,11 @@ edge_end(const EndSlot& s) const noexcept -> EndId
 }
 
 
-template<typename CC>
-bool Graph<CC>::
-is_equilibrated() const noexcept
-{
-    return true;  // stub
-}
-
-
 }  // namespace detail
 
 template<typename CC> using Graph = detail::Graph<CC>;
 
 
-///===================================================================
-
-/*
-    template<typename Tr>
-    struct PropertySetter
-    {
-        explicit constexpr PropertySetter(Graph& gr)
-            : gr {gr}
-        {}
-
-        void start(Tr::Res& res)
-        {}
-
-        void end(Tr::Res& res)
-        {}
-
-    protected:
-
-        Graph& gr;
-    };
-
-    PropertySetter<> on_transform {*this};
-*/
 }  // namespace graffine::structure::components
 
 // Parts of the implementation.
