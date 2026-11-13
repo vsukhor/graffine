@@ -110,7 +110,7 @@ public:  // Functions
      * skipped.
      * \return Number of the vertices moved.
      */
-    constexpr auto move_to(Host& h, const Chain& m) -> VIdH;
+    constexpr auto move_to(Host& h, const Chain& m) -> std::size_t;
     /** Moves vertex \p v from this container to that of component \p h,
      * and assigns it to \p h.
      * \return False if \p v is not in this container.
@@ -258,9 +258,9 @@ template<typename V,
 constexpr
 auto Vertices<V, H>::
 move_to(Host& h,
-        const Chain& m) -> VIdH
+        const Chain& m) -> std::size_t
 {
-    VIdH n {};
+    std::size_t n {};
 
     n += move_to(h, m.g.front().vertex_at_outer(End::A));
     for (std::size_t a {1}; a < m.length(); ++a) {
@@ -413,8 +413,9 @@ auto Vertices<V, H>::
 find(const EdgeSlotC& s) noexcept -> Vertex*
 {
     for (auto& v : vv)
-        if (v->is_connected_to(s))
-            return v.get();
+        for (const auto& d : v->edges())
+            if (d.indc() == s.w && d.e == s.e)
+                return v.get();
 
     return nullptr;
 }
@@ -425,8 +426,9 @@ auto Vertices<V, H>::
 find(const EdgeSlotC& s) const noexcept -> const Vertex*
 {
     for (auto& v : vv)
-        if (v->is_connected_to(s))
-            return v.get();
+        for (const auto& d : v->edges())
+            if (d.indc() == s.w && d.e == s.e)
+                return v.get();
 
     return nullptr;
 }
@@ -549,23 +551,25 @@ void clear(Vertices<V, H>& vcl) noexcept
 }
 
 
-/** Finds a vertex inside a collection by one of its incident slots.
+/** Finds a vertex inside a collection by one of its incident edge ends.
  * \tparam V Class encapsulating vertex object.
  * \tparam H Host graph component.
- * \param[in] s Slot of the vertex to find.
+ * \param[in] s Edge end attached to the vertex to find, by component-wide
+ * edge index.
  * \param[in] ns Vertices to search.
  * \return Handle of the vertex found, or VIdH::undefined.
  */
 template<typename V,
          typename H>
 auto find_vertex(
-    const typename Vertices<V, H>::EndSlot& s,
+    const descriptors::EdgeSlotC& s,
     const Vertices<V, H>& ns
 ) noexcept -> VIdH
 {
     for (const auto& v : ns.get())
-        if (v.contains(s))
-            return v->id();
+        for (const auto& d : v->edges())
+            if (d.indc() == s.w && d.e == s.e)
+                return v->get_id();
 
     return VIdH::undefined;
 }
@@ -583,8 +587,9 @@ template<Degree D,
 void print(const Vertices<V, H>& ns,
            const std::string& s="") noexcept
 {
-    for (const auto& v : ns.get()[D])
-        v.print(s);
+    for (const auto& v : ns.get())
+        if (v->deg() == D)
+            v->print(s);
 }
 
 

@@ -107,6 +107,10 @@ struct InMultiEdgeChain
      */
     auto processor() const noexcept -> PP* { return deg1.processor(); }
 
+    /** The graph transformed.
+     */
+    auto graph() const noexcept -> const Graph& { return deg1.graph(); }
+
 private:
 
     /** Degree of the end vertex of edge \p ind other than of degree 2.

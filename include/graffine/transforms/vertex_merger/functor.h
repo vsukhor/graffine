@@ -103,6 +103,10 @@ struct Functor
      */
     auto processor() const noexcept -> PP* { return from11.processor(); }
 
+    /** The graph transformed.
+     */
+    auto graph() const noexcept -> const Graph& { return from11.graph(); }
+
     From<Deg1, Deg1, G, PP> from11;  ///< Merger 1+1.
     From<Deg1, Deg2, G, PP> from12;  ///< Merger 1+2.
     From<Deg1, Deg3, G, PP> from13;  ///< Merger 1+3.

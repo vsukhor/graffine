@@ -87,10 +87,16 @@ public:  // Functions
         : id {create_id()}
     {}
 
-    /// Constructor taking a given handle \p id, e.g. read from a file.
+    /** Constructor taking a given handle \p id, e.g. read from a file.
+     * \details Advances the counter issuing new handles past \p id, so that
+     * vertices created later do not duplicate it.
+     */
     explicit constexpr Vertex(const VIdH id)
         : id {id}
-    {}
+    {
+        if (id.is_defined() && h < id)
+            h = id;
+    }
 
     /** Two vertices are equal if they have the same handle.
      */

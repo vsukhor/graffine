@@ -31,6 +31,7 @@ limitations under the License.
 #define GRAFFINE_STRUCTURE_CONTAINERS_SEQUENCE_H
 
 #include <deque>
+#include <utility>  // forward, move
 #include <vector>
 
 
@@ -267,7 +268,7 @@ constexpr
 auto Sequence<Type>::
 emplace_back(Args&&... args) -> reference
 {
-    return m_data.emplace_back(args...);
+    return m_data.emplace_back(std::forward<Args>(args)...);
 }
 
 template<typename Type>
@@ -306,7 +307,7 @@ constexpr
 auto Sequence<Type>::
 insert(const_iterator pos, value_type&& value) -> iterator
 {
-    return m_data.insert(pos, value);
+    return m_data.insert(pos, std::move(value));
 }
 template<typename Type>
 template<class InputIt>

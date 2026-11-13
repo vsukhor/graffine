@@ -68,11 +68,12 @@ struct Distance
     /// Shortest distance to the target.
     EdgeWeight dist {inf};
 
-    /// Orders the records by slot \a prev first, then by distance.
+    /// Orders the records by distance, then by slot \a prev, so that the
+    /// search queue yields the nearest slot first.
     constexpr bool operator<(const Distance& c) const noexcept
     {
-        return prev < c.prev ||
-              (prev == c.prev && dist < c.dist);
+        return dist < c.dist ||
+              (dist == c.dist && prev < c.prev);
     }
 
     /// Sets the preceding slot and the distance.

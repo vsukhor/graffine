@@ -183,10 +183,7 @@ public:
 
     /** Adds \p num new components, each a single unconnected chain of
      * \p len edges.
-     * \note The count of components to reach is based on the number of
-     * chains already present, so it is exact only if each existing
-     * component is a single chain.
-     * \param[in] num Desired number of components.
+     * \param[in] num Number of components to add.
      * \param[in] len Number of edges of each chain.
      */
     void generate_single_chain_components(
@@ -432,7 +429,6 @@ public:
      * \note Does not update edge connectivity.
      *       Does not update chain connectivity and 'ngs'.
      *       Does not remove source chain if it is emptied.
-     *       Only \p posTo = 0 is handled correctly.
      */
     constexpr void move_edges(
         Chain& fr,
@@ -458,13 +454,13 @@ public:
      */
     constexpr auto edge_end(const EndSlot& s) const noexcept -> EndId;
 
-    /** Rebuilds the edge adjacency of the component hosting edge \p ind.
-     * \note Only compiled in use if \a useAgl is set.
+    /** Rebuilds the edge adjacency list of the component hosting edge
+     * \p ind (Component::adj).
      */
     void update_adjacency_edges(EgIdG ind) noexcept;
 
-    /** Rebuilds the edge adjacency of all the components.
-     * \note Only compiled in use if \a useAgl is set.
+    /** Rebuilds the edge adjacency lists of all the components
+     * (Component::adj).
      */
     void update_adjacency() noexcept;
 
@@ -673,23 +669,29 @@ public:
      */
     void print_components(std::string_view tag="") const;
 
-    /// Prints the chains of each component, labelled by \p tag.
+    /** Prints the chains of each component, labelled by \p tag.
+     */
     void print_component_chains(std::string_view tag="") const;
-    /// Prints the edge adjacency lists of the components.
+
+    /** Prints the edge adjacency lists of the components, by graph-wide
+     * edge index, each line preceded by \p tag.
+     */
     void print_adjacency_lists(std::string_view tag="") const;
-    /// Prints the vertices of each component, each preceded by \p tag.
+
+    /** Prints the vertices of each component, each preceded by \p tag.
+     */
     void print_vertices(std::string_view tag=" ") const;
-    /// Prints the vertices of degree \p d of each component, each preceded
-    /// by \p tag.
+    /** Prints the vertices of degree \p d of each component, each preceded
+     * by \p tag.
+     */
     void print_vertices_deg(
         Degree d,
         std::string_view tag=" "
     ) const;
 
     /** Writes a one-line summary of the graph to \p ofs: the numbers of
-     * vertices by degree, of edges, of chains and of components.
-     * \note The current implementation iterates degrees 0 to 3, thus
-     * omitting degree 4.
+     * vertices by degree (1 to maxDegree), of edges, of chains and of
+     * components, e.g. " v 2 10 0 0 egn 11 cnn 1 ctn 1".
      * \param[in] ofs Output stream.
      */
     void report(std::ostream& ofs) const;

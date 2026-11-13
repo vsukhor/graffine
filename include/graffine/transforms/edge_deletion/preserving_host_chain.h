@@ -160,6 +160,10 @@ struct PreservingHostChain
      */
     auto processor() const noexcept -> PP* { return updateProperties.get(); }
 
+    /** The graph transformed.
+     */
+    auto graph() const noexcept -> const Graph& { return gr; }
+
 protected:  // Data
 
     Graph& gr;  ///< Reference to the modified graph object.

@@ -149,7 +149,8 @@ public:
     template<typename Chains>
     void populate(const Chains& cn, const ChIds& ww);
 
-    /// Writes the number of chains in each class to \p ofs.
+    /// Writes the number of chains in each class to \p ofs, as
+    /// " s_<deg1>_<deg2> <number>" per class.
     void report(std::ostream& ofs) const;
 
     /// Prints the classes, preceded by the concatenation of \p args, if any.
@@ -329,16 +330,17 @@ template<typename ES>
 void ChainClasses<ES>::
 report(std::ostream& ofs) const
 {
-    auto formatted = [](const auto& k, const auto& v) -> std::string_view
+    // E.g. " s_1_1 2 s_1_3 4" for two {1, 1} chains and four {1, 3} ones.
+    auto formatted = [&ofs](const Degree k0, const Degree k1, const auto& v)
     {
-        return {"s_", k[0], "_", k[1], " ", v.size()};
+        ofs << " s_" << k0 << '_' << k1 << ' ' << v.size();
     };
 
     for (const auto& [k, v]: symmetric)
-        ofs << formatted({k, k}, v);
+        formatted(k, k, v);
 
     for (const auto& [k, v]: asymmetric)
-        ofs << formatted(k, v);
+        formatted(k[0], k[1], v);
 }
 
 template<typename ES>

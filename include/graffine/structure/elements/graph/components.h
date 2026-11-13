@@ -40,9 +40,7 @@ generate_single_chain_components(
     const std::size_t len
 )
 {
-    const auto n = num_chains();  // number of chains already present
-
-    while (num_compts() < num + n)
+    for (std::size_t i {}; i < num; ++i)
         add_single_chain_component(len);
     if constexpr (verboseF)
         jot("Generated ", colorcodes::GREEN, num, colorcodes::RESET,
@@ -230,6 +228,12 @@ move_edges(
 
     ct[fr.c].move_edges(fr, posFrBegin, posFrEnd, to, posTo);
 
+    // The edges remaining in 'fr' after the removed range shift down.
+    for (std::size_t i = posFrBegin; i < fr.length(); ++i) {
+        const auto& fg = fr.g[i];
+        egl[fg.ind].set(fr.idw, fg.indw);
+    }
+    // The moved edges and those following them in 'to' change position.
     for (std::size_t i = posTo; i < to.length(); ++i) {
         const auto& tg = to.g[i];
         egl[tg.ind].set(to.idw, tg.indw);

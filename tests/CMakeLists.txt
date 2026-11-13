@@ -37,6 +37,7 @@ list(APPEND cpps
     vertex_split_22.cpp
     vertex_split_functor.cpp
     vertex_identity.cpp
+    fixes.cpp
     edge_creation.cpp
     edge_deletion.cpp
     edge_split_merger.cpp

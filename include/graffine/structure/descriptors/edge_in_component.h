@@ -69,8 +69,11 @@ struct EdgeInComponent
         return BulkSlot{w, a};
     }
 
+    /// Compares all the fields.
+    constexpr bool operator==(const EdgeInComponent&) const noexcept = default;
+
     /// Checks that the descriptor differs from \ref Undef.
-    constexpr auto is_defined()
+    constexpr bool is_defined() const noexcept
     {
         return *this != Undef;
     }

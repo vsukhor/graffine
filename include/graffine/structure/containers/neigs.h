@@ -227,12 +227,14 @@ struct Neigs
         return v;
     }
 
-    /// Copy of the slots, in ascending order, as an array; \p N must
-    /// equal num().
+    /** Copy of the slots, in ascending order, as an array.
+     * \throws precondition_error If \p N differs from num().
+     */
     template<size_t N>
-    constexpr auto as_array() const noexcept -> std::array<value_type, N>
+    constexpr auto as_array() const -> std::array<value_type, N>
     {
-        GRAFFINE_ASSERT(N <= num(), "Number of neighbours < N");
+        GRAFFINE_REQUIRE(N == num(), "number of neighbours ", num(),
+                         " differs from ", N);
 
         std::array<value_type, N> v;
 

@@ -181,9 +181,8 @@ struct Ply
      * distinct vertices, the orientations must be valid and the weights
      * finite, and every vertex must have a supported degree. Both text and
      * binary files are accepted.
-     * \note The vertices take the ids stored in the file without advancing
-     * the counter issuing new vertex handles, so vertices created later in
-     * the same program may duplicate them.
+     * The vertices take the ids stored in the file; vertices created
+     * later receive new ids, distinct from these.
      * \tparam beLoud Report the file structure and the element counts.
      * \param file Path of the file.
      * \param preloadIntoMemory Read the whole file into memory before

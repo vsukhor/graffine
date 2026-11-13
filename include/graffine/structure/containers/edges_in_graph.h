@@ -142,7 +142,7 @@ template<typename G>
 void EdgeDescriptorsInGraph<G>::
 append(const Edge& g)
 {
-    m_data.push_back(EdgeDescr{g});
+    m_data.push_back(EdgeDescr{g.w, g.indw, g.id});
 }
 
 }  // namespace graffine::structure::containers

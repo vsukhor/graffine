@@ -407,13 +407,15 @@ move_edges(
         fr.g[i].indw = i;
         egl[fr.g[i].indc].a = i;
     }
-    for (EgIdA i{posTo}; auto& eg : to.g) {
 
+    // The moved edges and those following them in 'to' change position.
+    for (std::size_t i{posTo}; i < to.length(); ++i) {
+
+        auto& eg = to.g[i];
         eg.indw = i;
         eg.w = to.idw;
         egl[eg.indc].a = i;
         egl[eg.indc].w = to.idw;
-        ++i;
     }
 }
 

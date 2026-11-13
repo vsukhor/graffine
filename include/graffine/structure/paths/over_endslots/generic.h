@@ -90,12 +90,8 @@ struct Generic
      * The slots connected to \p s are at distance zero; traversing a chain
      * adds the chain weight.
      * \note Follows the chain connections in Chain::ngs.
-     * \note Follows Dijkstra's algorithm
-     * (https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm), except that
-     * the queue is ordered by slot rather than by distance (see
-     * Distance::operator<): a slot is queued again when its distance
-     * improves. The distances found are the shortest ones, but without
-     * Dijkstra's bound on the number of visits.
+     * \note Implements Dijkstra's algorithm
+     * (https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm).
      * \param[in] s Chain end slot from which the paths are computed (source).
      */
     void compute_from_source(const EndSlot& s);

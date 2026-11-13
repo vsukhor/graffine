@@ -414,8 +414,6 @@ public:  // functions
     /// Checks if both ends are connected to vertices.
     constexpr bool is_connected_both_ends() const noexcept;
     /** Checks if edge \p eg shares a vertex with this edge.
-     * \note Returns false as soon as inner end A is unconnected, without
-     * examining end B.
      */
     constexpr bool is_neig_of(const Edge& eg) const noexcept;
     ///@}
@@ -861,7 +859,7 @@ is_neig_of(const Edge& eg) const noexcept
         const auto v = vertex_at_inner(e);
 
         if (!v)
-            return false;
+            continue;
 
         if (v->is_connected_to(typename Vertex::EgDescr{eg.id, eg.indc, End::A}) ||
             v->is_connected_to(typename Vertex::EgDescr{eg.id, eg.indc, End::B}))

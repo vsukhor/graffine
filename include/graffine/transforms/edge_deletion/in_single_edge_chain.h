@@ -101,6 +101,10 @@ struct InSingleEdgeChain
      */
     auto processor() const noexcept -> PP* { return deg3.processor(); }
 
+    /** The graph transformed.
+     */
+    auto graph() const noexcept -> const Graph& { return deg3.graph(); }
+
 protected:
 
     Graph& gr;  ///< Reference to the modified graph object.

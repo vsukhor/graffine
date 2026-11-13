@@ -148,6 +148,10 @@ struct Functor
      */
     auto processor() const noexcept -> PP* { return create.processor(); }
 
+    /** The graph transformed.
+     */
+    auto graph() const noexcept -> const Graph& { return create.graph(); }
+
 protected:
 
     Graph& gr;  ///< Reference to the modified graph object.

@@ -43,7 +43,8 @@ get_single_connected_end() const -> EndId
 
     utils::raise<precondition_error>(
         nullptr, std::source_location::current(),
-        "Error in Chain::get_single_connected_end(): ", "the connected end is not single!");
+        "Error in Chain::get_single_connected_end(): ",
+        "the connected end is not single!");
 }
 
 template<typename E>
@@ -155,7 +156,7 @@ constexpr
 bool Chain<E>::
 is_unconnected_linear() const noexcept
 {
-    return !ngs[endA].num() || !ngs[endB].num();
+    return !ngs[endA].num() && !ngs[endB].num();
 }
 
 

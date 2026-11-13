@@ -95,13 +95,14 @@ struct Distance
         , dist {d}
     {}
 
-    /** Orders the records by their edge \a prev, \e not by distance.
+    /** Orders the records by distance, then by edge \a prev, so that the
+     * search queue yields the nearest edge first.
      * \param[in] c The other distance object to compare with.
-     * \return True if the edge id of this record is less than that of \p c.
      */
     constexpr bool operator<(const Distance& c) const noexcept
     {
-        return prev < c.prev;
+        return dist < c.dist ||
+               (dist == c.dist && prev < c.prev);
     }
 
     /** Sets the previous edge id and distance.

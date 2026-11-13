@@ -34,11 +34,13 @@ limitations under the License.
 #define GRAFFINE_TRANSFORMS_COMMON_H
 
 #include "graffine/definitions.h"
+#include "graffine/structure/analyzers/integral_tests.h"
 #include "graffine/utils/errors.h"
 
 #include <expected>
 #include <source_location>
 #include <string>
+#include <type_traits>
 #include <utility>
 
 /// Transformations of the graph topology, as function objects: one
@@ -84,6 +86,14 @@ auto vet(const D& d, const A&... args) -> Applicability;
 
 }  // namespace plans
 
+namespace detail {
+
+/// Number of transformations under way through operator() or try_apply()
+/// on this thread: the integrity checks run when the outermost one ends.
+inline thread_local int applying {};
+
+}  // namespace detail
+
 /** Interface shared by the transformation functors.
  * \details A transformation \p D implements, for each of its argument lists:
  * - \c applicability(args) const: checks the preconditions, at a cost
@@ -103,6 +113,13 @@ auto vet(const D& d, const A&... args) -> Applicability;
  *
  * Calling \c apply directly is only valid for arguments for which
  * \c is_applicable is true: it spares the check when this is known.
+ *
+ * If CMake enabled GRAFFINE_DO_INTEGRAL_TESTS (\c doIntegralTests),
+ * operator() and try_apply() verify the integrity of the graph after the
+ * transformation (see structure::IntegralTests), and throw invariant_error
+ * on failure. Inner transformations of a composed one are not checked
+ * separately: the check runs once the outermost transformation is complete.
+ * \c apply does not run the check.
  * \tparam D Transformation functor type.
  */
 template<typename D>
@@ -129,7 +146,8 @@ struct Applicable
                 nullptr, std::source_location::current(),
                 name(), ": ", ok.error().reason);
 
-        return self().apply(std::forward<A>(args)...);
+        return checked([&]() -> decltype(auto) {
+            return self().apply(std::forward<A>(args)...); });
     }
 
     /** Whether the transformation is applicable to \p args.
@@ -154,10 +172,50 @@ struct Applicable
         if (const auto ok = plans::vet(self(), std::as_const(args)...); !ok)
             return std::unexpected(ok.error());
 
-        return self().apply(std::forward<A>(args)...);
+        return checked([&]() -> decltype(auto) {
+            return self().apply(std::forward<A>(args)...); });
     }
 
 private:
+
+    /** Calls \p f, which applies the transformation, then checks the
+     * integrity of the graph if enabled and \p f is the outermost
+     * transformation under way.
+     * \throws invariant_error If the graph fails an integrity check.
+     */
+    template<typename F>
+    auto checked(F&& f) -> decltype(auto)
+    {
+        if constexpr (!doIntegralTests)
+            return std::forward<F>(f)();
+        else {
+            struct Depth {
+                Depth()  { ++detail::applying; }
+                ~Depth() { --detail::applying; }
+            } depth;
+
+            if constexpr (std::is_void_v<decltype(std::forward<F>(f)())>) {
+                std::forward<F>(f)();
+                check_integrity();
+            }
+            else {
+                auto res = std::forward<F>(f)();
+                check_integrity();
+                return res;
+            }
+        }
+    }
+
+    /** Runs the integrity tests on the graph, if no outer transformation
+     * is under way.
+     */
+    void check_integrity() const
+    {
+        if (detail::applying == 1) {
+            using Graph = std::remove_cvref_t<decltype(self().graph())>;
+            structure::IntegralTests<Graph, false> {self().graph()}();
+        }
+    }
 
     constexpr auto self() noexcept -> D& { return static_cast<D&>(*this); }
     constexpr auto self() const noexcept -> const D&

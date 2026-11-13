@@ -60,14 +60,16 @@ remove_slot_from_neigs(const EndSlot& s)
         // Remove s from the neighbours of ne.
         const auto ngsOK = ngs.erase(s);
 
-        GRAFFINE_ENSURE(ngsOK, "EndSlot {", s.w, " ", s.e, "} not found among",
-                      "ngs of the slot {", ne.w, " ", ne.e, " connected to it");
+        GRAFFINE_ENSURE(ngsOK,
+            "EndSlot {", s.w, " ", s.e, "} not found among",
+            "ngs of the slot {", ne.w, " ", ne.e, " connected to it");
 
         // Remove ne from the neighbours of s.
         const auto neOK = sr.erase(ne);
 
-        GRAFFINE_ENSURE(neOK, "EndSlot {", ne.w, " ", ne.e, "} not found among",
-                     "ngs of the slot {", s.w, " ", s.e, " connected to it");
+        GRAFFINE_ENSURE(neOK,
+            "EndSlot {", ne.w, " ", ne.e, "} not found among",
+            "ngs of the slot {", s.w, " ", s.e, " connected to it");
     }
 }
 
@@ -88,8 +90,9 @@ replace_slot_in_neigs(
 
         const auto ok = ne_ngs.replace(old, nov);
 
-        GRAFFINE_ENSURE(ok, "EndSlot {", old.w, " ", old.e, "} not found among",
-                    "ngs of the slot {", ne.w, " ", ne.e, " connected to it");
+        GRAFFINE_ENSURE(ok,
+            "EndSlot {", old.w, " ", old.e, "} not found among",
+            "ngs of the slot {", ne.w, " ", ne.e, " connected to it");
     }
 }
 
@@ -127,12 +130,9 @@ constexpr
 auto Graph<CC>::
 ng_inds_at(const EndSlot& s) const noexcept -> EgIdGs
 {
-    const auto& ngs = ngs_at(s);
-
-    EgIdGs inds(ngs.num());
-
-    for (std::size_t i {}; i<ngs.num(); ++i)
-        inds[i] = slot2ind(ngs[i]);
+    EgIdGs inds;
+    for (const auto& n : ngs_at(s))
+        inds.push_back(slot2ind(n));
 
     return inds;
 }

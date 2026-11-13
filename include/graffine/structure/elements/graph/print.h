@@ -80,8 +80,17 @@ template<typename CC>
 void Graph<CC>::
 print_adjacency_lists(const std::string_view tag) const
 {
-    for (const auto& c : ct)
-        c.print_adjacency_list_edges(tag);
+    // Built here: the lists stored in the components may be stale.
+    for (const auto& c : ct) {
+        const auto lg = Adjacency<Compt>::list_edges(c);
+        for (std::size_t j {}; j < lg.size(); ++j) {
+            jot<false>(tag, "[", c.edge(EgIdC {j}).ind, "] : ");
+            for (const auto k : lg[j])
+                jot<false>(c.edge(k).ind, ' ');
+            jot("");
+        }
+        jot("");
+    }
 }
 
 
@@ -120,10 +129,9 @@ template<typename CC>
 void Graph<CC>::
 report(std::ostream& ofs) const
 {
-    ofs << " v ";
-    for (Degree d {}; d < maxDegree; ++d)
-        (d < maxDegree - 1) ? (ofs << num_vertices(d) << " ")
-                            : (ofs << num_vertices(d));
+    ofs << " v";
+    for (const auto d : degrees)
+        ofs << ' ' << num_vertices(d);
     ofs << " egn " << numEdges
         << " cnn " << num_chains()
         << " ctn " << num_compts();

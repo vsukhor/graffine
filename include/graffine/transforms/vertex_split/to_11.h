@@ -163,6 +163,10 @@ struct To<Deg1, Deg1, G, PP>
      */
     auto processor() const noexcept -> PP* { return updateProperties.get(); }
 
+    /** The graph transformed.
+     */
+    auto graph() const noexcept -> const Graph& { return gr; }
+
 protected:
 
     /** Divides an unconnected cycle chain at its boundary vertex.

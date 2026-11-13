@@ -154,17 +154,21 @@ public: // Functions
     ~Component() = default;
 
     /// Compares the sets of chains of the two components.
-    constexpr bool operator==(const Component& other);
+    constexpr bool operator==(const Component& other) const;
 
-    /// Sets the component index to \p i, also in its chains, edges and
-    /// vertices.
+    /** Sets the component index to \p i, also in its chains, edges and
+     * vertices.
+     */
     constexpr void set_ind(CmpId i) noexcept;
+
     /// Index of the component in the graph.
     constexpr CmpId get_id() const noexcept { return ind; };
 
-    /// Assigns all the chains of \a ww to this component, numbering them
-    /// and their edges in order.
+    /** Assigns all the chains of \a ww to this component, numbering them
+     * and their edges in order.
+     */
     void set_chains() noexcept;
+
     /** Assigns chain \p m to this component.
      * \details Sets the component index and the component-wide chain index
      * \p idc of \p m, and numbers its edges consecutively from \p indc .
@@ -208,8 +212,6 @@ public: // Functions
         Chain& m,
         EgIdC& indc // ref
     ) noexcept;
-    /// Rebuilds the vertex container from the chains.
-    void set_vertices() noexcept;
 
     /// Rebuilds the edge descriptors from the chains.
     constexpr void set_egl() { egl.set(*this); };
@@ -226,8 +228,9 @@ public: // Functions
 
     /// Removes all the edge descriptors.
     void clear_egl() noexcept { egl.clear(); };
-    /// Rebuilds \a ww and the edge descriptors from the chains of the
-    /// graph assigned to this component.
+    /// Rebuilds \a ww, in the order of the component-wide chain indexes,
+    /// and the edge descriptors from the chains of the graph assigned to
+    /// this component.
     void update_edge_descriptors() noexcept;
 
     /// Classifies the chains of the component anew (see \a chis).
@@ -581,9 +584,6 @@ public: // Functions
      * \note Does not update edge connectivity.
      *       Does not update chain connectivity and 'ngs'.
      *       Does not remove source chain if it is emptied.
-     * \note Only \p posTo = 0 is handled correctly: for a larger value,
-     *       the positions of the edges of \p to are renumbered from the
-     *       wrong edge.
      */
     constexpr void move_edges(
         Chain& fr,
@@ -625,16 +625,22 @@ public: // Functions
     constexpr auto edge(const BulkSlot& s) const noexcept -> const Edge&;
     /// The edge following internal vertex \p s along its chain, i.e. g[a].
     constexpr auto edge(const BulkSlot& s)       noexcept ->       Edge&;
-    /// The edge with graph-wide index \p i (linear search).
-    constexpr auto edge(EgIdG i) const noexcept -> const Edge&;
+    /** The edge with graph-wide index \p i (linear search).
+     * \throws precondition_error If the edge is not in this component.
+     */
+    constexpr auto edge(EgIdG i) const -> const Edge&;
 
     /** The chains of the component, in the order of \a ww.
      */
     constexpr auto chains() const noexcept -> std::vector<const Chain*>;
-    /// The chain with component-wide index \p w, or \ref nullChain.
-    constexpr auto chain(ChIdC w) const noexcept -> const Chain&;
-    /// The chain with component-wide index \p w, or \ref nullChain.
-    constexpr auto chain(ChIdC w)       noexcept ->       Chain&;
+    /** The chain with component-wide index \p w.
+     * \throws precondition_error If no chain has that index.
+     */
+    constexpr auto chain(ChIdC w) const -> const Chain&;
+    /** The chain with component-wide index \p w.
+     * \throws precondition_error If no chain has that index.
+     */
+    constexpr auto chain(ChIdC w)       ->       Chain&;
     /// The chain with graph-wide id \p w, which must belong to this component.
     constexpr auto chain(ChIdG w) const noexcept -> const Chain&;
     /// The chain with graph-wide id \p w, which must belong to this component.
@@ -659,9 +665,7 @@ public: // Functions
     /// EgIdC::undefined (linear search).
     constexpr auto ind2indc(EgIdG ind) const noexcept -> EgIdC;
 
-    /// The vertices adjacent to vertex \p v.
-    /// \note The current implementation returns, for each incident edge,
-    /// the vertex at the end attached to \p v, i.e. \p v itself.
+    /// The vertices adjacent to vertex \p v, one per incident edge.
     constexpr auto ngs_of(const Vertex& v) const noexcept -> std::vector<Vertex*>;
     /// The edges sharing the vertex at inner end \p eInner of edge \p eg.
     constexpr auto ngs_of(const Edge& eg, EndId eInner) const noexcept -> std::vector<Edge*>;
@@ -858,17 +862,17 @@ operator=(Component&& other) noexcept -> Component&
 
 template <typename Ch>
 constexpr bool Component<Ch>::
-operator==(const Component& other)
+operator==(const Component& other) const
 {
     if (num_chains() != other.num_chains())
         return false;
 
-    if (num_chains() > 1) {
-        std::sort(ww.begin(), ww.end());
-        std::sort(other.ww.begin(), other.ww.end());
-    }
+    auto w1 = ww;        // copies: the order of the chains is irrelevant
+    auto w2 = other.ww;
+    std::ranges::sort(w1);
+    std::ranges::sort(w2);
 
-    return ww == other.ww;
+    return w1 == w2;
 }
 
 template <typename Ch>
@@ -1041,7 +1045,7 @@ template <typename Ch>
 constexpr bool Component<Ch>::
 contains(const Vertex& v) const noexcept
 {
-    return vv.find(v) != nullptr;
+    return vv.find(v.get_id()) == &v;
 }
 
 template <typename Ch>
@@ -1066,14 +1070,15 @@ template <typename Ch>
 constexpr auto Component<Ch>::
 find_vertex(const VIdH vi) const noexcept -> Vertex*
 {
-    return vv.find(vi);
+    // The vertices are owned by this component, non-const.
+    return const_cast<Vertex*>(vv.find(vi));
 }
 
 template <typename Ch>
 constexpr auto Component<Ch>::
 find(const Vertex& v) const noexcept -> Vertex*
 {
-    return vv.find(v);
+    return contains(v) ? const_cast<Vertex*>(&v) : nullptr;
 }
 
 template <typename Ch>
@@ -1158,31 +1163,17 @@ get_chis() noexcept -> Chis&&
 
 template <typename Ch>
 void Component<Ch>::
-set_vertices() noexcept
-{
-    vv.populate(*this);
-}
-
-template <typename Ch>
-void Component<Ch>::
 update_edge_descriptors() noexcept
 {
-    egl.clear();
     ww.clear();
-
     for (const auto& m : cn)
-        if (m.c == ind) {
-
+        if (m.c == ind)
             ww.push_back(m.idw);
-            [[maybe_unused]] EgIdC i{};
-            for (const auto& g : m.g) {
 
-                GRAFFINE_ASSERT(i++ == g.indc,
-                       "i =", i, " != g.indc = ", g.indc, " in chain ", m.idw);
+    std::ranges::sort(ww, [this](const ChIdG a, const ChIdG b)
+                          { return cn[a].idc < cn[b].idc; });
 
-                egl.emplace_back(g.w, g.indw, g.ind);
-            }
-        }
+    set_egl();
 }
 
 template <typename Ch>
@@ -1265,19 +1256,14 @@ edge(const BulkSlot& s) noexcept -> Edge&
 
 template <typename Ch>
 constexpr auto Component<Ch>::
-edge(const EgIdG i) const noexcept -> const Edge&
+edge(const EgIdG i) const -> const Edge&
 {
-    EdgeDescr h;
-    for (const auto& g : egl)
-        if (g.i == i) {
-            h = g;
-            break;
-        }
+    const auto indc = ind2indc(i);
 
-    GRAFFINE_ASSERT(h.is_defined(),
-           "Error: Edge ind", i, " is not part of component ", ind);
+    GRAFFINE_REQUIRE(indc.is_defined(),
+                     "edge ", i, " is not part of component ", ind);
 
-    return &cn[h.w].g[h.a];
+    return edge(indc);
 }
 
 template <typename Ch>
@@ -1293,24 +1279,21 @@ chains() const noexcept -> std::vector<const Chain*>
 
 template <typename Ch>
 constexpr auto Component<Ch>::
-chain(const ChIdC ic) const noexcept -> const Chain&
+chain(const ChIdC ic) const -> const Chain&
 {
-    for (const auto w : ww)
-        if (cn[w].indc == ic)
-            return cn[w];
+    const auto w = chid(ic);
 
-    return nullChain<Edge>;
+    GRAFFINE_REQUIRE(w.is_defined(),
+                     "no chain has idc ", ic, " in component ", ind);
+
+    return cn[w];
 }
 
 template <typename Ch>
 constexpr auto Component<Ch>::
-chain(const ChIdC ic) noexcept -> Chain&
+chain(const ChIdC ic) -> Chain&
 {
-    for (const auto w : ww)
-if (cn[w].indc == ic)
-            return cn[w];
-
-    return nullChain<Edge>;
+    return const_cast<Chain&>(std::as_const(*this).chain(ic));
 }
 
 template <typename Ch>

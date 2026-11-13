@@ -178,6 +178,10 @@ struct To<Deg2, Deg2, G, PP>
      */
     auto processor() const noexcept -> PP* { return updateProperties.get(); }
 
+    /** The graph transformed.
+     */
+    auto graph() const noexcept -> const Graph& { return gr; }
+
 private:
 
     // Inner transformations performing the split.

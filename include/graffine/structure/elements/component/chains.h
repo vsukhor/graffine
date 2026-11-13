@@ -200,7 +200,7 @@ append(Component& other)
     for (const auto w : other.ww)
         set_chain(cn[w], idc++, indc);
 
-    vv.append(other);
+    vv.append(other.vv.get());
 
     std::move(other.egl.begin(), other.egl.end(), std::back_inserter(egl));
     std::move(other.ww.begin(), other.ww.end(), std::back_inserter(ww));

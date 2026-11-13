@@ -427,6 +427,43 @@ TEST_F(IOTest, PlyReadRawFile)
 }
 
 
+/// Vertices created after reading a file get ids distinct from the read ones.
+TEST_F(IOTest, PlyReadAdvancesVertexIds)
+{
+    ++testCount;
+
+    if constexpr (verboseT)
+        print_description(
+            "Tests that vertices created after reading a .PLY file get ids ",
+            "distinct from those read"
+        );
+
+    // Ids above those issued so far in this program. They stay moderate:
+    // the graph indexes vertices by a table sized by the largest id.
+    const auto id0 = static_cast<uint32_t>(structure::Vertex{}.get_id()()) + 1000U;
+    auto raw = RawPly::single_edge();
+    raw.vIds = {id0, id0 + 1};
+    raw.eVidA = {id0};
+    raw.eVidB = {id0 + 1};
+    const auto file = std::filesystem::current_path()/"testPlyLargeIds";
+    raw.write(file);
+
+    Ply<G> ply;
+    auto grNew = ply.template read<profuse>(file, false);
+    const IntegrityCheck integrityCheck {grNew};
+    ASSERT_NE(grNew.vertex(VIdH {id0}), nullptr);
+    ASSERT_NE(grNew.vertex(VIdH {id0 + 1}), nullptr);
+
+    const structure::Vertex fresh;
+    EXPECT_GT(fresh.get_id(), VIdH {id0 + 1});
+
+    // Also for the vertices created by a transformation.
+    grNew.add_single_chain_component(1);
+    for (const auto& v : grNew.compt_last().vertices().get())
+        EXPECT_GT(v->get_id(), VIdH {id0 + 1});
+}
+
+
 /// Reading of a file lacking a property required by the importer.
 TEST_F(IOTest, PlyReadMissingProperty)
 {

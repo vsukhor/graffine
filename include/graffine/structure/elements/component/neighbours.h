@@ -38,8 +38,9 @@ constexpr auto Component<Ch>::
 ngs_of(const Edge& eg,
       const EndId eInner) const noexcept -> std::vector<Edge*>
 {
-    GRAFFINE_ASSERT_CALLING(edges().contains(eg), eg.print("ERROR"),
-                   "Edge is not part of component ", ind);
+    GRAFFINE_ASSERT_CALLING(contains(eg),
+                            eg.print("ERROR"),
+                            "Edge is not part of component ", ind);
 
     std::vector<Edge*> gg;
     const auto v = eg.vertex_at_inner(eInner);
@@ -57,22 +58,28 @@ template <typename Ch>
 constexpr auto Component<Ch>::
 ngs_of(const Vertex& v) const noexcept -> std::vector<Vertex*>
 {
-    GRAFFINE_ASSERT_CALLING(vv.contains(v), v.print("ERROR"),
-                   "Vertex is not part of component ", ind);
+    GRAFFINE_ASSERT_CALLING(contains(v),
+                            v.print("ERROR"),
+                            "Vertex is not part of component ", ind);
 
-    std::vector<Vertex*> vv;
-    for (const auto& edv : v.edges())
-        vv.push_back(edge(egl[edv.w]).vertex_at_inner(edv.e));
+    std::vector<Vertex*> res;
+    for (const auto& edv : v.edges()) {
+        // The neighbour is at the other end of the incident edge.
+        const auto& d = egl[edv.indc()];
+        res.push_back(cn[d.w].g[d.a].vertex_at_inner(End::opp(edv.e)));
+    }
 
-    return vv;
+    return res;
 }
 
 template <typename Ch>
 constexpr auto Component<Ch>::
 ngs_of(const Chain& m, const EndId e) const noexcept -> std::vector<Chain*>
 {
-    GRAFFINE_ASSERT_CALLING(std::find(ww.begin(), ww.end(), m.idw) != ww.end(),
-                   m.print("ERROR"), "Chain is not part of component ", ind);
+    GRAFFINE_ASSERT_CALLING(
+        std::find(ww.begin(), ww.end(), m.idw) != ww.end(),
+        m.print("ERROR"),
+        "Chain is not part of component ", ind);
 
     std::vector<Chain*> mm;
     for (const auto& n : m.ngs[e])
@@ -110,8 +117,9 @@ replace_slot_in_neigs(
         auto& ne_ngs = ngs_at(ne);
         const auto ok = ne_ngs.replace(old, nov);
 
-        GRAFFINE_ENSURE(ok, "EndSlot {", old.w, " ", old.e, "} not found among",
-               "ngs of the slot {", ne.w, " ", ne.e, " connected to it");
+        GRAFFINE_ENSURE(ok,
+            "EndSlot {", old.w, " ", old.e, "} not found among",
+            "ngs of the slot {", ne.w, " ", ne.e, " connected to it");
     }
 }
 
@@ -127,16 +135,18 @@ remove_slot_from_neigs(const EndSlot& s)
         auto& ngs = ngs_at(ne);
 
         // Remove s from the neighbours of ne.
-        const auto ngsOK = ngs.remove(s);
+        const auto ngsOK = ngs.erase(s);
 
-        GRAFFINE_ENSURE(ngsOK, "EndSlot {", s.w, " ", s.e, "} not found among",
-               "ngs of the slot {", ne.w, " ", ne.e, " connected to it");
+        GRAFFINE_ENSURE(ngsOK,
+            "EndSlot {", s.w, " ", s.e, "} not found among",
+            "ngs of the slot {", ne.w, " ", ne.e, " connected to it");
 
         // Remove ne from the neighbours of s.
-        const auto neOK = sr.remove(ne);
+        const auto neOK = sr.erase(ne);
 
-        GRAFFINE_ENSURE(neOK, "EndSlot {", ne.w, " ", ne.e, "} not found among",
-               "ngs of the slot {", s.w, " ", s.e, " connected to it");
+        GRAFFINE_ENSURE(neOK,
+            "EndSlot {", ne.w, " ", ne.e, "} not found among",
+            "ngs of the slot {", s.w, " ", s.e, " connected to it");
     }
 }
 
@@ -149,7 +159,8 @@ shift_chain_junction(const EndSlot& f,
     auto& g0 = cn[f.w].g;
     auto& g1 = cn[t.w].g;
 
-    GRAFFINE_ASSERT(cn[f.w].c == cn[t.w].c, "Slots belong to differrent components");
+    GRAFFINE_ASSERT(cn[f.w].c == cn[t.w].c,
+                    "Slots belong to differrent components");
 
     if (f.e == End::B) {
 

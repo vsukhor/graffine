@@ -204,6 +204,10 @@ struct From<Deg1, Deg2, G, PP>
      */
     auto processor() const noexcept -> PP* { return updateProperties.get(); }
 
+    /** The graph transformed.
+     */
+    auto graph() const noexcept -> const Graph& { return gr; }
+
 private:
 
     /** Calls \p f with the locations of vertices \p v1 and \p v2.

@@ -124,7 +124,7 @@ vertex_at_bulk(const EgIdG ind1,
 
     GRAFFINE_ASSERT(eg2, "Edge ind ", ind2, " not found in chain ", idw);
 
-    return vertex_at_bulk(eg1, eg2);
+    return vertex_at_bulk(*eg1, *eg2);
 }
 
 template<typename E>
@@ -135,13 +135,13 @@ vertex_at_bulk(const Edge& eg1,
 {
     GRAFFINE_ASSERT(eg1.ind != eg2.ind, "Identical inds: ", eg1.ind);
 
-    GRAFFINE_ASSERT(eg1->indw == eg2->indw + 1 || eg2->indw == eg1->indw + 1,
-           "Edges at a1 ", eg1->indw, " a2 ", eg2->indw, " are expected ",
+    GRAFFINE_ASSERT(eg1.indw == eg2.indw + 1 || eg2.indw == eg1.indw + 1,
+           "Edges at a1 ", eg1.indw, " a2 ", eg2.indw, " are expected ",
            "to have a common bulk vertex");
 
-    return eg1->indw < eg2->indw
-        ? eg2->vertex_at_outer(End::A)
-        : eg1->vertex_at_outer(End::A);
+    return eg1.indw < eg2.indw
+        ? eg2.vertex_at_outer(End::A)
+        : eg1.vertex_at_outer(End::A);
 }
 
 

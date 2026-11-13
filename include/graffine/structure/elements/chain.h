@@ -477,8 +477,6 @@ struct Chain<E>
 
     /** Checks if the chain is linear and unconnected, i.e. a component of
      * its own with two free ends.
-     * \note The current implementation returns \a true as soon as \a either
-     * end is free.
      */
     constexpr bool is_unconnected_linear() const noexcept;
 

@@ -53,15 +53,13 @@ struct Reporter
 
 
     /** Prints the path and its chains before a pull of \p n steps.
-     * \note Takes the last of the chains of the path, which are listed in
-     * ascending order of id, as the source chain.
      */
     void before(
         const Path& pp,
         const int n
     ) const noexcept
     {
-        const auto chs = pp.chains(pp.pthc);
+        const auto chs = path_chains(pp);
         const auto& schain = cn(chs.back(), pp);
         const auto src_is_engulfed = schain.length() > 1 &&
                                     n == static_cast<int>(schain.length());
@@ -91,7 +89,7 @@ struct Reporter
     /// Prints the chains of the path after the pull.
     void after(const Path& pp) const noexcept
     {
-        const auto chs = pp.chains(pp.pthc);
+        const auto chs = path_chains(pp);
 
         jot("");
         jot(colorcodes::GREEN, functor.shortName, colorcodes::RESET, " producing:");
@@ -100,6 +98,21 @@ struct Reporter
             cn(w, pp).print("path ch ", i++, " after ");
 
         jot("");
+    }
+
+    /** Chains traversed by path \p pp, in path order, from the driver
+     * chain to the source chain.
+     */
+    static auto path_chains(const Path& pp) -> ChIdGs
+    {
+        ChIdGs ww;
+        for (const auto indc : pp.pthc) {
+            const auto w = pp.cmp->get_egl(indc).w;
+            if (ww.empty() || ww.back() != w)
+                ww.push_back(w);
+        }
+
+        return ww;
     }
 
     /// Chain \p w of the component of path \p pp.

@@ -138,6 +138,10 @@ struct From<Deg1, Deg3, G, PP>
      */
     auto processor() const noexcept -> PP* { return updateProperties.get(); }
 
+    /** The graph transformed.
+     */
+    auto graph() const noexcept -> const Graph& { return gr; }
+
 protected:
 
     Graph& gr;  ///< Reference to the modified graph object.

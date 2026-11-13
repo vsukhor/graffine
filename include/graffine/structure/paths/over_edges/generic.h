@@ -90,12 +90,8 @@ struct Generic
      * preceding edge on its shortest path.
      * \note Uses the edge adjacency list of the component, rebuilt at each
      * call.
-     * \note Follows Dijkstra's algorithm
-     * (https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm), except that
-     * the queue is ordered by edge index rather than by distance (see
-     * Distance::operator<): an edge is queued again when its distance
-     * improves. The distances found are the shortest ones, but without
-     * Dijkstra's bound on the number of visits.
+     * \note Implements Dijkstra's algorithm
+     * (https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm).
      * \param[in] source Component-wide index of the edge from which the
      * paths are computed.
      */
@@ -127,8 +123,10 @@ struct Generic
      */
     auto path_to_global_ind(const PathC& pc) -> const PathW;
 
-    /** Converts the distances to refer to graph-wide edge indexes.
-     * \note The result is still indexed by component-wide edge index.
+    /** The distances with the preceding edges given by graph-wide
+     * indexes instead of component-wide ones.
+     * \note The result is still indexed by component-wide edge index, and
+     * the preceding edges are held in EgIdC-typed fields.
      */
     auto distances_to_global_ind() -> const Distances;
 
@@ -413,15 +411,14 @@ template<typename Component>
 auto Generic<Component>::
 distances_to_global_ind() -> const Distances
 {
-    // !!! the output has size is cmp.num_edges(), not gr.numedges,
-    // and elements are still indexed as indc
+    // The output has size cmp.num_edges(), not gr.num_edges(), and its
+    // elements are still indexed by indc.
     Distances dg;
 
-    for (const auto p : distances)
-
-        p.is_defined()
-            ? dg.push_back(cmp->edge(p).ind)
-            : dg.push_back(p);
+    for (const auto& p : distances)
+        dg.push_back(p.get_prev().is_defined()
+            ? Dist {EgIdC {cmp->edge(p.get_prev()).ind()}, p.get_dist()}
+            : p);
 
     return dg;
 }

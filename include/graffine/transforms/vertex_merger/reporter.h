@@ -82,9 +82,7 @@ struct Reporter
      * \param ssB Text preceding the 2nd chain id.
      * \param dd Degrees of the merged vertices, replacing those given at
      * construction if not empty.
-     * \note The chains joined at a degree 3 vertex are meant to be printed
-     * too, but the test of the degrees compares them with "13", while they
-     * are formatted as "1+3".
+     * For a 1+3 merger, also prints the chains joined at the junction.
      */
     template<structure::descriptors::slot S1=EndSlot,
              structure::descriptors::slot S2=EndSlot>
@@ -208,7 +206,7 @@ before(
     if (w2 != w1) {
         cn[w2].print(str3);
         if constexpr (std::is_same_v<S2, EndSlot>)
-            if (degs == "13") {
+            if (degs == degrees_to_string(Deg1, Deg3)) {
 
                 GRAFFINE_ASSERT(cn[w2].num_neigs(ea2) == 2, "num neigs is incorrect for 13");
                 const auto ngs = cn[w2].ngs[ea2].as_vector();  // segments connected to w2 at e2
@@ -249,7 +247,7 @@ after(
         if (w != w1)
             cn[w].print(str2);
 
-    if (mi.is_defined() && degs == "12" &&
+    if (mi.is_defined() && degs == degrees_to_string(Deg1, Deg2) &&
         !cn[ws[0]].is_unconnected_cycle())  // because ws.size() == 1
         cn[mi].print(str2);
 

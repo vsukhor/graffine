@@ -157,6 +157,10 @@ struct From<Deg1, Deg1, G, PP>
      */
     auto processor() const noexcept -> PP* { return merge.processor(); }
 
+    /** The graph transformed.
+     */
+    auto graph() const noexcept -> const Graph& { return gr; }
+
 private:
 
     /** Free end slot of a vertex of degree 1 belonging to the graph.

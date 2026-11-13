@@ -73,6 +73,7 @@ struct EdgeDescriptorsInComponent
 
     /// Rebuilds the table from the edges of the chains of component \p cmp.
     void set(const Component& cmp);
+
     /// Appends the descriptor of edge \p g; its EgIdC must equal the
     /// current table size.
     void append(const Edge& g);
@@ -81,6 +82,7 @@ struct EdgeDescriptorsInComponent
     /// Appends the descriptors of another table, e.g. when merging
     /// components.
     void append(Self&& egl) noexcept;
+
     /** Removes the descriptor of edge \p eg.
      * \details The last edge of the component takes over the EgIdC of
      * \p eg: its descriptor moves into the vacated entry, and the edge and
@@ -90,19 +92,21 @@ struct EdgeDescriptorsInComponent
      * \param vv Vertices of the component.
      */
     void remove(const Edge& eg, Chains& cn, Vertices& vv);
+
     /// Removes all the descriptors.
     void clear() { m_data.clear(); }
-    /** Checks the descriptors against edge \p eg.
+
+    /** Checks that the descriptor at the index of edge \p eg matches it.
      * \param eg Edge.
      * \param ic Host component, for the error message.
-     * \throws invariant_error If a descriptor disagrees with the edge.
+     * \throws invariant_error If the descriptor disagrees with the edge,
+     * or the index is out of range.
      */
     void check(const Edge& eg, CmpId ic) const;
 
 private:
 
     using Base::m_data;
-
 };
 
 // IMPLEMENTATION ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -173,8 +177,10 @@ void EdgeDescriptorsInComponent<C>::
 check(const Edge& eg,
       const CmpId ic) const
 {
-    for (EgIdC k {}; const auto& gl: m_data)
-        gl.check(eg, ic, k);
+    GRAFFINE_ENSURE(eg.indc < m_data.size(), "indc ", eg.indc, " of edge ",
+                    eg.ind, " out of range in component ", ic);
+
+    m_data[eg.indc()].check(eg, ic, eg.indc);
 }
 
 }  // namespace graffine::structure::containers

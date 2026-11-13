@@ -60,7 +60,7 @@ void Graph<CC>::
 update_adjacency_edges(const EgIdG ind) noexcept
 {
     const auto c = cn[egl[ind].w].c;
-    ct[c].adjacency_list_edges();
+    ct[c].adj.list_edges();
 }
 
 
@@ -69,7 +69,7 @@ void Graph<CC>::
 update_adjacency() noexcept
 {
     for (auto& c : ct)
-        c.adjacency_list_edges();
+        c.adj.list_edges();
 }
 
 
