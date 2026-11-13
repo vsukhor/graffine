@@ -592,43 +592,7 @@ struct Chain<E>
     constexpr void set_w(ChIdG w) noexcept;
     constexpr void set_g_w(ChIdG w) noexcept;
     constexpr void set_g_w() noexcept;
-#if 0
-    /**
-     * \name Vertex addition and removal.
-     * @{
-     */
 
-    /** Connects an edge end and a vertex.
-     * \details Arranges descriptors in vertex \p v and in edge \p eg to match
-     * each other. After this operation, the vertex \p v is assigned to the end
-     * \p egend of edge \p eg and the latter is set as the incoming slot to \p v.
-     * \param[in] v Vertex object to which the new connection is appended.
-     * \param[in] eg Edge object to which the new vertex is appended.
-     * \param[in] egend End of the edge accepting the new vertex.
-     */
-    constexpr void connect(
-        Vertex& v,  // by reference
-        Edge& eg,   // by reference
-        End::Id egend
-    ) const noexcept;
-
-    /** Disconnects an edge end from a vertex.
-     * \details Removes the descriptors in vertex \p v pointing to edge \p eg
-     * end \p egend and the other way around. After this operation, the
-     * vertex \p v is not assigned to the end \p egend of edge \p eg  any more
-     * and the latter is removed from the incoming slots of \p v.
-     * \param[in] v Vertex object from which the connection is removed.
-     * \param[in] eg Edge object from which the vertex is disconnected.
-     * \param[in] egend End of the edge losing the connection.
-     */
-    constexpr void disconnect(
-        Vertex& v,  // by reference
-        Edge& eg,   // by reference
-        End::Id egend
-    ) const noexcept;
-
-    ///@}  // Vertex addition and removal.
-#endif
     /**
      * \name Formatted printing.
      * @{

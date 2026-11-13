@@ -73,7 +73,6 @@ struct Path
     using PathC = Base::PathC;
     using PathW = Base::PathW;
     using PathCh = structure::paths::over_endslots::Generic<C>::Path;
-//    using Skeleton = paths::Container<Driver>;
     using BulkSlot = Chain::BulkSlot;
 
     /** Descriptor of the Path source.
@@ -189,8 +188,6 @@ struct Path
     PathW pthw;  ///< Path edges by graph-wide index, from driver to source.
     PathC pthc;  ///< Path edges by component-wide index, from driver to source.
 
-//    Skeleton skeleton;
-
     explicit constexpr Path(
         const Component* const cmp,
         Driver d,
@@ -225,15 +222,10 @@ struct Path
     constexpr auto operator=(const Path& p) -> Path&;
     constexpr auto operator=(Path&& p) -> Path&;
 
-    static constexpr auto end_to_a_tip(const C::Chain& m,
-                                       const End::Id e);
-
     /** Checks that position \p a of chain \p m is a vertex inside it.
      */
     static constexpr bool is_bulk_position(const Chain& m,
                                            EgIdA a) noexcept;
-
-//    void set_skeleton() const;
 
     /** Id of the chain at the leading path end.
      */
@@ -262,8 +254,6 @@ struct Path
     constexpr auto source_vertex()       noexcept ->       Vertex&;
 
     auto driver2source(const Driver& dr) const -> Source;
-
-    void set_cmp(Component& cc) noexcept;
 
     constexpr auto drv() const noexcept -> const Driver& { return d; }
 
@@ -315,8 +305,6 @@ private:
         const Source& sr,
         Base& b
     ) -> EgIdC;
-
-    void set_driver_end(const End::Id e);
 };
 
 
@@ -363,8 +351,6 @@ Path(
     , s {s}
     , internals {internals}
 {
-//    GRAFFINE_ASSERT(cmp->chain(s.w).ngs[s.e].num() == 0,
-//           "Source end is not disconnected");
     GRAFFINE_ASSERT(cmp->chain(s.w).c == cmp->ind,
            "Source compartment is different from cmp");
     GRAFFINE_ASSERT(cmp->chain(d.w).c == cmp->ind,
@@ -620,36 +606,10 @@ is_bulk_position(const Chain& m,
 
 
 template<typename C>
-void Path<C>::
-set_driver_end(const End::Id e)
-{
-    d = structure::descriptors::EdgeSlotC{pthw[0], e};
-}
-
-
-template<typename C>
 auto Path<C>::
 driver2source(const Driver& dr) const -> Source
 {
     return Source {dr.w, cmp->chain(dr.w).ind2end(dr.ind, dr.egEnd)};
-}
-
-
-template<typename C>
-constexpr
-auto Path<C>::
-end_to_a_tip(const C::Chain& m,
-             const End::Id e)  // static
-{
-    return e == End::A ? 0 : m.length();
-}
-
-
-template<typename C>
-void Path<C>::
-set_cmp(Component& cc) noexcept
-{
-    cmp = cc;
 }
 
 
@@ -659,164 +619,6 @@ set_src(const Source& src) noexcept
 {
     s = src;
 }
-
-
-/*
-template<typename C>
-void Path<C>::
-set_skeleton() const
-{
-    // using path over component-wde edge indexes indc
-    skeleton.clear();
-
-    // first path element treat may be a chain inner edge, so treat it separately
-    const auto& gl0 = cmp.egl[pthc[0]];
-    const auto w0 = gl0.w;
-    const auto ind0 = gl0.i;
-    if (cmp.chain(w0).length() == 1) {
-        // the first chain of the path is single-edge
-        if (pthc.size() == 1) {  // single-edge path over a single_edge chain
-            skeleton.emplace_back(Driver{ind0, w, 0});  // free side
-            skeleton.emplace_back(Driver{ind0, w, 1});  // free side
-            return;
-        }
-        else {  // multi-edge path starting on a single_edge chain
-            const auto& gl1 = cmp.egl[pthc[1]];
-            const auto ind1 = gl1.i;
-            const auto es = inds_to_chain_link(ind0, gl1.i);
-            // es[0] is a slot on w0 connecting to the chain that follows path
-            if (es[0].e == End::B) {
-                skeleton.emplace_back(Driver{ind0, w, 0});  // free side
-                skeleton.emplace_back(Driver{ind0, w, 1});  // connected side
-            }
-            else if (es[0].e == End::A) { {
-                skeleton.emplace_back(Driver{ind0, w, 1});  // free side
-                skeleton.emplace_back(Driver{ind0, w, 0});  // connected side
-            }
-            else
-                abort("edges with inds", ind0,", " gl1.i,
-                      "are not on the same junction");
-        }
-    }
-    else { // the first chain of the path is multi-edge
-        // the second edge of the path is guaranteed to be on the chain end
-    }
-
-    for (EgId i {1}; i < pthc.length(); ++i) {
-        const auto w = cmp.egl[p[i]].w;
-            if (cmp.chain(w).length > 1) {
-
-                pes.push_back(EndSlot{w, e});
-            }
-            else {
-                pes.push_back(EndSlot{w, e});
-                pes.push_back(EndSlot{w, e});
-            }
-        }
-        else
-            pes.push_back(p);
-    }
-}
-*/
-
-
-/*
-template<typename C>
-void Path<C>::
-set_clagl( Graph& gr )
-{
-    Path<Graph>::clagl.resize(gr.clnum);
-    for (std::size_t c=0; c<gr.clnum; ++c)
-        make_adjacency_list(c, clagl[c], gr);
-}
-
-template<typename Graph>
-void Path<Graph>::
-set_clagl( const std::size_t c, Graph& gr )
-{
-    make_adjacency_list(c, clagl[c], gr);
-}
-
-
-
-template<typename C>
-bool Path<C>::
-hasPath(Graph& gr,
-    const EgId ind1,
-    const EgId ind2
-)  // static
-{
-    const auto indcl1 = gr.cn[gr.glm[ind1]].g[gr.gla[ind1]].indcl;
-    const auto indcl2 = gr.cn[gr.glm[ind2]].g[gr.gla[ind2]].indcl;
-
-    auto& vis = gr.clvisited[c];
-    std::fill(vis.begin(), vis.end(), false);
-    vis[indcl1] = true;
-    std::deque<size_t> q(1, indcl1);
-
-    return GG.bfs(gr.clagl[c], q, vis, indcl2);
-}
-
-
-template<typename C>
-void Path<C>::
-make_adjacency_list(
-    const std::size_t c,
-    typename gT::aglT& a,
-    Graph& gr
-)
-{
-    gr.clvisited[c].resize(gr.cls[c]);
-
-    a.resize(gr.cls[c]);
-    for (auto& o : a)
-        o.clear();
-
-    for (const auto j : gr.clmt[c]) {
-        auto& m = cn[j];
-        for (std::size_t k=0; k<m.length(); ++k)
-            if (!m.g[k].isImmobile) {
-                const auto ind = m.g[k].indcl;
-                if (k == 0) {
-                    for (unsigned int ie=1; ie<=m.nn[1]; ++ie) {            // connection backwards: only other mitos might be found
-                        const auto w2 = m.neig[1][ie];
-                        const auto a2 = cn[w2].end2a(m.neen[1][ie]);
-                        const auto& g2 = cn[w2].g[a2];
-                        if (!g2.isImmobile)
-                            a[ind].push_back(typename gT::neighbour(g2.indcl, 1));
-                    }
-                    if (m.length() == 1)                            // connection forwards: to other chain
-                        for (unsigned int ie=1; ie<=m.nn[2]; ++ie) {
-                            const auto w2 = m.neig[2][ie];
-                            const auto a2 = cn[w2].end2a(m.neen[2][ie]);
-                            const auto& g2 = cn[w2].g[a2];
-                            if (!g2.isImmobile)
-                                a[ind].push_back(typename gT::neighbour(g2.indcl, 1));
-                        }
-                    else {                                            // connection forwards: to the same chain
-                        const auto& g2 = m.g[k+1];
-                        if (!g2.isImmobile)
-                            a[ind].push_back(typename gT::neighbour(g2.indcl, 1));
-                    }
-                }
-                else if (k == m.length()-1) {                        // but not  a1 == 0  =>  cn[m1].length() > 1
-                    a[ind].push_back(typename gT::neighbour(m.g[k-1].indcl, 1));    // connection backwards: to the same chain
-                    for (unsigned int ie=1; ie<=m.nn[2]; ++ie) {                            // connection forwards: to other chain
-                        const auto w2 = m.neig[2][ie];
-                        const auto a2 = cn[w2].end2a(m.neen[2][ie]);
-                        const auto& g2 = cn[w2].g[a2];
-                        if (!g2.isImmobile)
-                            a[ind].push_back(typename gT::neighbour(g2.indcl, 1));
-                    }
-                }
-                else {                                                // chain internal edge: a1 != 1 && a1 != cn[m1].length()
-                    if (!m.g[k-1].isImmobile) a[ind].push_back(typename gT::neighbour(m.g[k-1].indcl, 1));    // connection backwards: to the same chain
-                    if (!m.g[k+1].isImmobile) a[ind].push_back(typename gT::neighbour(m.g[k+1].indcl, 1));    // connection forwards: to the same chain
-                }
-            }
-        }
-}
-*/
 
 
 template<typename C>

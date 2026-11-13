@@ -179,6 +179,28 @@ protected:
 
 private:
 
+    /** Calls \p f with the location of vertex \p v.
+     * \details For D == 2 the location is the bulk slot of \p v, or the
+     * chain id if \p v is the boundary vertex of an unconnected cycle;
+     * otherwise it is a chain end slot at \p v.
+     */
+    template<typename F>
+    auto with_slot(const Vertex& v, F&& f) const
+    {
+        if constexpr (D == Deg2) {
+            const auto s = locate::bulk_slot(gr, v);
+            return checks::is_valid(gr, s) ? f(s)
+                                           : f(s.w);  // cycle boundary
+        }
+        else
+            return f(locate::end_slot(gr, v));
+    }
+
+    /** Completes the creation, once the new chain is attached at its end A.
+     * \return Pointer to the new edge.
+     */
+    auto finish() -> Res;
+
     template<typename S>
     void log_before(const S& s,
                     std::string&& at) const;
@@ -221,13 +243,7 @@ applicability(const Vertex& v) const -> Applicability
     if (v.deg() != D)
         return reject("vertex degree does not match the transformation");
 
-    if constexpr (D == Deg2) {
-        const auto s = locate::bulk_slot(gr, v);
-        return checks::is_valid(gr, s) ? applicability(s)
-                                       : applicability(s.w);  // cycle boundary
-    }
-    else
-        return applicability(locate::end_slot(gr, v));
+    return with_slot(v, [this](const auto& s) { return applicability(s); });
 }
 
 
@@ -279,13 +295,7 @@ template<Degree D,
 auto InNewChain<D, G, PP>::
 apply(Vertex& v) -> Res
 {
-    if constexpr (D == Deg2) {
-        const auto s = locate::bulk_slot(gr, v);
-        return checks::is_valid(gr, s) ? apply(s)
-                                       : apply(s.w);  // cycle boundary
-    }
-    else
-        return apply(locate::end_slot(gr, v));
+    return with_slot(v, [this](const auto& s) { return apply(s); });
 }
 
 // Creates new single-edge chain attached to the original chain(s) at slot 's'.
@@ -311,16 +321,7 @@ apply(const Slot& s) -> Res
 
     nested<PP>(frame, [&] { merge_vertices(EndSlot{cn.back().idw, e}, s); });
 
-    const auto u = gr.edge(gr.num_edges()-1).w;  // ChIdG of the new chain
-    const auto ep = &cn[u].g[0];                 // pointer to the new edge
-
-    if constexpr (!std::is_void_v<PP>)
-        hooks::on_end<isNewChain>(updateProperties->edgeCreation, *ep);
-
-    if constexpr (verboseF)
-        log_after(EndSlot{u, e});
-
-    return {ep};
+    return finish();
 }
 
 
@@ -351,14 +352,26 @@ apply(const ChIdG w) -> Res
 
     nested<PP>(frame, [&] { merge_vertices(EndSlot{cn.back().idw, e}, w); });
 
-    const auto u = gr.edge(gr.num_edges()-1).w;
+    return finish();
+}
+
+
+template<Degree D,
+         typename G,
+         typename PP>
+    requires edge_creation::Processor<PP, G> &&
+             vertex_merger::Processor<PP, G>
+auto InNewChain<D, G, PP>::
+finish() -> Res
+{
+    const auto u = gr.edge(gr.num_edges()-1).w;  // ChIdG of the new chain
     const auto ep = &cn[u].g[0];                 // pointer to the new edge
 
     if constexpr (!std::is_void_v<PP>)
         hooks::on_end<isNewChain>(updateProperties->edgeCreation, *ep);
 
     if constexpr (verboseF)
-        log_after(EndSlot{u, e});
+        log_after(EndSlot{u, End::A});
 
     return {ep};
 }

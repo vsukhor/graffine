@@ -87,8 +87,6 @@ struct Graph<CC>
     using BulkSlot = Chain::BulkSlot;
     using End = Chain::End;  ///< Edge ends.
     using EndId = End::Id;
-//    using Facet = Compt::Facet;
-//    using Facets = Compt::Facets;
     using EdgeDescr = descriptors::EdgeInGraph;
     using EdgeDescriptors = structure::containers::EdgeDescriptorsInGraph<Self>;
     using Vertex = Edge::Vertex;
@@ -415,6 +413,15 @@ public:
     template<typename F>
     auto adjacency_list_edges(F(*f)(const Edge&)) const noexcept -> vec2<F>;
 
+    /** Generates the chain adjacency list of the graph.
+     * \details Chains are adjacent if they are joined at their ends. Each
+     * chain end joined at an end of chain \a w contributes one entry to
+     * the list of \a w, first those at end A of \a w, then at end B. So a
+     * chain joined to another at both ends lists it twice, and a cycle,
+     * having its ends joined to each other, lists itself twice.
+     * \return For each graph-wide chain id, the ids of the chains joined
+     * to its ends.
+     */
     auto adjacency_list_chains() const noexcept -> vec2<ChIdG>;
 
     constexpr auto max_degree() const noexcept -> Degree;

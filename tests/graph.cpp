@@ -30,6 +30,7 @@ limitations under the License.
 #include "graffine/structure/modifiers/graph_factory.h"
 
 
+#include <algorithm>  // ranges::sort
 #include <array>
 #include <iostream>
 #include <memory>
@@ -551,6 +552,61 @@ TEST_F(GraphTest, RenameChain)
 
 
 /// Tests copy_neigs(from, to): copy assigns connected slots of 'from' to 'to'
+TEST_F(GraphTest, AdjacencyListChains)
+{
+    ++testCount;
+
+    if constexpr (verboseT)
+        print_description(
+            "Tests adjacency_list_chains(): for each chain, the chains ",
+            "joined to its ends"
+        );
+
+    constexpr ChIdG u {0};
+    constexpr ChIdG v {1};
+    constexpr ChIdG x {2};
+    constexpr ChIdG w {3};  // created by splitting v
+
+    G gr;
+    const IntegrityCheck integrityCheck {gr};
+
+    ASSERT_TRUE(gr.adjacency_list_chains().empty());
+
+    gr.add_single_chain_component(4);  // u
+    gr.add_single_chain_component(4);  // v
+    gr.add_single_chain_component(4);  // x
+
+    auto adj = gr.adjacency_list_chains();
+    ASSERT_EQ(adj.size(), 3);
+    for (const auto& a : adj)
+        ASSERT_TRUE(a.empty());
+
+    // End B of u to the bulk of v: a 3-way junction of u, v and new chain w.
+    VertexMerger<1, 2, G> merge12 {gr};
+    merge12(ESlot{u, End::B}, BSlot{v, 2});
+
+    // Merging the ends of the remaining free chain makes a cycle.
+    VertexMerger<1, 1, G> merge11 {gr};
+    merge11(ESlot{x, End::A}, ESlot{x, End::B});
+
+    ASSERT_EQ(gr.num_chains(), 4);
+    ASSERT_TRUE(gr.chain(x).is_unconnected_cycle());
+
+    adj = gr.adjacency_list_chains();
+    ASSERT_EQ(adj.size(), gr.num_chains());
+
+    auto sorted = [&](const ChIdG c) {
+        auto a = adj[c()];
+        std::ranges::sort(a);
+        return a;
+    };
+    ASSERT_EQ(sorted(u), (std::vector<ChIdG>{v, w}));
+    ASSERT_EQ(sorted(v), (std::vector<ChIdG>{u, w}));
+    ASSERT_EQ(sorted(w), (std::vector<ChIdG>{u, v}));
+    ASSERT_EQ(sorted(x), (std::vector<ChIdG>{x, x}));
+}
+
+
 TEST_F(GraphTest, CopyNeigs)
 {
     ++testCount;

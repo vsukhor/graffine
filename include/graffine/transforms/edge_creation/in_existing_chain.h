@@ -35,10 +35,8 @@ limitations under the License.
 #include "graffine/transforms/edge_creation/common.h"
 
 #include <memory>
-#include <utility>
-
-#include <memory>
 #include <type_traits>
+#include <utility>
 
 namespace graffine::transforms::edge_creation {
 
@@ -124,13 +122,7 @@ struct InExistingChain
      */
     auto plan(const Vertex& v) const -> Plan<G>
     {
-        if (v.deg() == Deg2) {
-            const auto s = locate::bulk_slot(gr, v);
-            const auto [w, a] = s.we();
-            return plan(a == 0 ? BulkSlot {w, gr.chain(w).length()} : s);
-        }
-
-        return plan(locate::end_slot(gr, v));
+        return with_slot(v, [this](const auto& s) { return plan(s); });
     }
 
     /** Outcome of the insertion of a new edge at slot \p s (see plan.h).
@@ -157,6 +149,26 @@ protected:
 
     /// Processor for non-topological properties.
     std::shared_ptr<PP> updateProperties;
+
+private:
+
+    /** Calls \p f with the slot of vertex \p v.
+     * \details The slot is the bulk slot of \p v if \p v has degree 2,
+     * otherwise a chain end slot at \p v. Position 0 is the boundary vertex
+     * of an unconnected cycle: it is replaced by the position after the last
+     * edge, which is the same vertex.
+     */
+    template<typename F>
+    auto with_slot(const Vertex& v, F&& f) const
+    {
+        if (v.deg() == Deg2) {
+            const auto s = locate::bulk_slot(gr, v);
+            const auto [w, a] = s.we();
+            return f(a == 0 ? BulkSlot {w, gr.chain(w).length()} : s);
+        }
+
+        return f(locate::end_slot(gr, v));
+    }
 };
 
 
@@ -186,13 +198,7 @@ applicability(const Vertex& v) const -> Applicability
     if (!checks::is_in_graph(gr, v))
         return reject("vertex not in the graph");
 
-    if (v.deg() == Deg2) {
-        const auto s = locate::bulk_slot(gr, v);
-        const auto [w, a] = s.we();
-        return applicability(a == 0 ? BulkSlot {w, gr.chain(w).length()} : s);
-    }
-
-    return applicability(locate::end_slot(gr, v));
+    return with_slot(v, [this](const auto& s) { return applicability(s); });
 }
 
 
@@ -225,15 +231,7 @@ template<typename G,
 auto InExistingChain<G, PP>::
 apply(Vertex& v) -> Res
 {
-    if (v.deg() == Deg2) {
-        // Position 0 is the boundary vertex of an unconnected cycle: the edge
-        // is inserted after the last edge instead, at the same vertex.
-        const auto s = locate::bulk_slot(gr, v);
-        const auto [w, a] = s.we();
-        return apply(a == 0 ? BulkSlot {w, gr.chain(w).length()} : s);
-    }
-
-    return apply(locate::end_slot(gr, v));
+    return with_slot(v, [this](const auto& s) { return apply(s); });
 }
 
 template<typename G,

@@ -41,7 +41,7 @@ enum class Elements {
     Vertex,
     Edge,
     Chain,
-    Facet,
+    Triangle,
     Component,
     Graph,
     Any

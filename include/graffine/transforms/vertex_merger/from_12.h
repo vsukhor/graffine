@@ -203,6 +203,26 @@ struct From<Deg1, Deg2, G, PP>
 
 private:
 
+    /** Calls \p f with the locations of vertices \p v1 and \p v2.
+     * \details The vertex of degree 1 is located first, by its chain end
+     * slot. The vertex of degree 2 is located by its bulk slot, or by the
+     * chain id if it is the boundary vertex of an unconnected cycle.
+     */
+    template<typename F>
+    auto with_slots(const Vertex& v1,
+                    const Vertex& v2,
+                    F&& f) const
+    {
+        const auto& leaf = v1.is_leaf() ? v1 : v2;
+        const auto& bulk = v1.is_leaf() ? v2 : v1;
+
+        const auto s1 = locate::end_slot(gr, leaf);
+        const auto s2 = locate::bulk_slot(gr, bulk);
+
+        return checks::is_valid(gr, s2) ? f(s1, s2)
+                                        : f(s1, s2.w);  // cycle boundary
+    }
+
     /** Checks of the free end \p s1.
      * \details Rejects an invalid slot, a chain having no edges, and a
      * chain end which is not free.
@@ -271,12 +291,9 @@ applicability(
     if (!leaf.is_leaf() || !bulk.is_bulk())
         return reject("vertex degrees are not 1 and 2");
 
-    const auto s1 = locate::end_slot(gr, leaf);
-    const auto s2 = locate::bulk_slot(gr, bulk);
-    if (checks::is_valid(gr, s2))
+    return with_slots(v1, v2, [this](const auto& s1, const auto& s2) {
         return applicability(s1, s2);
-
-    return applicability(s1, s2.w);  // boundary vertex of a cycle
+    });
 }
 
 
@@ -332,15 +349,9 @@ apply(
     Vertex& v2
 ) -> Res
 {
-    const auto& leaf = v1.is_leaf() ? v1 : v2;
-    const auto& bulk = v1.is_leaf() ? v2 : v1;
-
-    const auto s1 = locate::end_slot(gr, leaf);
-    const auto s2 = locate::bulk_slot(gr, bulk);
-    if (checks::is_valid(gr, s2))
+    return with_slots(v1, v2, [this](const auto& s1, const auto& s2) {
         return apply(s1, s2);
-
-    return apply(s1, s2.w);  // boundary vertex of a cycle
+    });
 }
 
 

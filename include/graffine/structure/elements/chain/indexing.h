@@ -276,29 +276,6 @@ a2egEnd(const EgIdA a) const noexcept -> EndId
 }
 
 
-/*
-template<typename E>
-constexpr
-auto Chain<E>::
-end(const EgId indc,
-    const EndId egEnd) const noexcept -> EndId
-{
-    GRAFFINE_ASSERT(g.front().indc == indc || g.back().indc == indc,
-           "edge having component index ", indc, " is not an at chain end");
-
-    const auto a = g[0].indc == indc
-                 ? 0
-                 : length() - 1;
-    const auto isForward = g[a].points_forwards();
-
-    return a == 0
-        ? (egEnd == End::A ? (isForward ? End::A : End::B)
-                            : (isForward ? End::B : End::A))
-        : (isForward ? End::B : End::A);
-}
-*/
-
-
 template<typename E>
 constexpr
 auto Chain<E>::
@@ -358,16 +335,10 @@ ind2end(const EgIdG ind,                  // graph-wide edge index
     if (length() == 1) {
         if (ind == g[0].ind)
             return g[0].outer_endId(ege);
-
-        utils::raise<precondition_error>(
-            nullptr, std::source_location::current(),
-            ind, " is not an end edge ind of chain ", idw);
     }
-
-    if (ind == g.front().ind)
+    else if (ind == g.front().ind)
         return endA;
-
-    if (ind == g.back().ind)
+    else if (ind == g.back().ind)
         return endB;
 
     utils::raise<precondition_error>(

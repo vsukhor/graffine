@@ -192,15 +192,9 @@ struct From<Deg2, Deg2, G, PP>
     auto plan(const Vertex& v1,
               const Vertex& v2) const -> Plan<G>
     {
-        const auto b1 = locate::bulk_slot(gr, v1);
-        const auto b2 = locate::bulk_slot(gr, v2);
-        const auto isCB1 = !checks::is_valid(gr, b1);  // cycle boundary
-        const auto isCB2 = !checks::is_valid(gr, b2);
-
-        if (isCB1 && isCB2) return plan(b1.w, b2.w);
-        if (isCB1)          return plan(b2, b1.w);
-        if (isCB2)          return plan(b1, b2.w);
-        /* else */          return plan(b1, b2);
+        return with_slots(v1, v2, [this](const auto& x, const auto& y) {
+            return plan(x, y);
+        });
     }
 
     /** Outcome of the merger of the vertices at \p b1 and \p b2 (see plan.h).
@@ -259,6 +253,27 @@ struct From<Deg2, Deg2, G, PP>
 
 private:
 
+    /** Calls \p f with the locations of vertices \p v1 and \p v2.
+     * \details A vertex is located by its bulk slot, or by the chain id if
+     * it is the boundary vertex of an unconnected cycle. A bulk slot comes
+     * first in a mixed pair.
+     */
+    template<typename F>
+    auto with_slots(const Vertex& v1,
+                    const Vertex& v2,
+                    F&& f) const
+    {
+        const auto b1 = locate::bulk_slot(gr, v1);
+        const auto b2 = locate::bulk_slot(gr, v2);
+        const auto isCB1 = !checks::is_valid(gr, b1);  // cycle boundary
+        const auto isCB2 = !checks::is_valid(gr, b2);
+
+        if (isCB1 && isCB2) return f(b1.w, b2.w);
+        if (isCB1)          return f(b2, b1.w);
+        if (isCB2)          return f(b1, b2.w);
+        /* else */          return f(b1, b2);
+    }
+
     /** Checks the loops closed by merging two vertices of the same chain.
      * \param[in] m The chain.
      * \param[in] d Number of edges between the vertices along the chain.
@@ -280,21 +295,30 @@ private:
     Keeper<G> keep;
 
     constexpr auto deg4_vertex(
-        Chain& m, EndId em,
-        Chain& p, EndId ep,
-        Chain& q, EndId eq
-    ) noexcept -> Vertex*;
-
-    constexpr auto deg4_vertex(
         const EndSlot& s,
         const EndSlot& p,
         const EndSlot& q
     ) -> Vertex*;
 
+    /** Joins chain ends \p s1, \p s2, \p s3 and \p s4 to each other.
+     */
     constexpr void join_ends(const EndSlot& s1,
                              const EndSlot& s2,
                              const EndSlot& s3,
                              const EndSlot& s4);
+
+    /** Completes a merger producing degree 4 vertex \p v.
+     * \details Joins the four chain ends at \p v to each other, updates the
+     * graph records, and runs the end hook and the report.
+     * \param[in] v The resulting vertex.
+     * \param[in] s1, s2, s3, s4 Chain ends at \p v.
+     * \return Pointer to \p v.
+     */
+    auto finish(Vertex* v,
+                const EndSlot& s1,
+                const EndSlot& s2,
+                const EndSlot& s3,
+                const EndSlot& s4) -> Res;
 };
 
 
@@ -349,15 +373,9 @@ applicability(
     if (&v1 == &v2)
         return reject("merging a vertex with itself");
 
-    const auto b1 = locate::bulk_slot(gr, v1);
-    const auto b2 = locate::bulk_slot(gr, v2);
-    const auto isCB1 = !checks::is_valid(gr, b1);  // cycle boundary
-    const auto isCB2 = !checks::is_valid(gr, b2);
-
-    if (isCB1 && isCB2) return applicability(b1.w, b2.w);
-    if (isCB1)          return applicability(b2, b1.w);
-    if (isCB2)          return applicability(b1, b2.w);
-    /* else */          return applicability(b1, b2);
+    return with_slots(v1, v2, [this](const auto& x, const auto& y) {
+        return applicability(x, y);
+    });
 }
 
 
@@ -435,15 +453,9 @@ apply(
     const Vertex& v2
 ) -> Res
 {
-    const auto b1 = locate::bulk_slot(gr, v1);
-    const auto b2 = locate::bulk_slot(gr, v2);
-    const auto isCB1 = !checks::is_valid(gr, b1);  // cycle boundary
-    const auto isCB2 = !checks::is_valid(gr, b2);
-
-    if (isCB1 && isCB2) return apply(b1.w, b2.w);
-    if (isCB1)          return apply(b2, b1.w);
-    if (isCB2)          return apply(b1, b2.w);
-    /* else */          return apply(b1, b2);
+    return with_slots(v1, v2, [this](const auto& x, const auto& y) {
+        return apply(x, y);
+    });
 }
 
 
@@ -672,25 +684,8 @@ apply(
             }
         }
     }
-    join_ends(s1, s2, s3, s4);
 
-    ct[res0->get_c()].set_chis();
-
-    // Update internal records.
-
-    const auto [u1, u2, u3, u4] = std::array{s1.w, s2.w, s3.w, s4.w};
-
-    gr.update();
-
-    if constexpr (!std::is_void_v<PP>)
-        hooks::on_end(updateProperties->vertexMerger, *res0);
-
-    // Print out summary after the operation.
-
-    if constexpr (verboseF)
-        report.after(res0, u1, {u2, u3, u4});
-
-    return {res0};
+    return finish(res0, s1, s2, s3, s4);
 }
 
 
@@ -806,25 +801,7 @@ apply(
         }
     }
 
-    join_ends(s1, s2, s3, s4);
-
-    ct[res0->get_c()].set_chis();
-
-    // Update internal records:
-
-    const auto [u1, u2, u3, u4] = std::array{s1.w, s2.w, s3.w, s4.w};
-
-    gr.update();
-
-    if constexpr (!std::is_void_v<PP>)
-        hooks::on_end(updateProperties->vertexMerger, *res0);
-
-    // Print out summary after the operation.
-
-    if constexpr (verboseF)
-        report.after(res0, u1, {u2, u3, u4});
-
-    return {res0};
+    return finish(res0, s1, s2, s3, s4);
 }
 
 
@@ -899,6 +876,33 @@ apply(
 
 template<typename G,
          typename PP>
+auto From<Deg2, Deg2, G, PP>::
+finish(
+    Vertex* const v,
+    const EndSlot& s1,
+    const EndSlot& s2,
+    const EndSlot& s3,
+    const EndSlot& s4
+) -> Res
+{
+    join_ends(s1, s2, s3, s4);
+
+    ct[v->get_c()].set_chis();
+
+    gr.update();
+
+    if constexpr (!std::is_void_v<PP>)
+        hooks::on_end(updateProperties->vertexMerger, *v);
+
+    if constexpr (verboseF)
+        report.after(v, s1.w, {s2.w, s3.w, s4.w});
+
+    return {v};
+}
+
+
+template<typename G,
+         typename PP>
 constexpr
 void From<Deg2, Deg2, G, PP>::
 join_ends(const EndSlot& s1,
@@ -910,26 +914,8 @@ join_ends(const EndSlot& s1,
     gr.ngs_at(s2) = Neigs{s1, s3, s4};
     gr.ngs_at(s3) = Neigs{s2, s1, s4};
     gr.ngs_at(s4) = Neigs{s2, s3, s1};
-
 }
 
-template<typename G,
-         typename PP>
-constexpr
-auto From<Deg2, Deg2, G, PP>::
-deg4_vertex(
-    Chain& m, const EndId em,
-    Chain& p, const EndId ep,
-    Chain& q, const EndId eq
-) noexcept -> Vertex*
-{
-    auto v = m.vertex_at_end(em);  // will become junction
-
-    p.connect_end_vertex(ep, *v);
-    q.connect_end_vertex(eq, *v);
-
-    return v;
-}
 
 template<typename G,
          typename PP>

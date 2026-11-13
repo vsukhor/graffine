@@ -222,31 +222,6 @@ vertices() const noexcept -> std::vector<const Vertex*>
     return w;
 }
 
-
-#if 0  // Disabled, as their declarations in chain.h.
-template<typename E>
-constexpr
-void Chain<E>::
-connect(Vertex& v,
-        Edge& eg,
-        const EndId egend) const noexcept
-{
-    v.insert(std::move(EdgeSlot{eg.ind, egend}));
-    eg.connect_to_inner(egend, v);
-}
-
-template<typename E>
-constexpr
-void Chain<E>::
-disconnect(Vertex& v,
-           Edge& eg,
-           const EndId egend) const noexcept
-{
-    v.erase_edge_descriptor(EdgeSlot{eg.ind, egend});
-    eg.disconnect_end_inner(egend);
-}
-#endif
-
 }  // namespace graffine::structure::detail
 
 #endif  // GRAFFINE_STRUCTURE_ELEMENTS_CHAIN_VERTICES_H

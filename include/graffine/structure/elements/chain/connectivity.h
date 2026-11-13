@@ -166,20 +166,6 @@ constexpr
 bool Chain<E>::
 is_unconnected_cycle() const noexcept
 {
-//    const auto vA = vertex_at_end(endA);
-//    const auto vB = vertex_at_end(endB);
-//    const auto A = vA->deg() == 2 && vA == vB;
-
-//    const auto B = ngs[endA].num() == 1 &&
-//           ngs[endB].num() == 1 &&
-//           ngs[endA][0] ==
-//           ngs[endB][0].opp();
-
-//    GRAFFINE_ASSERT(A == B, " B ", B, " vA->deg() ", vA->deg(),  " Addr vA ", vA, " addr vB ", vB);
-//    const auto vA = vertex_at_end(endA);
-//    const auto vB = vertex_at_end(endB);
-
-//    return vA->deg() == 2 && vA == vB;
     // The ends must be joined to each other only, not to the opposite ends
     // of another chain: that is a cycle of two chains.
     return ngs[endA].num() == 1 &&

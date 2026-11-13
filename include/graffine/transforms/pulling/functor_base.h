@@ -404,7 +404,6 @@ pull_leaf_vertex(Path& path)
         jot(colorcodes::GREEN, "---Pulling free end over path: ",
             colorcodes::RESET);
         path.template print_short<true>("");
-//        path.template print_detailed("");
     }
 
     bool is_dissolved {};
@@ -558,7 +557,6 @@ shift_edges_to_target_chain(const Path& path)
                    "leadingInd = ", leadingInd, " and indN = ", indN,
                    " are not ends of connected chains");
 
-//            gr.ct[path.cmp->ind].shift_chain_junction(f, t);
             auto& cmp = gr.compt(path.cmp->ind);
             cmp.jShifter(cmp, f, t);
             gr.update_edge_descriptors();

@@ -41,7 +41,6 @@ limitations under the License.
 #include "graffine/structure/analyzers/adjacency.h"
 #include "graffine/structure/modifiers/junction_shifter.h"
 #include "graffine/structure/analyzers/connectivity.h"
-// #include "graffine/structure/elements/facet.h"
 #include "graffine/structure/descriptors/edge_in_component.h"
 #include "graffine/structure/descriptors/edge_in_vertex.h"
 #include "graffine/structure/descriptors/end.h"
@@ -54,6 +53,7 @@ limitations under the License.
 #include <ranges>
 #include <set>
 #include <string>
+#include <utility>  // as_const
 #include <vector>
 
 namespace graffine::structure {
@@ -193,7 +193,6 @@ public: // Functions
 
     void clear();
 
-    //    constexpr void detect_facets() const noexcept;
     /** Finds the chain triangles of the component and stores them in \a trs.
      * \details A chain triangle is formed by three distinct chains, none a
      * cycle, joined end to end into a loop through three distinct junction
@@ -645,6 +644,15 @@ public: // Functions
     void print_ww() const;
 
     ///@}  // Printing.
+
+private:
+
+    /** Splices a new edge \p p next to edge \p nb at end \p e of \p nb.
+     * \details The vertex at end \p e of \p nb moves to the same end of \p p,
+     * and a new bulk vertex joins end \p e of \p nb to the opposite end
+     * of \p p.
+     */
+    void splice_edge(Edge& nb, Edge& p, End::Id e);
 };
 
 // IMPLEMENTATION ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -775,15 +783,6 @@ num_vertices() const noexcept -> std::size_t
     return vv.num();
 }
 
-/*
-template<typename Ch>
-constexpr
-auto Component<Ch>::
-num_facets() const noexcept -> FId
-{
-    return static_cast<FId>(facets.size());
-}
-*/
 
 template <typename Ch>
 constexpr bool Component<Ch>::
@@ -1079,13 +1078,7 @@ template <typename Ch>
 constexpr auto Component<Ch>::
 edge(const EgIdC indc) noexcept -> Edge&
 {
-    GRAFFINE_ASSERT(indc < num_edges(),
-           "Incorrect indc ", indc,
-           " for component ", ind, " having ", num_edges(), " edges");
-
-    const auto& h = egl[indc];
-
-    return cn[h.w].g[h.a];
+    return const_cast<Edge&>(std::as_const(*this).edge(indc));
 }
 
 template <typename Ch>

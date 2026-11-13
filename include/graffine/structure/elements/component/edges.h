@@ -232,20 +232,7 @@ insert_edge_inside_chain(
         g[i].indw = i;
     set_egl();
 
-    auto& egA = g[a - 1];
-
-    // 'eg' will be connected at its end B to the vertex to which egA is
-    // originally connected at its end B.
-    //  A new BULK vertex will be created to join end B egA to end A of 'eg'.
-
-    auto gvB = egA.vertex_at_outer(End::B);
-    GRAFFINE_ASSERT(gvB, "end B of ", egA.indw, " is not connected.");
-    egA.disconnect_end_outer(End::B);
-    p.connect_to_outer(End::B, *gvB);
-
-    auto& v = vv.create_vertex(ind);
-    egA.connect_to_outer(End::B, v);
-    p.connect_to_outer(End::A, v);
+    splice_edge(g[a - 1], p, End::B);
 
     return p;
 }
@@ -334,20 +321,7 @@ append_edge_to_chain(Edge&& eg,
     m.g.push_back(std::move(eg));
     auto& p = m.g.back();
 
-    auto& egA = m.g[p.indw - 1]; // edge preceding 'p' in chain
-
-    // 'eg' will be connected at its end B to the vertex to which egA is
-    // originally connected at its end B.
-    // A new BULK vertex will be created to join end B egA to end A of 'eg'.
-
-    auto gvB = egA.vertex_at_outer(End::B);
-    GRAFFINE_ASSERT(gvB, "end B of ", egA.indw, " is not connected.");
-    egA.disconnect_end_outer(End::B);
-    p.connect_to_outer(End::B, *gvB);
-
-    auto& v = vv.create_vertex(ind);
-    egA.connect_to_outer(End::B, v);
-    p.connect_to_outer(End::A, v);
+    splice_edge(m.g[p.indw - 1], p, End::B);  // after the preceding edge
 
     return p;
 }
@@ -382,22 +356,27 @@ prepend_edge_to_chain(Edge&& eg,
         m.g[i].indw = i;
     set_egl();
 
-    auto& egB = m.g[1]; // edge following 'p' in chain
-
-    // 'eg' will be connected at its end A to the vertex to which egA is
-    // originally connected at its end A.
-    // A new BULK vertex will be created to join end A of egB to end B of 'eg'.
-
-    auto gvA = egB.vertex_at_outer(End::A);
-    GRAFFINE_ASSERT(gvA, "end A of ", egB.indw, " is not connected.");
-    egB.disconnect_end_outer(End::A);
-    p.connect_to_outer(End::A, *gvA);
-
-    auto& v = vv.create_vertex(ind);
-    egB.connect_to_outer(End::A, v);
-    p.connect_to_outer(End::B, v);
+    splice_edge(m.g[1], p, End::A);  // before the following edge
 
     return p;
+}
+
+
+template <typename Ch>
+void Component<Ch>::
+splice_edge(
+    Edge& nb,
+    Edge& p,
+    const End::Id e)
+{
+    auto gv = nb.vertex_at_outer(e);
+    GRAFFINE_ASSERT(gv, "end ", e, " of ", nb.indw, " is not connected.");
+    nb.disconnect_end_outer(e);
+    p.connect_to_outer(e, *gv);
+
+    auto& v = vv.create_vertex(ind);
+    nb.connect_to_outer(e, v);
+    p.connect_to_outer(End::opp(e), v);
 }
 template <typename Ch>
 constexpr void Component<Ch>::

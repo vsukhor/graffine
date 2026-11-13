@@ -185,20 +185,7 @@ template <typename Ch>
 void Component<Ch>::
 append(Component&& other)
 {
-    EgIdC indc{num_edges()};
-    ChIdC idc{num_chains()};
-
-    GRAFFINE_ASSERT(other.ind != ind, "Appending identical component");
-
-    for (const auto w : other.ww)
-        set_chain(cn[w], idc++, indc);
-
-    vv.append(other);
-
-    std::move(other.egl.begin(), other.egl.end(), std::back_inserter(egl));
-    std::move(other.ww.begin(), other.ww.end(), std::back_inserter(ww));
-
-    chis.append(std::move(other.chis));
+    append(other);
 }
 
 template <typename Ch>

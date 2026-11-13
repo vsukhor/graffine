@@ -357,16 +357,6 @@ restore_consecutive_vids(
         if (std::find(vhs.begin(), vhs.end(), i) == vhs.end())
             availableIds.insert(i);
 
-#if 0
-    jot("Restoring consecutive indexing.");
-    jot("vertex number: ", vhs.size());
-    jot("Initial values:");
-    print_vector(availableIds, "avabl");
-    print_vector(vhs, "vhs");
-    print_vector(vIdA, "vidA");
-    print_vector(vIdB, "vidB");
-#endif
-
     auto replace = [](const auto f, const auto t, auto& vec)
     {
         do {
@@ -390,13 +380,6 @@ restore_consecutive_vids(
         replace(idOld, idNew, vIdA);
         replace(idOld, idNew, vIdB);
     }
-
-#if 0
-    jot("Remapped values:");
-    print_vector(vhs, "vhs");
-    print_vector(vIdA, "vidA");
-    print_vector(vIdB, "vidB");
-#endif
 }
 
 

@@ -193,6 +193,21 @@ adjacency_list_edges(F(*f)(const Edge&)) const noexcept -> vec2<F>
     return x;
 }
 
+
+template<typename CC>
+auto Graph<CC>::
+adjacency_list_chains() const noexcept -> vec2<ChIdG>
+{
+    vec2<ChIdG> x(num_chains());
+
+    for (ChIdG w {}; w < num_chains(); ++w)
+        for (const auto e : End::Ids)
+            for (const auto& s : cn[w].ngs[e]())
+                x[w()].push_back(s.w);
+
+    return x;
+}
+
 }  // namespace graffine::structure::detail
 
 #endif  // GRAFFINE_STRUCTURE_ELEMENTS_GRAPH_DESCRIPTORS_H

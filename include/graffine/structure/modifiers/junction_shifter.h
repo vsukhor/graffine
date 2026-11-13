@@ -54,10 +54,6 @@ struct JunctionShifter
     using End = descriptors::End;
     using ED = typename Vertex::EgDescr;
 
-//    explicit constexpr JunctionShifter(Host& host)
-//        : host {host}
-//    {}
-
     /**  Shift an edge from f.e end of f.w to t.e end of t.w
      */
     void operator()(Host& host,
@@ -86,8 +82,6 @@ operator()(Host& host,
            const EndSlot& f,
            const EndSlot& t)
 {
-// jot("Shifting over junction from ", f.str_short(), " to ", t.str_short());
-
     auto& mf = host.chain(f.w);
     auto& mt = host.chain(t.w);
 
@@ -96,78 +90,44 @@ operator()(Host& host,
     GRAFFINE_ASSERT(mf.ngs[f.e].contains(t) && mt.ngs[t.e].contains(f),
            "Slots {", f.str_short(), "} {", t.str_short(), "} are not incident");
 
-    if (f.e == End::B) {
+    auto& egf = mf.end_edge(f.e);
+    const auto sf = edge_descriptor(egf, f.e);
 
-        auto& egf = mf.g.back();
-        const auto sf = edge_descriptor(egf, f.e);
+    auto v = egf.vertex_at_outer(f.e);
+    auto u = egf.vertex_at_outer(End::opp(f.e));
 
-        auto v = egf.vertex_at_outer(f.e);
-        auto u = egf.vertex_at_outer(End::opp(f.e));
+    GRAFFINE_ASSERT(v, "Slot f ", f.str_short(), " is not connected.");
+    GRAFFINE_ASSERT_CALLING(v->is_junction(), v->print("v"),
+                   "Shifting a vertex outside junction");
 
-        GRAFFINE_ASSERT(v, "Slot f ", f.str_short(), " is not connected.");
-        GRAFFINE_ASSERT_CALLING(v->is_junction(), v->print("v"),
-                       "Shifting a vertex outside junction");
+    // reassign vertex connections
 
-        // reassign vertex connections
-        auto& egt = mt.end_edge(t.e);
-        const auto st = edge_descriptor(egt, t.e);
+    auto& egt = mt.end_edge(t.e);
+    const auto st = edge_descriptor(egt, t.e);
 
-        GRAFFINE_ASSERT_CALLING(
-            v->is_connected_to(st),
-            v->print("v_at_slot_f"),
-            "Vertex at slot f is not connected to slot t", t.str_short()
-        );
+    GRAFFINE_ASSERT_CALLING(
+        v->is_connected_to(st),
+        v->print("v_at_slot_f"),
+        "Vertex at slot f is not connected to slot t", t.str_short()
+    );
 
-        shift_egS(v, u, std::array<ED, 2>{{sf, st}}, host);
+    shift_egS(v, u, std::array<ED, 2>{{sf, st}}, host);
 
-        // reassign edge hosting chains
+    // reassign edge hosting chains: the edge keeps its direction along the
+    // path f -> t unless it leaves and enters at like ends
 
-        if (t.e == End::A)
-            mt.g.insert(mt.g.begin(), std::move(egf));
-        else {
-            egf.template reverse<false>();
-            mt.g.push_back(std::move(egf));
-        }
+    if (f.e == t.e)
+        egf.template reverse<false>();
 
-        mf.g.pop_back();
-    }
-    else {  // f.e == End::A
+    if (t.e == End::A)
+        mt.g.insert(mt.g.begin(), std::move(egf));
+    else
+        mt.g.push_back(std::move(egf));
 
-        auto& egf = mf.g.front();
-        const auto sf = edge_descriptor(egf, f.e);
-
-        auto v = egf.vertex_at_outer(f.e);
-        auto u = egf.vertex_at_outer(End::opp(f.e));
-
-        GRAFFINE_ASSERT(v, "Slot f ", f.str_short(), " is not connected.");
-        GRAFFINE_ASSERT_CALLING(v->is_junction(), v->print("v"),
-                       "Shifting a vertex outside junction");
-
-        // reassign vertex connections
-
-        auto& egt = mt.end_edge(t.e);
-        const auto st = edge_descriptor(egt, t.e);
-
-        GRAFFINE_ASSERT_CALLING(
-            v->is_connected_to(st),
-            v->print("v_at_slot_f"),
-            "Vertex at slot f is not connected to slot t", t.str_short()
-        );
-
-        shift_egS(v, u, std::array<ED, 2>{{sf, st}}, host);
-
-        // reassign edge hosting chains
-
-        if (t.e == End::A) {
-            egf.template reverse<false>();
-            mt.g.insert(mt.g.begin(), std::move(egf));
-        }
-        else
-            mt.g.push_back(std::move(egf));
-
-
+    if (f.e == End::A)
         mf.g.erase(mf.g.begin());
-    }
+    else
+        mf.g.pop_back();
 
     mf.set_g_w();
     mt.set_g_w();

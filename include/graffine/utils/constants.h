@@ -57,10 +57,8 @@ constexpr auto STR(T x)
 {
     if constexpr (std::is_arithmetic_v<T>)
         return std::to_string(x);
-    else  //if constexpr (std::is_same_v<T, char*>)
+    else
         return std::string(x);
-//    else
-//        static_assert(false, "Unsupported type");
 }
 
 using ulong = unsigned long;

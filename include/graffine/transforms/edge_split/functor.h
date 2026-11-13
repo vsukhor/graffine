@@ -81,8 +81,6 @@ template<typename G,
 struct Functor
     : public Applicable<Functor<G, PP>>
 {
-//    static_assert(std::is_base_of_v<structure::GraphBase, G>);
-
     using Trait = edge_split::Trait<G>;
     using Graph = Trait::Graph;
     using Chain = Graph::Chain;

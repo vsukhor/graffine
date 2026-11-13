@@ -22,14 +22,11 @@ limitations under the License.
 #define GRAFFINE_TESTS_VERTEX_MERGER_COMMON_H
 
 #include "common.h"
-//#include "graffine/properties/processors.h"
 #include "graffine/transforms/vertex_merger/core.h"
 #include "graffine/transforms/vertex_merger/from_11.h"
 #include "graffine/transforms/vertex_merger/from_12.h"
 #include "graffine/transforms/vertex_merger/from_13.h"
 #include "graffine/transforms/vertex_merger/from_22.h"
-//#include "graffine/transforms/vertex_merger/from_1N.h"
-//#include "graffine/transforms/vertex_merger/from_2N.h"
 #include "graffine/transforms/vertex_merger/functor.h"
 
 #include <algorithm>

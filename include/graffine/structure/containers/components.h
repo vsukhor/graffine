@@ -59,11 +59,7 @@ struct Components
     /** Actual number of chains in the container.
      */
     constexpr auto num() const noexcept -> size_type;
-//    constexpr auto num_edges() const noexcept -> std::size_t;
     constexpr auto ind_last() const noexcept -> size_type;
-
-//    constexpr auto edge(const EdgeDescr& egd) const noexcept -> const Edge&;
-//    constexpr auto edge(const EdgeDescr& egd) noexcept -> Edge&;
 
     constexpr auto operator[](const CmpId w) -> value_type& { return m_data[w()]; }
     constexpr auto operator[](const CmpId w) const -> const value_type& { return m_data[w()]; }

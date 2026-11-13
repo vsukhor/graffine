@@ -30,31 +30,13 @@ limitations under the License.
 #ifndef GRAFFINE_STRUCTURE_CONTAINERS_TRIANGLES_H
 #define GRAFFINE_STRUCTURE_CONTAINERS_TRIANGLES_H
 
-#include "graffine/definitions.h"
+#include "graffine/structure/elements/triangle.h"
 
-#include <array>
 #include <cstddef>
 #include <vector>
 
 
 namespace graffine::structure {
-
-
-/** A chain triangle: three chains joined end to end into a loop.
- * \details The chains meet pairwise at three distinct junction vertices.
- */
-struct Triangle
-{
-    static constexpr std::size_t num {3};
-
-    using ChIds = std::array<ChIdG, num>;
-    using VIds = std::array<VIdH, num>;
-
-    ChIds ww;  ///< Graph-wide ids of the chains, in ascending order.
-    VIds vv;   ///< Ids of the junction vertices, in ascending order.
-
-    bool operator==(const Triangle&) const = default;
-};
 
 
 /** Collection of chain triangles.

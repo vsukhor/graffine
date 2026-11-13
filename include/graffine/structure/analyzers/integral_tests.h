@@ -369,7 +369,6 @@ template<typename G,
 void IntegralTests<G, beLoud>::
 consistency(const itT it) const
 {
-//    print_chains( "ChC" );
     for (ChIdG i=0; i<gr.num_chains(); ++i) {
         for (const auto j : End::Ids) {
             for (const auto& s : cn[i].ngs[j]()) {

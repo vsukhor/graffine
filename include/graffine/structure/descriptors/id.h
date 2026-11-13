@@ -76,7 +76,7 @@ enum class ElementType {
     EDGE,
     CHAIN,
     COMPONENT,
-    FACET,
+    TRIANGLE,
     UNDEF
 };
 
@@ -222,7 +222,7 @@ using VIdG = Id<ElementType::VERTEX, IdScope::GRAPH>;
 using VIdC = Id<ElementType::VERTEX, IdScope::COMPONENT>; ///< Vertex ids: component-wide.
 
 using CmpId = Id<ElementType::COMPONENT, IdScope::GRAPH>;  ///< Component ids.
-using FId   = Id<ElementType::FACET, IdScope::GRAPH>;      ///< Facet ids.
+using TrId  = Id<ElementType::TRIANGLE, IdScope::GRAPH>;   ///< Triangle ids.
 
 static_assert(std::is_trivially_copyable_v<EgIdG> &&
               std::is_nothrow_move_constructible_v<EgIdG>,

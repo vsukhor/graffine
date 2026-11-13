@@ -180,12 +180,6 @@ template<Degree D,
     requires vertex_merger::Processor<PP, G>
 struct From1 {};
 
-template<Degree D,
-         typename G,
-         typename PP = void>
-    requires vertex_merger::Processor<PP, G>
-struct FromN {};
-
 inline constexpr auto UnconnectedCycleEnd = structure::descriptors::End::A;
 
 

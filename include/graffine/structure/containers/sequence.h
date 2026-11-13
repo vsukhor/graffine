@@ -95,8 +95,6 @@ struct Sequence
                           const value_type& value) -> iterator;
     constexpr auto insert(const_iterator pos,
                           value_type&& value) -> iterator;
-//    constexpr auto insert(const_iterator pos,
-//                          Type&& value) -> iterator;
     template<class InputIt>
     constexpr auto insert(const_iterator pos,
                           InputIt first,

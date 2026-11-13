@@ -119,7 +119,6 @@ public:  // Functions
     auto find(VIdH id)       noexcept ->       Vertex*;
     auto find(VIdH id) const noexcept -> const Vertex*;
 
-    //    auto check_types() const noexcept -> Vertex*;
     auto check_c(CmpId c) const noexcept -> Vertex*;
 
     /// \name Formatted printing
@@ -420,7 +419,6 @@ append(Container& other)
 {
     std::move(other.begin(), other.end(), std::back_inserter(vv));
     other.clear();
-//        vv.append_range(std::move(other));
 }
 
 template<typename V,
