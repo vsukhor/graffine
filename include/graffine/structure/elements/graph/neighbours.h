@@ -57,13 +57,13 @@ remove_slot_from_neigs(const EndSlot& s)
 
         auto& ngs = ngs_at(ne);
 
-        // Remove oldn from the neig list of its j-th neig
+        // Remove s from the neighbours of ne.
         const auto ngsOK = ngs.erase(s);
 
         GRAFFINE_ENSURE(ngsOK, "EndSlot {", s.w, " ", s.e, "} not found among",
                       "ngs of the slot {", ne.w, " ", ne.e, " connected to it");
 
-        // Remove the j-th neig from the oldn's list of neigs
+        // Remove ne from the neighbours of s.
         const auto neOK = sr.erase(ne);
 
         GRAFFINE_ENSURE(neOK, "EndSlot {", ne.w, " ", ne.e, "} not found among",
@@ -72,9 +72,8 @@ remove_slot_from_neigs(const EndSlot& s)
 }
 
 
-/** slots connected to 'nov' will be checked, and if there is 'old',
- * it will be replaced by 'nov'
- */
+// The slots connected to 'nov' are checked, and 'old' among their
+// neighbours is replaced by 'nov'.
 template<typename CC>
 void Graph<CC>::
 replace_slot_in_neigs(

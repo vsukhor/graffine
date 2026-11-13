@@ -22,8 +22,7 @@ limitations under the License.
 
 /**
  * \file graph_factory.h
- * \brief Implements assembling of graph structure from collection
- * of independent vertex and edge indexes.
+ * \brief Assembly of a graph from a flat collection of vertices and edges.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -40,7 +39,7 @@ limitations under the License.
 #include <source_location>
 #include <vector>
 
-/// Handlers of large-scale structural modification of the graph
+/// Large-scale structural modifications of the graph.
 namespace graffine::structure::modifiers {
 
 
@@ -68,6 +67,8 @@ struct GraphFactory
      * \param[in] globalVertices All vertices of the graph.
      * \param[in] globalEdges All edges, connected to the vertices.
      * \return The assembled graph.
+     * \throws invariant_error If the assembled components fail their
+     * internal checks.
      */
     template<bool beLoud = false>
     auto create(
@@ -293,8 +294,6 @@ create(
         if constexpr (beLoud)
             jot("Graph Factory: component structure is ready: ",
                 gr.num_components(), " components");
-
-        // Set vertex types.
 
         // Move vertices into components.
 

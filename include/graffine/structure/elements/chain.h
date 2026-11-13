@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file chain.h
- * \brief Contains Chain class template and its specialization.
+ * \brief The chain: a linear run of edges with no branches.
  * \details Only graphs containing vertices of max degree 4 are implemented.
  * A related implementation for max degree 3 is available at
  * https://github.com/vsukhor/mitoSim/blob/master/include/segment.h
@@ -51,6 +51,9 @@ limitations under the License.
 namespace graffine::structure {
 namespace detail {
 
+/** Generic chain template; see the specialization Chain<E> for the
+ * implemented chain.
+ */
 template<typename E,
          typename... Props>
 struct Chain
@@ -58,12 +61,14 @@ struct Chain
 
 
 /** Chain template for Edge classes having max vertex degree equal to 4.
- * \details Chain is a sequence of edges linked linearly (without branches).
- * Chain ends may form branching sites, if connected to other chains.
- * A chain not connected to other chains or a complete collection of chains
- * connected to each other form a graph component (aka 'component').
- * The class handles the tasks and properties specific to a single
- * chain and its relation to other graph components.
+ * \details A chain is a sequence of edges linked linearly, without
+ * branches: all its internal vertices have degree 2. Its ends may be
+ * free (degree 1), or joined to the ends of other chains at junctions
+ * (degree 3 or 4). A chain not connected to other chains, or a maximal
+ * set of chains connected to each other, forms a graph component.
+ * Chains make graffine efficient for graphs dominated by long unbranched
+ * runs: a position along a chain is a plain index, and most
+ * transformations touch only a few chains.
  *
  * Chain coordinates:
  * - the edges are stored in \a g, ordered from chain end A to chain end B:
@@ -95,26 +100,27 @@ struct Chain<E>
     using Neigs = containers::Neigs<EndSlot>;  ///< Slots connected to the chain ends.
     using Vertex = Edge::Vertex;
     using Self = Chain<Edge>;
-    using Neighbours = std::array<Neigs, End::num>;
+    using Neighbours = std::array<Neigs, End::num>;  ///< Neighbours at ends A and B.
 
     static constexpr auto Type = Elements::Chain;
     // A chain is a linear sequence of edges, so it has 2 ends.
-    static constexpr auto endA = End::A;
-    static constexpr auto endB = End::B;
-    static constexpr auto endUndef = End::undefined;
+    static constexpr auto endA = End::A;            ///< Tail end.
+    static constexpr auto endB = End::B;            ///< Head end.
+    static constexpr auto endUndef = End::undefined;  ///< Undefined end.
     /// Minimal number of edges of a cycle.
     static constexpr std::size_t minCycleLength {2};
     /// Minimal number of edges of a chain.
     static constexpr std::size_t minLength {1};
+    /// True iff the chain lives in a geometric space.
     static constexpr auto isSpatial = false;
 
-    Edges g;  ///< Edges forming this chain.
+    Edges g;  ///< Edges forming this chain, from end A to end B.
 
-    /// Slots connected to this chain at each end.
+    /// End slots of the other chains joined at each end.
     Neighbours ngs;
 
-    ChIdG idw {ChIdG::undefined};  ///< Identifier over the whole graph.
-    ChIdC idc {ChIdC::undefined};  ///< Identifier over the current component.
+    ChIdG idw {ChIdG::undefined};  ///< Position in the graph (ChIdG).
+    ChIdC idc {ChIdC::undefined};  ///< Position in the current component (ChIdC).
 
     /// Identifier of the current connected component the chain belongs to.
     CmpId c {CmpId::undefined};
@@ -144,20 +150,25 @@ struct Chain<E>
     constexpr auto operator=(Chain&& other) noexcept -> Chain& = default;
     ~Chain() = default;
 
+    /// Compares the edges, the neighbours and the ids.
     constexpr bool operator==(const Chain& other) const noexcept;
 
-    /** Reflects the chain edges.
+    /** Reverses the order of the edges, so that ends A and B swap.
+     * \details Each edge flips its orientation, keeping its vertices, and
+     * gets its new position. The neighbours \a ngs and the slots referring
+     * to this chain elsewhere are not updated: that is up to the caller.
      */
     void reverse_g();
 
-    /** Rotates the sequence of chain edges using std::rotate.
+    /** Rotates the edges to the left by \p n positions (std::rotate), and
+     * renumbers their positions.
+     * \details Meaningful for a cycle, whose ends then move to the vertex
+     * formerly at position \p n.
      */
     constexpr void rotate(const std::size_t n);
 
-    /** Set data related to the connected component hosting this chain, without
-     * setting the edges.
-     * \details Change connected graph component-related indexes of the
-     * chain, without setting them for the edges.
+    /** Sets the component-related ids of the chain, but not those of its
+     * edges.
      * \param[in] newc Index of the new connected component.
      * \param[in] newidc New index of this chain inside the component.
      */
@@ -169,14 +180,15 @@ struct Chain<E>
      * @{
      */
 
-    /** Counts vertices of a given degree.
+    /** Counts the vertices of this chain having a given degree.
      * \param[in] d Vertex degree.
-     * \return The number of vertices having degree D.
+     * \return The number of vertices having degree \p d.
      */
     constexpr auto num_vertices(Degree d) const noexcept -> std::size_t;
 
-    /** Collection of all vertices of this chain.
-     * Does not discriminate between internal and boundary vertices.
+    /** Vertices at both ends of every edge, in chain order.
+     * \details Two entries per edge: each internal vertex appears twice,
+     * and the entry of an unconnected end is nullptr.
      * \return Pointers to vertices forming this chain.
      */
     constexpr auto vertices() const noexcept -> std::vector<const Vertex*>;
@@ -204,7 +216,8 @@ struct Chain<E>
     constexpr auto vertex_at_end(EndId e) const noexcept -> const Vertex*;
 
     /**
-     * \return Internal vertex at edge position \p a
+     * \return Internal vertex at position \p a, between edges g[a-1] and
+     * g[a]; requires 0 < \p a < length().
      */
     constexpr auto vertex_at_bulk(EgIdA a) noexcept -> Vertex*;
     /**
@@ -226,19 +239,20 @@ struct Chain<E>
      */
     constexpr auto vertex_at_bulk(const Edge& eg1,
                                   const Edge& eg2) const noexcept -> const Vertex*;
-    /** Vertex at slot \p s . Depending on the slot type, returns either
-     * internal or boundary vertex.
-     * \tparam S Slot type
+    /** Vertex at slot \p s of this chain: a boundary vertex for an
+     * EndSlot, an internal one for a BulkSlot.
+     * \tparam S Slot type: EndSlot or BulkSlot.
      * \return Pointer to vertex at slot \p s
      */
     template<typename S>
     constexpr auto vertex_at_slot(const auto& s) const noexcept -> const Vertex*;
 
-    /** Reports degree of the boundary vertex at chain end \p e
+    /** Degree of the boundary vertex at chain end \p e, as given by the
+     * number of neighbours: ngs[e].num() + 1.
      */
     constexpr auto degree_at_end(EndId e) const noexcept -> Degree;
 
-    /** Reports max vertex degree among the vertices of this chain.
+    /** Maximal degree among the vertices of this chain.
      */
     constexpr auto max_degree() const noexcept -> Degree;
 
@@ -249,33 +263,35 @@ struct Chain<E>
      */
     bool has_edge(EgIdG ind) const noexcept;
 
-    /** Get the edge at the specified end.
+    /** The edge at chain end \p e: the tail for A, the head for B.
      * \param[in] e Index of the chain end.
      * \return Reference to the edge at the specified end.
      */
     constexpr auto end_edge(EndId e) const noexcept -> const Edge&;
+    /** \overload */
     constexpr auto end_edge(EndId e) noexcept -> Edge&;
 
-    /** Convert chain edge index and edge end in chain to internal edge end
-     * \param[in] a Edge index inside chain;
-     * \param[in] e Edge end in chain coordinates.
-     * \return Internal edge end.
+    /** Converts an outer end of edge g[\p a] to its inner end.
+     * \param[in] a Edge position inside the chain.
+     * \param[in] e Edge end in chain (outer) coordinates.
+     * \return Inner edge end.
      */
     constexpr auto edge_internal_end(
         EgIdA a,
         EndId e
     ) const noexcept -> EndId;
 
-    /** Get the edge internal end at the specified chain boundary.
+    /** Inner end, of the edge at chain end \p e, that lies at that end.
      * \param[in] e Chain end index.
-     * \return Edge internal end at the specified chain boundary.
+     * \return Inner edge end at the specified chain boundary.
      */
     constexpr auto edge_internal_end_at_end(EndId e) const noexcept -> EndId;
 
-    /** Get pointer to the edge connected at edge end \p egEnd to the edge at
-     * chain position \p a .
+    /** The edge of this chain joined to inner end \p egEnd of the edge at
+     * position \p a, or nullptr.
+     * \note \p egEnd must not lie at a chain end.
      * \param[in] a Intra-chain position of the edge.
-     * \param[in] egEnd Edge internal end.
+     * \param[in] egEnd Inner end of the edge.
      */
     constexpr auto connected_edge(
         EgIdA a,
@@ -298,31 +314,33 @@ struct Chain<E>
 
     ///@}  // Edge lookup.
 
-    /** Calculate chain end slot from edge position and edge internal end
+    /** Chain end slot at inner end \p internalEgEnd of the edge at
+     * position \p a, which must be the head or the tail.
      * \param[in] a Edge position within the chain.
-     * \param[in] internalEgEnd Edge end in edge internal representation.
-     * \return End slot of this chain if input is valid, otherwise Slot::undef;
+     * \param[in] internalEgEnd Inner edge end.
+     * \return End slot of this chain if the input is valid, otherwise an
+     * undefined slot.
      */
     constexpr auto end_slot(
         EgIdA a,
         EndId internalEgEnd
     ) const noexcept -> EndSlot;
 
-    /** Position of the edge neigh to egEnd \p ee of edge at \p a.
+    /** Position of the edge joined to inner end \p ee of the edge at
+     * position \p a.
      * \note Should only be applied to the chain internal vertices.
-     * \return Position in chain of the edge neigh to egEnd \p ee of edge at
-     * \p a if \p ee is at internal chain vertex; undefined otherwise.
+     * \return The position of that edge if \p ee is at an internal vertex
+     * of the chain; undefined otherwise.
      */
     constexpr auto neig_a_of_egEnd(
         EgIdA a,     ///< Edge position inside the chain.
         EndId ee     ///< Edge end.
     ) const noexcept -> EgIdA;
 
-    /** Edge end of an internal vertex.
-     * \details Finds edge end of the edge \p b to which the edge at
-     * \p a is connected via a vertex internal to the chain.
-     * \note Should only be applied to the chain internal vertices.
-     * Then, the searched edge end is unique.
+    /** Inner end of the edge at position \p b by which it is joined to
+     * the adjacent edge at position \p a.
+     * \note \p a and \p b must be consecutive positions, so that the
+     * edges share an internal vertex; then the end sought is unique.
      */
     constexpr auto internal_egEnd(
         EgIdA a,
@@ -333,34 +351,30 @@ struct Chain<E>
      */
     constexpr auto a2egEnd(EgIdA a) const noexcept -> EndId;
 
-    /** Convert chain end to position index of the boundary edge.
-     * \details Converts the chain end of the boundary edge to internal
-     * position in the chain.
+    /** Position of the edge at chain end \p e: 0 for A, length()-1 for B.
      * \param[in] e Chain end index.
-     * \return Internal position of the boundary edge at chain end \p e .
      */
     constexpr auto end2a(EndId e) const noexcept -> EgIdA;
 
-   /** Edge position to chain end conversion.
-    * \details Converts edge position within the chain to the end
-    * if the edge is the boundary edge.
-    * \return The chain end, or End::undefined for single-edge chains.
+   /** Chain end at which the edge at position \p a lies, which must be the
+    * head or the tail.
+    * \return The chain end, or End::undefined for single-edge chains,
+    * whose edge lies at both.
     * \param[in] a Edge position within the chain.
     */
     constexpr auto a2end(EgIdA a) const noexcept -> EndId;
 
-    /** Convert edge end to interior slot.
-     * \details Maps the edge end to the corresponding interior slot.
-     * \param[in] egE Edge end.
-     * \param[in] a Edge position in a chain.
-     * \return Corresponding interior slot.
-     * \note The edge end must be in the internal of the chain.
+    /** Slot of the internal vertex at inner end \p egE of the edge at
+     * position \p a.
+     * \param[in] egE Inner edge end.
+     * \param[in] a Edge position in the chain.
+     * \return Corresponding internal slot.
+     * \note The edge end must not lie at a chain end.
      */
     constexpr auto egEnd_to_bulkslot(EndId egE,
                                      EgIdA a) const noexcept -> BulkSlot;
 
-    /** Convert chain end to graph-wide edge index.
-     * \details Converts chain end to the boundary edge graph-wide index.
+    /** Graph-wide index of the edge at chain end \p e.
      * \param[in] e Chain end index.
      */
     constexpr auto end2ind(EndId e) const noexcept -> EgIdG;
@@ -401,43 +415,47 @@ struct Chain<E>
     constexpr auto indc2end(EgIdC indc,
                             EndId egEnd) const -> EndId;
 
-    /** Determines if the chain is connected at its end 'e' to chain 'n'.
-     * \param[in] e End index at the current chain.
-     * \param[in] n Chain index of the eventual neighbor.
+    /** Determines if the chain is joined at its end \p e to chain \p n.
+     * \param[in] e End of this chain.
+     * \param[in] n Id of the presumed neighbour chain.
      */
     bool has_such_neig(EndId e, ChIdG n) const noexcept;
 
-    /** Return index of the chain end opposite to the end \p e .
+    /** The chain end opposite to end \p e.
      * \param[in] e Chain end index.
      * \return Opposite end index.
      */
     static constexpr auto opp_end(EndId e) noexcept -> EndId;
 
-    /** Determines if end \p e has any connected chains.
-     * \return \a true iff the chain has neighbours at its  end \p e
+    /** Determines if end \p e is joined to any chain end.
+     * \return \a true iff the chain has neighbours at its end \p e.
      */
     constexpr bool is_connected_at(EndId e) const noexcept;
 
-    /** Determines if chain is connected to any chains at any of its ends.
+    /** Determines if the chain is joined to any chain end at either end.
      * \return \a true iff the chain is connected at any of its ends.
      */
     constexpr bool is_connected() const noexcept;
 
-    /** Index of the connected end for a chain connected at one end.
+    /** The connected end of a chain connected at exactly one end.
+     * \throws precondition_error If the chain is connected at both or
+     * neither end.
      */
     constexpr auto get_single_connected_end() const -> EndId;
 
-    /** Index of the unconnected end for a chain connected at one end.
+    /** The free end of a chain connected at exactly one end.
+     * \throws precondition_error If the chain is connected at both or
+     * neither end.
      */
     constexpr auto get_single_leaf_end() const -> EndId;
 
-    /** Index of the end connected via a 3-way junction.
-     * \note Is valid for chains having single such connection only.
+    /** The end lying at a degree 3 junction.
+     * \throws precondition_error If both or neither end lie at one.
      */
     constexpr auto get_single_3way_end() const -> EndId;
 
-    /** Index of the end connected via a 4-way junction.
-     * \note Is valid for chains having single such connection only.
+    /** The end lying at a degree 4 junction.
+     * \throws precondition_error If both or neither end lie at one.
      */
     constexpr auto get_single_4way_end() const -> EndId;
 
@@ -451,43 +469,33 @@ struct Chain<E>
      */
     constexpr auto the_only_leaf_end() const noexcept -> EndId;
 
-    /** Determines if at least one of the chain ends is not connected.
+    /** Determines if at least one of the chain ends is free.
      * \return \a true and the free end (End::A if both are free), or
      *         \a false and End::undefined.
      */
     constexpr auto has_a_leaf_end() const noexcept -> std::pair<bool, EndId>;
 
-    /** Checks if the chain has its both ends unconnected.
-     * \details This chain is unconnected iff it is
-     * not connected at its boundary vertices.
-     * \return \a true if the chain is unconnected at its boundary vertices,
-     *         \a false otherwise.
+    /** Checks if the chain is linear and unconnected, i.e. a component of
+     * its own with two free ends.
+     * \note The current implementation returns \a true as soon as \a either
+     * end is free.
      */
     constexpr bool is_unconnected_linear() const noexcept;
 
 
-    /** Checks if the chain is unconnected and cycled onto itself.
-     * \details A chain is unconnected and cycled onto itself if it is
-     * not connected to chains other than itself, while its ends are connected
-     * to each other.
-     * \return \a true if the chain is unconnected and cycled onto itself,
-     *         \a false otherwise.
+    /** Checks if the chain is an unconnected cycle: its two ends are
+     * joined to each other and to nothing else, so that the chain forms a
+     * component of its own.
      */
     constexpr bool is_unconnected_cycle() const noexcept;
 
-    /** Checks if the chain is connected and cycled onto itself.
-     * \details A chain is connected and cycled onto itself if it is
-     * connected to chains other than itself, while its ends are also connected
-     * to each other.
-     * \return \a true if the chain is connected and cycled onto itself,
-     *         \a false otherwise.
+    /** Checks if the chain is a connected cycle: its two ends meet at a
+     * junction, which also joins other chains.
      */
     constexpr bool is_connected_cycle() const noexcept;
 
-    /** Checks if the chain is cycled onto itself.
-     * \details A chain is cycled onto itself if its ends are connected
-     * to each other.
-     * \return \a true if the chain is cycled onto itself, \a false otherwise.
+    /** Checks if the chain is a cycle, i.e. both its ends are at the same
+     * vertex, whether or not other chains are joined there.
      */
     constexpr bool is_cycle() const noexcept;
 
@@ -525,16 +533,11 @@ struct Chain<E>
      */
     constexpr auto num_neigs(const EndId e) const noexcept -> std::size_t;
 
-    /** Reports the chain length measured in edges.
-     * \details The chain length is equal to the number of edges in the chain.
-     * \return Chain length measured in edges.
+    /** Chain length: the number of its edges.
      */
     constexpr auto length() const noexcept -> std::size_t;
 
-    /** Reports the total weight of the chain edges.
-     * \details The chain weight is equal to the sum of the weights of all edges
-     * in the chain.
-     * \return Chain weight measured in units of Edge::weight_t.
+    /** Total weight of the chain: the sum of the weights of its edges.
      */
     constexpr auto weight() const noexcept -> typename Edge::weight_t;
 
@@ -557,7 +560,9 @@ struct Chain<E>
      * the edge is both.
      * @{
      */
+    /// Graph-wide index of the head edge.
     constexpr auto headind() const noexcept -> EgIdG { return head().ind; }
+    /// Graph-wide index of the tail edge.
     constexpr auto tailind() const noexcept -> EgIdG { return tail().ind; }
 
     static constexpr bool is_tail(const EgIdA a) noexcept { return a == 0; }
@@ -575,22 +580,27 @@ struct Chain<E>
 
     ///@}  // Head and tail tests.
 
-    /** Find if the given edge is at the chain head.
+    /** Checks if inner end \p egEnd of edge \p ind lies at chain end B.
      * \param ind Edge index in graph scope.
      * \param egEnd Inner end of the edge at \p ind
      */
     constexpr bool egEnd_is_head(EgIdG ind,
                                  EndId egEnd) const noexcept;
 
-    /** Find if the given edge is at the chain tail.
+    /** Checks if inner end \p egEnd of edge \p ind lies at chain end A.
      * \param ind Edge index in graph scope.
      * \param egEnd Inner end of the edge at \p ind
      */
     constexpr bool egEnd_is_tail(EgIdG ind,
                                  EndId egEnd) const noexcept;
 
+    /// Sets the graph-wide id of the chain to \p w, and updates its edges.
     constexpr void set_w(ChIdG w) noexcept;
+    /// Sets the host chain of the edges to \p w and renumbers their
+    /// positions.
     constexpr void set_g_w(ChIdG w) noexcept;
+    /// Sets the host chain of the edges to this chain and renumbers their
+    /// positions.
     constexpr void set_g_w() noexcept;
 
     /**
@@ -598,8 +608,9 @@ struct Chain<E>
      * @{
      */
 
-    /** Prints neighbor data on both ends.
+    /** Prints the neighbours at both ends.
      * \param[in] tag Human-readable description common to all records.
+     * \return Length of the printed tag, for aligning further output.
      */
     template<bool endLine,
              typename... T>
@@ -753,8 +764,10 @@ set_w(const ChIdG w) noexcept
 
 template<typename E> using Chain = detail::Chain<E>;
 
+/// Empty chain with an undefined id, marking the absence of a chain.
 template<typename E> constexpr Chain<E> nullChain {ChIdG::undefined};
 
+/// Checks that \p ch differs from \ref nullChain.
 template<typename T>
 constexpr bool is_defined(const Chain<T>& ch) noexcept
 {

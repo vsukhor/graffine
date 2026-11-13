@@ -22,8 +22,7 @@ limitations under the License.
 
 /**
  * \file chains.h
- * \brief Contains implementations for managing collections of chains in the graph.
- * \details Adds chain-specific functionality to the Sequence container class.
+ * \brief Container of the chains of a graph.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -42,10 +41,10 @@ limitations under the License.
 
 namespace graffine::structure::containers {
 
-/** Implements a manager for collections of chains in the graph.
- * \details Derives from Sequence container adding to it chain-specific
- * functionality.
- * \tparam Ch Container element type: A chain of edges.
+/** Container of the chains of a graph.
+ * \details Extends Sequence with indexing by graph-wide chain id (ChIdG)
+ * and with access to the edges held by the chains.
+ * \tparam Ch Container element type: a chain of edges.
  */
 template<typename Ch>
 struct Chains
@@ -60,23 +59,43 @@ struct Chains
     using Edge = Ch::Edge;
     using EdgeDescr = descriptors::EdgeInGraph;
 
-    /** Actual number of chains in the container.
+    /** Number of chains in the container.
      */
     constexpr auto num() const noexcept -> size_type;
+    /** Total number of edges in all the chains.
+     */
     constexpr auto num_edges() const noexcept -> std::size_t;
+    /** Index of the last chain, or \ref utils::undefined if the container
+     * is empty.
+     */
     constexpr auto ind_last() const noexcept -> size_type;
 
+    /** Changes the graph-wide index of the edge indexed \p from to \p to.
+     * \details Searches the chains for the edge, so the cost is linear in
+     * the number of edges. Does nothing if no edge is indexed \p from.
+     */
     constexpr void reind_edge(EgIdG from, EgIdG to) noexcept;
 
+    /// The edge described by \p egd.
     constexpr auto edge(const EdgeDescr& egd) const noexcept -> const Edge&;
+    /// The edge described by \p egd.
     constexpr auto edge(const EdgeDescr& egd) noexcept -> Edge&;
 
+    /// Copy of the neighbours of chain end \p s, i.e. the chain ends
+    /// meeting it at its vertex.
     constexpr auto ngs_of(const EndSlot& s) const noexcept;
+    /// The chain with id \p w.
     constexpr auto operator[](const ChId w) -> value_type& { return m_data[w()]; }
+    /// The chain with id \p w.
     constexpr auto operator[](const ChId w) const -> const value_type& { return m_data[w()]; }
 
+    /** Ids of all the chains: 0, 1, ..., num()-1.
+     */
     constexpr auto chids() const noexcept -> const ChIds;
 
+    /** Prints all the chains.
+     * \param tag Label printed with each chain.
+     */
     void print(std::string_view tag) const;
 
     /** Checks that \p cond is satisfied.

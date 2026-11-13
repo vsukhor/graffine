@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file generic.h
- * \brief Specification of the template for paths over graph edges.
+ * \brief Shortest paths over the edges of a component.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -47,6 +47,14 @@ limitations under the License.
 namespace graffine::structure::paths::over_edges {
 
 
+/** Shortest paths over the edges of a component.
+ * \details A path is the sequence of edges it passes, consecutive edges
+ * sharing a vertex, and its length the sum of the weights (Edge::weight)
+ * of its edges other than the first. compute_from_source() computes the
+ * distances from one edge to all others, on which find_shortest_path()
+ * relies.
+ * \tparam Component Type of the graph component.
+ */
 template<typename Component>
 struct Generic
 {
@@ -56,8 +64,9 @@ struct Generic
     using EndSlot = Chain::EndSlot;
     using End = Edge::End;  ///< Type alias for edge ends.
 
-    /// Type alias for path over consecutively connected vertices.
+    /// Path as a sequence of component-wide edge indexes.
     using PathC = std::deque<EgIdC>;
+    /// Path as a sequence of graph-wide edge indexes.
     using PathW = std::deque<EgIdG>;
 
     using Dist = Distance<Component>;     ///< Distance over edges
@@ -65,6 +74,7 @@ struct Generic
 
     const Component* cmp {};  ///< Pointer to the graph component.
 
+    /// Constructor of the paths over the edges of component \p cmp.
     explicit constexpr Generic(const Component* const cmp) noexcept;
 
     Generic() = default;
@@ -74,22 +84,32 @@ struct Generic
     constexpr auto operator=(const Generic& all) -> Generic&;
     constexpr auto operator=(Generic&& all) -> Generic&;
 
-    /** Computes paths connecting a vertex in the graph
-     * \details Computes paths starting at vertex \p source to other vertices
-     * in the connected component of the graph;
-     * \note utilizes the component adjacency list of chains.
-     * \note Implements Dijkstra's algorithm
-     * \see https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm.
-     * \param[in] source Path element from which the paths are computed.
+    /** Computes the shortest paths from edge \p source to every edge of
+     * the component.
+     * \details Records, for each edge, its distance from \p source and the
+     * preceding edge on its shortest path.
+     * \note Uses the edge adjacency list of the component, rebuilt at each
+     * call.
+     * \note Follows Dijkstra's algorithm
+     * (https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm), except that
+     * the queue is ordered by edge index rather than by distance (see
+     * Distance::operator<): an edge is queued again when its distance
+     * improves. The distances found are the shortest ones, but without
+     * Dijkstra's bound on the number of visits.
+     * \param[in] source Component-wide index of the edge from which the
+     * paths are computed.
      */
     void compute_from_source(EgIdC source);
 
-    /** The shortest path between two graph vertex slots.
+    /** The shortest path between two edges.
      * \details Calculates the shortest path from edge with a component-wide
      * index \p s1 to edge with index \p s2.
+     * \tparam computeFromSource Whether to compute the distances from
+     * \p s1 first; if not, those computed beforehand from \p s1 are used.
      * \param[in] s1 indc of the first edge of the path.
      * \param[in] s2 indc of the last edge of the path.
-     * \return The shortest path between slots \p s1 and \p s2 .
+     * \return The shortest path from \p s1 to \p s2, or an empty path if
+     * they are not connected.
      */
     template<bool computeFromSource>
     auto find_shortest_path(
@@ -97,8 +117,8 @@ struct Generic
         EgIdC s2
     ) -> PathC;
 
-    /** Converts path using component-wide EgId to graph-wide EgId.
-     * \param[in] pg Indexable sequence of graph-wide edge indexes.
+    /** Converts a path of graph-wide edge indexes to component-wide ones.
+     * \param[in] pg Path as graph-wide edge indexes.
      */
     auto from_global_ind(const PathW& pg) const -> PathC;
 
@@ -107,14 +127,14 @@ struct Generic
      */
     auto path_to_global_ind(const PathC& pc) -> const PathW;
 
-    /** Converts distances using component-wide EgId to graph-wide EgId.
-     * \returns Distances as a sequence of graph-wide edge distances.
+    /** Converts the distances to refer to graph-wide edge indexes.
+     * \note The result is still indexed by component-wide edge index.
      */
     auto distances_to_global_ind() -> const Distances;
 
-    /** Extracts chain indexes of edges in the path \p path.
+    /** Chains traversed by path \p path.
      * \param[in] path Path over edges as component-wide Ids.
-     * \return Sequence of graph-wide chain indexes.
+     * \return Graph-wide ids of the chains, each once, in ascending order.
      */
     auto chains(const PathC& path) const noexcept -> std::vector<ChIdG>;
 
@@ -123,21 +143,28 @@ struct Generic
      * @{
      */
 
+    /// Prints the distances, labelled by \p args.
     template<typename... Args>
     void print_distances(Args... args) const noexcept;
 
+    /// Prints a summary of \p path, labelled by \p args, then its edges.
+    /// \tparam isGlobal Whether \p path holds graph-wide edge indexes.
     template<bool isGlobal,
              typename... Args>
     void print_path(const auto& path, Args... args) const noexcept;
 
+    /// Prints the edge indexes of \p path, coloured by the edge position
+    /// in its chain, and optionally the chain ends they lie at.
     template<bool isGlobal,
              bool withChains>
     void print_inds(const auto& path) const noexcept;
 
+    /// Prints the edges of \p path in detail, each preceded by \p args.
     template<bool isGlobal,
              typename... Args>
     void print_edges(const auto& path, Args... args) const noexcept;
 
+    /// Prints edge \p indc in detail, as the \p i-th of a path.
     template<typename... Args>
     void print_edge(EgIdG i, EgIdC indc, Args... args) const noexcept;
 
@@ -145,29 +172,35 @@ struct Generic
 
 protected:
 
-    /** These are just for printing: text colorcodes.
+    /** Colour of edge \p eg in printouts: green for a chain tail, red for a
+     * head, yellow for both, white for an internal edge.
      */
     auto edge_color(const Chain& m,
                     const Edge& eg) const noexcept -> const char*;
 
 private:
 
-    using Q = std::set<Dist>;
-    Q q;
+    using Q = std::set<Dist>;  ///< Type of the search queue.
+    Q q;                       ///< Search queue.
 
-    Distances distances;
+    Distances distances;  ///< Distance records, indexed by edge.
 
     decltype(Component::adj.lg) ajlg;  ///< Adjacency list.
 
+    /// Builds the edge adjacency list, without duplicate entries.
     void set_agl();
+    /// Prepares a new search: rebuilds the adjacency list, and resets the
+    /// distances and the queue.
     void reset();
 
-    /** Computes element indexes of the \a min_distance and \a previous.
+    /** Position in \a distances of the record of edge \p s.
      */
     constexpr auto element_ind(EgIdC s) const noexcept -> std::size_t;
 
+    /// Edge whose record is at position \p i of \a distances.
     constexpr auto element(std::size_t i) const noexcept -> EgIdC;
 
+    /// Relaxes edge \p v, adjacent to the edge \p ud popped from the queue.
     void update(
         const Q::value_type& ud,
         EgIdC v
@@ -439,8 +472,6 @@ print_path(const auto& path,
     print_inds<isGlobal, true>(path);
 }
 
-/** These are just for printing: text colorcodes.
- */
 template<typename Component>
 auto Generic<Component>::
 edge_color(const Chain& m,

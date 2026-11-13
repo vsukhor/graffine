@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file in_new_chain.h
- * \brief Contains class performing creation of graph edges in new chain.
+ * \brief Creation of an edge forming a new chain, branching from a vertex.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -47,13 +47,21 @@ limitations under the License.
 namespace graffine::transforms::edge_creation {
 
 
-/** Creates an edge adjoint to a vertex, branching a new chain.
- * \details Creates a graph edge together with its host chain. The edge will
- * have as one of its ends a vertex whose initial degree \p D will be
- * incremented by addition of the new chain branching from it. Because the new
- * chain has length 1, the other vertex of the new edge has degree 1.
- * \tparam D Degree of the source vertex, from which the chain is branched out.
+/** Creates an edge at a vertex, forming a new chain branching from it.
+ * \details The new edge forms a single-edge chain, joining the source
+ * vertex, whose degree \p D increases by one, to a new free end (degree 1).
+ * The edge and its chain are first created as a new component, which is
+ * then merged into the source vertex by a vertex merger 1+D: the hooks of
+ * that merger run inside this transformation (see context.h). Usage:
+ * \code
+ * edge_creation::InNewChain<Deg2, G> branch {gr};
+ * const auto [eg] = branch(G::BulkSlot {w, 3});  // a junction at position 3 of w
+ * \endcode
+ * \tparam D Degree of the source vertex, from which the chain is branched
+ * out: 2 (an internal vertex, or the boundary vertex of an unconnected
+ * cycle) or 3 (a junction).
  * \tparam G Graph to which the transformation is applied.
+ * \tparam PP Processor of non-topological properties, or void.
  */
 template<Degree D,
          typename G,
@@ -79,9 +87,9 @@ struct InNewChain
     using ResT = Trait::ResT;
     using Res = Trait::Res;
 
-    static constexpr auto isNewChain = true;
+    static constexpr auto isNewChain = true;  ///< The edge forms a new chain.
 
-    static constexpr auto I1 = undefined<Degree>; // There is only one input vertex.
+    static constexpr auto I1 = undefined<Degree>; ///< There is only one input vertex.
     static constexpr auto I2 = D;     ///< Degree of the input vertex.
     static constexpr auto J1 = Deg1;  ///< Degree of the 1st output vertex.
     static constexpr auto J2 = I2 + Deg1;  ///< Degree of the 2nd output vertex.
@@ -89,37 +97,40 @@ struct InNewChain
     /// Context of the hooks of the inner vertex merger.
     static constexpr Frame frame {Trait::Type, D};
 
-    const std::string d {std::to_string(I2)};
-    const std::string shortName {"ec_n"s + d};
-    static constexpr const char* fullName  {"edge_creation_new_chain"};
+    const std::string d {std::to_string(I2)};       ///< Source degree, as text.
+    const std::string shortName {"ec_n"s + d};      ///< Abbreviated name.
+    static constexpr const char* fullName  {"edge_creation_new_chain"};  ///< Name in messages.
 
-    /** Constructs a functor for creating an edge and its host chain an in
-     * Graph.
+    /** Constructs a functor creating an edge and its host chain in a
+     * graph.
      * \param[in] gr Graph to which the transformation is applied.
      * \param[in] pp Processor for non-topological properties.
      */
     explicit InNewChain(Graph& gr,
                         std::shared_ptr<PP> pp = nullptr);
 
+    /** Creates a new single-edge chain branching from vertex \p v.
+     * \details Calls the overload taking the slot of \p v, or the cycle id
+     * if \p v is the boundary vertex of an unconnected cycle.
+     * Unchecked: see Applicable.
+     * \return Pointer to the new edge.
+     */
     auto apply(Vertex& v) -> Res;
 
-    /** Creates a new edge packed into a single-edge chain.
-     * \details The source vertex may be either a chain internal vertex
-     * (D == Deg2) or a three-way junction (D == Deg3).
-     * Depending on the case, type Slot of the source corresponds to the
-     * vertex_merger functor applied to connect the new chain to the source
-     * vertex.
-     * \tparam Slot Type of the source. One of the following:
-     *    BulkSlot: at chain internal vertex (D == Deg2), or
-     *    EndSlot: at branching vertex (D == Deg3).
+    /** Creates a new single-edge chain branching from the vertex at \p s.
+     * \details The source vertex is a chain internal vertex (D == Deg2,
+     * Slot is BulkSlot) or a three-way junction (D == Deg3, Slot is
+     * EndSlot). Unchecked: see Applicable.
      * \param[in] s Slot at the source vertex.
+     * \return Pointer to the new edge.
      */
     auto apply(const Slot& s) -> Res;
 
-    /** Creates a new edge packed into a single-edge chain.
-     * \details The source vertex is a boundary vertex of an unconnected chain.
-     * \overload
-     * \param[in] w Id of an unconnected cycle chain .
+    /** Creates a new single-edge chain branching from the boundary vertex
+     * of the unconnected cycle \p w, which has no slot of its own.
+     * \details Only for D == Deg2. Unchecked: see Applicable.
+     * \param[in] w Id of an unconnected cycle chain.
+     * \return Pointer to the new edge.
      */
     auto apply(ChIdG w) -> Res;
 
@@ -168,10 +179,10 @@ struct InNewChain
 protected:
 
     Graph& gr;  ///< Reference to the modified graph object.
-    Chains& cn;
+    Chains& cn; ///< The chains of \a gr.
 
-    /// Auxiliary transform merging vertices of degrees Deg1 and I2.
-    /// Is utilized for internal operation.
+    /// Inner transformation merging the free end of the new chain (degree
+    /// 1) with the source vertex (degree I2).
     vertex_merger::From<Deg1, I2, Graph, PP> merge_vertices;
 
     /// Processor for non-topological properties.
@@ -227,7 +238,7 @@ InNewChain(Graph& gr,
     , merge_vertices {gr, pp}
     , updateProperties {pp}
 {
-    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor given, while PP is void");
 }
 
 template<Degree D,
@@ -326,7 +337,7 @@ apply(const Slot& s) -> Res
 
 
 // Creates new single-edge chain attached to an unconnected cycle chain.
-// For all all other cases the other overload should be called.
+// For all other cases the other overload should be called.
 template<Degree D,
          typename G,
          typename PP>

@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file integral_tests.h
- * \brief Contains class encapsulating integral testing of the graph structure.
+ * \brief Integrity tests of the graph structure.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>.
  */
 
@@ -34,7 +34,16 @@ limitations under the License.
 
 namespace graffine::structure {
 
-/** Implements integral tests of the graph internal structure and its elements.
+/** Integrity tests of the graph's internal structure and its elements.
+ * \details Verifies that the redundant records kept by the graph agree with
+ * each other: component, chain and edge indexes, neighbour lists, edge
+ * descriptors and vertex counts. A failure reveals a defect in graffine or
+ * a graph corrupted by direct manipulation of its members. Usage:
+ * \code
+ * IntegralTests<G>{gr}();                  // throws on failure
+ * if (auto r = IntegralTests<G>{gr}.validate(); !r)
+ *     std::cerr << r.error().message;      // reports instead
+ * \endcode
  * \tparam G Graph subjected to the tests.
  * \tparam beLoud Flag switching verbose reporting.
  */
@@ -47,6 +56,7 @@ struct IntegralTests
     using End = Chain::End;
     using EndSlot = Chain::EndSlot;
 
+    /// Constructor of the tests of graph \p gr.
     constexpr explicit IntegralTests(const Graph& gr);
 
     /** Runs consecutively all the specific tests implemented here.
@@ -70,24 +80,26 @@ struct IntegralTests
      */
     void components(itT it) const;
 
-    /** Tests correspondence of current numbers of vertices.
+    /** Tests that the numbers of vertices of each degree, counted over the
+     * components and over the chains, agree with each other.
      * \param[in] it Index of the current iteration if used in a multi-step
      * sequence of transformations.
      */
     void vertex_numbers(itT it) const;
 
-    /** Tests cycles.
-     * \details Ensures that no inappropriate cycles are present.
+    /** Tests that no cycle chain is shorter than Chain::minCycleLength.
      */
      void loops() const;
 
-    /** Tests consistency of inter-chain connections within components.
+    /** Tests that the chain connections are mutual (if end s lists end n
+     * as a neighbour, n lists s), and that the edge descriptors refer to
+     * the right edges.
      * \param[in] it Index of the current iteration if used in a multi-step
      * sequence of transformations.
      */
     void consistency(itT it) const;
 
-    /** Tests correctness of chain indexes.
+    /** Tests that each chain's graph-wide id equals its position.
      * \param[in] it Index of the current iteration if used in a multi-step
      * sequence of transformations.
      */
@@ -410,7 +422,7 @@ chain_id(const itT it) const
         cn[i].ensure(
             cn[i].idw == i,
             "should have idw: iteration ", it,
-            " check.chain_id faied at i ", i, " != idw ", cn[i].idw
+            " check.chain_id failed at i ", i, " != idw ", cn[i].idw
         );
 }
 

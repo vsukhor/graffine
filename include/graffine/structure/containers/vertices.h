@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file vertices.h
- * \brief Contains classes holding and updating vertex collections.
+ * \brief Container of the vertices of a component.
  * \details Each graph component owns its vertices through a Vertices
  * collection, which holds them by std::unique_ptr: vertex addresses remain
  * stable while the collection changes, so that edges can point to them.
@@ -48,24 +48,26 @@ limitations under the License.
 
 namespace graffine::structure::containers {
 
-/** Collection of vertices.
- * \tparam V Vertex class
- * \tparam H Graph compartment class hosting the vertices.
+/** Container owning the vertices of a component.
+ * \details The vertices are not ordered: lookups by handle, by address or
+ * by incident edge scan the container, at a cost linear in its size.
+ * \tparam V Vertex class.
+ * \tparam H Graph component class hosting the vertices.
  */
 template<typename V,
          typename H>
 struct Vertices
 {
-    using Host = H;
+    using Host = H;  ///< Host component type.
     using Chain = Host::Chain;
     using Edge = Chain::Edge;
     using End = Host::End;
     using EndSlot = Host::EndSlot;  ///< Slot type for the edge ends.
     using EndId = End::Id;
-    using EdgeSlotC = descriptors::EdgeSlotC;
+    using EdgeSlotC = descriptors::EdgeSlotC;  ///< Edge end, by EgIdC.
     using Vertex = V;
-    using Element = std::unique_ptr<Vertex>;
-    using Container = std::vector<Element>;
+    using Element = std::unique_ptr<Vertex>;  ///< Owning pointer to a vertex.
+    using Container = std::vector<Element>;   ///< Underlying container.
     using Elements = Container;
 
 protected:  // Data
@@ -81,25 +83,52 @@ public:  // Functions
     constexpr auto operator=(const Vertices& other) -> Vertices& = delete;
     constexpr auto operator=(Vertices&& other) -> Vertices& = default;
 
+    /// The underlying container.
     constexpr auto get() const noexcept -> const Container&;
+    /// The underlying container.
     constexpr auto get() noexcept -> Container&;
+    /// Pointers to the vertices of degree \p d.
     constexpr auto get(Degree d) const noexcept -> std::vector<Vertex*>;
 
+    /// Deletes all the vertices.
     constexpr void clear() noexcept;
 
+    /// Number of vertices.
     constexpr auto num() const noexcept -> std::size_t;
+    /// Number of vertices of degree \p d.
     constexpr auto num(Degree d) const noexcept -> std::size_t;
 
+    /** Creates a new, unconnected vertex.
+     * \param c Component to assign the vertex to.
+     * \return Reference to the new vertex.
+     */
     constexpr auto create_vertex(CmpId c = CmpId::undefined) -> Vertex&;
 
+    /** Moves the vertices of chain \p m from this container to that of
+     * component \p h.
+     * \details The vertices not found here, e.g. already moved, are
+     * skipped.
+     * \return Number of the vertices moved.
+     */
     constexpr auto move_to(Host& h, const Chain& m) -> VIdH;
+    /** Moves vertex \p v from this container to that of component \p h,
+     * and assigns it to \p h.
+     * \return False if \p v is not in this container.
+     */
     constexpr bool move_to(Host& h, const Vertex* const v);
 
+    /// Takes over vertex \p v.
     void insert(std::unique_ptr<Vertex>&& v);
 
+    /** Takes over all the vertices of \p other, leaving it empty.
+     * \note The vertices must already be assigned to the right component.
+     */
     constexpr void append(Container& other);
 
+    /// Deletes vertex \p vp, which must have no edges attached.
     constexpr void remove_disconnected(Vertex* vp) noexcept;
+    /// Detaches end \p e of edge \p eg from its vertex, which must have no
+    /// other edges attached, and deletes that vertex.
     constexpr void remove_connected_to_outer(Edge& eg,
                                              End::Id e) noexcept;
     /** Disconnects vertex \p id from its edges, which are hosted by
@@ -107,28 +136,45 @@ public:  // Functions
      */
     constexpr void remove(VIdH id, Host& hst) noexcept;
 
+    /** Updates the vertices at the ends of edge \p from to refer to the
+     * edge by the new component-wide index \p to.
+     */
     constexpr void reind_edge(const Edge& from,
                               EgIdC to) noexcept;
 
+    /// Assigns all the vertices to component \p c.
     void set_c(CmpId c) noexcept;
 
+    /// Position in the container of the vertex with handle \p id, or
+    /// \ref utils::undefined if absent.
     auto find_container_coord(VIdH id) const noexcept -> std::size_t;
+    /// Position in the container of vertex \p v, or \ref utils::undefined
+    /// if absent.
     auto find_container_coord(const Vertex* v) const noexcept -> std::size_t;
+    /// The vertex to which edge end \p s is attached, or nullptr.
     auto find(const EdgeSlotC& s)       noexcept ->       Vertex*;
+    /// The vertex to which edge end \p s is attached, or nullptr.
     auto find(const EdgeSlotC& s) const noexcept -> const Vertex*;
+    /// The vertex with handle \p id, or nullptr.
     auto find(VIdH id)       noexcept ->       Vertex*;
+    /// The vertex with handle \p id, or nullptr.
     auto find(VIdH id) const noexcept -> const Vertex*;
 
+    /// The first vertex not assigned to component \p c, which is also
+    /// printed, or nullptr if all are.
     auto check_c(CmpId c) const noexcept -> Vertex*;
 
     /// \name Formatted printing
     ///@{
 
+    /// Writes the number of vertices to \p ofs.
     constexpr void report(std::ostream& ofs) const noexcept;
 
+    /// Prints the vertices grouped by degree; \p args prefix each vertex.
     template<typename... Args>
     void print(Args&&... args) const;
 
+    /// Prints the vertices of degree \p d; \p args prefix each vertex.
     template<typename... Args>
     void print_degree(
         Degree d,
@@ -409,8 +455,8 @@ find(const VIdH id) const noexcept -> const Vertex*
     return nullptr;
 }
 
-// Assumes that issues related to vertex types and connectivity were solved
-// elsewhere so that the vertex can be placed into proper container
+// Assumes that the vertices were already assigned to this container's
+// component and connected as needed.
 template<typename V,
          typename H>
 constexpr
@@ -507,8 +553,8 @@ void clear(Vertices<V, H>& vcl) noexcept
  * \tparam V Class encapsulating vertex object.
  * \tparam H Host graph component.
  * \param[in] s Slot of the vertex to find.
- * \param[in] ns Vertices of vertices to search.
- * \return Index of the found vertex or an undefined Id.
+ * \param[in] ns Vertices to search.
+ * \return Handle of the vertex found, or VIdH::undefined.
  */
 template<typename V,
          typename H>
@@ -524,11 +570,11 @@ auto find_vertex(
     return VIdH::undefined;
 }
 
-/** Prints all the vertices held in the collection.
+/** Prints the vertices of degree \p D held in the collection.
  * \tparam D Vertex degree.
  * \tparam V Class encapsulating vertex object.
  * \tparam H Host graph component.
- * \param[in] ns Vertices of vertices to print.
+ * \param[in] ns Vertices to print.
  * \param[in] s Optional string prefix for each vertex printout.
  */
 template<Degree D,

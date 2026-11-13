@@ -22,7 +22,8 @@ limitations under the License.
 
 /**
  * \file preserving_host_chain.h
- * \brief Contains classes performing deletion of specific graph edges.
+ * \brief Contraction of an edge of a multi-edge chain, between a degree 2
+ * vertex and a vertex of a given degree.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -38,19 +39,17 @@ limitations under the License.
 #include <string>
 #include <type_traits>
 
-/** Contains operations handling edge deletion in a graph.
- * These are functors for deleting edges based on chain lengths and vertex
- * degrees.
- */
 namespace graffine::transforms::edge_deletion {
 
 
-/** Template for deletion of graph edges without deleting their host chain.
- * \details Handles the case of multi-edge chains. Notably, because the chain
- * contains more than a single edge, at least one of the edge ends is a vertex
- * of degree 2.
- * \tparam D Vertex degree at the non-trivial edge end (the other one has D==2).
+/** Deletes an edge of a multi-edge chain by contracting it, keeping the
+ * chain.
+ * \details Because the chain has more than one edge, at least one end of
+ * the edge is an internal vertex, of degree 2. The two vertices of the
+ * edge merge into one, of degree \p D, and the chain loses one edge.
+ * \tparam D Vertex degree at the other end of the edge.
  * \tparam G Graph hosting the edge to be deleted.
+ * \tparam PP Processor of non-topological properties, or void.
  */
 template<Degree D,
          typename G,
@@ -84,17 +83,14 @@ struct PreservingHostChain
     /// \note This vertex can have arbitrary implemented degree.
     static constexpr auto I2 = D;
 
-    static constexpr auto J1 = undefined<Degree>;
-    static constexpr auto J2 = undefined<Degree>;
+    static constexpr auto J1 = undefined<Degree>;  ///< Not used.
+    static constexpr auto J2 = undefined<Degree>;  ///< Not used.
 
-    const std::string dd {std::to_string(I2)};
+    const std::string dd {std::to_string(I2)};  ///< Degree D, as text.
 
-    /// Short form of human-readable name of edge deletion functors.
-    /// \note Is used for naming conventions in the code.
-    const std::string shortName {make_name("edph_", dd)};
+    const std::string shortName {make_name("edph_", dd)};  ///< Abbreviated name.
 
-    /// Full form of human-readable name of edge deletion functors.
-    /// \note Is used for more descriptive naming conventions in the code.
+    /// Name in messages.
     const std::string fullName {
         make_name("edge_deletion_without_host_chain_", dd)
     };
@@ -109,13 +105,16 @@ struct PreservingHostChain
     constexpr explicit PreservingHostChain(Graph& gr,
                                            std::shared_ptr<PP> pp = nullptr);
 
-    /** Function call operator executing the deletion using edge index.
+    /** Contracts edge \p ind. Unchecked: see Applicable.
      * \param[in] ind Graph-wide index of the deleted edge.
+     * \return Index of the component hosting the edge.
      */
     auto apply(EgIdG ind) -> Res;
 
-    /** Delete edge using its position.
-     * \param[in] s Slot incident to a chain internal vertex.
+    /** Contracts the edge at chain position \p s, i.e. edge g[a] of chain
+     * w. Unchecked: see Applicable.
+     * \param[in] s Chain and position of the edge.
+     * \return Index of the component hosting the edge.
      */
     auto apply(const BulkSlot& s) -> Res;
 
@@ -185,7 +184,7 @@ PreservingHostChain(Graph& gr,
     : gr {gr}
     , updateProperties {pp}
 {
-    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor given, while PP is void");
 }
 
 

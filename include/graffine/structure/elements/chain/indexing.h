@@ -69,7 +69,6 @@ end_edge(const EndId e) noexcept -> Edge&
 }
 
 
-// Convert chain edge index and edge end in chain internal to edge end
 template<typename E>
 constexpr
 auto Chain<E>::
@@ -81,7 +80,6 @@ edge_internal_end(const EgIdA a, const EndId e) const noexcept -> EndId
 }
 
 
-// Convert chain boundary id to edge internal end id
 template<typename E>
 constexpr
 auto Chain<E>::
@@ -245,9 +243,6 @@ neig_a_of_egEnd(
 }
 
 
-// Finds edge end of the edge \p b to which the edge at
-// \p a is connected via a vertex internal to the chain.
-// Should only be applied to the chain internal vertices.
 template<typename E>
 constexpr
 auto Chain<E>::
@@ -266,7 +261,6 @@ internal_egEnd(
 }
 
 
-// Edge end of an edge a
 template<typename E>
 constexpr
 auto Chain<E>::

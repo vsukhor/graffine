@@ -22,7 +22,8 @@ limitations under the License.
 
 /**
  * \file common.h
- * \brief Contains class templates for degree-specific vertex merger.
+ * \brief Declarations shared by the vertex mergers: trait, processor
+ * concept, plan, and the degree-specific functor templates.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -42,6 +43,7 @@ limitations under the License.
 
 namespace graffine::transforms {
 
+/// Compile-time description of the vertex merger.
 template<typename G>
 struct Trait<TransformType::VertexMerger, G>
 {
@@ -55,12 +57,29 @@ struct Trait<TransformType::VertexMerger, G>
     /// Result of the transformation: pointer to the vertex resulting from the merger.
     using Res = std::array<ResT, 1>;
 
-    static constexpr auto Type = TransformType::VertexMerger;
+    static constexpr auto Type = TransformType::VertexMerger;  ///< Family.
 
-    static constexpr const char* shortName {"v_m_"};
-    static constexpr const char* fullName  {"vertex_merger"};
+    static constexpr const char* shortName {"v_m_"};  ///< Abbreviated name prefix.
+    static constexpr const char* fullName  {"vertex_merger"};  ///< Name in messages.
 };
 
+/** Merger of two vertices into one.
+ * \details The two vertices, of degrees D1 and D2, become a single vertex
+ * of degree D1 + D2, which must not exceed the maximal degree 4. The
+ * vertices are given by their slots: an EndSlot for a vertex at a chain end
+ * (degrees 1 and 3), a BulkSlot for a vertex inside a chain (degree 2), or
+ * the chain id for the boundary vertex of an unconnected cycle. Merging
+ * vertices of different components joins the components; merging vertices
+ * of the same component closes a cycle.
+ *
+ * From<D1, D2> merges vertices of degrees D1 and D2; the implemented pairs
+ * are 1+1, 1+2, 1+3 and 2+2. Functor dispatches to the right one for any
+ * two vertices. Usage:
+ * \code
+ * vertex_merger::From<Deg1, Deg1, G> merge {gr};
+ * merge(G::EndSlot {w1, G::End::B}, G::EndSlot {w2, G::End::A});
+ * \endcode
+ */
 namespace vertex_merger {
 
 /** Processor of non-topological properties usable by the vertex mergers.
@@ -86,6 +105,7 @@ concept Processor =
     };
 
 
+/// Compile-time description of the vertex merger.
 template<typename G>
 using Trait = transforms::Trait<TransformType::VertexMerger, G>;
 
@@ -101,6 +121,7 @@ struct Plan {
     /// Merged vertex which is removed.
     const Vertex* removed {};
 
+    /// The hooks of this family in processor \p pp.
     template<typename PP>
     static constexpr auto hooks(PP& pp) -> decltype((pp.vertexMerger))
     {
@@ -157,10 +178,12 @@ struct Keeper {
     }
 };
 
-/** Generic template for vertex degree-specific merger executing classes.
+/** Generic template of the degree-specific vertex mergers; specialized for
+ * the implemented pairs of degrees.
  * \tparam D1 Degree of the 1st input vertex.
  * \tparam D2 Degree of the 2nd input vertex.
  * \tparam G Graph to which the transformation is applied.
+ * \tparam PP Processor of non-topological properties, or void.
  */
 template<Degree D1,
          Degree D2,
@@ -170,9 +193,12 @@ template<Degree D1,
              vertex_merger::Processor<PP, G>
 struct From {};
 
-/** Template for vertex degree-specific merger with a vertex havingDegree 1.
+/** Merger of a vertex of degree 1 with a vertex of degree \p D: the same
+ * functor as From<Deg1, D>, addressed by the degree of the second vertex
+ * only.
  * \tparam D Degree of the 2nd input vertex.
  * \tparam G Graph to which the transformation is applied.
+ * \tparam PP Processor of non-topological properties, or void.
  */
 template<Degree D,
          typename G,
@@ -180,6 +206,8 @@ template<Degree D,
     requires vertex_merger::Processor<PP, G>
 struct From1 {};
 
+/// Chain end standing for the boundary vertex of an unconnected cycle,
+/// which lies at both ends.
 inline constexpr auto UnconnectedCycleEnd = structure::descriptors::End::A;
 
 

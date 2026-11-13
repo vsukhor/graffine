@@ -22,7 +22,8 @@ limitations under the License.
 
 /**
  * \file common.h
- * \brief Contains classes controlling vertex split transformation.
+ * \brief Declarations shared by the vertex splits: trait, processor
+ * concept, plan, and the degree-specific functor templates.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -43,6 +44,7 @@ limitations under the License.
 
 namespace graffine::transforms {
 
+/// Compile-time description of the vertex split.
 template<typename G>
 struct Trait<TransformType::VertexSplit, G>
 {
@@ -53,21 +55,39 @@ struct Trait<TransformType::VertexSplit, G>
     using EndSlot = Chain::EndSlot;
     using Vertex = Graph::Vertex;
     using ResT = Vertex*;
-    /// Result of the transformation: pointers to the two vertices produced by the split.
+    /// Result of the transformation: pointers to the two vertices produced
+    /// by the split.
     using Res = std::array<ResT, 2>;
 
-    static constexpr auto Type = TransformType::VertexSplit;
+    static constexpr auto Type = TransformType::VertexSplit;  ///< Family.
 
-    static constexpr const char* fullName  {"vertex_split_"};
-    static constexpr const char* shortName {"v_s_"};
+    static constexpr const char* fullName  {"vertex_split_"};  ///< Name prefix in messages.
+    static constexpr const char* shortName {"v_s_"};  ///< Abbreviated name prefix.
 };
 
 
 
-/// Enables split of a graph vertex into two daughter ones.
+/** Split of a vertex into two.
+ * \details The inverse of the vertex merger: a vertex of degree D1 + D2
+ * becomes two vertices of degrees D1 and D2, sharing out its edges. The
+ * edges going to the first resulting vertex are given by their chain end
+ * slots, or by their descriptors at the vertex; a vertex of degree 2 is
+ * given by its BulkSlot. Splitting may disconnect a component into two.
+ *
+ * To<D1, D2> produces vertices of degrees D1 and D2; the implemented pairs
+ * are 1+1 (cutting a chain at an internal vertex), 1+2 and 1+3 (detaching
+ * one chain end from a junction) and 2+2 (separating an X junction into two
+ * pairs of chain ends). Functor dispatches to the right one for any vertex.
+ * Usage:
+ * \code
+ * vertex_split::To<Deg1, Deg2, G> detach {gr};
+ * detach(G::EndSlot {w, G::End::A});  // detach end A of w from its Y junction
+ * \endcode
+ */
 namespace vertex_split {
 
 
+/// Compile-time description of the vertex split.
 template<typename G>
 using Trait = transforms::Trait<TransformType::VertexSplit, G>;
 
@@ -110,6 +130,7 @@ struct Plan {
     /// one: the plan does not tell.
     std::array<std::vector<EgIdG>, 2> edges;
 
+    /// The hooks of this family in processor \p pp.
     template<typename PP>
     static constexpr auto hooks(PP& pp) -> decltype((pp.vertexSplit))
     {
@@ -133,13 +154,12 @@ auto make_plan(
 }
 
 
-/** Template for functors performing vertex split.
- * \details This class template is specialized for specific vertex degrees
- * and provides the functionality to split a vertex into two vertices of
- * specified degrees.
+/** Generic template of the degree-specific vertex splits; specialized for
+ * the implemented pairs of resulting degrees.
  * \tparam D1 Degree of the 1st resulting vertex.
  * \tparam D2 Degree of the 2nd resulting vertex.
  * \tparam G Graph to which the split operation is applied.
+ * \tparam PP Processor of non-topological properties, or void.
  */
 template<Degree D1,
          Degree D2,
@@ -150,13 +170,11 @@ template<Degree D1,
 struct To
 {};
 
-/** Template for functors performing vertex split which produce a degree 1
- * vertex.
- * \details This class template is specialized for specific vertex degrees
- * and provides the functionality to split a vertex into two vertices of
- * specified degrees.
+/** Split producing a vertex of degree 1 and one of degree \p D: the same
+ * functor as To<Deg1, D>, addressed by the second degree only.
  * \tparam D Degree of the 2nd resulting vertex.
  * \tparam G Graph to which the split operation is applied.
+ * \tparam PP Processor of non-topological properties, or void.
  */
 template<Degree D,
          typename G,
@@ -166,13 +184,11 @@ template<Degree D,
 struct To1
 {};
 
-/** Template for functors performing vertex split which produce a degree 2
- * vertex.
- * \details This class template is specialized for specific vertex degrees
- * and provides the functionality to split a vertex into two vertices of
- * specified degrees.
+/** Split producing a vertex of degree 2 and one of degree \p D: the same
+ * functor as To<Deg2, D>, addressed by the second degree only.
  * \tparam D Degree of the 2nd resulting vertex.
  * \tparam G Graph to which the split operation is applied.
+ * \tparam PP Processor of non-topological properties, or void.
  */
 template<Degree D,
          typename G,

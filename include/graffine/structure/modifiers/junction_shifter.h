@@ -22,8 +22,7 @@ limitations under the License.
 
 /**
  * \file junction_shifter.h
- * \brief Contains implementation of the mechanism enabling smooth shifting of
- * internal chain vertices over a junction node connecting the chains.
+ * \brief Shifting a junction by one edge along a chain.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -40,8 +39,16 @@ limitations under the License.
 
 namespace graffine::structure::modifiers {
 
-/** Contains implementation of the mechanism enabling smooth shifting of
- * internal chain vertices over a junction node connecting the chains.
+/** Shifts a junction by one edge along one of the chains it joins.
+ * \details Given two chain ends \a f and \a t joined at a junction, the edge
+ * at end \a f moves over to chain \a t, becoming its end edge at \a t.
+ * The junction thus moves from its vertex to the vertex at the far end of
+ * that edge, previously internal to chain \a f: the other chains joined
+ * at the junction are reattached there. Chain \a f shrinks by one edge and
+ * chain \a t grows by one; the topology is unchanged, and the vertex
+ * objects keep their identity.
+ * \note Chain \a f must have more than one edge.
+ * \tparam H Host: the component owning the chains.
  */
 template<typename H>
 struct JunctionShifter
@@ -52,14 +59,21 @@ struct JunctionShifter
     using Vertex = Host::Vertex;
     using Vertices = Host::Vertices;
     using End = descriptors::End;
-    using ED = typename Vertex::EgDescr;
+    using ED = typename Vertex::EgDescr;  ///< Edge descriptor held by a vertex.
 
-    /**  Shift an edge from f.e end of f.w to t.e end of t.w
+    /** Moves the edge at end \p f.e of chain \p f.w to end \p t.e of
+     * chain \p t.w, shifting the junction joining \p f and \p t.
+     * \param host Component owning the chains.
+     * \param f Chain end giving up its end edge.
+     * \param t Chain end, joined to \p f, receiving the edge.
      */
     void operator()(Host& host,
                     const EndSlot& f,
                     const EndSlot& t);
 
+    /** Descriptor by which a vertex records outer end \p eOuter of edge
+     * \p eg.
+     */
     constexpr auto edge_descriptor(
         const Edge& eg,
         End::Id eOuter
@@ -67,6 +81,9 @@ struct JunctionShifter
 
 protected:
 
+    /** Reattaches to vertex \p t the edge ends at vertex \p v, except
+     * those \p toOmit.
+     */
     void shift_egS(Vertex* v,
                    Vertex* t,
                    const std::array<ED, 2>& toOmit,

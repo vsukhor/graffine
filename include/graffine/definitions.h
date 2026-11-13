@@ -22,9 +22,10 @@ limitations under the License.
 
 /**
  * \file definitions.h
- * \brief project-scope typenames and definitions.
- * \details Contains various type definitions and utility functions used
- * throughout the project.
+ * \brief Project-wide type names and definitions.
+ * \details Brings the element identifiers, the vertex degree tags and the
+ * utility constants into the \c graffine namespace, and defines the
+ * floating-point type and the edge orientation used throughout the library.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>.
  */
 
@@ -53,7 +54,8 @@ limitations under the License.
 
 /// Project namespace
 namespace graffine {
-/// Contains definitions available to all graffine entities
+/// Definitions visible throughout graffine (an inline namespace, so they
+/// are accessible directly as members of \c graffine).
 inline namespace definitions {
 
 using namespace std::string_literals;
@@ -63,29 +65,32 @@ using namespace structure::descriptors::vertex_degrees;
 
 namespace colorcodes = utils::colorcodes;
 
-using Msgr = utils::Msgr;
+using Msgr = utils::Msgr;  ///< Message logger, see utils/msgr.h.
+
+/// Floating-point type of the non-topological quantities, such as edge
+/// weights: \c double if CMake set GRAFFINE_REAL_IS_DOUBLE, else \c float.
 using real = std::conditional_t<realIsDouble, double, float>;
 
-// 'verboseF' flag to decide if functors should report verbosely,
-// was set by cmake.
-// 'printEdges' flag to decide if detailed info on edges should be printed,
-// was set by cmake.
-// 'printVertices' flag to decide if detailed info on vertices should be
-// printed, was set by cmake.
+// The reporting flags 'verboseF', 'printEdges' and 'printVertices' are set
+// by CMake, see config_cmake.h.
 
 /// Tests report in verbose mode.
 inline constexpr bool verboseT {true};
 
-/// Orientation of elements relative to the orientation of their host.
+/// Orientation of an element relative to the direction of its host,
+/// e.g. of an edge relative to its chain, which runs from end A to end B.
 enum Orientation {
-    Backwards = -1,  ///< B -> A
-    Forwards = 1,    ///< A -> B
-    Undefined = 0
+    Backwards = -1,  ///< Points from the host's end B towards its end A.
+    Forwards = 1,    ///< Points from the host's end A towards its end B.
+    Undefined = 0    ///< Not yet set.
 };
 
 using itT = std::uint_fast64_t;  ///< Type for counting simulation iterations.
 
-/// For use in if constexpr static_assert in case c++23 is not activated.
+/// A false value depending on template parameters, for
+/// <tt>static_assert(always_false<T>)</tt> in a discarded branch of
+/// <tt>if constexpr</tt>, which a plain \c false would trigger
+/// unconditionally before C++23.
 template <class...> constexpr std::false_type always_false{};
 
 }  // namespace definitions

@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file distance.h
- * \brief Contains class template defining distances over the graph components.
+ * \brief Distance record of the shortest paths over the edges of a component.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -44,14 +44,20 @@ limitations under the License.
 namespace graffine::structure::paths::over_edges {
 
 
+/** Distance record of an edge in a shortest path search over edges.
+ * \details Holds the shortest distance found to the target edge and the
+ * edge preceding it on that path. The same type serves as the entry of the
+ * search queue, where \a prev holds the queued edge itself.
+ * \tparam Component Type of the graph component.
+ */
 template<typename Component>
 struct Distance
 {
     using Edge = Component::Edge;
-    using EdgeWeight = typename Edge::weight_t;
+    using EdgeWeight = typename Edge::weight_t;  ///< Type of the distances.
 
-    static constexpr EdgeWeight zero {};
-    static constexpr auto inf = Edge::maxWeight;
+    static constexpr EdgeWeight zero {};          ///< Zero distance.
+    static constexpr auto inf = Edge::maxWeight;  ///< Distance of an unreached edge.
 
     /** Default constructor.
      * \details Initializes the distance with an undefined previous edge id
@@ -89,9 +95,9 @@ struct Distance
         , dist {d}
     {}
 
-    /** Compares two distance objects.
+    /** Orders the records by their edge \a prev, \e not by distance.
      * \param[in] c The other distance object to compare with.
-     * \return True if this distance is less than the other, false otherwise.
+     * \return True if the edge id of this record is less than that of \p c.
      */
     constexpr bool operator<(const Distance& c) const noexcept
     {
@@ -134,6 +140,8 @@ struct Distance
         dist = d;
     }
 
+    /** Checks if the edge was reached by the search.
+     */
     constexpr bool is_finite() const noexcept
     {
         return dist < inf;
@@ -149,6 +157,8 @@ struct Distance
         dist = inf;
     }
 
+    /** Prints the record of edge \p target, without a line break.
+     */
     void print(const EgIdC target) const
     {
         jot<false>(target, "=>[", prev, " ", dist, "] ");

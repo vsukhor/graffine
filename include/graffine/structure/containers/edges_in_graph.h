@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file edges_in_graph.h
- * \brief Defines collection of edge descriptors for use in the graph object.
+ * \brief Table of the edge descriptors of a graph.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -44,6 +44,12 @@ limitations under the License.
 
 namespace graffine::structure::containers {
 
+/** Table of the edge descriptors of a graph, indexed by EgIdG.
+ * \details The edges themselves are stored in the chains. This table maps
+ * the graph-wide index of each edge to its location (chain and position)
+ * and its stable handle, see descriptors::EdgeInGraph.
+ * \tparam G Graph type.
+ */
 template<typename G>
 struct EdgeDescriptorsInGraph
     : containers::Sequence<std::vector<descriptors::EdgeInGraph>>
@@ -58,11 +64,16 @@ struct EdgeDescriptorsInGraph
     using Chain = Component::Chain;
     using Chains = Component::Chains;
 
+    /// Descriptor of the edge with graph-wide index \p i.
     constexpr auto operator[](const EgIdG i) -> EdgeDescr& { return m_data[i()]; }
+    /// Descriptor of the edge with graph-wide index \p i.
     constexpr auto operator[](const std::size_t i) -> EdgeDescr& { return m_data[i]; }
+    /// Descriptor of the edge with graph-wide index \p i.
     constexpr auto operator[](const EgIdG i) const -> const EdgeDescr& { return m_data[i()]; }
+    /// Descriptor of the edge with graph-wide index \p i.
     constexpr auto operator[](const std::size_t i) const -> const EdgeDescr& { return m_data[i]; }
 
+    /// Rebuilds the table from the edges of all the chains of graph \p gr.
     void set(const Graph& gr);
 
     /** Updates the descriptors of the edges of chains \p ww only.
@@ -71,9 +82,13 @@ struct EdgeDescriptorsInGraph
      */
     void set(const Graph& gr,
              std::initializer_list<ChIdG> ww);
+    /// Appends the descriptor of edge \p g.
     void append(const Edge& g);
+    /// Appends the descriptors of the edges of chain \p m, in chain order.
     void append(const Chain& m);
+    /// Appends the descriptors of another table.
     void append(EdgeDescriptorsInGraph&& egl) noexcept;
+    /// Removes all the descriptors.
     void clear() { m_data.clear(); }
 
 private:

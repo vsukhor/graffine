@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file from_11.h
- * \brief Contains class performing merger between vertices of degree 1.
+ * \brief Merger of two free chain ends (1+1).
  * \note Simplified version of the functor class was also used in
  * https://github.com/vsukhor/mitoSim/blob/master/include/ability_for_fusion.h
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
@@ -46,8 +46,8 @@ namespace graffine::transforms::vertex_merger {
 
 
 /** Merges two vertices of degree 1 to produce a vertex of degree 2.
- * \details Adds vertex type-specific vertex merger capability and updates the
- * graph for it.
+ * \details Joins two chains at their free ends into one chain, or closes a
+ * chain into an unconnected cycle if both ends are its own.
  * \tparam G Graph to which the merger operation is applied.
  */
 template<typename G,
@@ -71,9 +71,9 @@ struct From<Deg1, Deg1, G, PP>
     static constexpr auto J1 = Deg2;  ///< Degree of the 1st output vertex.
     static constexpr auto J2 = undefined<Degree>;  ///< No 2nd output vertex.
 
-    const std::string dd {degrees_to_string(I1, I2)};
-    const std::string shortName {make_name(Trait::shortName, dd)};
-    const std::string fullName  {make_name(Trait::fullName, dd)};
+    const std::string dd {degrees_to_string(I1, I2)};  ///< Degrees, as text.
+    const std::string shortName {make_name(Trait::shortName, dd)};  ///< Abbreviated name.
+    const std::string fullName  {make_name(Trait::fullName, dd)};  ///< Name in messages.
 
     /** Constructs a Functor object based on the Graph instance.
      * \param[in] gr Graph to which the transformation is applied.
@@ -103,7 +103,7 @@ struct From<Deg1, Deg1, G, PP>
      * s1.e == B: 456 + 0123 -> 4563210 (>>> + >>>> -> >>><<<<)
      * Unchecked: see Applicable.
      * \param[in] s1 Chain boundary slot at the 1st parent vertex.
-     * \param[in] s2 Chain boundary slot on the 2nd parent vertex.
+     * \param[in] s2 Chain boundary slot at the 2nd parent vertex.
      * \return The vertex resulting from the merger.
      */
     auto apply(const EndSlot& s1,
@@ -185,7 +185,7 @@ From(Graph& gr,
     , merge {gr, pp, shortName}
     , report {gr, dd}
 {
-    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor given, while PP is void");
 }
 
 
@@ -311,7 +311,7 @@ struct From1<Deg1, G, PP>
                     std::shared_ptr<PP> pp = nullptr)
         : Base {gr, pp}
     {
-        GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+        GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor given, while PP is void");
     }
 };
 

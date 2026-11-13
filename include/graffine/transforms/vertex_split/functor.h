@@ -22,8 +22,7 @@ limitations under the License.
 
 /**
  * \file functor.h
- * \brief Contains wrapper class for degree-independent vertex split
- * transformation.
+ * \brief Split of any vertex, dispatching to the functor for its degree.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -44,8 +43,10 @@ limitations under the License.
 
 namespace graffine::transforms::vertex_split {
 
-/** Wrapper functor for vertex degree-independent vertex split operations.
+/** Splits any vertex, dispatching to To<D1, D2> for its degree and the
+ * number of edges detached.
  * \tparam G Graph to which the transformation is applied.
+ * \tparam PP Processor of non-topological properties, or void.
  */
 template<typename G,
          typename PP = void>
@@ -67,11 +68,13 @@ struct Functor
     explicit constexpr Functor(Graph& gr,
                                std::shared_ptr<PP> pp = nullptr);
 
-    /** Divides the graph chain at given vertex \p v.
-     * This is a wrapper operator able to process all implemented vertex degrees.
-     * Unchecked: see Applicable.
-     * \param[in] v Internal chain vertex.
-     * \param[in] ss Slots to get removed from the vertex.
+    /** Splits vertex \p v, detaching edges \p ss to the first resulting
+     * vertex. Unchecked: see Applicable.
+     * \param[in] v Vertex to split.
+     * \param[in] ss Descriptors of the edges detached: one, or two for a
+     * 2+2 split; ignored for a vertex of degree 2, which is cut as a chain
+     * internal vertex.
+     * \return The two resulting vertices.
      */
     auto apply(Vertex& v,
                const std::vector<typename Vertex::EgDescr>& ss) -> Res;
@@ -133,7 +136,7 @@ Functor(Graph& gr,
     , to_1_3 {gr, pp}
     , to_2_2 {gr, pp}
 {
-    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor given, while PP is void");
 }
 
 

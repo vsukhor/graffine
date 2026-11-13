@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file functor.h
- * \brief Contains classes performing deletion of specific graph edges.
+ * \brief Deletion of any edge, dispatching to the functor of its case.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -37,16 +37,15 @@ limitations under the License.
 
 #include <memory>
 
-/** Contains operations handling edge deletion in a graph.
- * These are both functors for deleting edges based on chain lengths and vertex
- * degrees and their generic wrappers.
- */
 namespace graffine::transforms::edge_deletion {
 
 
-/** Wrapper functor for edge deletion able to handle all possible
- * configurations.
+/** Deletes any deletable edge, dispatching to the functor of its case.
+ * \details A single-edge chain attached by one end is deleted with its
+ * edge (InSingleEdgeChain); any other edge is contracted, keeping its
+ * chain (InMultiEdgeChain). See the namespace description.
  * \tparam G Graph hosting the edge to be deleted.
+ * \tparam PP Processor of non-topological properties, or void.
  */
 template<typename G,
          typename PP = void>
@@ -69,8 +68,9 @@ struct Functor
     constexpr explicit Functor(Graph& gr,
                                std::shared_ptr<PP> pp = nullptr);
 
-    /** Function call operator executing the deletion using edge index.
+    /** Deletes edge \p ind. Unchecked: see Applicable.
      * \param[in] ind Graph-wide index of the deleted edge.
+     * \return Index of the component that hosted the edge.
      */
     auto apply(EgIdG ind) -> Res;
 
@@ -102,8 +102,8 @@ protected:
 
     Graph& gr;  ///< Reference to the modified graph object.
 
-    InSingleEdgeChain<G, PP> withChain;
-    InMultiEdgeChain<G, PP>  withoutChain;
+    InSingleEdgeChain<G, PP> withChain;     ///< Deletes an edge with its chain.
+    InMultiEdgeChain<G, PP>  withoutChain;  ///< Contracts an edge, keeping its chain.
 };
 
 
@@ -122,7 +122,7 @@ Functor(Graph& gr,
     , withChain {gr, pp}
     , withoutChain {gr, pp}
 {
-    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor given, while PP is void");
 }
 
 

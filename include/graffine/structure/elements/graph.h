@@ -22,7 +22,8 @@ limitations under the License.
 
 /**
  * \file graph.h
- * \brief Contains class template encapsulating graph structure-related features.
+ * \brief The graph: the container of all components, chains, edges and
+ * vertices.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -60,25 +61,41 @@ limitations under the License.
 namespace graffine::structure {
 namespace detail {
 
+/** Generic graph template; see the specialization Graph<CC> for the
+ * implemented graph.
+ */
 template<typename CC,
          typename... Props>
 struct Graph
 {};
 
 
-/** Implementation of a multicomponent Graph.
- * \details Implements major structure-related properties important for
- * topological transformations, such as collections and classifications of
- * graph Chains, but is unaware of any physical or geometric properties.
- * Forms base for classes adding graph-specific characteristics.
+/** A graph made of one or more connected components.
+ * \details The graph is the entry point to the structure: it owns the
+ * chains (which own the edges) and the components (which own the
+ * vertices), and provides graph-wide access to all of them. It keeps
+ * graph-wide tables of edge and vertex descriptors, for locating an
+ * element by its graph-wide index.
+ *
+ * The graph type is assembled from the element templates, e.g.
+ * \code
+ * using G = Graph<Component<Chain<Edge<Vertex>>>>;
+ * \endcode
+ * and makes the nested types available: G::Component, G::Chain, G::Edge,
+ * G::Vertex, G::EndSlot, G::BulkSlot...
+ *
+ * The graph holds the topology only: it is unaware of any physical or
+ * geometric properties, which client code may attach through the property
+ * processors of the transformations. The graph is movable but not
+ * copyable.
  * \tparam CC Type of connected components forming the graph object.
  */
 template<typename CC>
 struct Graph<CC>
 {
     using Self = Graph<CC>;
-    using Compt = CC;  // Connected component
-    using Component = CC;
+    using Compt = CC;  ///< Connected component (short alias).
+    using Component = CC;  ///< Connected component.
     using Components = structure::containers::Components<Compt>;
     using Chain = Compt::Chain;
     using Chains = Compt::Chains;
@@ -92,11 +109,14 @@ struct Graph<CC>
     using Vertex = Edge::Vertex;
     using VertexDescr = descriptors::VertexInGraph;
     using VertexDescriptors = structure::containers::VertexDescriptorsInGraph<Self>;
+    /// Shortest paths over the chain ends of a component.
     using PathsOverEndSlots = paths::over_endslots::Generic<Compt>;
     using ChainClasses = Compt::Chis;  ///< Chains classified by end degrees.
 
     static constexpr auto Type = Elements::Graph;
+    /// True iff the graph lives in a geometric space.
     static constexpr bool isSpatial {};
+    /// True: a graph may hold several components.
     static constexpr bool isMulticomponent {true};
     /// Whether the graph keeps the adjacency lists in \a adj up to date on
     /// update(). Off by default: the lists are then built on demand.
@@ -155,19 +175,26 @@ public:
     constexpr Graph(const Graph& gr) = delete;
     constexpr auto operator=(const Graph& gr) -> Graph& = delete;
 
+    /** Constructor taking over the chains \p gr, without components.
+     * \details Used by graph builders, which then assemble the components
+     * (see GraphFactory).
+     */
     explicit constexpr Graph(Chains&& gr);
 
-    /** Generate initial set of the graph components.
-     * \details The components are single chains of equal length 'len'.
+    /** Adds \p num new components, each a single unconnected chain of
+     * \p len edges.
+     * \note The count of components to reach is based on the number of
+     * chains already present, so it is exact only if each existing
+     * component is a single chain.
      * \param[in] num Desired number of components.
-     * \param[in] len Component length.
+     * \param[in] len Number of edges of each chain.
      */
     void generate_single_chain_components(
         std::size_t num,
         std::size_t len
     );
 
-    /** Appends an unconnected chain to the graph.
+    /** Adds a new component made of an unconnected chain of \p len edges.
      */
     void add_single_chain_component(std::size_t len);
 
@@ -255,50 +282,114 @@ public:
         Chain& m
     ) -> Compt&;
 
+    /**
+     * \name Access to the components.
+     * @{
+     */
+    /// All the components.
     constexpr auto compts() const noexcept -> const Components& { return ct; }
+    /// All the components.
     constexpr auto compts()       noexcept ->       Components& { return ct; }
+    /// Component \p c.
     constexpr auto compt(const CmpId c) const noexcept -> const Component& { return ct[c]; }
+    /// Component \p c.
     constexpr auto compt(const CmpId c)       noexcept ->       Component& { return ct[c]; }
+    /// Component hosting chain \p w.
     constexpr auto compt(const ChIdG w) const noexcept -> const Component& { return ct[cn[w].c]; }
+    /// Component hosting chain \p w.
     constexpr auto compt(const ChIdG w)       noexcept ->       Component& { return ct[cn[w].c]; }
+    /// Component hosting edge \p i.
     constexpr auto compt(const EgIdG i) const noexcept -> const Component& { return ct[cmpid(i)]; }
+    /// Component hosting edge \p i.
     constexpr auto compt(const EgIdG i)       noexcept ->       Component& { return ct[cmpid(i)]; }
+    /// The last component.
     constexpr auto compt_last() const noexcept -> const Component& { return ct.back(); }
+    /// The last component.
     constexpr auto compt_last()       noexcept ->       Component& { return ct.back(); }
+    /// Id of the component hosting chain \p w.
     constexpr auto cmpid(const ChIdG w) const noexcept -> CmpId { return cn[w].c; }
+    /// Id of the component hosting edge \p i.
     constexpr auto cmpid(const EgIdG i) const noexcept -> CmpId { return edge(i).c; }
+    ///@}
 
+    /**
+     * \name Access to the chains.
+     * @{
+     */
+    /// Ids of all the chains: 0, 1, ..., num_chains()-1.
     constexpr auto chids() const noexcept -> ChIdGs { return cn.chids(); }
+    /// Id of the chain hosting edge \p ind.
     constexpr auto chid(const EgIdG ind) const noexcept -> ChIdG;
+    /// All the chains.
     constexpr auto chains() const noexcept -> const Chains& { return cn; }
+    /// All the chains.
     constexpr auto chains()       noexcept ->       Chains& { return cn; }
+    /// Chain \p w.
     constexpr auto chain(const ChIdG& w) const noexcept -> const Chain& { return cn[w]; }
+    /// Chain \p w.
     constexpr auto chain(const ChIdG& w)       noexcept ->       Chain& { return cn[w]; }
+    /// The chain of end slot \p s.
     constexpr auto chain(const EndSlot& s) const noexcept -> const Chain&;
+    /// The chain of end slot \p s.
     constexpr auto chain(const EndSlot& s)       noexcept ->       Chain&;
+    /// The chain hosting edge \p ind.
     constexpr auto chain(const EgIdG ind) const noexcept -> const Chain&;
+    /// The chain hosting edge \p ind.
     constexpr auto chain(const EgIdG ind)       noexcept ->       Chain&;
+    /// The last chain.
     constexpr auto chain_last() const noexcept -> const Chain& { return cn.back(); }
+    /// The last chain.
     constexpr auto chain_last()       noexcept ->       Chain& { return cn.back(); }
+    ///@}
 
+    /**
+     * \name Access to the edges.
+     * @{
+     */
+    /// Edge \p ind.
     constexpr auto edge(EgIdG ind) const noexcept -> const Edge&;
+    /// Edge \p ind.
     constexpr auto edge(EgIdG ind)       noexcept ->       Edge&;
+    /// The edge at chain end \p s.
     constexpr auto edge(const EndSlot& s) noexcept -> Edge&;
+    /// The edge following internal vertex \p s along its chain, i.e. g[a].
     constexpr auto edge(const BulkSlot& s) noexcept -> Edge&;
+    /// The edge with the highest graph-wide index.
     constexpr auto edge_last() const noexcept -> const Edge& { return edge(numEdges-1); };
+    /// The edge with the highest graph-wide index.
     constexpr auto edge_last()       noexcept ->       Edge& { return edge(numEdges-1); };
+    ///@}
 
+    /**
+     * \name Access to the vertices.
+     * \details The lookups by VertexDescr, VIdG or VIdH go through the
+     * graph-wide vertex descriptors, rebuilt first if stale (see
+     * refresh_vertex_descriptors()).
+     * @{
+     */
+    /// Descriptors of the vertices of degree \p d.
     auto vertices(Degree d) const -> VertexDescriptors;
+    /// The vertex described by \p vd.
     constexpr auto vertex(const VertexDescr& vd) const noexcept -> const Vertex&;
+    /// The vertex described by \p vd.
     constexpr auto vertex(const VertexDescr& vd)       noexcept ->       Vertex&;
+    /// The vertex at position \p ind of the graph-wide descriptors.
     auto vertex(VIdG ind) const -> const Vertex&;
+    /// The vertex at position \p ind of the graph-wide descriptors.
     auto vertex(VIdG ind)       ->       Vertex&;
+    /// The vertex with handle \p h, or nullptr.
     auto vertex(VIdH h) const -> const Vertex*;
+    /// The vertex with handle \p h, or nullptr.
     auto vertex(VIdH h)       ->       Vertex*;
+    /// The vertex at chain end \p s, or nullptr if unconnected.
     constexpr auto vertex(const EndSlot& s) const noexcept -> const Vertex*;
+    /// The vertex at chain end \p s, or nullptr if unconnected.
     constexpr auto vertex(const EndSlot& s)       noexcept ->       Vertex*;
+    /// The internal vertex at slot \p s.
     constexpr auto vertex(const BulkSlot& s) const noexcept -> const Vertex*;
+    /// The internal vertex at slot \p s.
     constexpr auto vertex(const BulkSlot& s)       noexcept ->       Vertex*;
+    ///@}
 
     /** Exchanges the places of vertices \p a and \p b in the graph: each takes
      * over the edges, and the component, of the other.
@@ -308,17 +399,27 @@ public:
      */
     void exchange_vertices(Vertex& a, Vertex& b);
 
+    /// The graph-wide edge descriptors.
     constexpr auto get_egl() const noexcept -> const EdgeDescriptors& { return egl; }
+    /// The graph-wide edge descriptors.
     constexpr auto get_egl()       noexcept ->       EdgeDescriptors& { return egl; }
+    /// Descriptor of edge \p ind.
     constexpr auto get_egl(EgIdG ind) const noexcept -> const EdgeDescr&;
+    /// Descriptor of edge \p ind.
     constexpr auto get_egl(EgIdG ind)       noexcept ->       EdgeDescr&;
 
     // The vertex descriptors are refreshed if stale, see update_vertex_descriptors().
+    /// The graph-wide vertex descriptors.
     auto get_ved() const -> const VertexDescriptors& { refresh_vertex_descriptors(); return ved; }
+    /// The graph-wide vertex descriptors.
     auto get_ved()       ->       VertexDescriptors& { refresh_vertex_descriptors(); return ved; }
+    /// The vertex descriptor at position \p ind.
     auto get_ved(VIdG ind) const -> const VertexDescr&;
+    /// The vertex descriptor at position \p ind.
     auto get_ved(VIdG ind)       ->       VertexDescr&;
+    /// Descriptor of the vertex with handle \p h, which must exist.
     auto get_ved(VIdH h) const -> const VertexDescr& { refresh_vertex_descriptors(); return ved[h]; }
+    /// Descriptor of the vertex with handle \p h, which must exist.
     auto get_ved(VIdH h)       ->       VertexDescr& { refresh_vertex_descriptors(); return ved[ved.find(h)]; }
 
     /** Rotates the edges of chain \p m by \p n positions, as
@@ -326,10 +427,12 @@ public:
      */
     constexpr void rotate_chain(Chain& m, std::size_t n);
 
-    /**
+    /** Moves edges between two chains of a component, as
+     * Component::move_edges(), also updating the graph-wide descriptors.
      * \note Does not update edge connectivity.
      *       Does not update chain connectivity and 'ngs'.
      *       Does not remove source chain if it is emptied.
+     *       Only \p posTo = 0 is handled correctly.
      */
     constexpr void move_edges(
         Chain& fr,
@@ -355,15 +458,17 @@ public:
      */
     constexpr auto edge_end(const EndSlot& s) const noexcept -> EndId;
 
-    /** Updates internal data related to edge 'ind'.
+    /** Rebuilds the edge adjacency of the component hosting edge \p ind.
+     * \note Only compiled in use if \a useAgl is set.
      */
     void update_adjacency_edges(EgIdG ind) noexcept;
 
-    /** Updates internal data.
+    /** Rebuilds the edge adjacency of all the components.
+     * \note Only compiled in use if \a useAgl is set.
      */
     void update_adjacency() noexcept;
 
-    /** Updates internal vectors.
+    /** Updates the graph-wide records after a change of the structure.
      * \details Calls update_edge_descriptors(), then update_adjacency() if
      * the graph keeps an adjacency list (\a useAgl), and finally
      * update_vertex_descriptors(), which only marks the vertex descriptors
@@ -373,7 +478,7 @@ public:
     template<bool withVertices = true>
     void update();
 
-    /** Updates internal vectors after changes limited to chains \p ww.
+    /** Updates the graph-wide records after changes limited to chains \p ww.
      * \details Like update(), but updates only the descriptors of the edges
      * of chains \p ww: these must comprise every chain whose edges changed
      * position, chain or index. Chains no longer in the graph are skipped.
@@ -381,7 +486,7 @@ public:
     template<bool withVertices = true>
     void update(std::initializer_list<ChIdG> ww);
 
-    /** Initializes or updates vector of graph-wide edge descriptors.
+    /** Rebuilds the graph-wide edge descriptors from all the chains.
      */
     void update_edge_descriptors();
 
@@ -404,9 +509,11 @@ public:
      */
     void refresh_vertex_descriptors() const;
 
-    /** Builds an edge adjacency list.
+    /** Builds an edge adjacency list: edges are adjacent if they share a
+     * vertex.
      * \tparam F Type of element of the generated list.
-     * \param[in] f pointer to the function used for the element generation.
+     * \param[in] f Function mapping an edge to an element of the list, e.g.
+     * to its index.
      * \return For each graph-wide edge index, the elements generated by \p f
      * from the edges adjacent to it.
      */
@@ -424,9 +531,11 @@ public:
      */
     auto adjacency_list_chains() const noexcept -> vec2<ChIdG>;
 
+    /** Maximal vertex degree in the graph.
+     */
     constexpr auto max_degree() const noexcept -> Degree;
 
-    /** Number of vertices for the specific vertex degree \p d.
+    /** Number of vertices of degree \p d.
      */
     constexpr auto num_vertices(Degree d) const noexcept -> std::size_t;
 
@@ -437,6 +546,8 @@ public:
     /** Current number of components.
      */
     constexpr auto num_compts() const noexcept -> std::size_t { return ct.size(); };
+    /** Current number of components; the same as num_compts().
+     */
     constexpr auto num_components() const noexcept -> std::size_t { return num_compts(); };
 
     /** Current number of chains.
@@ -453,10 +564,14 @@ public:
     /** Current number of edges.
      */
     constexpr auto num_edges() const noexcept -> std::size_t { return numEdges; };
+    /// Recounts the edges from the chains.
     constexpr auto set_num_edges() noexcept { numEdges = cn.num_edges(); }
+    /// Sets the recorded number of edges to \p n.
     constexpr auto set_num_edges(const std::size_t n) noexcept { numEdges = n; }
 
+    /// Id of the last component.
     constexpr auto ind_last_cmpt() const noexcept -> CmpId;
+    /// Id of the last chain.
     constexpr auto ind_last_chain() const noexcept -> ChIdG;
 
     /** Records chain ends \p s1 and \p s2 as joined.
@@ -468,12 +583,17 @@ public:
     constexpr void connect(const EndSlot& s1,
                            const EndSlot& s2);
 
+    /// The neighbours of chain end \p s.
     constexpr auto ngs_at(const EndSlot& s) noexcept -> Chain::Neigs&;
+    /// The neighbours of chain end \p s.
     constexpr auto ngs_at(const EndSlot& s) const noexcept -> const Chain::Neigs&;
 
+    /// Graph-wide indexes of the end edges of the chain ends joined to \p s.
     constexpr auto ng_inds_at(const EndSlot& s) const noexcept -> EgIdGs;
 
+    /// The vertices of edge \p ind, by inner end.
     constexpr auto edge_vertices(EgIdG ind) const noexcept -> const Edge::Vertices&;
+    /// Handles of the vertices of edge \p ind, by inner end.
     constexpr auto edge_vids(EgIdG ind) const noexcept -> Edge::VIDs;
 
     /** Chain end slots by which the end edges \p ind1 and \p ind2 of two
@@ -486,24 +606,28 @@ public:
         EgIdG ind2
     ) const noexcept -> std::array<EndSlot, 2>;
 
-    /** Updates graph chain indexes.
-     * \details The indexes are updated so that the chain indexed as source
-     * will acquire the identity of the target:
-     * - connections of the source become connections of the target (end to end).
-     * - the source edges are moved to the target.
-     * - target acquires component index of the source.
-     * Source now devoid of edges retains its neigs which are now identical to
-     * those of the target.
+    /** Transfers the identity of chain \p f to chain \p t.
+     * \details Used, e.g., to fill the place of a removed chain with the
+     * last chain:
+     * - the connections of the source become those of the target, end to
+     *   end, and the neighbours refer to the target;
+     * - the source edges are moved to the target;
+     * - the target takes over the component and component-wide index of
+     *   the source, and replaces it in the records of the component.
+     *
+     * The source, now devoid of edges, retains its neighbours, which are
+     * now identical to those of the target.
+     * \tparam updateChis Also update the chain classification.
      * \param[in] f Source chain index.
      * \param[in] t Target chain index.
      */
     template<bool updateChis=true>
     void rename_chain(ChIdG f, ChIdG t);
 
-    /** Copies connection partners to a new chain.
-     * \details Copies assigning the connected slots of \p f to \p t and
-     * updates neigs of \p f to become neigs of \p t . Previous neigs of \p t
-     * are deleted; \p f neigs are not cleared.
+    /** Transfers the neighbours of chain end \p f to chain end \p t.
+     * \details Copies the neighbour list of \p f to \p t, replacing the
+     * previous neighbours of \p t, and makes each neighbour refer to \p t
+     * instead of \p f. The neighbour list of \p f is not cleared.
      * \param[in] f Source slot.
      * \param[in] t Target slot.
      */
@@ -532,6 +656,8 @@ public:
         const EndSlot& nov
     );
 
+    /** Checks if \p s1 and \p s2 are the two ends of the same cycle chain.
+     */
     constexpr bool is_same_cycle(
         const EndSlot& s1,
         const EndSlot& s2
@@ -547,15 +673,23 @@ public:
      */
     void print_components(std::string_view tag="") const;
 
+    /// Prints the chains of each component, labelled by \p tag.
     void print_component_chains(std::string_view tag="") const;
+    /// Prints the edge adjacency lists of the components.
     void print_adjacency_lists(std::string_view tag="") const;
+    /// Prints the vertices of each component, each preceded by \p tag.
     void print_vertices(std::string_view tag=" ") const;
+    /// Prints the vertices of degree \p d of each component, each preceded
+    /// by \p tag.
     void print_vertices_deg(
         Degree d,
         std::string_view tag=" "
     ) const;
 
-    /** Outputs the graph components to a text-formatted stream.
+    /** Writes a one-line summary of the graph to \p ofs: the numbers of
+     * vertices by degree, of edges, of chains and of components.
+     * \note The current implementation iterates degrees 0 to 3, thus
+     * omitting degree 4.
      * \param[in] ofs Output stream.
      */
     void report(std::ostream& ofs) const;
@@ -760,7 +894,7 @@ edge_end(const EndSlot& s) const noexcept -> EndId
 template<typename CC> using Graph = detail::Graph<CC>;
 
 
-}  // namespace graffine::structure::components
+}  // namespace graffine::structure
 
 // Parts of the implementation.
 #include "graffine/structure/elements/graph/components.h"

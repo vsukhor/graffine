@@ -57,6 +57,9 @@ struct invariant_error
 };
 
 /** An operation was requested for graph elements not meeting its requirements.
+ * \details Thrown, for instance, by a transformation applied to arguments it
+ * does not accept. The check precedes any modification, so the graph is left
+ * unchanged.
  */
 struct precondition_error
     : public error
@@ -75,7 +78,7 @@ struct io_error
 /** Description of a failed consistency check.
  */
 struct Violation {
-    std::string message;
+    std::string message;  ///< What was found inconsistent, and where.
 };
 
 /// Outcome of a consistency check: either success or the first violation.
@@ -84,9 +87,11 @@ using Validation = std::expected<void, Violation>;
 namespace utils {
 
 /** Throws exception \p E with a message composed of \p args.
- * \details Out of line and cold, so that the checks calling it cost no more
- * than a predictable branch on the success path. The message is only
- * formatted when the check fails.
+ * \details The message concatenates \p args, followed by the failed
+ * condition, if given, and the source location. The function is kept out of
+ * line and marked cold, so that a check calling it costs no more than a
+ * predictable branch when it passes; the message is only formatted when the
+ * check fails.
  * \tparam E Exception type to throw.
  * \param cond Text of the failed condition, or nullptr.
  * \param loc Location of the failed check.

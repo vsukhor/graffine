@@ -22,8 +22,8 @@ limitations under the License.
 
 /**
  * \file adjacency.h
- * \brief Contains class template building adjacency lists and checking
- * adjacency of graph vertices.
+ * \brief Adjacency lists of edges and chains, and adjacency checks of
+ * vertices.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -51,17 +51,20 @@ struct Adjacency
     using EndSlot = H::EndSlot;
     using End = descriptors::End;
     template <typename T> using vec2 = std::vector<std::vector<T>>;
+    /// Chain id type: graph-wide for a Graph host, component-wide otherwise.
     using ChId = std::conditional_t<H::isMulticomponent, ChIdG, ChIdC>;
+    /// Edge id type: graph-wide for a Graph host, component-wide otherwise.
     using EgId = std::conditional_t<H::isMulticomponent, EgIdG, EgIdC>;
 
-    // cpagl
-    vec2<EgId> lg;   ///< Edge adjacency_list.
-    vec2<VIdH> lev;  ///< Vertex adjacency_list for end vertices.
+    // Stored lists, filled on request by list_edges() and list_chains().
+    vec2<EgId> lg;   ///< Edge adjacency list.
+    vec2<VIdH> lev;  ///< Vertex adjacency list for end vertices (not filled here).
 
-    vec2<ChId> lw;   ///< Chain adjacency_list.
-    vec2<ChId> lwA;  ///< Chain adjacency_list in direction backwards.
-    vec2<ChId> lwB;  ///< Chain adjacency_list in direction forwards.
+    vec2<ChId> lw;   ///< Chain adjacency list, see list_chains().
+    vec2<ChId> lwA;  ///< Chain adjacency list at ends A (not filled here).
+    vec2<ChId> lwB;  ///< Chain adjacency list at ends B (not filled here).
 
+    /// Constructor of an analyzer of host \p h, with empty lists.
     Adjacency(const Host& h)
         : h {h}
     {}
@@ -93,7 +96,8 @@ struct Adjacency
      */
     void clear();
 
-    /** Initializes adjacency list of edges of this component.
+    /** Builds the edge adjacency list \a lg of the host, see
+     * list_edges(const Host&).
      */
     void list_edges() noexcept;
 
@@ -141,15 +145,19 @@ struct Adjacency
                                 ChId w2,
                                 EgIdA a2) const noexcept;
 
+    /// Prints the edge adjacency list \a lg, each line preceded by \p tag.
     void print_list_edges(std::string_view tag) const;
+    /// Prints the chain adjacency list \a lw, each line preceded by \p tag.
     void print_list_chains(std::string_view tag) const;
+    /// Prints chain adjacency list \p l of host \p h, each line preceded
+    /// by \p tag.
     static void print_list_chains(std::string_view tag,
                                   const vec2<ChId>& l,
                                   const Host& h);
 
 protected:
 
-    const Host& h;
+    const Host& h;  ///< The host whose elements are analysed.
 };
 
 

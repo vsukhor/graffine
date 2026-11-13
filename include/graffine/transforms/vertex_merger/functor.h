@@ -22,9 +22,8 @@ limitations under the License.
 
 /**
  * \file functor.h
- * \brief Contains implementation of a wrapper class for vertex merger
- * transformation.
- * \details Class encapsulating merger of vertices of all implemented degrees.
+ * \brief Merger of any two vertices, dispatching to the functor for their
+ * degrees.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -42,12 +41,11 @@ limitations under the License.
 #include <memory>
 #include <type_traits>
 
-/** Contains operations handling fusion of two vertices in a graph.
- */
 namespace graffine::transforms::vertex_merger {
 
-/** Wrapper functor for vertex degree-independent vertex merger.
+/** Merges any two vertices, dispatching to From<D1, D2> for their degrees.
  * \tparam G Graph to which the transformation is applied.
+ * \tparam PP Processor of non-topological properties, or void.
  */
 template<typename G,
          typename PP = void>
@@ -73,6 +71,7 @@ struct Functor
      * \details Unchecked: see Applicable.
      * \param[in] v1 The 1st parent vertex.
      * \param[in] v2 The 2nd parent vertex.
+     * \return Pointer to the merged vertex.
      */
     auto apply(Vertex& v1,
                Vertex& v2) -> Res;
@@ -104,10 +103,10 @@ struct Functor
      */
     auto processor() const noexcept -> PP* { return from11.processor(); }
 
-    From<Deg1, Deg1, G, PP> from11;
-    From<Deg1, Deg2, G, PP> from12;
-    From<Deg1, Deg3, G, PP> from13;
-    From<Deg2, Deg2, G, PP> from22;
+    From<Deg1, Deg1, G, PP> from11;  ///< Merger 1+1.
+    From<Deg1, Deg2, G, PP> from12;  ///< Merger 1+2.
+    From<Deg1, Deg3, G, PP> from13;  ///< Merger 1+3.
+    From<Deg2, Deg2, G, PP> from22;  ///< Merger 2+2.
 };
 
 // IMPLEMENTATION ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -123,7 +122,7 @@ Functor(Graph& gr,
     , from13 {gr, pp}
     , from22 {gr, pp}
 {
-    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor given, while PP is void");
 }
 
 

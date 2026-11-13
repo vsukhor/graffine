@@ -53,6 +53,8 @@
 // GRAFFINE_ASSERT and GRAFFINE_ASSERT_CALLING are compiled in DEBUG builds
 // only. They guard hot paths, and a failure aborts the process: it reveals
 // a defect, and the abort stops in a debugger or leaves a core dump.
+// GRAFFINE_ASSERT_CALLING evaluates the expression FUN before aborting,
+// e.g. to print the state that made the assertion fail.
 //
 // The checks below are always compiled in, and throw:
 // GRAFFINE_ENSURE  -- graffine::invariant_error, if EX is false;
@@ -77,17 +79,24 @@
 #define GRAFFINE_ENSURE(EX, ...) \
     (void)((EX) || (::graffine::utils::raise<::graffine::invariant_error>(#EX, std::source_location::current()  __VA_OPT__(,) __VA_ARGS__), 0))
 
-/// \note Here, condition \p EX is only used for printing it as text.
+/// \note Here, condition \p EX is not evaluated: it only describes the
+/// failure in the message.
 #define GRAFFINE_ABORT(EX, ...) \
     ::graffine::utils::raise<::graffine::invariant_error>(#EX, std::source_location::current()  __VA_OPT__(,) __VA_ARGS__)
 
 #define GRAFFINE_REQUIRE(EX, ...) \
     (void)((EX) || (::graffine::utils::raise<::graffine::precondition_error>(#EX, std::source_location::current()  __VA_OPT__(,) __VA_ARGS__), 0))
 
-/// General stuff.
+/// General-purpose utilities.
 namespace graffine::utils {
 
-/// Sum at compile time.
+/** Binary operation adding the result of member function \p P of an
+ * object to an accumulated value, e.g. for std::accumulate over a
+ * container of \p Q objects.
+ * \tparam T Type of the accumulated value and of the result of \p P.
+ * \tparam Q Type of the objects.
+ * \tparam P Pointer to a const member function of \p Q returning \p T.
+ */
 template<typename T,
          typename Q,
           T (Q::* P)() const>  // member function pointer parameter
@@ -99,9 +108,9 @@ struct Adder
     }
 };
 
-/** Find index of the first minimal vector element.
- * \note \b v must not be empty.
- * \return Index of the first minimal element of vector \b v
+/** Finds the index of the first smallest element of a vector.
+ * \note \p v must not be empty.
+ * \return Index of the first smallest element of vector \p v.
  */
 template<typename T> constexpr
 std::size_t index_min( const std::vector<T>& v ) noexcept
@@ -116,7 +125,10 @@ std::size_t index_min( const std::vector<T>& v ) noexcept
     return k;
 }
 
-/** Remove from a vector the first instance of an element a.
+/** Removes from a vector the first element equal to \p a.
+ * \details The order of the remaining elements is preserved. In DEBUG
+ * builds, the absence of such an element is an assertion failure; otherwise
+ * the vector is then left unchanged.
  * \tparam T Data type (must be EqualityComparable).
  * \param v The vector.
  * \param a The value to remove.
@@ -133,14 +145,16 @@ void remove_vector_element( std::vector<T>& v,
     GRAFFINE_ASSERT(false, "element not found");
 }
 
-// array from std::integer_sequence, based on
-//https://stackoverflow.com/questions/41660062/how-to-construct-an-stdarray-with-index-sequence
+/// Implementation of integers_zero_based(): builds an array from the
+/// integers of a std::integer_sequence. Based on
+/// https://stackoverflow.com/questions/41660062/how-to-construct-an-stdarray-with-index-sequence
 template<typename T, std::size_t N, std::size_t... I>
 constexpr auto create_array_impl(std::integer_sequence<T, I...>)
 {
     return std::array<T, N>{{I...}};
 }
 
+/// Returns the compile-time array {0, 1, ..., N-1} of type \p T.
 template<typename T, std::size_t N>
 constexpr auto integers_zero_based()
 {

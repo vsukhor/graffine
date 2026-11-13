@@ -22,7 +22,8 @@ limitations under the License.
 
 /**
  * \file common.h
- * \brief Contains generic templates for degree-specific vertex pulling.
+ * \brief Declarations shared by the pullings: trait, processor concept,
+ * plan, and the degree-specific functor template.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -47,6 +48,7 @@ limitations under the License.
 
 namespace graffine::transforms {
 
+/// Compile-time description of the pulling.
 template<typename G>
 struct Trait<TransformType::Pulling, G>
 {
@@ -54,14 +56,37 @@ struct Trait<TransformType::Pulling, G>
     using Compt = Graph::Compt;
     using Chain = Graph::Chain;
     using ResT = CmpId;
-    /// Result of the transformation: index of the component hosting the path after the pull.
+    /// Result of the transformation: index of the component hosting the
+    /// path after the pull.
     using Res = std::array<ResT, 1>;
 
-    static constexpr auto Type = TransformType::Pulling;
+    static constexpr auto Type = TransformType::Pulling;  ///< Family.
 };
 
 
-/// Enables pulling of a graph edge holding it at specific end.
+/** Pulling: shifting a path of edges relative to the rest of its component.
+ * \details A path (see Path) runs over consecutive edges from a \e driver
+ * vertex to a \e source vertex. Pulling it by one step moves the path's
+ * edges by one edge from the source side towards the driver: the chain at
+ * the driver gains an edge, the chain at the source loses one, and the
+ * junctions along the path, with the branches attached to them, shift by
+ * one edge towards the source. Think of pulling a rope at the driver end.
+ *
+ * The functors are degree-specific: On<D> pulls from a driver of degree D
+ * (1, 2 or 3), first preparing it so that it can be pulled as a free end
+ * (see FunctorBase). Functor dispatches to the right one for any driver.
+ * Usage:
+ * \code
+ * using Path = pulling::Path<G::Compt>;
+ * // From inner end A of edge eg (the driver), to the free end B of chain w:
+ * Path path {&gr.compt(eg.c), Path::Driver {&eg, G::End::A},
+ *            Path::Source {G::EndSlot {w, G::End::B}}};
+ * pulling::Functor<G> pull {gr};
+ * pull(path, 3);  // by 3 steps
+ * \endcode
+ * The path between the driver and the source is found as the shortest one,
+ * unless given explicitly.
+ */
 namespace pulling {
 
 template<typename C>
@@ -86,6 +111,7 @@ concept Processor =
     };
 
 
+/// Compile-time description of the pulling.
 template<typename G>
 using Trait = transforms::Trait<TransformType::Pulling, G>;
 
@@ -121,6 +147,7 @@ struct Plan {
     int steps {};   ///< Number of steps.
     int shifts {};  ///< Number of leading steps shifting the branches.
 
+    /// The hooks of this family in processor \p pp.
     template<typename PP>
     static constexpr auto hooks(PP& pp) -> decltype((pp.pulling))
     {
@@ -156,13 +183,16 @@ auto make_plan(
     return p;
 }
 
+/// Degrees of the vertices which can drive a pulling.
 inline constexpr std::array pullableDegrees {Deg1, Deg2, Deg3};
 
+/// True if a vertex of degree \p D can drive a pulling.
 template <Degree D>
 constexpr auto is_pullable_degree =
     std::find(pullableDegrees.begin(), pullableDegrees.end(), D) !=
     pullableDegrees.end();
 
+/// A degree of a vertex which can drive a pulling.
 template <Degree D>
 concept pullable_degree =
     std::find(pullableDegrees.begin(), pullableDegrees.end(), D) !=

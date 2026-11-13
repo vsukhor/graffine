@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file vertex.h
- * \brief Contains implementation of various vertex types.
+ * \brief The graph vertex.
  * \details Vertices are owned by the containers::Vertices collection of their
  * host component, which holds them by std::unique_ptr, so that their
  * addresses remain stable while the graph is transformed. A vertex records
@@ -55,6 +55,9 @@ namespace graffine::structure {
 namespace detail {
 
 
+/** Generic vertex template, specialized by the kinds of data a vertex
+ * holds: Vertex<> (handle only) and Vertex<ED> (with incident edges).
+ */
 template <typename... Ligands>
 struct Vertex {};
 
@@ -66,34 +69,39 @@ struct Vertex<>
 {
     using End = descriptors::End;
     static constexpr auto Type = Elements::Vertex;
+    /// True iff the vertex lives in a geometric space.
     static constexpr auto isSpatial = false;
 
 protected:  // Data
 
-    VIdH id;  ///< Unique identifier.
+    VIdH id;  ///< Stable handle, unique over the program run.
 
 private:
 
-    static inline VIdH h {};   ///< In-class id counter;
+    static inline VIdH h {};   ///< Counter issuing the handles.
 
 public:  // Functions
 
+    /// Constructor issuing a new handle.
     constexpr Vertex()
         : id {create_id()}
     {}
 
+    /// Constructor taking a given handle \p id, e.g. read from a file.
     explicit constexpr Vertex(const VIdH id)
         : id {id}
     {}
 
-    /** Equality operator.
+    /** Two vertices are equal if they have the same handle.
      */
     constexpr bool operator==(const Vertex& other) const noexcept
     {
         return id == other.id;
     }
 
+    /// The stable handle.
     constexpr auto get_id() const noexcept -> VIdH { return id; }
+    /// Sets the stable handle.
     constexpr void set_id(const VIdH i) noexcept   { id = i;}
 
     /**
@@ -118,7 +126,8 @@ public:  // Functions
 
 protected: // Functions
 
-    /** Create identifier unique over the program run.
+    /** Creates a handle unique over the program run, by incrementing a
+     * counter shared by all vertices.
      */
     static constexpr auto create_id() noexcept -> VIdH
     {
@@ -126,16 +135,18 @@ protected: // Functions
     }
 };
 
-using VertexFeaturelessUnconnected = Vertex<>;
+using VertexFeaturelessUnconnected = Vertex<>;  ///< Vertex holding only a handle.
 
 // /////////////////////////////////////////////////////////////////////////////
 
+/// Descriptor of an incident edge, as recorded by a vertex.
 using ED = descriptors::EdgeInVertex<IdScope::COMPONENT>;
 
 /** A vertex knowing its incident edges and its host component.
  * \details The edges are recorded by descriptors (Vertex::edges()) holding
- * their component-wide index and the inner end connected to the vertex;
- * the vertex degree is the number of descriptors. A vertex can be \a fixed:
+ * their component-wide index and the inner end connected to the vertex
+ * (see Edge for inner and outer ends); the vertex degree is the number of
+ * descriptors. A vertex can be \a fixed:
  * a flag for the user, stored and saved to PLY files, but not interpreted
  * by graffine.
  */
@@ -145,9 +156,9 @@ struct Vertex<ED>
 {
     using Base = VertexFeaturelessUnconnected;
     template<typename T> using EgContainerTempl = containers::Neigs<T>;
-    using EgDescr = ED;
-    using EgDescrors = EgContainerTempl<EgDescr>;
-    using FixedAttr = Property<bool>;
+    using EgDescr = ED;  ///< Descriptor of an incident edge.
+    using EgDescrors = EgContainerTempl<EgDescr>;  ///< Set of descriptors.
+    using FixedAttr = Property<bool>;  ///< Type of the \a fixed flag.
 
     static constexpr auto Type = Base::Type;
     static constexpr auto isSpatial = Base::isSpatial;
@@ -168,11 +179,17 @@ protected:  // Data
 
 public:  // Functions
 
+    /// Constructor of an unconnected vertex with a new handle, not
+    /// assigned to a component.
     Vertex();
+    /// Constructor of an unconnected vertex with handle \p id, not
+    /// assigned to a component.
     explicit Vertex(VIdH id);
+    /// Constructor of an unconnected vertex with handle \p id and the
+    /// \a fixed flag \p isFixed, not assigned to a component.
     explicit Vertex(VIdH id, bool isFixed);
 
-    /** Constructor for an unconnected vertex.
+    /** Constructor of an unconnected vertex with a new handle.
      * \param[in] c Id of the graph connected component hosting the vertex.
      */
     explicit Vertex(CmpId c);
@@ -190,7 +207,9 @@ public:  // Functions
      */
     constexpr auto deg() const noexcept -> Degree;
 
+    /// Id of the host component.
     constexpr auto get_c() const noexcept -> CmpId { return c; }
+    /// Sets the id of the host component.
     constexpr void set_c(CmpId i) noexcept   { c = i; }
 
     /**
@@ -212,7 +231,9 @@ public:  // Functions
 
     ///@}  // Edges connected to the given ones.
 
+    /// Descriptors of the incident edges.
     constexpr auto edges() const noexcept -> const EgDescrors& { return egDescrors; }
+    /// Descriptors of the incident edges.
     constexpr auto edges() noexcept -> EgDescrors&             { return egDescrors; }
 
     /** Descriptors of the edges connected at their inner end B, i.e.
@@ -225,7 +246,8 @@ public:  // Functions
     auto edges_out() const noexcept -> EgDescrors;
 
     /** Removes the descriptor \p g of an incident edge.
-     * \return The number of descriptors removed: 1.
+     * \return 1 if \p g was present, 0 otherwise (an assertion failure in
+     * DEBUG builds).
      */
     auto erase(const EgDescr& g) noexcept -> EgDescrors::size_type;
 
@@ -257,13 +279,15 @@ public:  // Functions
     bool reind_edge(EgDescr&& from,
                     EgIdC to) noexcept;
 
-    /** Degree tests: 2 (bulk), 1 (leaf), 3 (junctionY), 4 (junctionX), and
-     * above 2 (junction).
-     */
+    /// Checks if the vertex is inside a chain: degree 2.
     constexpr bool is_bulk() const noexcept;
+    /// Checks if the vertex is a free end: degree 1.
     constexpr bool is_leaf() const noexcept;
+    /// Checks if the vertex is a Y-shaped junction: degree 3.
     constexpr bool is_junctionY() const noexcept;
+    /// Checks if the vertex is an X-shaped junction: degree 4.
     constexpr bool is_junctionX() const noexcept;
+    /// Checks if the vertex is a junction: degree above 2.
     constexpr bool is_junction() const noexcept;
 
     ///@}  // Edge connectivity.
@@ -276,7 +300,9 @@ public:  // Functions
     /** Whether the vertex is fixed (see the class description).
      */
     constexpr bool is_fixed() const noexcept { return isFixed(); }
+    /// Sets the \a fixed flag.
     constexpr void fix() noexcept   { isFixed() = true; }
+    /// Clears the \a fixed flag.
     constexpr void unfix() noexcept { isFixed() = false; }
 
     ///@}  // Property operations.
@@ -573,8 +599,8 @@ print(const std::string_view s) const
 
 }  // namespace::detail
 
-using VertexFixable = detail::Vertex<detail::ED>;
-using Vertex = VertexFixable;
+using VertexFixable = detail::Vertex<detail::ED>;  ///< Vertex with incident edges and a \a fixed flag.
+using Vertex = VertexFixable;  ///< The vertex type used by graffine.
 
 }  // namespace graffine::structure
 

@@ -22,9 +22,8 @@ limitations under the License.
 
 /**
  * \file reporter.h
- * \brief Contains class responsible for logging summary in vertex splits.
- * \details The summary is printed out in standardized form before, during and
- * after the transform.
+ * \brief Printing of the chains of a vertex split before, during and after
+ * it.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -43,9 +42,9 @@ limitations under the License.
 
 namespace graffine::transforms::vertex_split {
 
-/** Structure responsible for outputting formatted summary of vertex split.
- * \details The summary is printed out in standardized form before, during and
- * after the transform.
+/** Prints the vertex and chains of a vertex split before, during and after
+ * it, when the functors report verbosely (\c verboseF).
+ * \tparam G Graph type.
  */
 template<typename G>
 struct Reporter
@@ -59,24 +58,42 @@ struct Reporter
     using ResT = Vertex*;
     using Res = std::array<ResT, 2>;
 
-    const std::string longName {"Vertex split "};
-    const std::string shortName {"vs"};
+    const std::string longName {"Vertex split "};  ///< Name in the header line.
+    const std::string shortName {"vs"};           ///< Name in the chain labels.
 
+    /** Constructor.
+     * \param degs Degrees of the resulting vertices, as text.
+     * \param gr Graph transformed.
+     */
     constexpr explicit Reporter(
         const std::string& degs,
         Graph& gr
     );
 
+    /** Prints the vertex at slot \p s, split, and its chains, before the
+     * split.
+     * \param s Slot of the split vertex, or of the chain end detached.
+     * \param tag Label of the split case.
+     */
     template<structure::descriptors::slot S=EndSlot>
     void before(
         const S& s,
         std::string&& tag={}
     );
 
+    /** Prints the chain ends \p ss detached and the chains at the vertex,
+     * before the split.
+     */
     void before(
         std::vector<EndSlot>&& ss
     );
 
+    /** Prints the resulting vertices and chains after the split.
+     * \param res The resulting vertices.
+     * \param w1 A resulting chain.
+     * \param inds Edges whose chains are printed as well.
+     * \param isSelfCycled The split chain was a cycle.
+     */
     void after(
         const Res& res,
         ChIdG w1,
@@ -84,32 +101,43 @@ struct Reporter
         bool isSelfCycled=false
     ) const;
 
+    /** Prints the resulting vertices \p res and the chains holding edges
+     * \p inds1 and \p inds2, at either resulting vertex, after the split.
+     */
     void after(
         const Res& res,
         EgIdGs&& inds1,
         EgIdGs&& inds2
     ) const;
 
+    /** Prints chains \p w1 and \p w2 at an intermediate stage of a split.
+     */
     void intermediate(
         ChIdG w1,
         ChIdG w2
     ) const;
 
+    /** Prints the number \p i of the case of the split being performed,
+     * with description \p s.
+     */
     constexpr void branch(int i,
                           std::string_view s) const;
 
+    /** Prints the two resulting vertices \p res.
+     */
     void print_res(const Res& res) const noexcept;
 
 protected:
 
-    std::string degs;
-    std::string tag_before {};
+    std::string degs;              ///< Degrees of the resulting vertices, as text.
+    std::string tag_before {};     ///< Label of the split case.
 
     Graph& gr;  ///< Reference to the modified graph object.
 
     // References to some of graph class fields for convenience.
     Graph::Chains& cn; ///< Reference to the graph edge chains.
 
+    /// Prints the vertex at slot \p s.
     template<structure::descriptors::slot S>
     void vertex_before(const S& s) const;
 };

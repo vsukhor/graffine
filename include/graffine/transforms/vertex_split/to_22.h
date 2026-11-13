@@ -22,10 +22,7 @@ limitations under the License.
 
 /**
  * \file to_22.h
- * \brief Contains class template enabling splits of specific graph vertices.
- * \details This Functor template specialization operates on vertices of
- * degree 4 to produce two vertices whose degrees sum up to 4, except 1 and 3,
- * implemented in a separate functor.
+ * \brief Split of an X junction into two vertices of degree 2 (4 -> 2+2).
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -45,12 +42,12 @@ limitations under the License.
 
 namespace graffine::transforms::vertex_split {
 
-/** Template specialization for producing a pair of degree 2 vertices.
- * \details Adds vertex type-specific split capability and updates
- * the graph for it. This Functor template specialization operates
- * on vertices of degree 4 to produce two vertices of degree 2: V4 -> 2V2.
- * The V2 vertices may be either internal chain vertices or boundary vertices of
- * one or two unconnected cycle chains.
+/** Splits a vertex of degree 4 into two vertices of degree 2.
+ * \details Separates the four chain ends at an X junction into two pairs,
+ * each pair joined through one of the resulting vertices. These may be
+ * internal chain vertices, or boundary vertices of one or two unconnected
+ * cycles. Performed by the splits 1+3 and 1+2 and the merger 1+1, whose
+ * hooks run inside this transformation (see context.h).
  * \tparam G Graph to which the split operation is applied.
  */
 template<typename G,
@@ -79,9 +76,9 @@ struct To<Deg2, Deg2, G, PP>
     /// Context of the hooks of the inner splits and merger.
     static constexpr Frame frame {Trait::Type, J1, J2};
 
-    const std::string dd {degrees_to_string(J1, J2)};
-    const std::string shortName {make_name(Trait::shortName, dd)};
-    const std::string fullName  {make_name(Trait::fullName, dd)};
+    const std::string dd {degrees_to_string(J1, J2)};  ///< Degrees, as text.
+    const std::string shortName {make_name(Trait::shortName, dd)};  ///< Abbreviated name.
+    const std::string fullName  {make_name(Trait::fullName, dd)};  ///< Name in messages.
 
     /** Constructs a Functor object based on the Graph instance.
      * \param[in] gr Graph to which the transformation is applied.
@@ -90,28 +87,36 @@ struct To<Deg2, Deg2, G, PP>
     explicit To(Graph& gr,
                 std::shared_ptr<PP> pp = nullptr);
 
-    /** Divides the graph chain at a vertex of degree 2.
-     * \param[in] v Degree 3 vertex.
-     * \param[in] s Descriptors of incident edges to get disconnected.
+    /** Detaches edges \p s together from vertex \p v, of degree 4.
+     * Unchecked: see Applicable.
+     * \param[in] v Degree 4 vertex.
+     * \param[in] s Descriptors of the two incident edges going to the first
+     * resulting vertex.
+     * \return The two resulting vertices.
      */
     auto apply(Vertex& v,
                const std::vector<EdgeInVertex>& s) -> Res;
 
-    /** Divides the component at a vertex of degree 4.
-     * Template parameters are used for testing of output chain types, their
-     * default values may be accepted in most cases.
-     * \param[in] s Slots defining the vertex to split.
+    /** Splits the X junction at chain ends \p s, detaching them together.
+     * \details The template parameters serve for testing the kinds of the
+     * resulting chains; their default values suit most cases. Unchecked:
+     * see Applicable.
+     * \param[in] s The two chain ends going to the first resulting vertex.
+     * \return The two resulting vertices.
      */
     template<bool checkValidity = false,
              bool toDisconnectedCycle1 = false,
              bool toDisconnectedCycle2 = false>
     auto apply(const std::array<EndSlot, J1>& s) -> Res;
 
-    /** Divides the component at a vertex of degree 4.
-     * Template parameters are used for testing of output chain types, their
-     * default values may be accepted in most cases.
-     * \param[in] s1 Slot defining the vertex to split and its 1st edge.
-     * \param[in] s2 Slot defining the vertex to split and its 2nd edge.
+    /** Splits the X junction at chain ends \p s1 and \p s2, detaching
+     * them together.
+     * \details The template parameters serve for testing the kinds of the
+     * resulting chains; their default values suit most cases. Unchecked:
+     * see Applicable.
+     * \param[in] s1 1st chain end going to the first resulting vertex.
+     * \param[in] s2 2nd chain end going to the first resulting vertex.
+     * \return The two resulting vertices.
      */
     template<bool checkValidity = false,
              bool toDisconnectedCycle1 = false,
@@ -175,10 +180,10 @@ struct To<Deg2, Deg2, G, PP>
 
 private:
 
-    // Auxiliary low-level functors for intermediate states.
-    vertex_merger::From<Deg1, Deg1, Graph, PP> merge;
-    To<Deg1, Deg3, Graph, PP> split_to_13;
-    To<Deg1, Deg2, Graph, PP> split_to_12;
+    // Inner transformations performing the split.
+    vertex_merger::From<Deg1, Deg1, Graph, PP> merge;  ///< Merger 1+1.
+    To<Deg1, Deg3, Graph, PP> split_to_13;             ///< Split 4 -> 1+3.
+    To<Deg1, Deg2, Graph, PP> split_to_12;             ///< Split 3 -> 1+2.
 
     Graph& gr;  ///< Reference to the modified graph object.
 
@@ -214,7 +219,7 @@ To(Graph& gr,
     , updateProperties {pp}
     , report {dd, gr}
 {
-    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor given, while PP is void");
 }
 
 
@@ -494,7 +499,7 @@ struct To2<Deg2, G, PP>
                            std::shared_ptr<PP> pp = nullptr)
         : Base {gr, pp}
     {
-        GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+        GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor given, while PP is void");
     }
 };
 

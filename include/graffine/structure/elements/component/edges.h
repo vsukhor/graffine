@@ -33,7 +33,7 @@ limitations under the License.
 
 namespace graffine::structure::detail {
 
-// Reconnect edges from vA to vB
+// Moves the edge ends attached to vertex f over to vertex t.
 template <typename Ch>
 void Component<Ch>::
 reconnect_edges(Vertex* f, Vertex* t)
@@ -49,10 +49,10 @@ reconnect_edges(Vertex* f, Vertex* t)
     }
 }
 
-// Removes an edge g[a],  shifting original g[a+1], g[a+2], ... backwards.
+// Removes an edge g[a], shifting original g[a+1], g[a+2], ... backwards.
 // These then become g[a], g[a+1], ... .
 // Note: does not update global edge indices.
-// Note: does not remove the host chain if it gets emptied by the edge removal.
+// Note: the host chain must keep at least one edge.
 template <typename Ch>
 template <bool preserveTopology>
 auto Component<Ch>::
@@ -62,10 +62,10 @@ remove_edge(const ChIdG w, // id of the chain modified by the edge removal
     return remove_edge(cn[w], a);
 }
 
-// Removes an edge g[a],  shifting original g[a+1], g[a+2], ... backwards.
+// Removes an edge g[a], shifting original g[a+1], g[a+2], ... backwards.
 // These then become g[a], g[a+1], ... .
 // Note: does not update global edge indices.
-// Note: does not remove the host chain if it gets emptied by the edge removal.
+// Note: the host chain must keep at least one edge.
 template <typename Ch>
 template <bool preserveTopology>
 auto Component<Ch>::
@@ -76,10 +76,10 @@ remove_edge(const EgIdC indc) -> Edge*
     return remove_edge(cn[gl.w], gl.a);
 }
 
-// Removes edge g[a],  shifting original g[a+1], g[a+2], ... backwards.
+// Removes edge g[a], shifting original g[a+1], g[a+2], ... backwards.
 // These then become g[a], g[a+1], ... .
 // Note: does not update global edge indices.
-// Note: does not remove the host chain if it gets emptied by the edge removal.
+// Note: the host chain must keep at least one edge.
 template <typename Ch>
 template <bool preserveTopology>
 auto Component<Ch>::
@@ -138,8 +138,8 @@ remove_edge(Chain& m, // chain modified by the edge removal
     return a < m.length() ? &g[a] : nullptr;
 }
 
-// Inserts an edge at g[a] of chain 'w' shifting original g[a], g[a+1], ...
-// forwards, to become g[a+1], g[a+2], .....
+// Inserts an edge at g[a] of chain 'w', shifting original g[a], g[a+1], ...
+// forwards, to become g[a+1], g[a+2], ...
 // Note: insertion is not limited to the chain internal:
 //   if a == 0, prepends the new edge at end A,
 //   if a == length(), appends the new edge at end B.
@@ -153,8 +153,8 @@ insert_edge_into_chain(
     return insert_edge_into_chain(std::move(eg), cn[w], a);
 }
 
-// Inserts an edge at g[a] of chain 'w' shifting original g[a], g[a+1], ...
-// forwards, to become g[a+1], g[a+2], .....
+// Inserts an edge at g[a] of chain 'w', shifting original g[a], g[a+1], ...
+// forwards, to become g[a+1], g[a+2], ...
 // Note: insertion is not limited to the chain internal:
 //   if a == 0, prepends the new edge at end A,
 //   if a == length(), appends the new edge at end B.
@@ -189,8 +189,8 @@ insert_edge_into_chain(
     return insert_edge_inside_chain(std::move(eg), m, a);
 }
 
-// Inserts an edge at g[a] of chain 'w' shifting original g[a], g[a+1], ...
-// forwards, to become g[a+1], g[a+2], .....
+// Inserts an edge at g[a] of chain 'w', shifting original g[a], g[a+1], ...
+// forwards, to become g[a+1], g[a+2], ...
 // Note: insertion is limited to the chain internal: 0 < a < m.length()
 template <typename Ch>
 auto Component<Ch>::
@@ -202,8 +202,8 @@ insert_edge_inside_chain(
     return insert_edge_inside_chain(std::move(eg), cn[w], a);
 }
 
-// Inserts an edge at g[a] of chain 'w' shifting original g[a], g[a+1], ...
-// forwards, to become g[a+1], g[a+2], .....
+// Inserts an edge at g[a] of chain 'w', shifting original g[a], g[a+1], ...
+// forwards, to become g[a+1], g[a+2], ...
 // Note: insertion is limited to the chain internal: 0 < a < m.length()
 template <typename Ch>
 auto Component<Ch>::
@@ -326,7 +326,7 @@ append_edge_to_chain(Edge&& eg,
     return p;
 }
 
-// Appends an edge at the chain head, i.e. at the back of g.
+// Prepends an edge at the chain tail, i.e. at the front of g.
 template <typename Ch>
 auto Component<Ch>::
 prepend_edge_to_chain(Edge&& eg,
@@ -335,7 +335,7 @@ prepend_edge_to_chain(Edge&& eg,
     return prepend_edge_to_chain(std::move(eg), cn[w]);
 }
 
-// Appends an edge at the chain head, i.e. at the back of g.
+// Prepends an edge at the chain tail, i.e. at the front of g.
 template <typename Ch>
 auto Component<Ch>::
 prepend_edge_to_chain(Edge&& eg,
@@ -378,6 +378,7 @@ splice_edge(
     nb.connect_to_outer(e, v);
     p.connect_to_outer(End::opp(e), v);
 }
+
 template <typename Ch>
 constexpr void Component<Ch>::
 move_edges(

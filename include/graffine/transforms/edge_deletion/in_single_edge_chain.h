@@ -22,7 +22,8 @@ limitations under the License.
 
 /**
  * \file in_single_edge_chain.h
- * \brief Struct performing deletion of graph edges along with host chain.
+ * \brief Deletion of a single-edge chain with its edge, for any junction
+ * degree.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -36,22 +37,15 @@ limitations under the License.
 #include <memory>
 #include <type_traits>
 
-/** Contains utilities for handling edge deletion operations in a graph.
- * \details These are functors for deleting edges based on chain lengths and
- * vertex degrees.
- */
 namespace graffine::transforms::edge_deletion {
 
-/** Vertex degree-independent wrapper class for edge deletion in chains
- * consisting of single edge.
- * \details Handles the case of single-edge chains. Notably, because the chain
- * contains only one edge, at least one of the edge ends is a vertex
- * of degree 1. So, a single-edge chain is suitable for deletion upon the edge
- * removal only if one of its ends is unconnected, while the other end is at a
- * junction between chains.
- * \note This case is discriminated because deletion of an edge in single-edge
- * chains does trigger automatically deletion of the host chain itself
+/** Deletes an edge forming a single-edge chain, together with the chain.
+ * \details A single-edge chain disappears with its edge, so it is
+ * deletable only if one of its ends is free, while the other is at a
+ * junction, which then loses one branch. Dispatches to DeletingHostChain
+ * for the degree, 3 or 4, of that junction.
  * \tparam G Graph hosting the edge to be deleted.
+ * \tparam PP Processor of non-topological properties, or void.
  */
 template<typename G,
          typename PP = void>
@@ -69,7 +63,7 @@ struct InSingleEdgeChain
     using Res = Trait::Res;
     using PropertyProcessor = PP;
 
-    /// This is a single-edge chain, so one of the edge ends has degree 1.
+    /// Degree of the free end of the deletable single-edge chain.
     static constexpr auto I = Deg1;
 
     /** Constructs a Functor object based on the Graph instance.
@@ -79,8 +73,9 @@ struct InSingleEdgeChain
     explicit constexpr InSingleEdgeChain(Graph& gr,
                                          std::shared_ptr<PP> pp = nullptr);
 
-    /** Function call operator executing the deletion using edge index.
+    /** Deletes edge \p ind with its chain. Unchecked: see Applicable.
      * \param[in] ind Graph-wide index of the deleted edge.
+     * \return Index of the component that hosted the edge.
      */
     auto apply(EgIdG ind) -> Res;
 
@@ -130,7 +125,7 @@ InSingleEdgeChain(Graph& gr,
     , deg3 {gr, pp}
     , deg4 {gr, pp}
 {
-    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor given, while PP is void");
 }
 
 

@@ -23,7 +23,7 @@ limitations under the License.
 
 /**
  * \file triangles.h
- * \brief Implements container holding chain triangles.
+ * \brief Container of chain triangles.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -39,7 +39,7 @@ limitations under the License.
 namespace graffine::structure {
 
 
-/** Collection of chain triangles.
+/** Collection of the chain triangles of a component.
  */
 struct Triangles
 {

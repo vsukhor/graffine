@@ -22,9 +22,7 @@ limitations under the License.
 
 /**
  * \file to_11.h
- * \brief Contains class template enabling splits of specific graph vertices.
- * \details This Functor template specialization operates on vertices of
- * degree 2 to produce two degree 1 vertices.
+ * \brief Split of a vertex of degree 2 into two free ends (1+1).
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -48,10 +46,10 @@ limitations under the License.
 
 namespace graffine::transforms::vertex_split {
 
-/** Template specialization for a functor generating 2 degree 1 vertices.
- * \details Adds vertex type-specific split capability and updates
- * the graph for it. This implementation operates on degree 2 vertices
- * at specific position to produce two degree 1 vertices: V2 -> 2V1.
+/** Splits a vertex of degree 2 into two vertices of degree 1.
+ * \details Cuts a chain at an internal vertex: a linear chain becomes two
+ * chains, possibly in two components; a cycle is opened into a linear
+ * chain.
  * \tparam G Graph to which the split operation is applied.
  */
 template<typename G,
@@ -80,9 +78,9 @@ struct To<Deg1, Deg1, G, PP>
 
     static_assert(areCompatibleDegrees<J1, J2>);
 
-    const std::string dd {degrees_to_string(J1, J2)};
-    const std::string shortName {make_name(Trait::shortName, dd)};
-    const std::string fullName  {make_name(Trait::fullName, dd)};
+    const std::string dd {degrees_to_string(J1, J2)};  ///< Degrees, as text.
+    const std::string shortName {make_name(Trait::shortName, dd)};  ///< Abbreviated name.
+    const std::string fullName  {make_name(Trait::fullName, dd)};  ///< Name in messages.
 
     /** Constructs a functor for vertex split operation acting on a Graph.
      * \param[in] gr Graph to which the transformation is applied.
@@ -91,15 +89,18 @@ struct To<Deg1, Deg1, G, PP>
     explicit To(Graph& gr,
                 std::shared_ptr<PP> pp = nullptr);
 
-    /** Divides the graph chain at a vertex of degree 2.
+    /** Cuts the chain at vertex \p v, of degree 2. Unchecked: see
+     * Applicable.
      * \param[in] v Internal chain vertex.
+     * \return The two resulting free-end vertices.
      */
     auto apply(Vertex& v) -> Res;
 
-    /** Divides the graph chain at a vertex of degree 2.
-     * \param[in] s Slot on internal chain vertex. Location parameter \a s.a is
-     *              counted from 1 and designates the last edge to remain in the
+    /** Cuts the chain at the vertex at \p s. Unchecked: see Applicable.
+     * \param[in] s Slot of the internal chain vertex, between edges
+     *              g[a-1] and g[a]: edges g[0] to g[a-1] remain in the
      *              original chain.
+     * \return The two resulting free-end vertices.
      */
     auto apply(const BulkSlot& s) -> Res;
 
@@ -193,7 +194,7 @@ private:
     /// Pretty-printer of the initial and final configurations.
     Reporter<Graph> report;
 
-    /// Auxiliary functor for intermediate vertex merger.
+    /// Low-level joining of chain ends, used inside the split.
     vertex_merger::Core<Graph, PP> merge;
 
     /// Object of the split vertex and the resulting vertex to become it,
@@ -220,7 +221,7 @@ To(Graph& gr,
     , report {dd, gr}
     , merge {gr, pp, "vm_core called from"s + shortName}
 {
-    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor given, while PP is void");
 }
 
 
@@ -554,7 +555,7 @@ struct To1<Deg1, G, PP>
                            std::shared_ptr<PP> pp = nullptr)
         : Base {gr, pp}
     {
-        GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+        GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor given, while PP is void");
     }
 };
 

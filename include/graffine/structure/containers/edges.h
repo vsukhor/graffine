@@ -22,8 +22,7 @@ limitations under the License.
 
 /**
  * \file edges.h
- * \brief Defines classes managing collections of edges of the graph.
- * \details Adds edge-specific functionality to the Sequence container.
+ * \brief Container of the edges of a chain.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -44,10 +43,10 @@ limitations under the License.
 
 namespace graffine::structure::containers {
 
-/** Container for managing collections of chains in the graph.
- * \details Derives from Sequence container class adding to it chain-specific
- * functionality.
- * \tparam Eg Container element type.Should be derived from core::elements::Edge.
+/** Container of the edges of a chain, in their order along the chain.
+ * \details Extends Sequence with indexing by the position of an edge in its
+ * chain (EgIdA), counted from 0 at chain end A.
+ * \tparam Eg Container element type: an edge (see elements/edge.h).
  */
 template<typename Eg>
 struct Edges
@@ -59,16 +58,25 @@ struct Edges
     using value_type = Base::value_type;
     using EdgeDescr = descriptors::EdgeInGraph;
 
-    /// Actual number of chains in the container.
+    /// Number of edges in the container.
     constexpr auto num() const noexcept -> size_type;
+    /// Position of the last edge, or \ref utils::undefined if the
+    /// container is empty.
     constexpr auto ind_last() const noexcept -> size_type;
 
+    /// The edge at position \a egd.a; the chain \a egd.w is not checked.
     constexpr auto edge(const EdgeDescr& egd) const noexcept -> const Edge&;
+    /// The edge at position \a egd.a; the chain \a egd.w is not checked.
     constexpr auto edge(const EdgeDescr& egd) noexcept -> Edge&;
 
+    /// The edge at position \p w along the chain.
     constexpr auto operator[](const EgIdA w) -> Edge& { return m_data[w()]; }
+    /// The edge at position \p w along the chain.
     constexpr auto operator[](const EgIdA w) const -> const Edge& { return m_data[w()]; }
 
+    /** Prints all the edges.
+     * \param tag Label printed with each edge.
+     */
     void print(std::string_view tag) const;
 
     /** Checks that \p cond is satisfied.

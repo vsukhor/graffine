@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file functor.h
- * \brief Contains template for creation of specific connected components.
+ * \brief Creation of a new component made of a single unconnected chain.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -40,6 +40,7 @@ limitations under the License.
 
 namespace graffine::transforms {
 
+/// Compile-time description of the component creation.
 template<typename G>
 struct Trait<TransformType::ComponentCreation, G>
 {
@@ -53,16 +54,17 @@ struct Trait<TransformType::ComponentCreation, G>
     /// Result of the transformation: index of the created component.
     using Res = std::array<ResT, 1>;
 
-    static constexpr const char* fullName {"component_creation"};
-    static constexpr const char* shortName {"cmp_cr"};
+    static constexpr const char* fullName {"component_creation"};  ///< Name in messages.
+    static constexpr const char* shortName {"cmp_cr"};  ///< Abbreviated name.
 
-    static constexpr auto Type = TransformType::ComponentCreation;
+    static constexpr auto Type = TransformType::ComponentCreation;  ///< Family.
 };
 
 
 /// Enables creation of a new unconnected graph component.
 namespace component_creation {
 
+/// Compile-time description of the component creation.
 template<typename G>
 using Trait = transforms::Trait<TransformType::ComponentCreation, G>;
 
@@ -72,6 +74,7 @@ template<typename G>
 struct Plan {
     std::size_t length {};  ///< Number of edges of its single chain.
 
+    /// The hooks of this family in processor \p pp.
     template<typename PP>
     static constexpr auto hooks(PP& pp) -> decltype((pp.componentCreation))
     {
@@ -96,8 +99,13 @@ concept Processor =
     };
 
 
-/** Functor class creating specific graph component.
- * \details The component is created as a single chain.
+/** Creates a new component made of a single unconnected chain.
+ * \details The chain consists of new edges and vertices; the component is
+ * appended to the graph. Usage:
+ * \code
+ * component_creation::Functor<G> create {gr};
+ * const auto [c] = create(10);  // a chain of 10 edges
+ * \endcode
  * \tparam G Graph to which the transformation is applied.
  * \tparam PP Processor of non-topological properties, or void.
  */
@@ -165,7 +173,7 @@ Functor(Graph& gr,
     : gr {gr}
     , updateProperties {pp}
 {
-    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor given, while PP is void");
 }
 
 

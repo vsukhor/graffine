@@ -22,8 +22,7 @@ limitations under the License.
 
 /**
  * \file on_1.h
- * \brief Contains specialization of the functor for pulling graph
- * transformation to vertices of degree 1.
+ * \brief Pulling driven by a vertex of degree 1 (a free end).
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -44,7 +43,9 @@ limitations under the License.
 
 namespace graffine::transforms::pulling {
 
-/** Functor for edge pulling initiated at a vertex of degree 1.
+/** Pulling driven by a vertex of degree 1, i.e. a free chain end.
+ * \details The simplest case: the free end is pulled directly, with no
+ * preparation (see FunctorBase).
  * \tparam G Graph to which the pull operation is applied.
  * \tparam PP Processor of non-topological properties, or void.
  */
@@ -69,9 +70,9 @@ struct On<Deg1, G, PP>
 
     static_assert(is_pullable_degree<D>);
 
-    const std::string d {std::to_string(D)};
-    const std::string shortName {d + "pu"};
-    const std::string fullName  {"Pulling from Vertex Deg "s + d};
+    const std::string d {std::to_string(D)};  ///< Driver degree, as text.
+    const std::string shortName {d + "pu"};   ///< Abbreviated name.
+    const std::string fullName  {"Pulling from Vertex Deg "s + d};  ///< Name in messages.
 
     /** Constructs functor object based on the Graph instance.
      * \param[in] gr Graph to which the transformation is applied.
@@ -109,7 +110,7 @@ protected:
     using Base::check_source;
     using Base::updateProperties;
 
-    /** Checks that the path is valid for use in pulling.
+    /** Asserts, in DEBUG builds, that the path is valid for use in pulling.
      * \param[in] path Path containing the string of edges to get pulled.
      * \param[in] steps Number of steps to pull over.
      */
@@ -134,7 +135,7 @@ On(Graph& gr,
    std::shared_ptr<PP> pp)
     : Base {gr, pp, D}
 {
-    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor given, while PP is void");
 }
 
 

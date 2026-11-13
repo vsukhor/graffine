@@ -23,7 +23,7 @@ limitations under the License.
 
 /**
  * \file triangle.h
- * \brief Contains the chain triangle element.
+ * \brief The chain triangle: three chains forming a loop.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -41,16 +41,18 @@ namespace graffine::structure {
 
 /** A chain triangle: three chains joined end to end into a loop.
  * \details The chains meet pairwise at three distinct junction vertices.
+ * Components detect their triangles on request (see
+ * Component::detect_chain_triangles()).
  */
 struct Triangle
 {
-    static constexpr std::size_t num {3};
+    static constexpr std::size_t num {3};  ///< Number of chains and of vertices.
 
-    using ChIds = std::array<ChIdG, num>;
-    using VIds = std::array<VIdH, num>;
+    using ChIds = std::array<ChIdG, num>;  ///< Type of the chain ids.
+    using VIds = std::array<VIdH, num>;    ///< Type of the vertex ids.
 
     ChIds ww;  ///< Graph-wide ids of the chains, in ascending order.
-    VIds vv;   ///< Ids of the junction vertices, in ascending order.
+    VIds vv;   ///< Stable handles of the junction vertices, in ascending order.
 
     bool operator==(const Triangle&) const = default;
 };

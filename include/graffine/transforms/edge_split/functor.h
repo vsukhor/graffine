@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file functor.h
- * \brief Contains class performing split of an edge.
+ * \brief Split of an edge into two consecutive edges.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -43,6 +43,7 @@ limitations under the License.
 
 namespace graffine::transforms {
 
+/// Compile-time description of the edge split.
 template<typename G>
 struct Trait<TransformType::EdgeSplit, G>
 {
@@ -51,28 +52,41 @@ struct Trait<TransformType::EdgeSplit, G>
     using Chain = Graph::Chain;
     using Edge = Graph::Edge;
     using Vertex = Graph::Vertex;
-    using OnStart = const Edge*;
-    using OnEnd = Vertex*;
+    using OnStart = const Edge*;  ///< Argument of the on_start hook.
+    using OnEnd = Vertex*;        ///< Argument of the on_end hook.
     using ResT = Edge*;
-    /// Result of the transformation: pointer to the new edge, placed right after the split edge in its
-    /// chain.
+    /// Result of the transformation: pointer to the new edge, placed right
+    /// after the split edge in its chain.
     using Res = std::array<ResT, 1>;
 
-    static constexpr const char* fullName {"edge_split"};
-    static constexpr const char* shortName {"eg_sp"};
+    static constexpr const char* fullName {"edge_split"};  ///< Name in messages.
+    static constexpr const char* shortName {"eg_sp"};  ///< Abbreviated name.
 
-    static constexpr auto Type = TransformType::EdgeSplit;
+    static constexpr auto Type = TransformType::EdgeSplit;  ///< Family.
 };
 
 
 
-/// Enables split of a graph edge into two daughter ones.
+/// Split of an edge into two consecutive edges.
 namespace edge_split {
 
+/// Compile-time description of the edge split.
 template<typename G>
 using Trait = transforms::Trait<TransformType::EdgeSplit, G>;
 
-/** Performs split of an edge.
+/** Splits an edge into two consecutive edges, joined by a new vertex of
+ * degree 2.
+ * \details Performed as an edge creation in the edge's chain (see
+ * edge_creation::InExistingChain), right after the split edge: its hooks
+ * are those of edgeCreation, run inside this transformation (see
+ * context.h). The topology is unchanged, except that the chain gains an
+ * edge. Usage:
+ * \code
+ * edge_split::Functor<G> split {gr};
+ * const auto [eg] = split(ind);
+ * \endcode
+ * \tparam G Graph to which the transformation is applied.
+ * \tparam PP Processor of non-topological properties, or void.
  */
 template<typename G,
          typename PP = void>
@@ -107,8 +121,9 @@ struct Functor
     explicit Functor(Graph& gr,
                      std::shared_ptr<PP> pp = nullptr);
 
-    /** Function call operator executing the transformation.
+    /** Splits edge \p ind. Unchecked: see Applicable.
      * \param[in] ind Graph-wide index of the source edge.
+     * \return Pointer to the new edge.
      */
     auto apply(const EgIdG ind) -> Res;
 
@@ -137,7 +152,7 @@ protected:
 
     Graph& gr;  ///< Reference to the modified graph object.
 
-    /// Auxiliary functor. Utilized for internal operation.
+    /// Inner edge creation performing the split.
     edge_creation::InExistingChain<G, PP> create;
 };
 
@@ -153,7 +168,7 @@ Functor(Graph& gr,
     : gr {gr}
     , create {gr, pp}
 {
-    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor given, while PP is void");
 }
 
 

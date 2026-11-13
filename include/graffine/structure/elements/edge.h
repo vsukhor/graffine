@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file edge.h
- * \brief The graph graffine::Edge struct template.
+ * \brief The graph edge.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -57,8 +57,8 @@ struct Bond2
     using Vertex = V;
     using End = descriptors::End;  ///< Bond ends.
     using EndId = End::Id;
-    using Vertices = std::array<Vertex*, End::num>;
-    using VIDs = std::array<VIdH, End::num>;
+    using Vertices = std::array<Vertex*, End::num>;  ///< Vertices at ends A and B.
+    using VIDs = std::array<VIdH, End::num>;         ///< Handles of the end vertices.
     using DescrInVertex = descriptors::EdgeInVertex<IdScope::GRAPH>;
 
     /// True iff the edge lives in a geometric space.
@@ -66,12 +66,13 @@ struct Bond2
 
 // public variables
 
-    EgIdH id;  ///< Unique identifier.
-    EgIdG ind {EgIdG::undefined};   ///< Identifier container-wide.
+    EgIdH id;  ///< Stable handle, unique over the program run.
+    EgIdG ind {EgIdG::undefined};   ///< Position in the graph (EgIdG).
 
 protected:  // variables
 
-    Vertices vv {{nullptr, nullptr}};  ///< Vertices.
+    /// Vertices at ends A and B; nullptr at an unconnected end.
+    Vertices vv {{nullptr, nullptr}};
 
 public:  // functions
 
@@ -82,13 +83,20 @@ public:  // functions
      */
     explicit constexpr Bond2(EgIdG ind) noexcept;
 
+    /// Two edges are equal if they have the same handle.
     constexpr bool operator==(const Bond2& other) const noexcept;
 
+    /// Vertex at end \p e, or nullptr.
     constexpr auto vertex_at(EndId e) const noexcept -> const Vertex*;
+    /// Vertex at end \p e, or nullptr.
     constexpr auto vertex_at(EndId e)       noexcept ->       Vertex*;
+    /// Handles of the vertices at ends A and B (undefined if unconnected).
     constexpr auto vids() const noexcept -> VIDs;
+    /// Handle of the vertex at end \p e, or VIdH::undefined.
     constexpr auto vid_at(const EndId e) const noexcept -> VIdH;
 
+    /// Descriptor by which the vertex at end \p e would record this edge;
+    /// its edge index is left undefined.
     constexpr auto descriptor_for_vertex_at(
         const EndId e
     ) const noexcept -> DescrInVertex;
@@ -102,7 +110,8 @@ public:  // functions
 
 protected:  // functions
 
-    /** Create identifier unique over the program run.
+    /** Creates a handle unique over the program run, by incrementing a
+     * counter shared by all edges of this type.
      */
     static auto create_id() noexcept -> EgIdH;
 };
@@ -222,10 +231,13 @@ struct Edge
 
 template<typename, typename...> struct Chain;
 
-/** The graph Edge.
- * \details Edge is a minimal structural unit of a graph.
- * The struct implements the tasks and properties specific to a single edge
- * and its relation to other components.
+/** The graph edge.
+ * \details An edge is the smallest structural unit of a graph. It joins
+ * the vertices at its two ends, belongs to exactly one chain, and through
+ * it to one component. Besides its own handle and graph-wide index, it
+ * records its positions in the component and in the chain, and the ids of
+ * its chain and component; the containers keep these up to date when the
+ * graph changes.
  *
  * The ends of an edge are labelled in two coordinate systems:
  * - \a inner ends are the edge's own ends A and B: vertex \a vv[e] is
@@ -251,7 +263,8 @@ struct Edge<V>
     using EndId = End::Id;
     using weight_t = Property<real>::value_t;  ///< Type alias for edge weight.
     using Vertices = Base::Vertices;  ///< Container holding vertices.
-    using VIDs = Base::VIDs;
+    using VIDs = Base::VIDs;          ///< Handles of the end vertices.
+    /// Descriptor by which a vertex records this edge.
     using DescrInVertex = descriptors::EdgeInVertex<IdScope::COMPONENT>;
 
     friend struct Chain<Edge>;
@@ -266,21 +279,24 @@ struct Edge<V>
 
 // public variables
 
-    using Base::id;   ///< Unique identifier.
-    using Base::ind;  ///< Identifier container-wide.
+    using Base::id;   ///< Stable handle, unique over the program run.
+    using Base::ind;  ///< Position in the graph (EgIdG).
 
 
-    EgIdC indc {EgIdC::undefined};  ///< Identifier component-wide.
-    EgIdA indw {EgIdA::undefined};  ///< Identifier chain-wide.
+    EgIdC indc {EgIdC::undefined};  ///< Position in the host component.
+    EgIdA indw {EgIdA::undefined};  ///< Position in the host chain, from 0 at chain end A.
 
     ChIdG w {ChIdG::undefined};  ///< Identifier of the hosting chain.
     CmpId c {CmpId::undefined};  ///< Identifier of the hosting component.
 
-    /// Example of an edge property: weight real variable.
+    /// Edge weight, 1 by default: the length of the edge for the shortest
+    /// path searches (see structure/paths), read and written by the PLY I/O.
+    /// The transformations do not change it.
     Property<real> weight {"weight", "wt", weight_t(1.0)};
 
 protected:  // variables
 
+    /// Orientation relative to the host chain (see the class description).
     Orientation ornt {Orientation::Undefined};
 
     using Base::vv;  ///< Vertices connected to ends.
@@ -294,11 +310,20 @@ public:  // functions
      */
     explicit constexpr Edge(EgIdG ind) noexcept;
 
+    /** Constructor leaving chain and component data undefined.
+     * \param[in] ind Index graph-wide.
+     * \param[in] ornt Orientation relative to the future host chain.
+     */
     explicit constexpr Edge(
         EgIdG ind,
         Orientation ornt
     ) noexcept;
 
+    /** Constructor leaving chain and component data undefined.
+     * \param[in] ind Index graph-wide.
+     * \param[in] ornt Orientation relative to the future host chain.
+     * \param[in] weight Edge weight.
+     */
     explicit constexpr Edge(
         EgIdG ind,
         Orientation ornt,
@@ -333,6 +358,9 @@ public:  // functions
 
     using Base::operator==;
 
+    /** Assigns the edge to component \p cc at component-wide index
+     * \p indcc, updating the descriptors held by its vertices.
+     */
     constexpr void set_cmp(CmpId cc, EgIdC indcc) noexcept;
 
     /** Reverses the edge orientation.
@@ -344,7 +372,7 @@ public:  // functions
      */
     template<bool swapVV> void reverse();
 
-    /** Get edge orientation.
+    /** Edge orientation relative to the host chain.
      */
     constexpr auto orientation() const noexcept -> Orientation;
 
@@ -359,31 +387,61 @@ public:  // functions
      */
     constexpr auto inner_endId(EndId outerE) const noexcept -> EndId;
 
-    /** Return index of the edge end opposite to 'e'.
+    /** The end opposite to \p e.
      */
     static constexpr auto opp_end(EndId e) noexcept -> EndId;
 
+    /** \name Connection to vertices.
+     * \details Connecting an end to a vertex also records the edge in the
+     * vertex's descriptors; disconnecting removes the record. An end must
+     * be free before it is connected.
+     * @{
+     */
+    /// Connects inner end \p e to vertex \p v.
     constexpr void connect_to_inner(EndId e, Vertex& v);
+    /// Connects outer end \p e to vertex \p v.
     constexpr void connect_to_outer(EndId e, Vertex& v);
+    /// Disconnects inner end \p e from its vertex.
     constexpr void disconnect_end_inner(EndId e) noexcept;
+    /// Disconnects outer end \p e from its vertex.
     constexpr void disconnect_end_outer(EndId e) noexcept;
+    /// Checks if inner end \p e is connected to a vertex.
     constexpr bool is_connected_inner(EndId e) const noexcept;
+    /// Checks if outer end \p e is connected to a vertex.
     constexpr bool is_connected_outer(EndId e) const noexcept;
+    /// Checks if at least one end is connected to a vertex.
     constexpr bool is_connected() const noexcept;
+    /// Checks if both ends are connected to vertices.
     constexpr bool is_connected_both_ends() const noexcept;
+    /** Checks if edge \p eg shares a vertex with this edge.
+     * \note Returns false as soon as inner end A is unconnected, without
+     * examining end B.
+     */
     constexpr bool is_neig_of(const Edge& eg) const noexcept;
+    ///@}
 
+    /// The vertices, indexed by inner end.
     constexpr auto vertices() const noexcept -> const Vertices& { return vv; }
+    /// Vertex at outer end \p e, or nullptr.
     constexpr auto vertex_at_outer(EndId e) const noexcept -> const Vertex*;
+    /// Vertex at outer end \p e, or nullptr.
     constexpr auto vertex_at_outer(EndId e) noexcept -> Vertex*;
+    /// Vertex at inner end \p e, or nullptr.
     constexpr auto vertex_at_inner(EndId e) const noexcept -> const Vertex*;
+    /// Vertex at inner end \p e, or nullptr.
     constexpr auto vertex_at_inner(EndId e) noexcept -> Vertex*;
+    /// The vertex at the other end from vertex \p v, which must be at one
+    /// end of this edge.
     constexpr auto vertex_opposite_to(Vertex* v) noexcept -> Vertex*;
 
+    /// Handles of the vertices at inner ends A and B.
     constexpr auto vids_inner() const noexcept -> VIDs;
+    /// Handle of the vertex at outer end \p e, or VIdH::undefined.
     constexpr auto vid_at_outer(const EndId e) const noexcept -> VIdH;
+    /// Handle of the vertex at inner end \p e, or VIdH::undefined.
     constexpr auto vid_at_inner(const EndId e) const noexcept -> VIdH;
 
+    /// Descriptor by which the vertex at inner end \p e records this edge.
     constexpr auto descriptor_for_vertex_at(
         const EndId e
     ) const noexcept -> DescrInVertex;
@@ -398,7 +456,9 @@ public:  // functions
 
     // Testing
 
-    /** Ensures that the edge indexes are consistent within the graph.
+    /** Ensures that the edge indexes are within the bounds of their
+     * containers, and the weight within its range.
+     * \throws invariant_error If a check fails.
      * \param[in] nInd Total number of edges in the graph.
      * \param[in] nIndC Number of edges in the component.
      * \param[in] nIndW Number of edges in the chain.
@@ -868,7 +928,7 @@ check(const std::size_t nInd,
       const CmpId nCmpt) const
 {
     GRAFFINE_ENSURE(ind < nInd,
-           "Edge.cEdge.ind is out of range: ",
+           "Edge.ind is out of range: ",
            "ind = ", ind, ", numEdges = ", nInd);
 
     GRAFFINE_ENSURE(indc < nIndC,
@@ -876,7 +936,7 @@ check(const std::size_t nInd,
            "ind ", ind, ": ", "indc = ", indc, ", nIndC = ", nIndC);
 
     GRAFFINE_ENSURE(indw < nIndW,
-           "EdgEdge.indw is out of range for ",
+           "Edge.indw is out of range for ",
            "ind ", ind, ": ", "indw = ", indw, ", nIndW = ", nIndW);
 
     GRAFFINE_ENSURE(w < nCh,

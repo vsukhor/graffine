@@ -25,7 +25,10 @@
 
 /**
  * \file colorcodes.h
- * Codes for colors on cmd terminal output.
+ * \brief ANSI escape sequences for coloring text printed to a terminal.
+ * \details A string printed after one of these codes takes its color, until
+ * RESET is printed. Most constants are available as C strings and, with an
+ * \c s prefix, as std::string.
  * \author Valerii Sukhorukov
  */
 
@@ -35,9 +38,9 @@
 #include <array>
 #include <string>
 
-/// Library outer namespace.
+/// ANSI terminal color codes.
 namespace graffine::utils::colorcodes {
-// ANSI colors =================================================================
+// ANSI colors: foreground (FG), background (BG) and text attributes ===========
 
 inline constexpr auto ANSI_RESET      = "\x1B[0m";
 inline constexpr auto ANSI_FG_BLACK   = "\x1b[30m";
@@ -59,8 +62,10 @@ inline constexpr auto ANSI_BOLD_ON    = "\x1b[1m";
 inline constexpr auto ANSI_BOLD_OFF   = "\x1b[22m";
 inline constexpr auto ANSI_INVERSE_ON = "\x1b[7m";
 
-static constexpr const char* BOLD        {"\033[1m"};
-static constexpr const char* RESET       {"\033[0m"};
+// Short names of the foreground colors, also in bold ==========================
+
+static constexpr const char* BOLD        {"\033[1m"};          // Bold
+static constexpr const char* RESET       {"\033[0m"};          // Restore defaults
 static constexpr const char* BLACK       {"\033[30m"};          // Black
 static constexpr const char* RED         {"\033[31m"};          // Red
 static constexpr const char* GREEN       {"\033[32m"};          // Green
@@ -77,6 +82,8 @@ static constexpr const char* BOLDBLUE    {"\033[1m\033[34m"};   // Bold Blue
 static constexpr const char* BOLDMAGENTA {"\033[1m\033[35m"};   // Bold Magenta
 static constexpr const char* BOLDCYAN    {"\033[1m\033[36m"};   // Bold Cyan
 static constexpr const char* BOLDWHITE   {"\033[1m\033[37m"};   // Bold White
+
+// The same as std::string ====================================================
 
 const std::string sBOLD        {BOLD};
 const std::string sRESET       {RESET};
@@ -98,18 +105,20 @@ const std::string sBOLDCYAN    {BOLDCYAN};
 const std::string sBOLDWHITE   {BOLDWHITE};
 
 
+/// All the short-named codes, as C strings.
 static constexpr std::array all {
     BOLD, RESET,
     BLACK,     RED,     GREEN,     YELLOW,     BLUE,     MAGENTA,     CYAN,     WHITE,
     BOLDBLACK, BOLDRED, BOLDGREEN, BOLDYELLOW, BOLDBLUE, BOLDMAGENTA, BOLDCYAN, BOLDWHITE
 };
 
+/// All the short-named codes, as std::string, in the order of \c all.
 const std::array<std::string, all.size()> sall {
     sBOLD, sRESET,
     sBLACK,     sRED,     sGREEN,     sYELLOW,     sBLUE,     sMAGENTA,     sCYAN,     sWHITE,
     sBOLDBLACK, sBOLDRED, sBOLDGREEN, sBOLDYELLOW, sBOLDBLUE, sBOLDMAGENTA, sBOLDCYAN, sBOLDWHITE
 };
 
-}  // namespace fm::utils::colorcodes
+}  // namespace graffine::utils::colorcodes
 
 #endif // GRAFFINE_UTILS_COLORCODES_H

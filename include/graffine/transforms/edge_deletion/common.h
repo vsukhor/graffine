@@ -22,7 +22,8 @@ limitations under the License.
 
 /**
  * \file common.h
- * \brief Contains generic declarations for classes deleting graph edges.
+ * \brief Declarations shared by the edge deletions: trait, processor
+ * concept and plan.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -45,6 +46,7 @@ limitations under the License.
 
 namespace graffine::transforms {
 
+/// Compile-time description of the edge deletion.
 template<typename G>
 struct Trait<TransformType::EdgeDeletion, G>
 {
@@ -53,17 +55,30 @@ struct Trait<TransformType::EdgeDeletion, G>
     using Chain = Graph::Chain;
     using Edge = Graph::Edge;
     using ResT = CmpId;
-    /// Result of the transformation: index of the component hosting the deleted edge before the deletion.
-    /// If the deletion removed a component, the index may now refer to another
-    /// component, or be past the end.
+    /// Result of the transformation: index of the component hosting the
+    /// deleted edge before the deletion. If the deletion removed a
+    /// component, the index may now refer to another component, or be past
+    /// the end.
     using Res = std::array<ResT, 1>;
 
-    static constexpr auto Type = TransformType::EdgeDeletion;
+    static constexpr auto Type = TransformType::EdgeDeletion;  ///< Family.
 };
 
-/** Enables edge deletion operations on a graph.
- * \details These are functors for deleting edges based on chain lengths and
- * vertex degrees.
+/** Deletion of an edge.
+ * \details An edge is deleted in one of two ways, depending on its chain:
+ * - in a chain of several edges, the edge is \e contracted: its two
+ *   vertices merge into one, and the chain loses one edge
+ *   (PreservingHostChain, dispatched to by InMultiEdgeChain);
+ * - a single-edge chain attached by one end to a junction and free at the
+ *   other is deleted with its edge, and the junction loses one branch
+ *   (DeletingHostChain, dispatched to by InSingleEdgeChain).
+ *
+ * Functor dispatches to the right case for any edge. Usage:
+ * \code
+ * edge_deletion::Functor<G> remove {gr};
+ * if (remove.is_applicable(ind))
+ *     remove.apply(ind);
+ * \endcode
  */
 namespace edge_deletion {
 
@@ -89,6 +104,7 @@ concept Processor =
     };
 
 
+/// Compile-time description of the edge deletion.
 template<typename G>
 using Trait = transforms::Trait<TransformType::EdgeDeletion, G>;
 
@@ -111,6 +127,7 @@ struct Plan {
     const Vertex* preserved {};     ///< Vertex of the edge which remains.
     const Vertex* removed {};       ///< Vertex of the edge which is removed.
 
+    /// The hooks of this family in processor \p pp.
     template<typename PP>
     static constexpr auto hooks(PP& pp) -> decltype((pp.edgeDeletion))
     {

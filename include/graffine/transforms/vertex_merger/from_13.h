@@ -22,8 +22,7 @@ limitations under the License.
 
 /**
  * \file from_13.h
- * \brief Contains implementation of the for 1V + 3V -> 4V merger type.
- * \details Class encapsulating merger of a tip vertex to a 3-way junction.
+ * \brief Merger of a free chain end with a junction of degree 3 (1+3).
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -42,9 +41,10 @@ limitations under the License.
 
 namespace graffine::transforms::vertex_merger {
 
-/** Template specialization for V1 + V3 -> V4 vertex merger.
- * \details Adds vertex type-specific vertex merger capability and updates the
- * graph for it.
+/** Merges a vertex of degree 1 with a vertex of degree 3, producing a
+ * junction of degree 4.
+ * \details A free chain end joins a Y junction, which becomes an X
+ * junction. No chain is split.
  * \tparam G Graph to which the merger operation is applied.
  */
 template<typename G,
@@ -69,9 +69,9 @@ struct From<Deg1, Deg3, G, PP>
     static constexpr auto J1 = I1 + I2;  ///< Degree of the 1st output vertex.
     static constexpr auto J2 = undefined<Degree>;  ///< No 2nd output vertex.
 
-    const std::string dd {degrees_to_string(I1, I2)};
-    const std::string shortName {make_name(Trait::shortName, dd)};
-    const std::string fullName  {make_name(Trait::fullName, dd)};
+    const std::string dd {degrees_to_string(I1, I2)};  ///< Degrees, as text.
+    const std::string shortName {make_name(Trait::shortName, dd)};  ///< Abbreviated name.
+    const std::string fullName  {make_name(Trait::fullName, dd)};  ///< Name in messages.
 
     /** Constructs a Functor object based on the Graph instance.
      * \param[in] gr Graph to which the transformation is applied.
@@ -210,7 +210,7 @@ From(Graph& gr,
     , updateProperties {pp}
     , report {gr, dd}
 {
-    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor given, while PP is void");
 }
 
 
@@ -336,7 +336,7 @@ struct From1<Deg3, G, PP>
                     std::shared_ptr<PP> pp = nullptr)
         : Base {gr, pp}
     {
-        GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+        GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor given, while PP is void");
     }
 };
 

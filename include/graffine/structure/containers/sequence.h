@@ -22,11 +22,8 @@ limitations under the License.
 
 /**
  * \file sequence.h
- * \brief Contains definition of a sequence container wrapper.
- * \details This class provides a simple wrapper around an std sequence
- * container, such as std::vector or std::deque. It provides basic
- * functionalities such as accessing elements, checking size, and modifying
- * the container.
+ * \brief Base class of the element containers: a thin wrapper around a
+ * standard sequence container.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -39,17 +36,18 @@ limitations under the License.
 
 namespace graffine::structure::containers {
 
-/** Wrapper around an std sequence container.
- * \details This class provides a simple wrapper around an std sequence
- * container to manage elements of a specific type. It provides basic
- * functionalities such as accessing elements, checking size, and modifying
- * the container.
- * \tparam Type Wrapped std sequence container type, e.g. std::vector<T>.
+/** Thin wrapper around a standard sequence container.
+ * \details Forwards a subset of the interface of the wrapped container,
+ * with the usual semantics, and adds first() and last() as synonyms of
+ * front() and back(). The element containers of graffine derive from it
+ * and add element-specific functions, while keeping the wrapped container
+ * protected, so that only those functions can restructure it.
+ * \tparam Type Wrapped standard sequence container type, e.g. std::vector<T>.
  */
  template<typename Type>
 struct Sequence
 {
-    using Container = Type;  // std::vector<Type>;
+    using Container = Type;  ///< The wrapped container type.
 
     using size_type = Container::size_type;
     using value_type = Container::value_type;
@@ -71,10 +69,14 @@ struct Sequence
     constexpr auto back() noexcept -> reference;
     constexpr auto back() const noexcept -> const_reference;
 
+    /// The first element; the same as front().
     constexpr auto first() const noexcept -> const_reference;
+    /// The first element; the same as front().
     constexpr auto first() noexcept -> reference;
 
+    /// The last element; the same as back().
     constexpr auto last() const noexcept -> const_reference;
+    /// The last element; the same as back().
     constexpr auto last() noexcept -> reference;
 
     constexpr auto begin() noexcept -> iterator;
@@ -110,6 +112,7 @@ struct Sequence
 
     constexpr auto data() -> value_type*;
 
+    /// Element-wise equality.
     friend
     constexpr bool operator==(const Sequence<Type>& lhs,
                               const Sequence<Type>& rhs)
@@ -119,7 +122,7 @@ struct Sequence
 
 protected:
 
-    Container m_data;
+    Container m_data;  ///< The wrapped container.
 };
 
 

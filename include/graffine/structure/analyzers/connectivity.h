@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file connectivity.h
- * \brief Contains class useful for connectivity analysis between graph elements.
+ * \brief Reachability of chains over their end connections.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -87,10 +87,13 @@ struct Connectivity
 
 protected:
 
-    const Chains& cn;
+    const Chains& cn;  ///< The chains searched.
 
     /// Auxiliary: search epoch at which each chain was last visited.
     std::vector<std::uint32_t> mark;
+    /// Auxiliary: number of the current search. A chain is visited in this
+    /// search iff its mark equals it, so that starting a new search needs
+    /// no clearing of the marks.
     std::uint32_t epoch {};
 
     ChIdGs reached;             ///< Auxiliary: chains visited by a search.

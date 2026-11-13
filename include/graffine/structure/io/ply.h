@@ -22,7 +22,10 @@ limitations under the License.
 
 /**
  * \file ply.h
- * \brief Machinery necessary for graph read/write to file using PLY format.
+ * \brief Reading and writing graphs as PLY files.
+ * \details Relies on the bundled tinyply library: define TINYPLY_AS_LIBRARY
+ * before including this header in exactly one source file of the program,
+ * to compile its implementation.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -67,7 +70,12 @@ namespace ply = tinyply;
  *   \c weight.
  *
  * The vertex ids are written renumbered to 0, 1, ..., and reading
- * reassembles the chains and components with GraphFactory.
+ * reassembles the chains and components with GraphFactory. Usage:
+ * \code
+ * Ply<G> ply;
+ * ply.write(gr, "graph.ply", true);   // binary
+ * G gr2 = ply.read("graph.ply", true);
+ * \endcode
  * \tparam G Graph type.
  */
 template<typename G>
@@ -81,23 +89,27 @@ struct Ply
     using Writer = ply::FileOut;
     using Type = ply::Type;
 
-    using TypeVId  = ply::type<Type::UINT32>;
-    using TypeBool = ply::type<Type::INT8>;
-    using TypeOrnt = ply::type<Type::INT8>;
+    using TypeVId  = ply::type<Type::UINT32>;  ///< File type of the vertex ids.
+    using TypeBool = ply::type<Type::INT8>;    ///< File type of the \a fixed flags.
+    using TypeOrnt = ply::type<Type::INT8>;    ///< File type of the edge orientations.
     static_assert(std::is_floating_point_v<typename Edge::weight_t>);
+    /// File type of the edge weights: that of Edge::weight_t.
     using TypeWeight =
         std::conditional_t<std::is_same_v<typename Edge::weight_t, float>,
                            typename ply::type<Type::FLOAT32>,
                            typename ply::type<Type::FLOAT64>>;
 
+    /// Version of the file layout, written as a comment in the file header.
     static constexpr const char* version {"11"};
 
     /** Copies property data read from file into a vector of T.
-     * If the file stores the property with a type different from that of
+     * \details If the file stores the property with a type different from that of
      * T elements (e.g. edge weights written as float but read with real set
      * to double), the values are converted element by element.
      * \tparam T Arithmetic type or a fixed-size array of it.
      * \param dd Data buffer filled by the ply reader.
+     * \throws io_error If the buffer size disagrees with the item count,
+     * or the type stored is invalid.
      */
     template<typename T>
     auto convert_from_data(const Reader::Data& dd) const -> std::vector<T>
@@ -148,9 +160,14 @@ struct Ply
     };
 
     Ply() {}
+    /// Constructor; \p gr is ignored.
     explicit Ply(const Graph* gr) {}
 
     /** Writes graph \p gr to \p file.
+     * \tparam beLoud Log the name of the file written.
+     * \param gr Graph to write.
+     * \param file Path of the file; an existing file is overwritten.
+     * \param asBinary Write in binary rather than text (ASCII) format.
      * \throws io_error If the file cannot be written.
      */
     template<bool beLoud = false>
@@ -159,7 +176,18 @@ struct Ply
                const bool asBinary) const;
 
     /** Reads a graph from \p file.
-     * \details The file content is validated before the graph is built.
+     * \details The file content is validated before the graph is built:
+     * the vertex ids must be unique, the edges must refer to existing,
+     * distinct vertices, the orientations must be valid and the weights
+     * finite, and every vertex must have a supported degree. Both text and
+     * binary files are accepted.
+     * \note The vertices take the ids stored in the file without advancing
+     * the counter issuing new vertex handles, so vertices created later in
+     * the same program may duplicate them.
+     * \tparam beLoud Report the file structure and the element counts.
+     * \param file Path of the file.
+     * \param preloadIntoMemory Read the whole file into memory before
+     * parsing it, which is usually faster.
      * \throws io_error If the file cannot be read, or does not describe
      * a valid graph.
      */
@@ -167,6 +195,7 @@ struct Ply
     auto read(const std::filesystem::path& file,
               const bool preloadIntoMemory) -> Graph;
 
+    /// Prints the elements of \p con on one line, preceded by \p s.
     void print_vector(const auto& con,
                       std::string_view s) const
     {
@@ -180,6 +209,8 @@ struct Ply
 protected:
 
     /** Registers an element and some of its properties for reading from file.
+     * \return Buffer to be filled by the reader.
+     * \throws io_error If the file lacks the element or a property.
      */
     auto register_for_import(
         const std::string& elementName,

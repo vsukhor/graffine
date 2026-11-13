@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file vertex_in_graph.h
- * \brief Contains structure holding vertex parameters in graph-wide coordinates.
+ * \brief Descriptor of a vertex in graph-wide coordinates.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -34,28 +34,42 @@ limitations under the License.
 
 namespace graffine::structure::descriptors {
 
-/** Descriptor of a vertex.
+/** Descriptor of a vertex in graph-wide coordinates.
+ * \details Vertices are owned by the components and indexed per component.
+ * The graph assembles these descriptors into a single graph-wide table
+ * (see containers/vertices_in_graph.h), in which each vertex lists its
+ * incident edges and the neighbours they lead to, all by graph-wide
+ * indexes. The fields are compact \c uint, to keep the table small.
  */
 struct VertexInGraph
 {
     uint ci {utils::undefined<uint>};   ///< Id of the host component.
-    uint ind {utils::undefined<uint>};  ///< Index in the container.
-    uint idh {utils::undefined<uint>};  ///< Vertex hash.
-    uint d {utils::undefined<uint>};    ///< Vertex degree
+    uint ind {utils::undefined<uint>};  ///< Position of the descriptor in the graph-wide table (VIdG).
+    uint idh {utils::undefined<uint>};  ///< Stable handle of the vertex (VIdH).
+    uint d {utils::undefined<uint>};    ///< Vertex degree.
 
+    /// An incident edge and the neighbour vertex it leads to.
     struct Link
     {
-        // EgIdG of an incident edge (either in or out).
+        /// EgIdG of an incident edge (either in or out).
         uint egidW {utils::undefined<uint>};
 
         /// Index in 'VerticesInGraph' of the neighbour vertex linked by 'egidW'
         uint vidW {utils::undefined<uint>};
     };
 
+    /// Links of the vertex; only the first \a d are in use.
     Link links[numDegrees];
 
 
     constexpr VertexInGraph() = default;
+
+    /** Constructor leaving the links unset.
+     * \param ci Host component.
+     * \param ind Position of the descriptor in the graph-wide table.
+     * \param idh Stable handle of the vertex.
+     * \param d Vertex degree.
+     */
     explicit constexpr VertexInGraph(const CmpId ci,
                                      const uint ind,
                                      const VIdH idh,
@@ -66,6 +80,7 @@ struct VertexInGraph
         , d {static_cast<uint>(d)}
     {}
 
+    /// Sets all the fields except the links.
     constexpr void set(const CmpId cc,
                        const uint ii,
                        const VIdH hh,
@@ -77,6 +92,7 @@ struct VertexInGraph
         d = static_cast<uint>(dd);
     }
 
+    /// Compares all the fields except the links.
     constexpr bool has_same_data_as(const VertexInGraph& other) const noexcept
     {
         if (ci != other.ci ||
@@ -87,6 +103,7 @@ struct VertexInGraph
         return true;
     }
 
+    /// Compares all the fields, including the links in use.
     constexpr bool operator==(const VertexInGraph& other) const noexcept
     {
         if (!has_same_data_as(other)) return false;
@@ -100,6 +117,7 @@ struct VertexInGraph
         return true;
     }
 
+    /// Prints the descriptor, preceded by its index \p j.
     void print(const std::size_t j) const noexcept
     {
         jot<false>(j, " c ", ci, " ind ", ind, " h ", idh, " d ", d,

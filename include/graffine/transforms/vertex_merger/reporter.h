@@ -22,9 +22,8 @@ limitations under the License.
 
 /**
  * \file reporter.h
- * \brief Contains class responsible for formatted summary of vertex merger.
- * \details The summary is printed out in standardized form before, during and
- * after the transform.
+ * \brief Printing of the chains of a vertex merger before, during and
+ * after it.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -44,9 +43,9 @@ limitations under the License.
 
 namespace graffine::transforms::vertex_merger {
 
-/** Structure responsible for outputting formatted summary of vertex merger.
- * \details The summary is printed out in standardized form before, during and
- * after the transform.
+/** Prints the vertices and chains of a vertex merger before, during and
+ * after it, when the functors report verbosely (\c verboseF).
+ * \tparam G Graph type.
  */
 template<typename G>
 struct Reporter
@@ -59,15 +58,34 @@ struct Reporter
     using Neigs = Chain::Neigs;
     using Vertex = Graph::Vertex;
 
-    static constexpr std::string_view indent {"                        "};
-    const std::string longName {"Vertex merger "};
-    const std::string shortName {"vm"};
+    static constexpr std::string_view indent {"                        "};  ///< Indentation of continuation lines.
+    const std::string longName {"Vertex merger "};  ///< Name in the header line.
+    const std::string shortName {"vm"};            ///< Name in the chain labels.
 
+    /** Constructor.
+     * \param gr Graph transformed.
+     * \param degs Degrees of the merged vertices, as text.
+     */
     explicit Reporter(
         Graph& gr,
         const std::string& degs={}
     );
 
+    /** Prints the vertices at slots \p s1 and \p s2 and their chains,
+     * before the merger.
+     * \details An undefined location stands for the boundary vertex of an
+     * unconnected cycle.
+     * \param s1 Slot of the 1st vertex.
+     * \param s2 Slot of the 2nd vertex.
+     * \param tag Label of the merger case.
+     * \param ssA Text preceding the 1st chain id.
+     * \param ssB Text preceding the 2nd chain id.
+     * \param dd Degrees of the merged vertices, replacing those given at
+     * construction if not empty.
+     * \note The chains joined at a degree 3 vertex are meant to be printed
+     * too, but the test of the degrees compares them with "13", while they
+     * are formatted as "1+3".
+     */
     template<structure::descriptors::slot S1=EndSlot,
              structure::descriptors::slot S2=EndSlot>
     void before(
@@ -79,6 +97,9 @@ struct Reporter
         const std::string& dd={}
     );
 
+    /** Prints the resulting vertex \p v and the chains \p w1, \p ws and
+     * \p mi after the merger.
+     */
     void after(
         Vertex* v,
         ChIdG w1,
@@ -86,15 +107,18 @@ struct Reporter
         const ChIdG mi=ChIdG::undefined
     ) const;
 
+    /** Prints the number \p i of the case of the merger being performed,
+     * followed by \p args.
+     */
     template<typename... Args>
     constexpr void branch(int i,
                           Args... args) const;
 
 protected:
 
-    std::string degs;
-    std::string tag_ {};
-    std::string taggedName {};
+    std::string degs;              ///< Degrees of the merged vertices, as text.
+    std::string tag_ {};           ///< Label of the merger case.
+    std::string taggedName {};     ///< Short name, degrees and label combined.
 
     Graph::Chains& cn; ///< Reference to the graph edge chains.
 };

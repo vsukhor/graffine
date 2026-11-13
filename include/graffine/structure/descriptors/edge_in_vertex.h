@@ -22,8 +22,8 @@ limitations under the License.
 
 /**
  * \file edge_in_vertex.h
- * \brief Contains implementation of the edge parameters saved as a part of
- * vertex structure when the edge is connected to the vertex.
+ * \brief Descriptor of an edge end, as recorded by the vertex it is
+ * attached to.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -41,25 +41,36 @@ limitations under the License.
 namespace graffine::structure::descriptors {
 
 
-/** Descriptor of an edge known to vertex connected to it.
+/** Descriptor of an edge end, as recorded by the vertex it is attached to.
+ * \details A vertex lists the edge ends meeting at it, one descriptor per
+ * end. Each descriptor is an edge slot (the edge index and its end A or B)
+ * extended with the stable handle of the edge. Descriptors are ordered by
+ * handle, then by end.
+ * \tparam Sc Scope of the edge index; vertices use IdScope::COMPONENT.
  */
 template<IdScope Sc>
 struct EdgeInVertex
     : public _Slot<Id<ids::ElementType::EDGE, Sc>, End>
 {
-    static constexpr auto Scope = Sc;
-    using Id_t = Id<ids::ElementType::EDGE, Scope>;
+    static constexpr auto Scope = Sc;  ///< Scope of the edge index.
+    using Id_t = Id<ids::ElementType::EDGE, Scope>;  ///< Type of the edge index.
     using End = descriptors::End;
     using Base = _Slot<Id_t, End>;
     using HostId = Base::HostId;
     using LocId = Base::LocId;
 
+    /// Kind of the elements holding these descriptors.
     static constexpr auto hostElements = std::array {Elements::Vertex};
 
 //    using Base::w;  <-- misleading notation, so hide it behind indc()
     using Base::e;
-    const EgIdH idh;
+    const EgIdH idh;  ///< Stable handle of the edge.
 
+    /** Constructor.
+     * \param idh Stable handle of the edge.
+     * \param id Index of the edge.
+     * \param e End of the edge attached to the vertex.
+     */
     explicit constexpr EdgeInVertex(
         const EgIdH idh,
         const Id_t id,
@@ -79,15 +90,21 @@ struct EdgeInVertex
                (idh == p.idh && e < p.e);
     }
 
+    /// Component-wide index of the edge (only for IdScope::COMPONENT).
     constexpr Id_t indc() const noexcept
     {
         static_assert(Scope == IdScope::COMPONENT);
         return this->w;
     }
 
+    /// Checks that the edge points into the vertex, i.e. is attached by
+    /// its head end B.
     constexpr bool is_in() const noexcept { return e == End::B; }
+    /// Checks that the edge points out of the vertex, i.e. is attached by
+    /// its tail end A.
     constexpr bool is_out() const noexcept{ return !is_in(); }
 
+    /// The descriptor as a string: handle, index and end.
     auto str_short() const -> std::string
     {
         return idh.as_string() + " " +
@@ -95,11 +112,14 @@ struct EdgeInVertex
                End::str(e);
     }
 
+    /// Prints the descriptor in braces, without a line break.
     void print(const char* color=colorcodes::YELLOW) const
     {
         jot<false>('{', color, str_short(), colorcodes::RESET, '}');
     }
 
+    /// Prints the edge slot part (index and end) in braces, without a
+    /// line break.
     void print_edgeSlot(const char* color=colorcodes::YELLOW) const
     {
         jot<false>('{', color, indc().as_string(), " ",

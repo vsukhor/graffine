@@ -22,7 +22,8 @@ limitations under the License.
 
 /**
  * \file common.h
- * \brief Contains generic declarations for classes creating graph edges.
+ * \brief Declarations shared by the edge creations: trait, processor
+ * concept and plan.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -43,6 +44,7 @@ limitations under the License.
 
 namespace graffine::transforms {
 
+/// Compile-time description of the edge creation.
 template<typename G>
 struct Trait<TransformType::EdgeCreation, G>
 {
@@ -54,14 +56,19 @@ struct Trait<TransformType::EdgeCreation, G>
     /// Result of the transformation: pointer to the created edge.
     using Res = std::array<ResT, 1>;
 
-    static constexpr const char* shortName {"ec_oc"};
-    static constexpr const char* fullName {"edge_creation_old_chain"};
+    static constexpr const char* shortName {"ec_oc"};  ///< Abbreviated name.
+    static constexpr const char* fullName {"edge_creation_old_chain"};  ///< Name in messages.
 
-    static constexpr auto Type = TransformType::EdgeCreation;
+    static constexpr auto Type = TransformType::EdgeCreation;  ///< Family.
 };
 
-/** Enables edge creation operations on a graph.
- * \details These are functors for creating edges at specific spots of the graph.
+/** Creation of an edge attached to an existing vertex.
+ * \details The new edge joins an existing vertex to a new one. Two
+ * functors cover the cases:
+ * - InExistingChain inserts the edge into a chain, lengthening it: at an
+ *   internal vertex, or at a chain end;
+ * - InNewChain<D> forms a new single-edge chain hanging from a vertex of
+ *   degree D, which thus becomes a junction of degree D + 1.
  */
 namespace edge_creation {
 
@@ -99,6 +106,7 @@ concept Processor =
     };
 
 
+/// Compile-time description of the edge creation.
 template<typename G>
 using Trait = transforms::Trait<TransformType::EdgeCreation, G>;
 
@@ -115,6 +123,7 @@ struct Plan {
     const Vertex* vertex {};  ///< Existing vertex of the new edge.
     EgIdG moved {EgIdG::undefined};  ///< Edge whose end moves to the new vertex.
 
+    /// The hooks of this family in processor \p pp.
     template<typename PP>
     static constexpr auto hooks(PP& pp) -> decltype((pp.edgeCreation))
     {
@@ -122,7 +131,7 @@ struct Plan {
     }
 };
 
-}
+}  // namespace edge_creation
 
 } // namespace graffine::transforms
 

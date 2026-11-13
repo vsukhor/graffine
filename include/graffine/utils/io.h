@@ -25,6 +25,7 @@
 
 /**
  * \file io.h
+ * \brief Reading a file into memory, and an input stream over the read bytes.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>.
  */
 
@@ -44,6 +45,15 @@
 /// Input/output
 namespace graffine::utils::io {
 
+/**
+ * \brief Reads the whole content of a file into a byte vector.
+ * \tparam beLoud Log the name of the file being read.
+ * \param file Path to the file.
+ * \return The bytes of the file. The optional is always engaged: failures
+ * are reported by exceptions.
+ * \throws io_error If the file cannot be opened, its size determined or
+ * its content read.
+ */
 template<bool beLoud>
 auto read_file_binary(const std::filesystem::path& file)
     -> std::optional<std::vector<uint8_t>>
@@ -71,14 +81,20 @@ auto read_file_binary(const std::filesystem::path& file)
 }
 
 
+/**
+ * \brief Read-only stream buffer owning a block of bytes held in memory.
+ * \details Supports repositioning, which is needed by parsers that seek
+ * within their input.
+ */
 struct Buffer
     : public std::streambuf
 {
-    std::vector<uint8_t> b;
-    std::size_t size;
-    char* p_start {};
-    char* p_end {};
+    std::vector<uint8_t> b;  ///< The bytes.
+    std::size_t size;        ///< Number of bytes.
+    char* p_start {};        ///< Start of the bytes.
+    char* p_end {};          ///< One past the end of the bytes.
 
+    /// Constructor taking ownership of the bytes \p bb.
     Buffer(std::vector<uint8_t>&& bb)
         : b {std::move(bb)}
         , size {b.size()}
@@ -88,6 +104,8 @@ struct Buffer
         setg(p_start, p_start, p_end);
     }
 
+    /// Moves the read position by \p off relative to the start, the current
+    /// position or the end, as selected by \p dir.
     pos_type seekoff(const off_type off,
                      std::ios_base::seekdir dir,
                      [[maybe_unused]] std::ios_base::openmode which) override
@@ -102,6 +120,7 @@ struct Buffer
         return gptr() - p_start;
     }
 
+    /// Moves the read position to the absolute position \p pos.
     pos_type seekpos(const pos_type pos,
                      std::ios_base::openmode which) override
     {
@@ -109,10 +128,16 @@ struct Buffer
     }
 };
 
+/**
+ * \brief Input stream reading from bytes held in memory.
+ * \details Typically fed with the output of read_file_binary(), so that
+ * a file is parsed from memory rather than from disk.
+ */
 struct BufferedStream
     : virtual Buffer
     , public std::istream
 {
+    /// Constructor taking ownership of the bytes \p b.
     explicit BufferedStream(std::vector<uint8_t>&& b)
         : Buffer {std::move(b)}
         , std::istream(static_cast<std::streambuf*>(this))

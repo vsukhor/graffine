@@ -66,6 +66,7 @@ namespace graffine::transforms {
 /// Reason of the rejection of a transformation vetoed by a planning hook.
 inline constexpr const char* vetoed {"vetoed by the property processor"};
 
+/// Calling of the planning hooks, and helpers for building the plans.
 namespace plans {
 
 /** Whether processor \p PP has the planning hook for plans of type \p P.

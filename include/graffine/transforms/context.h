@@ -71,9 +71,9 @@ namespace graffine::transforms {
  * - undefined otherwise.
  */
 struct Frame {
-    TransformType type {};
-    Degree deg1 {undefined<Degree>};
-    Degree deg2 {undefined<Degree>};
+    TransformType type {};             ///< Family of the transformation.
+    Degree deg1 {undefined<Degree>};   ///< First degree, see above.
+    Degree deg2 {undefined<Degree>};   ///< Second degree, see above.
 
     friend constexpr auto operator==(const Frame&, const Frame&) -> bool = default;
 };
@@ -105,11 +105,14 @@ public:
         return {ff.data(), n};
     }
 
+    /// Iterator to the outermost frame.
     constexpr auto begin() const noexcept { return frames().begin(); }
+    /// Iterator past the innermost frame.
     constexpr auto end() const noexcept { return frames().end(); }
 
     /**
      * \p i th enclosing transformation, the outermost one being 0.
+     * \throws precondition_error If \p i is not below depth().
      */
     constexpr auto operator[](const std::size_t i) const -> const Frame&
     {
@@ -119,10 +122,12 @@ public:
     }
 
     /** The transformation directly enclosing the hook.
+     * \throws precondition_error If the context is empty.
      */
     constexpr auto innermost() const -> const Frame& { return (*this)[n - 1]; }
 
     /** The transformation applied by the client.
+     * \throws precondition_error If the context is empty.
      */
     constexpr auto outermost() const -> const Frame& { return (*this)[0]; }
 
@@ -152,8 +157,8 @@ private:
 
     friend class Nesting;
 
-    std::array<Frame, capacity> ff {};
-    std::size_t n {};
+    std::array<Frame, capacity> ff {};  ///< The frames; the first \a n are in use.
+    std::size_t n {};                   ///< Current depth.
 };
 
 
@@ -172,12 +177,15 @@ inline auto current_context() noexcept -> const Context&
 }
 
 
-/** Adds \p f to the context during its lifetime.
+/** Adds a frame to the context of this thread during its lifetime.
  */
 class Nesting {
 
 public:
 
+    /** Pushes frame \p f onto the context.
+     * \throws precondition_error If the context is full.
+     */
     explicit Nesting(const Frame& f)
     {
         auto& c = detail::context;
@@ -186,6 +194,7 @@ public:
         c.ff[c.n++] = f;
     }
 
+    /// Pops the frame.
     ~Nesting() { --detail::context.n; }
 
     Nesting(const Nesting&) = delete;
@@ -273,6 +282,7 @@ concept EndsB = requires (H& h, A&&... a) {
 
 }  // namespace detail
 
+/// Calls h.on_start(a...), with the context if accepted.
 template<typename H,
          typename... A>
     requires detail::StartsWithContext<H, A...> ||
@@ -285,6 +295,7 @@ constexpr void on_start(H& h, A&&... a)
         h.on_start(std::forward<A>(a)...);
 }
 
+/// Calls h.on_start<B>(a...), with the context if accepted.
 template<bool B,
          typename H,
          typename... A>
@@ -298,6 +309,7 @@ constexpr void on_start(H& h, A&&... a)
         h.template on_start<B>(std::forward<A>(a)...);
 }
 
+/// Calls h.on_start<T>(a...), with the context if accepted.
 template<typename T,
          typename H,
          typename... A>
@@ -311,6 +323,7 @@ constexpr void on_start(H& h, A&&... a)
         h.template on_start<T>(std::forward<A>(a)...);
 }
 
+/// Calls h.on_end(a...), with the context if accepted.
 template<typename H,
          typename... A>
     requires detail::EndsWithContext<H, A...> ||
@@ -323,6 +336,7 @@ constexpr void on_end(H& h, A&&... a)
         h.on_end(std::forward<A>(a)...);
 }
 
+/// Calls h.on_end<B>(a...), with the context if accepted.
 template<bool B,
          typename H,
          typename... A>

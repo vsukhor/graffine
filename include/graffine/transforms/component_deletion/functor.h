@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file functor.h
- * \brief Contains template for deletion of specific connected components.
+ * \brief Deletion of a component, with all its chains, edges and vertices.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -40,6 +40,7 @@ limitations under the License.
 
 namespace graffine::transforms {
 
+/// Compile-time description of the component deletion.
 template<typename G>
 struct Trait<TransformType::ComponentDeletion, G>
 {
@@ -50,20 +51,22 @@ struct Trait<TransformType::ComponentDeletion, G>
     using EndSlot = Chain::EndSlot;
     using Vertex = Graph::Vertex;
     using ResT = CmpId;
-    /// Result of the transformation: index the deleted component had: it may now be held by the formerly
-    /// last component, or be past the end.
+    /// Result of the transformation: the index the deleted component had,
+    /// now held by the formerly last component, or past the end if the
+    /// deleted component was the last.
     using Res = std::array<ResT, 1>;
 
-    static constexpr const char* fullName {"component_deletion"};
-    static constexpr const char* shortName {"cmp_de"};
+    static constexpr const char* fullName {"component_deletion"};  ///< Name in messages.
+    static constexpr const char* shortName {"cmp_de"};  ///< Abbreviated name.
 
-    static constexpr auto Type = TransformType::ComponentDeletion;
+    static constexpr auto Type = TransformType::ComponentDeletion;  ///< Family.
 };
 
 
 /// Enables deletion of a component from the graph.
 namespace component_deletion {
 
+/// Compile-time description of the component deletion.
 template<typename G>
 using Trait = transforms::Trait<TransformType::ComponentDeletion, G>;
 
@@ -73,6 +76,7 @@ template<typename G>
 struct Plan {
     CmpId c {CmpId::undefined};  ///< The deleted component.
 
+    /// The hooks of this family in processor \p pp.
     template<typename PP>
     static constexpr auto hooks(PP& pp) -> decltype((pp.componentDeletion))
     {
@@ -97,9 +101,12 @@ concept Processor =
     };
 
 
-/** Functor class deleting specific graph component.
- * \details The last component of the graph is moved to the index of the
- * deleted one, unless the deleted component was the last.
+/** Deletes a component, with all its chains, edges and vertices.
+ * \details The graph is renumbered to stay dense: the last component takes
+ * over the index of the deleted one, unless the deleted component was the
+ * last, and likewise the last chains and edges of the graph take over the
+ * ids of the deleted ones. Ids held by the client, other than the stable
+ * handles, must be looked up again afterwards.
  * \tparam G Graph to which the transformation is applied.
  * \tparam PP Processor of non-topological properties, or void.
  */
@@ -169,7 +176,7 @@ Functor(Graph& gr,
     : gr {gr}
     , updateProperties {pp}
 {
-    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor given, while PP is void");
 }
 
 template<typename G,

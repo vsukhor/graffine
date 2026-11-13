@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file vertices_in_graph.h
- * \brief Defines collection of vertex descriptors for use in the graph object.
+ * \brief Graph-wide table of vertex descriptors.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -44,6 +44,14 @@ limitations under the License.
 
 namespace graffine::structure::containers {
 
+/** Graph-wide table of vertex descriptors, indexed by VIdG.
+ * \details Vertices are owned by the components. The graph assembles this
+ * table on demand: it lists every vertex with its incident edges and
+ * neighbours by graph-wide indexes (see descriptors::VertexInGraph), for
+ * the graph-wide adjacency analyses and paths. The graph rebuilds the table
+ * on its first access after a change of the graph.
+ * \tparam G Graph type.
+ */
 template<typename G>
 struct VertexDescriptorsInGraph
     : containers::Sequence<std::vector<descriptors::VertexInGraph>>
@@ -58,21 +66,36 @@ struct VertexDescriptorsInGraph
     using Chain = Component::Chain;
     using Chains = Component::Chains;
 
+    /// Descriptor at position \p i.
     constexpr auto operator[](const VIdG i)       noexcept ->       VertexDescr& { return m_data[i()]; }
+    /// Descriptor at position \p i.
     constexpr auto operator[](const VIdG i) const noexcept -> const VertexDescr& { return m_data[i()]; }
+    /// Descriptor of the vertex with handle \p h, which must be present.
     constexpr auto operator[](const VIdH h) const noexcept -> const VertexDescr&;
+    /// Descriptor at position \p i.
     constexpr auto operator[](const std::size_t i)       noexcept ->       VertexDescr& { return m_data[i]; }
+    /// Descriptor at position \p i.
     constexpr auto operator[](const std::size_t i) const noexcept -> const VertexDescr& { return m_data[i]; }
 
+    /// Rebuilds the table from the vertices of all the components of
+    /// graph \p gr, in component order.
     constexpr void set(const Graph& gr);
+    /// Removes all the descriptors.
     constexpr void clear() { m_data.clear(); index.clear(); }
 
-    /** Position of the descriptor of vertex \p vid: constant time.
+    /** Position of the descriptor of vertex \p vid, or
+     * \ref utils::undefined if absent.
+     * \details Constant time through an index by handle; falls back to a
+     * linear scan if the index is out of date.
      */
     constexpr auto find(const VIdH vid) const noexcept -> std::size_t;
+    /// Appends a copy of \p vd, setting its position \a ind.
     constexpr auto push_back(const VertexDescr& vd);
 
+    /// Checks (in DEBUG builds) that the component ids and positions held
+    /// are within the bounds of graph \p gr.
     void check(const Graph& gr) const;
+    /// Prints the descriptors, preceded by the title \p s if not empty.
     void print(std::string_view s="") const noexcept;
 
 private:

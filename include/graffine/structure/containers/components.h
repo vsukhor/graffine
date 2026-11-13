@@ -22,8 +22,7 @@ limitations under the License.
 
 /**
  * \file components.h
- * \brief Contains class implementing collections of components in the graph.
- * \details Adds components-specific functionality to the Sequence container.
+ * \brief Container of the components of a graph.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -43,10 +42,9 @@ limitations under the License.
 
 namespace graffine::structure::containers {
 
-/** Implements a manager for collections of chains in the graph.
- * \details Derives from Sequence container class adding to it chain-specific
- * functionality.
- * \tparam Cmp Container element type: Disconnected component.
+/** Container of the components of a graph.
+ * \details Extends Sequence with indexing by component id (CmpId).
+ * \tparam Cmp Container element type: a connected component.
  */
 template<typename Cmp>
 struct Components
@@ -56,14 +54,22 @@ struct Components
     using size_type = Base::size_type;
     using value_type = Base::value_type;
 
-    /** Actual number of chains in the container.
+    /** Number of components in the container.
      */
     constexpr auto num() const noexcept -> size_type;
+    /** Index of the last component, or \ref utils::undefined if the
+     * container is empty.
+     */
     constexpr auto ind_last() const noexcept -> size_type;
 
+    /// The component with id \p w.
     constexpr auto operator[](const CmpId w) -> value_type& { return m_data[w()]; }
+    /// The component with id \p w.
     constexpr auto operator[](const CmpId w) const -> const value_type& { return m_data[w()]; }
 
+    /** Prints all the components.
+     * \param tag Label printed with each component.
+     */
     void print(std::string_view tag) const;
 
     /** Checks that \p cond is satisfied.

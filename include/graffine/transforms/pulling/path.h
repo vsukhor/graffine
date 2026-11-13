@@ -22,8 +22,7 @@ limitations under the License.
 
 /**
  * \file path.h
- * \brief Contains structure for representing paths in the graph in a way
- * convenient for pulling transformations.
+ * \brief Path of edges along which a component is pulled.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -92,10 +91,12 @@ struct Path
 
         constexpr Source() = default;
 
+        /// Source at chain end \p s.
         constexpr Source(const EndSlot& s) noexcept
             : EndSlot {s}
         {}
 
+        /// Source at the degree 2 vertex \p s inside a chain.
         explicit constexpr Source(const BulkSlot& s) noexcept
             : EndSlot {s.w, End::undefined}
             , pos {s.a()}
@@ -110,6 +111,8 @@ struct Path
          */
         constexpr bool is_bulk() const noexcept { return pos.is_defined(); }
 
+        /** The slot of a degree 2 source.
+         */
         constexpr auto bulk_slot() const noexcept -> BulkSlot { return {this->w, pos}; }
 
         /** The chain end of a source which is not a degree 2 vertex.
@@ -117,16 +120,24 @@ struct Path
         constexpr auto end_slot() const noexcept -> EndSlot { return *this; }
     };
 
-    /** Descriptor of the Path driver.
+    /** Descriptor of the Path driver: the first edge of the path, and its
+     * end at the vertex initiating the pull.
+     * \details The same type also describes intermediate edges through
+     * which a path is required to pass (see the constructor taking
+     * \a internals).
      */
     struct Driver
     {
         EgIdG ind {EgIdG::undefined};  ///< Graph-wide ind of the driving edge.
-        ChIdG w {ChIdG::undefined};    ///< Chain id
+        ChIdG w {ChIdG::undefined};    ///< Chain of the driving edge.
 
         /// Edge inner end at the driving vertex.
         End::Id egEnd {End::undefined};
 
+        /** Constructor.
+         * \param eg The driving edge.
+         * \param egEnd Inner end of \p eg at the driving vertex.
+         */
         explicit constexpr Driver(
             const Edge* const eg,
             const End::Id egEnd
@@ -143,12 +154,16 @@ struct Path
         constexpr auto operator=(const Driver& d) -> Driver& = default;
         constexpr auto operator=(Driver&& d) -> Driver& = default;
 
+        /// Compares the edges and their ends.
         constexpr auto operator==(const Driver& d)
         {
             return ind == d.ind &&
                    egEnd == d.egEnd;
         }
 
+        /** Chain end slot at the driving vertex, in its chain \p m.
+         * \return Undefined if the driving edge end is not at a chain end.
+         */
         constexpr auto end_slot(const Chain& m) const -> EndSlot
         {
             const auto e = m.ind2end(ind, egEnd);
@@ -157,6 +172,7 @@ struct Path
                                       : EndSlot {};
         }
 
+        /// Prints the descriptor.
         void print() const noexcept
         {
             jot("ind ", ind, " w ", w, " egEnd ", End::str(egEnd));
@@ -188,12 +204,26 @@ struct Path
     PathW pthw;  ///< Path edges by graph-wide index, from driver to source.
     PathC pthc;  ///< Path edges by component-wide index, from driver to source.
 
+    /** Constructs the shortest path from driver \p d to source \p s.
+     * \param cmp Component hosting the path.
+     * \param d Driver.
+     * \param s Source.
+     */
     explicit constexpr Path(
         const Component* const cmp,
         Driver d,
         Source s
     );
 
+    /** Constructs a path from driver \p d to source \p s, passing in turn
+     * through the edges \p internals: the shortest path between each pair
+     * of consecutive waypoints.
+     * \param cmp Component hosting the path.
+     * \param d Driver.
+     * \param s Source.
+     * \param internals Intermediate edges, each at a chain end and given
+     * with its inner end at that chain end.
+     */
     explicit constexpr Path(
         const Component* const cmp,
         Driver d,
@@ -201,6 +231,9 @@ struct Path
         std::vector<Driver> internals
     );
 
+    /** Constructs the path given by its graph-wide edge indexes \p pthw,
+     * from the driver edge to the source edge.
+     */
     explicit constexpr Path(
         const Component* const cmp,
         Driver d,
@@ -208,6 +241,9 @@ struct Path
         PathW pthw
     );
 
+    /** Constructs the path given by its component-wide edge indexes
+     * \p pthc, from the driver edge to the source edge.
+     */
     explicit constexpr Path(
         const Component* const cmp,
         Driver d,
@@ -253,15 +289,23 @@ struct Path
     constexpr auto source_vertex() const noexcept -> const Vertex&;
     constexpr auto source_vertex()       noexcept ->       Vertex&;
 
+    /** The chain end at edge end \p dr, as a source: a path to it ends
+     * over the edge of \p dr.
+     */
     auto driver2source(const Driver& dr) const -> Source;
 
+    /// The driver.
     constexpr auto drv() const noexcept -> const Driver& { return d; }
 
+    /// The source.
     constexpr auto src() const noexcept -> const Source& { return s; }
+    /// Sets the source, e.g. after a pulling step moved it.
     void set_src(const Source& src) noexcept;
 
+    /// Number of edges of the path.
     constexpr auto length() const noexcept -> std::size_t;
 
+    /// Number of edges of the path in the source chain.
     constexpr auto length_over_source_chain() const noexcept -> std::size_t;
 
     /** Vertices along the path, from the driver vertex to the source vertex.
@@ -277,21 +321,27 @@ struct Path
      */
     constexpr bool is_contiguous() const noexcept;
 
+    /// Prints a summary of the path and its edges, labelled by \p args.
     template<typename... Args>
     void print_path(Args... args) const noexcept;
 
+    /// Prints the edge indexes of the path, labelled by \p str.
     template<bool withChains>
     void print_short(const std::string& str) const;
 
+    /// Prints the path edges in detail, labelled by \p str.
     void print_detailed(const std::string& str) const;
 
 private:
 
-    Driver d;  // driver
-    Source s;  // source
-    std::vector<Driver> internals {};
+    Driver d;  ///< Driver.
+    Source s;  ///< Source.
+    std::vector<Driver> internals {};  ///< Required intermediate edges.
 
+    /// Sets the path edges to the shortest path from \a d to \a s.
     void set_shortest();
+    /// Shortest path from \p dr to \p sr in component \p cmp, as
+    /// component-wide and graph-wide edge indexes.
     static auto set_shortest(
         const Driver& dr,
         const Source& sr,

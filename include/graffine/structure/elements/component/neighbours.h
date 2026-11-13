@@ -39,7 +39,7 @@ ngs_of(const Edge& eg,
       const EndId eInner) const noexcept -> std::vector<Edge*>
 {
     GRAFFINE_ASSERT_CALLING(edges().contains(eg), eg.print("ERROR"),
-                   "Vertex is not part of component ", ind);
+                   "Edge is not part of component ", ind);
 
     std::vector<Edge*> gg;
     const auto v = eg.vertex_at_inner(eInner);
@@ -72,7 +72,7 @@ constexpr auto Component<Ch>::
 ngs_of(const Chain& m, const EndId e) const noexcept -> std::vector<Chain*>
 {
     GRAFFINE_ASSERT_CALLING(std::find(ww.begin(), ww.end(), m.idw) != ww.end(),
-                   m.print("ERROR"), "Vertex is not part of component ", ind);
+                   m.print("ERROR"), "Chain is not part of component ", ind);
 
     std::vector<Chain*> mm;
     for (const auto& n : m.ngs[e])
@@ -95,9 +95,8 @@ ngs_at(const EndSlot& s) const noexcept -> const Chain::Neigs&
     return cn[s.w].ngs[s.e];
 }
 
-/** slots connected to 'nov' will be checked, and if there is 'old',
- * it will be replaced by 'nov'
- */
+// The slots connected to 'nov' are checked, and 'old' among their
+// neighbours is replaced by 'nov'.
 template <typename Ch>
 void Component<Ch>::
 replace_slot_in_neigs(
@@ -127,13 +126,13 @@ remove_slot_from_neigs(const EndSlot& s)
 
         auto& ngs = ngs_at(ne);
 
-        // Remove oldn from the neig list of its j-th neig
+        // Remove s from the neighbours of ne.
         const auto ngsOK = ngs.remove(s);
 
         GRAFFINE_ENSURE(ngsOK, "EndSlot {", s.w, " ", s.e, "} not found among",
                "ngs of the slot {", ne.w, " ", ne.e, " connected to it");
 
-        // Remove the j-th neig from the oldn's list of neigs
+        // Remove ne from the neighbours of s.
         const auto neOK = sr.remove(ne);
 
         GRAFFINE_ENSURE(neOK, "EndSlot {", ne.w, " ", ne.e, "} not found among",
@@ -141,7 +140,7 @@ remove_slot_from_neigs(const EndSlot& s)
     }
 }
 
-// Shift an edge from f.e end of f.w to t.e end of t.w
+// Moves the edge at end f.e of chain f.w to end t.e of chain t.w.
 template<typename Ch>
 void Component<Ch>::
 shift_chain_junction(const EndSlot& f,
@@ -158,7 +157,7 @@ shift_chain_junction(const EndSlot& f,
         else                g1.push_back(std::move(g0.back()));
         g0.pop_back();
     }
-    else {  // ef == 1
+    else {  // f.e == End::A
 
         if (t.e == End::A) g1.insert(g1.begin(), std::move(g0.front()));
         else                g1.push_back(std::move(g0.front()));

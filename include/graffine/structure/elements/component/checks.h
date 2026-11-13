@@ -332,10 +332,6 @@ check(const std::string_view s) const
     return false;
 }
 
-// -----------------------------------------------------------------------------
-// PRINTING
-// -----------------------------------------------------------------------------
-
 }  // namespace graffine::structure::detail
 
 #endif  // GRAFFINE_STRUCTURE_ELEMENTS_COMPONENT_CHECKS_H

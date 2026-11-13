@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file bulk.h
- * \brief Implements chain internal connection.
+ * \brief Location of a vertex inside a chain.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -37,20 +37,26 @@ limitations under the License.
 /// Defines lightweight descriptors of the graph elements
 namespace graffine::structure::descriptors {
 
-/** Edge end connected at internal position inside a chain.
+/** Location of a vertex inside a chain, as opposed to at its ends (End).
+ * \details The location is given by the position \a a along the chain:
+ * the vertex joins edges a-1 and a. It mirrors the interface of End,
+ * so that slots of both kinds share the same template (see _Slot).
  */
 struct Bulk
 {
-    using Id = EgIdA;
+    using Id = EgIdA;  ///< Position of the vertex along the chain.
 
+    /// Number of locations: not fixed, as it depends on the chain length.
     static constexpr Id num {Id::undefined};
-    static constexpr Id Undefined {Id::undefined};
+    static constexpr Id Undefined {Id::undefined};  ///< Not set.
 
+    /// Inner vertices have no opposite: always returns \ref Undefined.
     static constexpr auto opp(const Id) noexcept -> Id
     {
         return Undefined;
     }
 
+    /// The position \p a as a string.
     static auto str(const Id a) noexcept -> std::string
     {
         return std::to_string(a());

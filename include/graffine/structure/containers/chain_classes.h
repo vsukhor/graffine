@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file chain_classes.h
- * \brief Contains collections of chain ids classified by end degrees.
+ * \brief Chains classified by the degrees of their end vertices.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -38,7 +38,7 @@ limitations under the License.
 #include <ostream>
 #include <vector>
 
-/// Classes defining collections of graph elements and their descriptors.
+/// Containers of graph elements and of their descriptors.
 namespace graffine::structure::containers {
 
 /** Chains classified according to end degrees.
@@ -52,6 +52,9 @@ namespace graffine::structure::containers {
  *
  * E.g. {1, 1} holds the unconnected linear chains, and {2, 2} the
  * unconnected cycles; num() accepts both kinds of key.
+ *
+ * Each component keeps its chains classified; the transformations use the
+ * classes to find candidate chains quickly, e.g. all free ends (degree 1).
  * \tparam ES Type of end slot.
  */
 template<typename ES>
@@ -59,14 +62,14 @@ struct ChainClasses
 {
     using End = descriptors::End;
     using EndSlot = ES;  ///< Type of end slot.
-    using ChId = ES::HostId;
-    using ChIds = std::vector<ChId>;
-    using Slots = std::vector<EndSlot>;
+    using ChId = ES::HostId;              ///< Chain id type.
+    using ChIds = std::vector<ChId>;      ///< List of chain ids.
+    using Slots = std::vector<EndSlot>;   ///< List of end slots.
     using Key = std::array<Degree, 2>;  ///< End degrees, in ascending order.
 
     template<typename> friend struct Component;
-    static constexpr ChIds emptyChids {};
-    static constexpr Slots emptySlots {};
+    static constexpr ChIds emptyChids {};  ///< Returned for an empty class.
+    static constexpr Slots emptySlots {};  ///< Returned for an empty class.
 
 private:
 
@@ -84,46 +87,72 @@ public:
 
     bool operator==(const ChainClasses& other) const noexcept = default;
 
+    /// Ids of the chains having degree \p d at both ends.
     constexpr auto operator()(Degree d) const -> const ChIds&;
+    /// Lower-degree end slots of the chains having end degrees \p k;
+    /// \p k[0] must be lower than \p k[1].
     constexpr auto operator()(const Key& k) const -> const Slots&;
 
+    /// Chains with both ends free: unconnected linear chains.
     constexpr auto cn_11() const -> const ChIds& { return (*this)(Deg1); }
+    /// Chains with degree 2 at both ends: unconnected cycles.
     constexpr auto cn_22() const -> const ChIds& { return (*this)(Deg2); }
+    /// Chains with degree 3 at both ends.
     constexpr auto cn_33() const -> const ChIds& { return (*this)(Deg3); }
+    /// Chains with degree 4 at both ends.
     constexpr auto cn_44() const -> const ChIds& { return (*this)(Deg4); }
+    /// Free ends of the chains with degrees 1 and 3 at their ends.
     constexpr auto cn_13() const -> const Slots& { return (*this)({Deg1, Deg3}); }
+    /// Free ends of the chains with degrees 1 and 4 at their ends.
     constexpr auto cn_14() const -> const Slots& { return (*this)({Deg1, Deg4}); }
+    /// Degree 3 ends of the chains with degrees 3 and 4 at their ends.
     constexpr auto cn_34() const -> const Slots& { return (*this)({Deg3, Deg4}); }
 
+    /// Lists chain \p v as having degree \p k at both ends.
     constexpr void insert(Degree k, ChId v);
+    /// Lists end slot \p v, of a chain having end degrees \p k.
     constexpr void insert(const Key& k, EndSlot&& v) noexcept;
 
     /** Number of chains having end degrees \p k, equal or not.
      */
     constexpr auto num(const Key& k) const -> std::size_t;
 
+    /** Total number of chains classified.
+     */
     constexpr auto num_chains() const noexcept -> std::size_t;
 
+    /// Empties the class of chains having degree \p k at both ends.
     constexpr void clear(Degree k);
+    /// Empties the class of chains having end degrees \p k.
     constexpr void clear(const Key& k) noexcept;
+    /// Empties all the classes.
     constexpr void clear() noexcept;
 
+    /// Moves the chains classified in \p other into the corresponding
+    /// classes of this object, e.g. when merging components.
     void append(ChainClasses&& other);
 
+    /// Classifies chain \p m by its current end degrees and lists it.
     template<typename Chain>
     void include(const Chain& m);
 
+    /// Removes chain \p m from the class of its current end degrees.
+    /// \note Must be called before the end degrees of \p m change.
     template<typename Chain>
     void remove(const Chain& m);
 
+    /// Clears the classes, then classifies all the chains \p cn.
     template<typename Chains>
     void populate(const Chains& cn);
 
+    /// Clears the classes, then classifies the chains \p ww of \p cn.
     template<typename Chains>
     void populate(const Chains& cn, const ChIds& ww);
 
+    /// Writes the number of chains in each class to \p ofs.
     void report(std::ostream& ofs) const;
 
+    /// Prints the classes, preceded by the concatenation of \p args, if any.
     template<typename... Args>
     void print(Args&&... args) const;
 };

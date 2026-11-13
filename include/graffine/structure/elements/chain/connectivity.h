@@ -122,8 +122,6 @@ constexpr
 auto Chain<E>::
 has_a_leaf_end() const noexcept -> std::pair<bool, EndId>
 {
-    // return the end index if true
-
     if (!is_connected_at(endA))
         return {true, endA};
 

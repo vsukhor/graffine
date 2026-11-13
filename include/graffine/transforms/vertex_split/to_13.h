@@ -22,9 +22,7 @@ limitations under the License.
 
 /**
  * \file to_13.h
- * \brief Contains class template enabling splits of specific graph vertices.
- * \details This Functor template specialization operates on vertices of
- * degree 4 to produce vertices of degrees 1 and 3.
+ * \brief Split of an X junction, detaching one chain end (4 -> 1+3).
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -43,10 +41,10 @@ limitations under the License.
 
 namespace graffine::transforms::vertex_split {
 
-/** Template specialization for a functor generating degree 1 and 3 vertices.
- * \details Adds vertex type-specific split capability and updates the
- * graph for it. This Functor template specialization operates on degree 4
- * vertices to produce vertices of degree 1 and 3: V4 -> V1 + V3.
+/** Splits a vertex of degree 4 into vertices of degrees 1 and 3.
+ * \details Detaches one chain end from an X junction, which becomes a free
+ * end; the junction is left a Y junction. The component may be
+ * disconnected into two.
  * \tparam G Graph to which the split operation is applied.
  */
 template<typename G,
@@ -75,9 +73,9 @@ struct To<Deg1, Deg3, G, PP>
 
     static_assert(areCompatibleDegrees<J1, J2>);
 
-    const std::string dd {degrees_to_string(J1, J2)};
-    const std::string shortName {make_name(Trait::shortName, dd)};
-    const std::string fullName  {make_name(Trait::fullName, dd)};
+    const std::string dd {degrees_to_string(J1, J2)};  ///< Degrees, as text.
+    const std::string shortName {make_name(Trait::shortName, dd)};  ///< Abbreviated name.
+    const std::string fullName  {make_name(Trait::fullName, dd)};  ///< Name in messages.
 
     /** Constructs a Functor for vertex split operation acting on a Graph.
      * \param[in] gr Graph to which the transformation is applied.
@@ -86,15 +84,19 @@ struct To<Deg1, Deg3, G, PP>
     explicit To(Graph& gr,
                 std::shared_ptr<PP> pp = nullptr);
 
-    /** Divides the graph chain at a vertex of degree 2.
-     * \param[in] v Degree 3 vertex.
+    /** Detaches edge \p s from vertex \p v, of degree 4. Unchecked: see
+     * Applicable.
+     * \param[in] v Degree 4 vertex.
      * \param[in] s Descriptor of the incident edge to get disconnected.
+     * \return The resulting vertices of degrees 1 and 3.
      */
     auto apply(Vertex& v,
                const EdgeInVertex& s) -> Res;
 
-    /** Divides the chain at a vertex of degree 4 to produce 1+3.
-     * \param[in] s Slot on a boundary chain vertex.
+    /** Detaches chain end \p s from its X junction. Unchecked: see
+     * Applicable.
+     * \param[in] s End slot disconnected from the divided vertex.
+     * \return The resulting vertices of degrees 1 and 3.
      */
     auto apply(const EndSlot& s) -> Res;
 
@@ -157,7 +159,7 @@ To(Graph& gr,
     , updateProperties {pp}
     , report {dd, gr}
 {
-    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor given, while PP is void");
 }
 
 
@@ -335,7 +337,7 @@ struct To1<Deg3, G, PP>
                            std::shared_ptr<PP> pp = nullptr)
         : Base {gr, pp}
     {
-        GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+        GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor given, while PP is void");
     }
 };
 

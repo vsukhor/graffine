@@ -41,7 +41,8 @@ limitations under the License.
 #include <string>
 #include <utility>
 
-/// Functionality enabling transformations of the graph topology
+/// Transformations of the graph topology, as function objects: one
+/// namespace per family (vertex_merger, vertex_split, edge_creation...).
 namespace graffine::transforms {
 
 /** Reason why a transformation is not applicable to its arguments.
@@ -49,7 +50,7 @@ namespace graffine::transforms {
  * they are part of the regular flow of simulations proposing random moves.
  */
 struct Rejection {
-    const char* reason;
+    const char* reason;  ///< Human-readable explanation, a string literal.
 };
 
 /// Outcome of checking whether a transformation can be applied.
@@ -287,24 +288,33 @@ constexpr auto bulk_slot(
 
 }  // namespace locate
 
+/// Family of a transformation.
 enum TransformType
 {
-    ComponentCreation,
-    ComponentDeletion,
-    EdgeCreation,
-    EdgeDeletion,
-    EdgeMerger,
-    EdgeSplit,
-    VertexMerger,
-    VertexSplit,
-    Pulling
+    ComponentCreation,  ///< Creation of a component.
+    ComponentDeletion,  ///< Deletion of a component.
+    EdgeCreation,       ///< Creation of an edge.
+    EdgeDeletion,       ///< Deletion of an edge.
+    EdgeMerger,         ///< Merger of two adjacent edges into one.
+    EdgeSplit,          ///< Split of an edge into two.
+    VertexMerger,       ///< Merger of two vertices into one.
+    VertexSplit,        ///< Split of a vertex into two.
+    Pulling             ///< Pulling of a path of edges.
 };
 
+/** Compile-time description of a transformation, such as its name;
+ * specialized by each family.
+ * 	param TT Family of the transformation.
+ * 	param Element Type distinguishing the members of the family, e.g.
+ * the degrees of the vertices involved.
+ */
 template<TransformType TT,
          typename Element>
 struct Trait
 {};
 
+/// Two degrees as a string, e.g. "1+3", for the names of the
+/// transformations.
 inline
 auto degrees_to_string(
     const Degree d1,
@@ -314,6 +324,8 @@ auto degrees_to_string(
     return std::to_string(d1) + '+' + std::to_string(d2);
 }
 
+/// Name of a transformation: \p nameTrait followed by \p dd, e.g. the
+/// degrees involved.
 constexpr
 auto make_name(
     const char* nameTrait,

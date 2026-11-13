@@ -22,7 +22,8 @@ limitations under the License.
 
 /**
  * \file deleting_host_chain.h
- * \brief Struct performing deletion of graph edges along with host chain.
+ * \brief Deletion of a single-edge chain attached to a junction of a given
+ * degree.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -44,13 +45,15 @@ limitations under the License.
 
 namespace graffine::transforms::edge_deletion {
 
-/** Functor template for deletion of a graph edge along with its host chain.
- * \details This template is specialized for different vertex degrees.
- * Handles the case of single-edge chains. Importantly, a single-edge chain is
- * suitable for deletion upon the edge removal only if one of its ends is
- * unconnected, while the other end is at a junction.
- * \tparam D Vertex degree at the connected end of the deleted chain.
+/** Deletes a single-edge chain, attached by one end to a junction of
+ * degree \p D and free at the other, together with its edge.
+ * \details The junction is first split (vertex split 1+(D-1)), detaching
+ * the chain as a component of its own, which is then deleted (component
+ * deletion): the hooks of these inner transformations run inside this one
+ * (see context.h). The junction is left with degree D-1.
+ * \tparam D Vertex degree at the connected end of the deleted chain: 3 or 4.
  * \tparam G Graph hosting the edge to be deleted.
+ * \tparam PP Processor of non-topological properties, or void.
  */
 template<Degree D,
          typename G,
@@ -74,13 +77,11 @@ struct DeletingHostChain
 
     static constexpr auto isChainDeleteded = true;
 
-    /// This is a single-edge chain, so one of the edge ends has degree 1.
+    /// Degree of the free end of the chain.
     static constexpr auto I1 = Deg1;
 
-    /// This is a single-edge connected chain,
-    /// \details One of the edge ends is a (3-way or 4-way) junction,
-    /// because single-edge loops are not allowed.
-    static constexpr auto I2 = D;  // Deg3 or Deg4
+    /// Degree of the junction at the attached end of the chain: 3 or 4.
+    static constexpr auto I2 = D;
 
     // Output degrees.
 
@@ -92,15 +93,11 @@ struct DeletingHostChain
     /// Context of the hooks of the inner split and component deletion.
     static constexpr Frame frame {Trait::Type, D};
 
-    const std::string dd {std::to_string(I2)};
+    const std::string dd {std::to_string(I2)};  ///< Junction degree, as text.
 
-    /// Short name for edge deletion functors.
-    /// \note Are used for naming conventions in the code.
-    const std::string shortName {make_name("edrh_", dd)};
+    const std::string shortName {make_name("edrh_", dd)};  ///< Abbreviated name.
 
-    /// Full name for edge deletion functors.
-    /// \note Are used for more descriptive naming conventions in the code.
-    const std::string fullName {make_name("edge_deletion_with_host_chain_", dd)};
+    const std::string fullName {make_name("edge_deletion_with_host_chain_", dd)};  ///< Name in messages.
 
 // public methods
 
@@ -111,13 +108,16 @@ struct DeletingHostChain
     constexpr explicit DeletingHostChain(Graph& gr,
                                          std::shared_ptr<PP> pp = nullptr);
 
-    /** Deletion using edge index.
+    /** Deletes edge \p ind with its chain. Unchecked: see Applicable.
      * \param[in] ind Graph-wide index of the deleted edge.
+     * \return Index of the component that hosted the edge.
      */
     auto apply(EgIdG ind) -> Res;
 
-    /** Deletion using edge position.
-     * \param[in] s End slot connecting the deleted edge.
+    /** Deletes the single-edge chain attached to the junction by its end
+     * \p s. Unchecked: see Applicable.
+     * \param[in] s Attached end of the deleted chain.
+     * \return Index of the component that hosted the edge.
      */
     auto apply(const EndSlot& s) -> Res;
 
@@ -190,7 +190,7 @@ DeletingHostChain(Graph& gr,
     , clrem {gr, pp}
     , split {gr, pp}
 {
-    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor given, while PP is void");
 }
 
 

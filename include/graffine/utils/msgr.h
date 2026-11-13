@@ -25,7 +25,8 @@
 
 /**
  * \file msgr.h
- * \brief Class for outputting short messages to console or a text file.
+ * \brief Class for printing short messages to the console and a log file,
+ * and the handler of failed assertions.
  * \author Valerii Sukhorukov
  */
 
@@ -47,10 +48,17 @@
 #include <utility>   // forward
 #include <vector>
 
-/// Library outer namespace.
+/// General-purpose utilities.
 namespace graffine::utils {
 
 
+/** Reports a failed assertion to std::cerr and aborts the process.
+ * \details Called by GRAFFINE_ASSERT and GRAFFINE_ASSERT_CALLING (see
+ * misc.h) in DEBUG builds.
+ * \param CND Text of the failed condition.
+ * \param location Location of the failed assertion.
+ * \param msg Parts of the explanation printed after the condition.
+ */
 template<typename ...Args>
 [[noreturn, gnu::cold]]
 void failure_message(
@@ -82,29 +90,30 @@ void failure_message(
 
 // /////////////////////////////////////////////////////////////////////////////
 
-/** Convenient formatted text output to the screen and a logfile.
- * \details Implements convenience class for formatted text output
- * to std::cout and to a logfile.
+/** Formatted text output to the screen and to a log file.
+ * \details Each message is written to both streams, if set; the copy
+ * written to the log file is stripped of color codes. Real numbers are
+ * printed in scientific notation.
  */
 class Msgr {
 
 public:
 
-    using outstream = std::ostream;
-    using logstream = std::ofstream;
+    using outstream = std::ostream;   ///< Type of the screen stream.
+    using logstream = std::ofstream;  ///< Type of the log file stream.
 
 
-    outstream* so {};  ///< Screen out stream.
-    logstream* sl {};  ///< Logfile stream.
+    outstream* so {};  ///< Screen output stream; null for no screen output.
+    logstream* sl {};  ///< Log file stream; null for no log file.
 
-    /** Default constructor.
+    /** Default constructor: no output streams, so nothing is printed.
      */
     Msgr() = default;
 
-    /** Constructs This object given streams to the screen and to file.
-     * \param so Screen out stream.
-     * \param sl File out stream.
-     * \param precision Precision of real numbers.
+    /** Constructs the object given streams to the screen and to a file.
+     * \param so Screen output stream, or nullptr.
+     * \param sl Log file stream, or nullptr.
+     * \param precision Number of digits of real numbers.
      */
     explicit Msgr(
         outstream* so,
@@ -112,12 +121,13 @@ public:
         int precision
     );
 
-    /** Set formatting parameters.
-     * \param precision Precision of real numbers
+    /** Sets the streams to print real numbers in scientific notation with
+     * \p precision digits.
+     * \param precision Number of digits of real numbers.
      */
     void set_formats(int precision) noexcept;
 
-    /** Print std::array.
+    /** Prints a named std::array on one line.
      * \tparam V Data type of array elements.
      * \tparam N Number of array elements.
      * \param name Name/title.
@@ -129,7 +139,7 @@ public:
         const std::array<V,N>& v
     ) const noexcept;
 
-    /** Print named std::vector .
+    /** Prints a named std::vector on one line.
      * \tparam V Data type of vector elements.
      * \param name Name/title.
      * \param v Vector data.
@@ -140,17 +150,18 @@ public:
         const std::vector<V>& v
     ) const noexcept;
 
-    /** Print a data series of various types.
-     * \details Based on proposition stackoverflow.com proposition by geza:
+    /** Prints the concatenation of values of various types, followed by
+     * a space.
+     * \details Based on a stackoverflow.com answer by geza:
      * https://stackoverflow.com/questions/51647834/printf-like-utility-in-c-without-format-specifier/51648068#51648068
-     * \tparam endline Finish with line end.
+     * \tparam endline Finish with a line end.
      * \param values Values to print.
      */
     template<bool endline=true, typename... T>
     void print(T... values) const;
 
-    /** ostream operator with the same functionality as the print method.
-     * \note The output is not terminated by a \a newline .
+    /** Stream operator with the same functionality as print().
+     * \note The output is not terminated by a newline.
      */
     template<typename... T>
     Msgr& operator<<(T... values);
@@ -162,17 +173,18 @@ public:
 
 private:
 
-    /** Check that the stream used is valid.
+    /** Checks that \p S is one of the stream types supported.
      * \tparam S Stream type.
      */
     template<typename S>
     static constexpr auto is_valid_stream() noexcept;
 
-    /** Removes color codes from the stream directed to a file.
+    /** Removes the color codes from a string, before it is written to the
+     * log file.
      */
     auto rm_colorcode(std::string&& v) const -> std::string;
 
-    /** Print to a stream \p io.
+    /** Prints a string to a stream \p io, then flushes it.
      * \tparam IO Stream type.
      * \param io Stream object.
      * \param v String to print.
@@ -328,12 +340,14 @@ operator<<(T... values)
 }
 
 
+/// A type with a member function <tt>print(std::ostream&)</tt>.
 template<typename T>
 concept Printable = requires(std::ostream& os, const T& t)
 {
     { t.print(os) };
 };
 
+/// Writes a Printable object to \p os by calling its print() member.
 template<Printable T>
 std::ostream& operator<<(std::ostream& os, const T& t)
 {

@@ -22,10 +22,8 @@ limitations under the License.
 
 /**
  * \file in_multi_edge_chain.h
- * \brief Contains class performing edge deletion in chains consisting of
- * multiple edges.
- * \note This case is discriminated because deletion of an edge in multi-edge
- * chains does not trigger automatically deletion of the host chain itself
+ * \brief Contraction of an edge of a multi-edge chain, for any vertex
+ * degree.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -39,20 +37,16 @@ limitations under the License.
 #include <memory>
 #include <type_traits>
 
-/** Contains operations handling edge deletion in a graph.
- * These are functors for deleting edges based on chain lengths and vertex
- * degrees.
- */
 namespace graffine::transforms::edge_deletion {
 
-/** Vertex degree-independent wrapper class for edge deletion in chains
- * consisting of multiple edges.
- * \details Handles the case of multi-edge chains. Notably, because the chain
- * contains more than a single edge, at least one of the edge ends is a vertex
- * of degree 2.
- * \note This case is discriminated because deletion of an edge in multi-edge
- * chains does not trigger automatically deletion of the host chain itself
+/** Deletes an edge of a multi-edge chain by contracting it, keeping the
+ * chain.
+ * \details Because the chain has more than one edge, at least one end of
+ * the edge is an internal vertex, of degree 2. The two vertices of the
+ * edge merge, and the chain loses one edge. Dispatches to
+ * PreservingHostChain for the degree of the other end.
  * \tparam G Graph hosting the edge to be deleted.
+ * \tparam PP Processor of non-topological properties, or void.
  */
 template<typename G,
          typename PP = void>
@@ -73,7 +67,7 @@ struct InMultiEdgeChain
     using Res = Trait::Res;
     using PropertyProcessor = PP;
 
-    /// This is a single-edge chain, so one of the edge ends has degree 1.
+    /// Unused here: copied from InSingleEdgeChain.
     static constexpr auto I = Deg1;
 
     /** Constructs a Functor object based on the Graph instance.
@@ -83,8 +77,9 @@ struct InMultiEdgeChain
     explicit constexpr InMultiEdgeChain(Graph& gr,
                                         std::shared_ptr<PP> pp = nullptr);
 
-    /** Function call operator executing the deletion using edge index.
+    /** Contracts edge \p ind. Unchecked: see Applicable.
      * \param[in] ind Graph-wide index of the deleted edge.
+     * \return Index of the component hosting the edge.
      */
     auto apply(EgIdG ind) -> Res;
 
@@ -146,7 +141,7 @@ InMultiEdgeChain(Graph& gr,
     , deg3 {gr, pp}
     , deg4 {gr, pp}
 {
-    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor given, while PP is void");
 }
 
 

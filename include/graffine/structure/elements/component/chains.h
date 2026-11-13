@@ -33,8 +33,8 @@ limitations under the License.
 
 namespace graffine::structure::detail {
 
-// Create an empty chain and insert it into the component.
-// Result:  an unconnected chain as a part of the component..
+// Creates an empty chain and inserts it into the component.
+// Result: an unconnected chain as a part of the component.
 template <typename Ch>
 constexpr auto Component<Ch>::
 create_chain() -> Chain&
@@ -50,7 +50,7 @@ create_chain() -> Chain&
     return m;
 }
 
-// Create a chain of specific length and insert it into an empty component.
+// Creates a chain of a given length and inserts it into an empty component.
 // Result: a chain as part of a single-chain component.
 template <typename Ch>
 constexpr auto Component<Ch>::

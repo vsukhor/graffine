@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file from_22.h
- * \brief Contains implementation of merger between two chain internal vertices.
+ * \brief Merger of two vertices inside chains (2+2).
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -44,9 +44,11 @@ limitations under the License.
 
 namespace graffine::transforms::vertex_merger {
 
-/** Template specialization for V2 + V2 -> V4 vertex merger.
- * \details Adds vertex type-specific vertex merger capability and updates the
- * graph for it.
+/** Merges two vertices of degree 2 into a junction of degree 4.
+ * \details Each vertex is internal to a chain, which is split at it, or
+ * is the boundary vertex of an unconnected cycle, whose ends join the
+ * junction as they are; four chain ends then meet at the new X junction.
+ * The vertices may lie in the same chain or in different ones.
  * \tparam G Graph to which the merger operation is applied.
  */
 template<typename G,
@@ -78,9 +80,9 @@ struct From<Deg2, Deg2, G, PP>
     static constexpr auto ee = UnconnectedCycleEnd;
     static constexpr auto oe = structure::descriptors::End::opp(UnconnectedCycleEnd);
 
-    const std::string dd {degrees_to_string(I1, I2)};
-    const std::string shortName {make_name(Trait::shortName, dd)};
-    const std::string fullName  {make_name(Trait::fullName, dd)};
+    const std::string dd {degrees_to_string(I1, I2)};  ///< Degrees, as text.
+    const std::string shortName {make_name(Trait::shortName, dd)};  ///< Abbreviated name.
+    const std::string fullName  {make_name(Trait::fullName, dd)};  ///< Name in messages.
 
     /** Constructs a Functor object based on the Graph instance.
      * \param[in] gr Graph to which the transformation is applied.
@@ -294,6 +296,10 @@ private:
     /// Keeping of the vertex asked for by the Keep overloads.
     Keeper<G> keep;
 
+    /** Attaches the free chain ends \p p and \p q to the vertex at chain
+     * end \p s, which is to become the degree 4 junction.
+     * \return Pointer to that vertex.
+     */
     constexpr auto deg4_vertex(
         const EndSlot& s,
         const EndSlot& p,
@@ -335,7 +341,7 @@ From(Graph& gr,
     , updateProperties {pp}
     , report {gr, dd}
 {
-    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor given, while PP is void");
 }
 
 

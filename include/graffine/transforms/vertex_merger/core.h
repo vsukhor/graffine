@@ -22,7 +22,8 @@ limitations under the License.
 
 /**
  * \file core.h
- * \brief Contains low-level vertex merging routines for joining linear chains.
+ * \brief Low-level mergers of free chain ends: joining two chains into one,
+ * or closing a chain into a cycle.
  * \note Implementation for the case of max vertex degree = 3 is available at
  * https://github.com/vsukhor/mitoSim/blob/master/include_transformer.h
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
@@ -44,10 +45,12 @@ limitations under the License.
 
 namespace graffine::transforms::vertex_merger {
 
-/** Encapsulates core vertex merger operations.
- * \details Elementary dynamics and updates the graph for it.
- * Forms base for classes adding more specific types of dynamics.
+/** Mergers of free chain ends (vertices of degree 1).
+ * \details Joins two chains at their free ends into a single chain, or the
+ * two free ends of one chain into a cycle, and updates the graph. Used by
+ * the degree-specific mergers, notably From<Deg1, Deg1>.
  * \tparam G Graph to which the transformation is applied.
+ * \tparam PP Processor of non-topological properties, or void.
  */
 template<typename G,
          typename PP = void>
@@ -65,7 +68,7 @@ struct Core
     using ResT = Trait::ResT;
     using Res = Trait::Res;
 
-    const std::string dd {degrees_to_string(Deg1, Deg1)};
+    const std::string dd {degrees_to_string(Deg1, Deg1)};  ///< Degrees, as text.
 
     /** Constructs a Core object from the Graph class instance.
      * \param[in] gr Graph to which the transformation is applied.
@@ -76,10 +79,9 @@ struct Core
                             std::shared_ptr<PP> pp = nullptr,
                             std::string_view shortName = "");
 
-    /** Performs merger of free ends of two antiparallel oriented chains.
-     * \details Antiparallel orientation is defined as:
-     * merging end 1 of the 1st chain with to end 1 of the 2nd chain, or
-     * merging end 2 of the 1st chain with to end 2 of the 2nd chain.
+    /** Joins two chains at like free ends: A with A, or B with B.
+     * \details The chains are then antiparallel: one of them is reversed,
+     * so that the result runs in a single direction.
      * \attention Important:
      * if \p end is A, reverses g of \p w1:
      * end == A: 456 + 0123 -> 6540123 (>>> + >>>> -> <<<>>>>);
@@ -88,6 +90,9 @@ struct Core
      * \param[in] end Index of chain boundary at the vertex merger position.
      * \param[in] w1 Index of the 1st chain.
      * \param[in] w2 Index of the 2nd chain.
+     * \return Pointer to the merged vertex.
+     * \throws precondition_error If the chains are invalid or equal, or
+     * their ends \p end are not free.
      */
     auto antiparallel(
         Chain::EndId end,
@@ -95,27 +100,34 @@ struct Core
         ChIdG w2
     ) -> Res;
 
-    /** Performs merger of free ends of two parallel oriented chains.
-     * \details Parallel orientation is defined as:
-     * merging end 1 of the 1st chain to end 2 of the 2nd chain, or
-     * merging end 2 of the 1st chain to end 1 of the 2nd chain.
-     * \note: edge indexes are combined as 234 + 01-> 23401 (>>>> + >> -> >>>>>>)
+    /** Joins two chains at unlike free ends: end A of \p w1 with end B of
+     * \p w2.
+     * \details The chains are then parallel: no reversal is needed, and the
+     * edges of \p w2 precede those of \p w1:
+     * 234 + 01 -> 23401 (>>>> + >> -> >>>>>>).
+     * \throws precondition_error If the chains are invalid or equal, or
+     * the ends to join are not free.
      * \param[in] w1 Index of the 1st chain.
      * \param[in] w2 Index of the 2nd chain.
+     * \return Pointer to the merged vertex.
      */
     auto parallel(ChIdG w1, ChIdG w2) -> Res;
 
-    /** Merges end vertices to form a linear chain.
+    /** Joins two chains at free ends \p s1 and \p s2 into a linear chain,
+     * calling antiparallel() or parallel() as the ends require.
      * \param[in] s1 Chain boundary slot at the 1st parent vertex.
-     * \param[in] s2 Chain boundary slot on the 2nd parent vertex.
+     * \param[in] s2 Chain boundary slot at the 2nd parent vertex.
+     * \return Pointer to the merged vertex.
      */
     auto to_linear(
         const EndSlot& s1,
         const EndSlot& s2
     ) -> Res;
 
-    /** Merges end vertices an unconnected chain to form a cycle.
+    /** Joins the two free ends of the unconnected chain \p w, closing it
+     * into a cycle.
      * \param[in] w Chain index.
+     * \return Pointer to the merged vertex.
      */
     auto to_cycle(ChIdG w) -> Res;
 
@@ -131,7 +143,7 @@ protected:
     /// Processor for non-topological properties.
     std::shared_ptr<PP> updateProperties;
 
-    const std::string_view shortName;
+    const std::string_view shortName;  ///< Name of the calling merger, in messages.
 
     /// Pretty-printer of the initial and final configurations.
     Reporter<Graph> report;
@@ -156,7 +168,7 @@ Core(
     , shortName {shortName}
     , report {gr, dd}
 {
-    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor given, while PP is void");
 }
 
 

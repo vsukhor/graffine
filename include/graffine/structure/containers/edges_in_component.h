@@ -22,8 +22,7 @@ limitations under the License.
 
 /**
  * \file edges_in_component.h
- * \brief Defines classes managing collections of edges of the graph.
- * \details Adds edge-specific functionality to the Sequence container.
+ * \brief Table of the edge descriptors of a component.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -44,6 +43,12 @@ limitations under the License.
 
 namespace graffine::structure::containers {
 
+/** Table of the edge descriptors of a component, indexed by EgIdC.
+ * \details The edges themselves are stored in the chains. This table maps
+ * the component-wide index of each edge to its location (chain and
+ * position) and to its other ids, see descriptors::EdgeInComponent.
+ * \tparam C Component type.
+ */
 template<typename C>
 struct EdgeDescriptorsInComponent
     : Sequence<std::vector<descriptors::EdgeInComponent<typename C::Edge>>>
@@ -57,17 +62,41 @@ struct EdgeDescriptorsInComponent
     using Chain = Component::Chain;
     using Chains = Component::Chains;
 
+    /// Descriptor of the edge with component-wide index \p i.
     constexpr auto operator[](const EgIdC i) -> EdgeDescr& { return m_data[i()]; }
+    /// Descriptor of the edge with component-wide index \p i.
     constexpr auto operator[](const std::size_t i) -> EdgeDescr& { return m_data[i]; }
+    /// Descriptor of the edge with component-wide index \p i.
     constexpr auto operator[](const EgIdC i) const -> const EdgeDescr& { return m_data[i()]; }
+    /// Descriptor of the edge with component-wide index \p i.
     constexpr auto operator[](const std::size_t i) const -> const EdgeDescr& { return m_data[i]; }
 
+    /// Rebuilds the table from the edges of the chains of component \p cmp.
     void set(const Component& cmp);
+    /// Appends the descriptor of edge \p g; its EgIdC must equal the
+    /// current table size.
     void append(const Edge& g);
+    /// Appends the descriptors of the edges of chain \p m, in chain order.
     void append(const Chain& m);
+    /// Appends the descriptors of another table, e.g. when merging
+    /// components.
     void append(Self&& egl) noexcept;
+    /** Removes the descriptor of edge \p eg.
+     * \details The last edge of the component takes over the EgIdC of
+     * \p eg: its descriptor moves into the vacated entry, and the edge and
+     * its vertices are reindexed accordingly.
+     * \param eg Edge to remove.
+     * \param cn Chains of the graph.
+     * \param vv Vertices of the component.
+     */
     void remove(const Edge& eg, Chains& cn, Vertices& vv);
+    /// Removes all the descriptors.
     void clear() { m_data.clear(); }
+    /** Checks the descriptors against edge \p eg.
+     * \param eg Edge.
+     * \param ic Host component, for the error message.
+     * \throws invariant_error If a descriptor disagrees with the edge.
+     */
     void check(const Edge& eg, CmpId ic) const;
 
 private:

@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file in_existing_chain.h
- * \brief Contains class performing creation of graph edges in existing chain.
+ * \brief Creation of an edge lengthening an existing chain.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -40,10 +40,18 @@ limitations under the License.
 
 namespace graffine::transforms::edge_creation {
 
-/** Creates an edge adjoint to a vertex, putting it into an existing chain.
- * \details Creates a graph edge inserted into an existing chain, at a vertex
- * of any degree. That vertex keeps its degree. Because the edge extends an
- * already existing chain, the chain gains a new vertex of degree 2.
+/** Creates an edge at a vertex, inserting it into an existing chain.
+ * \details The new edge lengthens a chain by one edge, at a vertex of any
+ * degree, which keeps its degree:
+ * - at an internal vertex, the new edge is inserted between its two edges;
+ * - at a chain end, the new edge becomes the end edge of the chain; the
+ *   former end edge is then joined to it by a new vertex of degree 2.
+ *
+ * Either way, the chain gains a new vertex of degree 2. Usage:
+ * \code
+ * edge_creation::InExistingChain<G> create {gr};
+ * const auto [eg] = create(G::EndSlot {w, G::End::B});  // lengthen w at end B
+ * \endcode
  * \tparam G Graph to which the transformation is applied.
  * \tparam PP Processor of non-topological properties, or void.
  */
@@ -66,15 +74,15 @@ struct InExistingChain
     using ResT = Trait::ResT;
     using Res = Trait::Res;
 
-    static constexpr auto isNewChain = false;
+    static constexpr auto isNewChain = false;  ///< The edge joins an existing chain.
 
     static constexpr auto I1 = undefined<Degree>;  ///< There is only one input vertex.
-    static constexpr auto I2 = undefined<Degree>;  ///< Is determined by the parameter.
-    static constexpr auto J1 = Deg2;  ///< Degree of the 1st output vertex.
-    static constexpr auto J2 = I2;    ///< Degree of the 2nd output vertex.
+    static constexpr auto I2 = undefined<Degree>;  ///< Degree of the input vertex: set by the argument.
+    static constexpr auto J1 = Deg2;  ///< Degree of the 1st output vertex: the new one.
+    static constexpr auto J2 = I2;    ///< Degree of the 2nd output vertex: unchanged.
 
-    static constexpr const char* shortName {"ec_oc"};
-    static constexpr const char* fullName  {"edge_creation_old_chain"};
+    static constexpr const char* shortName {"ec_oc"};  ///< Abbreviated name.
+    static constexpr const char* fullName  {"edge_creation_old_chain"};  ///< Name in messages.
 
     /** Constructs a Functor object based on the Graph instance.
      * \param[in] gr Graph to which the transformation is applied.
@@ -92,12 +100,10 @@ struct InExistingChain
      */
     auto apply(Vertex& v) -> Res;
 
-    /** Executes the transformation.
-     * The new edge is appended/inserted at vertex defined by slot \p s.
-     * If the vertex is internal, the new edge will become spanned between its
-     * incident edges. Otherwise the new edge is appended to the chain, becoming
-     * its boundary edge.
-     * Unchecked: see Applicable.
+    /** Executes the transformation at the vertex at slot \p s.
+     * \details If the vertex is internal, the new edge is inserted between
+     * its two edges. Otherwise the new edge is added at the chain end,
+     * becoming its end edge. Unchecked: see Applicable.
      * \param[in] s Slot inside a chain where the new edge is placed.
      * \return Pointer to the new edge.
      */
@@ -184,7 +190,7 @@ InExistingChain(Graph& gr,
     : gr {gr}
     , updateProperties {pp}
 {
-    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor given, while PP is void");
 }
 
 

@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file property.h
- * \brief Template for properties of the core elements.
+ * \brief Template for named properties of the graph elements.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -34,20 +34,34 @@ limitations under the License.
 
 namespace graffine {
 
+/**
+ * \brief A value carried by a graph element, together with its names.
+ * \details The names label the value in printouts; e.g. an edge holds
+ * its weight as <tt>Property<real> weight {"weight", "wt", 1.0}</tt>.
+ * The value is read and written through the call operator:
+ * \c weight() returns a reference to it.
+ * \tparam ValueT Type of the value.
+ */
 template<typename ValueT>
 struct Property
 {
-    using value_t = ValueT;
+    using value_t = ValueT;  ///< Type of the value.
 
-    const char* nameLong;
-    const char* nameShort;
+    const char* nameLong;   ///< Full name of the property.
+    const char* nameShort;  ///< Abbreviated name, used in printouts.
 
 private:  // Data
 
-    ValueT value;
+    ValueT value;  ///< The value.
 
 public:  // Functions
 
+    /**
+     * \brief Constructor.
+     * \param nameL Full name of the property.
+     * \param nameS Abbreviated name of the property.
+     * \param value Initial value.
+     */
     constexpr Property(const char* nameL,
                        const char* nameS,
                        const ValueT value)
@@ -56,21 +70,36 @@ public:  // Functions
         , value {value}
     {}
 
+    /**
+     * \brief Constructor leaving the value default-initialized.
+     * \note For an arithmetic \p ValueT, the value is then indeterminate
+     * until assigned.
+     * \param nameL Full name of the property.
+     * \param nameS Abbreviated name of the property.
+     */
     constexpr Property(const char* nameL,
                        const char* nameS)
         : nameLong {nameL}
         , nameShort {nameS}
     {}
 
+    /// Read-only access to the value.
     constexpr auto operator()() const noexcept -> const ValueT&
     {
         return value;
     }
+    /// Read-write access to the value.
     constexpr auto operator()() noexcept -> ValueT&
     {
         return value;
     }
 
+    /**
+     * \brief Prints the short name and the value to the log, without a
+     * line break.
+     * \details Only boolean (printed as T or F) and arithmetic values are
+     * printed; for other types the function prints nothing.
+     */
     void print() const
     {
         if constexpr (std::is_same_v<value_t, bool>)

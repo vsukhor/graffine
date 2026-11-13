@@ -22,8 +22,7 @@ limitations under the License.
 
 /**
  * \file on_3.h
- * \brief Contains specialization of the functor for pulling graph
- * transformation to vertices of degree 3.
+ * \brief Pulling driven by a vertex of degree 3, a Y junction.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -49,7 +48,13 @@ limitations under the License.
 namespace graffine::transforms::pulling {
 
 
-/** Functor doing edge pulling initiated from a vertex of degree 3.
+/** Pulling driven by a vertex of degree 3, a Y junction.
+ * \details The path leaves the junction over one of its three edges; the
+ * other two are the branches. The first step splits the junction (vertex
+ * split 1+2), pulls the driver as a free end, and merges the branches into
+ * the next vertex of the path, which thus becomes a junction of degree 4
+ * (vertex merger 2+2), or of degree 3 for a single-edge path (merger 1+2).
+ * The driver is left a free end, and the remaining steps pull it as such.
  * \tparam G Graph to which the pull operation is applied.
  * \tparam PP Processor of non-topological properties, or void.
  */
@@ -77,9 +82,9 @@ struct On<Deg3, G, PP>
 
     static_assert(is_pullable_degree<D>);
 
-    const std::string d {std::to_string(D)};
-    const std::string shortName {d + "pu"};
-    const std::string fullName  {"Pulling from Vertex Deg "s + d};
+    const std::string d {std::to_string(D)};  ///< Driver degree, as text.
+    const std::string shortName {d + "pu"};   ///< Abbreviated name.
+    const std::string fullName  {"Pulling from Vertex Deg "s + d};  ///< Name in messages.
 
     /** Constructs this functor object based on the Graph instance.
      * \param[in] gr Graph to which the transformation is applied.
@@ -89,8 +94,7 @@ struct On<Deg3, G, PP>
                 std::shared_ptr<PP> pp = nullptr);
 
     /** Pulls a vertex of degree 3 along \p path by \p steps.
-     * \details Pulls vertex at the end of the path, converting it to a 4-node.
-     * Unchecked: see Applicable.
+     * \details See the class description. Unchecked: see Applicable.
      * \param[inout] path Path containing the string of edges to get pulled.
      * \param[in] steps Number of steps to pull over.
      * \return Index of the component hosting the path after the pull.
@@ -112,8 +116,8 @@ struct On<Deg3, G, PP>
 
 protected:
 
-    /**
-     * \param[inout] path Path containing the string of edges to get pulled.
+    /** Asserts, in DEBUG builds, that the path is valid for pulling.
+     * \param[in] path Path containing the string of edges to get pulled.
      * \param[in] steps Number of steps to pull over.
      */
     void check_path(
@@ -133,14 +137,15 @@ private:
     using Base::frame;
     using Base::updateProperties;
 
-    // Auxiliary functors for vertex transformations
-    vertex_split::To<Deg1, Deg2, G, PP>    vertex_split_12;  // degree 3 -> 1 + 2
-    vertex_merger::From<Deg1, Deg2, G, PP> vertex_merge_12;  // degree 1 + 2 -> 3
-    vertex_merger::From<Deg2, Deg2, G, PP> vertex_merge_22;  // degree 2 + 2 -> 4
+    // Inner transformations preparing the driver.
+    vertex_split::To<Deg1, Deg2, G, PP>    vertex_split_12;  ///< Degree 3 -> 1 + 2.
+    vertex_merger::From<Deg1, Deg2, G, PP> vertex_merge_12;  ///< Degree 1 + 2 -> 3.
+    vertex_merger::From<Deg2, Deg2, G, PP> vertex_merge_22;  ///< Degree 2 + 2 -> 4.
 
     /// Pretty-printer of the initial and final configurations.
     Reporter<On<D, G, PP>> report {*this};
 
+    /// Performs the first step of the pull, see the class description.
     void pull(Path& path);
 };
 
@@ -157,7 +162,7 @@ On(Graph& gr,
     , vertex_merge_12 {gr, pp}
     , vertex_merge_22 {gr, pp}
 {
-    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor given, while PP is void");
 }
 
 

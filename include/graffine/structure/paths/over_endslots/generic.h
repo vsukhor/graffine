@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file generic.h
- * \brief Specification of the template for paths over chain end slots.
+ * \brief Shortest paths over the chain ends of a component.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -60,17 +60,20 @@ struct Generic
     using EndSlot = typename Chain::EndSlot;  ///< Type alias for end slot.
     using End = Edge::End;  ///< Type alias for edge ends.
 
-    /// Type alias for path over consecutively connected vertices.
+    /// Path as the sequence of the chain end slots it passes.
     using Path = std::deque<EndSlot>;
 
-    using Dist = Distance<Component>;
-    using Distances = std::vector<Dist>;
+    using Dist = Distance<Component>;     ///< Distance record of a slot.
+    using Distances = std::vector<Dist>;  ///< Distance records of all slots.
 
     const Component& cmp;   ///< The graph component.
 
     /// Number of end slots in the component: 2 * cmp.num_chains().
     const std::size_t numSlots;
 
+    /// Constructor of the paths over the chain ends of component \p cmp.
+    /// \note The number of slots is fixed at construction: construct a new
+    /// object after the component changes.
     explicit constexpr Generic(const Component& cmp) noexcept;
 
     /** Whether chain end slots \p s1 and \p s2 are connected by a path.
@@ -87,15 +90,19 @@ struct Generic
      * The slots connected to \p s are at distance zero; traversing a chain
      * adds the chain weight.
      * \note Follows the chain connections in Chain::ngs.
-     * \note Implements Dijkstra's algorithm
-     * \see https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm.
+     * \note Follows Dijkstra's algorithm
+     * (https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm), except that
+     * the queue is ordered by slot rather than by distance (see
+     * Distance::operator<): a slot is queued again when its distance
+     * improves. The distances found are the shortest ones, but without
+     * Dijkstra's bound on the number of visits.
      * \param[in] s Chain end slot from which the paths are computed (source).
      */
     void compute_from_source(const EndSlot& s);
 
-    /** Computes the shortest path between two graph vertex slots.
-     * \details Calculates the shortest path between graph vertex slots \p s1
-     * and \p s2 using the compute_from_source() member function.
+    /** Computes the shortest path between two chain end slots.
+     * \details Follows the preceding slots recorded by
+     * compute_from_source() back from \p s2 to \p s1.
      * \param[in] s1 The first slot of the path.
      * \param[in] s2 The last slot of the path.
      * \tparam computeFromSource Whether to compute the distances from
@@ -123,27 +130,34 @@ struct Generic
     auto path_chains_numedges(const Path& path) const noexcept
         -> std::tuple<std::set<ChIdG>, std::size_t>;
 
+    /// Prints the distances, labelled by \p args.
     template<typename... Args>
     void print_distances(Args... args) const noexcept;
 
+    /// Prints a summary of \p path, labelled by \p args, then its slots.
     template<typename... Args>
     void print_path(const Path& path, Args... args) const noexcept;
 
 private:
 
-    using Q = std::set<Dist>;
-    Q q;
+    using Q = std::set<Dist>;  ///< Type of the search queue.
+    Q q;                       ///< Search queue.
 
-    Distances distances;
+    Distances distances;  ///< Distance records, indexed by slot.
 
+    /// Prepares a new search: resets the distances and the queue.
     void reset();
 
-    /** Computes element indexes of the \a min_distance and \a previous.
+    /** Position in \a distances of the record of slot \p s:
+     * 2 * (component-wide chain index) + end.
      */
     constexpr auto element_ind(const EndSlot& s) const noexcept -> std::size_t;
 
+    /// Slot whose record is at position \p i of \a distances.
     constexpr auto element(std::size_t i) const noexcept -> EndSlot;
 
+    /// Relaxes slot \p v, at the opposite end of the chain of the slot
+    /// \p ud popped from the queue, and the slots joined to \p v.
     void update(
         const Q::value_type& ud,
         const EndSlot& v

@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file functor.h
- * \brief Contains class performing merger of two incident edges.
+ * \brief Merger of two adjacent edges into one.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -46,6 +46,7 @@ limitations under the License.
 
 namespace graffine::transforms {
 
+/// Compile-time description of the edge merger.
 template<typename G>
 struct Trait<TransformType::EdgeMerger, G>
 {
@@ -53,22 +54,23 @@ struct Trait<TransformType::EdgeMerger, G>
     using Compt = Graph::Compt;
     using Chain = Graph::Chain;
     using Edge = Graph::Edge;
-    using OnStart = std::array<const Edge*, 2>;
-    using OnEnd = Edge*;
+    using OnStart = std::array<const Edge*, 2>;  ///< Arguments of the on_start hook.
+    using OnEnd = Edge*;                         ///< Argument of the on_end hook.
     using ResT = Edge*;
     /// Result of the transformation: pointer to the edge resulting from the merger.
     using Res = std::array<ResT, 1>;
 
-    static constexpr const char* fullName {"edge_merger"};
-    static constexpr const char* shortName {"eg_mg"};
+    static constexpr const char* fullName {"edge_merger"};  ///< Name in messages.
+    static constexpr const char* shortName {"eg_mg"};  ///< Abbreviated name.
 
-    static constexpr auto Type = TransformType::EdgeMerger;
+    static constexpr auto Type = TransformType::EdgeMerger;  ///< Family.
 };
 
 
-/// Enables merger of graph edges.
+/// Merger of two adjacent edges into one.
 namespace edge_merger {
 
+/// Compile-time description of the edge merger.
 template<typename G>
 using Trait = transforms::Trait<TransformType::EdgeMerger, G>;
 
@@ -81,6 +83,7 @@ struct Plan {
     EgIdG kept {EgIdG::undefined};       ///< The edge which remains.
     edge_deletion::Plan<G> deletion;     ///< Deletion of the other edge.
 
+    /// The hooks of this family in processor \p pp.
     template<typename PP>
     static constexpr auto hooks(PP& pp) -> decltype((pp.edgeMerger))
     {
@@ -107,6 +110,19 @@ concept Processor =
     };
 
 
+/** Merges two adjacent edges into one.
+ * \details One of the edges is deleted by an edge deletion (see
+ * edge_deletion), which merges its two vertices: the other edge, which is
+ * kept, then reaches the far vertex of the deleted one. The hooks of the
+ * inner deletion run inside this transformation (see context.h). The edges
+ * may belong to the same chain or to chains joined at a junction. Usage:
+ * \code
+ * edge_merger::Functor<G> merge {gr};
+ * const auto [eg] = merge(ind1, ind2);
+ * \endcode
+ * \tparam G Graph to which the transformation is applied.
+ * \tparam PP Processor of non-topological properties, or void.
+ */
 template<typename G,
          typename PP = void>
     requires edge_merger::Processor<PP, G> &&
@@ -140,12 +156,14 @@ struct Functor
     explicit Functor(Graph& gr,
                      std::shared_ptr<PP> pp = nullptr);
 
-    /** Function call operator executing the transformation.
-     * \details \p ind1 will be merged into \p ind2 and disappear if 'ind2' has
-     * other edges besides it; if it does not, 'ind2' will be merged into 'ind1'
-     * and disappear.
+    /** Merges edges \p ind1 and \p ind2. Unchecked: see Applicable.
+     * \details Edge \p ind1 is deleted and \p ind2 kept if the chain of
+     * \p ind1 is shrinkable (see Chain::is_shrinkable()); otherwise \p ind2
+     * is deleted and \p ind1 kept.
      * \param[in] ind1 Graph-wide index of the 1st edge merged.
      * \param[in] ind2 Graph-wide index of the 2nd edge merged.
+     * \return Pointer to the kept edge, which may have been reindexed by
+     * the deletion.
      */
     auto apply(const EgIdG ind1,
                const EgIdG ind2) -> Res;
@@ -188,8 +206,9 @@ protected:
     /// Processor for non-topological properties.
     std::shared_ptr<PP> updateProperties;
 
-    /// Auxiliary functors. Utilized for internal operation.
+    /// Inner deletion of an edge forming a single-edge chain.
     edge_deletion::InSingleEdgeChain<G, PP> remSE;
+    /// Inner deletion of an edge of a multi-edge chain.
     edge_deletion::InMultiEdgeChain<G, PP>  remME;
 };
 
@@ -209,7 +228,7 @@ Functor(Graph& gr,
     , remSE {gr, pp}
     , remME {gr, pp}
 {
-    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor given, while PP is void");
 }
 
 // 'ind1' will be merged into 'ind2' and disappear if chain of 'ind2' has

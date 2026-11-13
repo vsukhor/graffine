@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file from_12.h
- * \brief Contains class encapsulating tip-to-side vertex merger.
+ * \brief Merger of a free chain end with a vertex inside a chain (1+2).
  * \note Simplified version of the functor class was also used in
  * https://github.com/vsukhor/mitoSim/blob/master/include/ability_for_fusion.h
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
@@ -43,9 +43,12 @@ limitations under the License.
 
 namespace graffine::transforms::vertex_merger {
 
-/** Template specialization for V1 + V2 -> V3 vertex merger.
- * \details Adds vertex type-specific vertex merger capability and updates the
- * graph for it.
+/** Merges a vertex of degree 1 with a vertex of degree 2, producing a
+ * junction of degree 3.
+ * \details A free chain end joins a chain at an internal vertex, which
+ * splits that chain into two: three chains then meet at the new junction.
+ * The degree 2 vertex may also be the boundary vertex of an unconnected
+ * cycle, which then becomes a cycle attached to the junction.
  * \tparam G Graph to which the merger operation is applied.
  */
 template<typename G,
@@ -71,9 +74,9 @@ struct From<Deg1, Deg2, G, PP>
     static constexpr auto J1 = I1 + I2;  ///< Degree of the 1st output vertex.
     static constexpr auto J2 = undefined<Degree>;  ///< No 2nd output vertex.
 
-    const std::string dd {degrees_to_string(I1, I2)};
-    const std::string shortName {make_name(Trait::shortName, dd)};
-    const std::string fullName  {make_name(Trait::fullName, dd)};
+    const std::string dd {degrees_to_string(I1, I2)};  ///< Degrees, as text.
+    const std::string shortName {make_name(Trait::shortName, dd)};  ///< Abbreviated name.
+    const std::string fullName  {make_name(Trait::fullName, dd)};  ///< Name in messages.
 
     /** Constructs a Functor object based on the Graph instance.
      * \param[in] gr Graph to which the transformation is applied.
@@ -255,7 +258,7 @@ From(Graph& gr,
     , updateProperties {pp}
     , report {gr, dd}
 {
-    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor given, while PP is void");
 }
 
 
@@ -636,7 +639,7 @@ struct From1<Deg2, G, PP>
                     std::shared_ptr<PP> pp = nullptr)
         : Base {gr, pp}
     {
-        GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+        GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor given, while PP is void");
     }
 };
 

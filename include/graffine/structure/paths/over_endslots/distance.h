@@ -22,7 +22,8 @@ limitations under the License.
 
 /**
  * \file distance.h
- * \brief Contains class template defining distances over the graph components.
+ * \brief Distance record of the shortest paths over the chain ends of a
+ * component.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -44,16 +45,22 @@ limitations under the License.
 namespace graffine::structure::paths::over_endslots {
 
 
+/** Distance record of a chain end in a shortest path search over chain ends.
+ * \details Holds the shortest distance found to the target chain end and
+ * the chain end preceding it on that path. The same type serves as the
+ * entry of the search queue, where \a prev holds the queued slot itself.
+ * \tparam Component Type of the graph component.
+ */
 template<typename Component>
 struct Distance
 {
     using Edge = Component::Edge;
     using EndSlot = Component::EndSlot;  ///< Type alias for end slot.
-    using EdgeWeight = typename Edge::weight_t;
+    using EdgeWeight = typename Edge::weight_t;  ///< Type of the distances.
 
-    static constexpr EdgeWeight zero {};
-    static constexpr auto inf = Edge::maxWeight;
-    static constexpr auto undefined_element = EndSlot {};
+    static constexpr EdgeWeight zero {};          ///< Zero distance.
+    static constexpr auto inf = Edge::maxWeight;  ///< Distance of an unreached slot.
+    static constexpr auto undefined_element = EndSlot {};  ///< No slot.
 
     /// Element preceding the target in the shortest path.
     EndSlot prev {undefined_element};
@@ -61,12 +68,14 @@ struct Distance
     /// Shortest distance to the target.
     EdgeWeight dist {inf};
 
+    /// Orders the records by slot \a prev first, then by distance.
     constexpr bool operator<(const Distance& c) const noexcept
     {
         return prev < c.prev ||
               (prev == c.prev && dist < c.dist);
     }
 
+    /// Sets the preceding slot and the distance.
     void set(const EndSlot& pr,
              const EdgeWeight d) noexcept
     {
@@ -74,17 +83,20 @@ struct Distance
         dist = d;
     }
 
+    /// Checks if the slot was reached by the search.
     bool is_finite() const noexcept
     {
         return dist < inf;
     }
 
+    /// Resets the record to an unreached slot.
     void reset() noexcept
     {
         prev = undefined_element;
         dist = inf;
     }
 
+    /// Prints the record of slot \p target.
     void print(const EndSlot& target) const
     {
         jot("{", target.str_short(), "}=>",

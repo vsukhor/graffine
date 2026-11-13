@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file neigs.h
- * \brief Defines Container holding slots.
+ * \brief Ordered set of the slots meeting at a vertex.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -45,8 +45,8 @@ namespace graffine::structure::containers {
 /** Ordered set of slots connected at a common vertex.
  * \details Holds, for a chain end (Chain::ngs), the end slots of the other
  * chains joined at its boundary vertex, and, for a vertex
- * (Vertex::edges()), the descriptors of its incident edge ends. It provides
- * methods to add, remove, and access the slots.
+ * (Vertex::edges()), the descriptors of its incident edge ends. The set
+ * provides functions to add, remove, replace and list the slots.
  * \note \a maxNum is the maximal size for a chain end: a vertex may hold up
  * to maxDegree descriptors.
  * \tparam S Slot type; its location must be an end (End::Id).
@@ -54,10 +54,12 @@ namespace graffine::structure::containers {
 template<typename S>
 struct Neigs
 {
+    /// Maximal number of neighbours of a chain end: the other ends at a
+    /// vertex of the maximal degree.
     static constexpr auto maxNum = maxDegree - 1;
 
     template<typename T> using ContainerTempl = std::set<T>;
-    using Container = ContainerTempl<S>;
+    using Container = ContainerTempl<S>;  ///< Underlying ordered set.
 
     using size_type = Container::size_type;
     using value_type = Container::value_type;
@@ -68,10 +70,10 @@ struct Neigs
     using reference = Container::reference;
     using const_reference = Container::const_reference;
 
-    using Slot = S;
-    using Slots = Container;
-    using Ws = std::vector<typename Slot::HostId>;
-    using Es = std::vector<typename Slot::LocId>;
+    using Slot = S;          ///< Slot type.
+    using Slots = Container;  ///< Set of slots.
+    using Ws = std::vector<typename Slot::HostId>;  ///< List of slot hosts.
+    using Es = std::vector<typename Slot::LocId>;   ///< List of slot ends.
     using End = descriptors::End;
     static_assert(std::is_same_v<typename Slot::LocId, End::Id>);
 
@@ -82,18 +84,22 @@ struct Neigs
     constexpr Neigs& operator=(Neigs&&) = default;
     constexpr ~Neigs() = default;
 
+    /// Constructs a set holding the single slot \p s.
     explicit constexpr Neigs(const Slot& s)
         : ss {s}
     {}
 
+    /// Constructs a set holding the single slot \p s.
     explicit constexpr Neigs(Slot&& s)
         : ss {std::move(s)}
     {}
 
+    /// Constructs a set taking over the slots \p ss.
     explicit constexpr Neigs(Slots&& ss)
         : ss {std::move(ss)}
     {}
 
+    /// Constructs a set holding the slots listed.
     constexpr Neigs(std::initializer_list<Slot> init)
         : ss {init}
     {}
@@ -120,12 +126,14 @@ struct Neigs
         return ss.cend();
     }
 
+    /// Checks if slot \p u is in the set.
     constexpr bool contains(const Slot& u) const
     {
         return ss.contains(u);
     }
 
     /**
+     * \brief Removes slot \p u.
      * \return Whether \p u was present: the callers check it.
      */
     bool erase(const Slot& u)
@@ -134,7 +142,8 @@ struct Neigs
     }
 
     /**
-     *  \return Whether \p f was present: the callers check it.
+     * \brief Replaces slot \p f with slot \p t, without reallocating.
+     * \return Whether \p f was present: the callers check it.
      */
     bool replace(const Slot& f, const Slot& t)
     {
@@ -148,20 +157,25 @@ struct Neigs
         return false;
     }
 
+    /// Removes all the slots.
     constexpr void clear() noexcept
     {
         ss.clear();
     }
 
+    /// Unlinks slot \p k from the set and returns its node (empty if
+    /// absent), see std::set::extract.
     constexpr auto extract(const key_type& k) -> node_type
     {
         return ss.extract(k);
     }
+    /// Unlinks the slot at \p pos from the set and returns its node.
     constexpr auto extract(const_iterator pos) -> node_type
     {
         return ss.extract(pos);
     }
 
+    /// Inserts slot \p s, which must not be present already.
     constexpr void insert(const Slot& s)
     {
         GRAFFINE_ASSERT_CALLING(!contains(s), s.print(),
@@ -169,6 +183,7 @@ struct Neigs
         ss.insert(s);
     }
 
+    /// Inserts slot \p s, which must not be present already.
     constexpr void insert(Slot&& s)
     {
         GRAFFINE_ASSERT_CALLING(!contains(s), s.print(),
@@ -177,25 +192,30 @@ struct Neigs
         ss.insert(std::move(s));
     }
 
+    /// Inserts a node obtained from extract().
     constexpr void insert(node_type&& s)
     {
         ss.insert(std::move(s));
     }
 
+    /// The underlying set.
     constexpr auto operator()() const noexcept -> const Container&
     {
         return ss;
     }
 
+    /// Number of slots; the same as size().
     constexpr auto num() const noexcept -> std::size_t
     {
         return size();
     }
+    /// Number of slots.
     constexpr auto size() const noexcept -> std::size_t
     {
         return ss.size();
     }
 
+    /// Copy of the slots, in ascending order, as a vector.
     constexpr auto as_vector() const -> std::vector<value_type>
     {
         std::vector<value_type> v;
@@ -207,10 +227,12 @@ struct Neigs
         return v;
     }
 
+    /// Copy of the slots, in ascending order, as an array; \p N must
+    /// equal num().
     template<size_t N>
     constexpr auto as_array() const noexcept -> std::array<value_type, N>
     {
-        GRAFFINE_ASSERT(N <= num(), "Number of neogbours < N");
+        GRAFFINE_ASSERT(N <= num(), "Number of neighbours < N");
 
         std::array<value_type, N> v;
 
@@ -220,6 +242,7 @@ struct Neigs
         return v;
     }
 
+    /// Hosts (chains or edges) of the slots, in slot order.
     constexpr auto ww() const -> Ws
     {
         Ws res {};
@@ -229,6 +252,7 @@ struct Neigs
         return res;
     }
 
+    /// Ends of the slots, in slot order.
     constexpr auto ee() const -> Es
     {
         Es res {};
@@ -238,6 +262,7 @@ struct Neigs
         return res;
     }
 
+    /// Copy of the set without the slots of \p uu.
     auto other_than(const Container& uu) const -> Container
     {
         Slots res = ss;
@@ -278,6 +303,7 @@ struct Neigs
         return res;
     }
 
+    /// Prints the slots, optionally followed by a line break.
     template<bool ENDL=false>
     void print() const
     {
@@ -288,13 +314,17 @@ struct Neigs
 
 private:
 
-    Container ss;
+    Container ss;  ///< The slots.
 };
 
 
+/// Number of neighbours of a chain end at a vertex of degree \p D: the
+/// other ends meeting there.
 template<Degree D>
 inline constexpr auto numNeigs = D - 1;
 
+/// Number of neighbours of a chain end at a vertex of degree \p D: the
+/// other ends meeting there.
 constexpr auto num_neigs(const Degree D) noexcept -> std::size_t
 {
     return D - 1;

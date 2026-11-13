@@ -46,7 +46,8 @@ namespace graffine::transforms::pulling {
  * each chain junction along the path by one edge towards the source: the
  * chain at the driver gains an edge, the chain at the source loses one, and
  * the chains in between keep their lengths. The vertex degrees and the number
- * of edges are preserved. A source chain made of a single edge is dissolved
+ * of edges are preserved by such a step, which requires the driver to be a
+ * free end. A source chain made of a single edge is dissolved
  * by the step: its edge joins the adjacent chain of the path, which then
  * holds the source. If the
  * driver and the source are on the same chain, a step leaves the topology
@@ -144,7 +145,7 @@ protected:
     Graph&         gr;  ///< Reference to the modified graph object
     Graph::Chains& cn;  ///< Reference to the graph edge chains.
 
-    const Graph::EdgeDescriptors& egl;
+    const Graph::EdgeDescriptors& egl;  ///< Graph-wide edge descriptors.
 
     /// Processor for non-topological properties.
     std::shared_ptr<PP> updateProperties;
@@ -156,6 +157,7 @@ protected:
      * \note The driver vertex is expected to be a leaf node.
      */
     bool pull_leaf_vertex(Path& path, int steps);
+    // Returns whether the source chain was dissolved.
     /** Pull once a sequence of consecutive edges defined by \p path .
      * \overload
      * \tparam notify Calls pulling.on_end after the step. False for a step
@@ -165,6 +167,12 @@ protected:
     template<bool notify = true>
     bool pull_leaf_vertex(Path& path);
 
+    /** Moves the reverse iterator \p rit, over the graph-wide edge
+     * indexes of a path, to the last of the consecutive edges sharing the
+     * chain of the edge it points to.
+     * \return True iff that edge is the first edge of the path, i.e. the
+     * driver chain is reached.
+     */
     bool chain_exit_path(
         PathW::const_reverse_iterator& rit,
         const PathW::const_reverse_iterator& rend
@@ -172,18 +180,27 @@ protected:
 
 private:
 
-    // Auxiliary functors:
+    // Inner transformations:
 
-    // Creation of an edge at a free end of an existing chain.
+    /// Creation of an edge at a free end of an existing chain.
     edge_creation::InExistingChain<Graph, PP> create_edge;
-    // Deletion of a single-edge chain having one end free:
-    // for chains having the other end connected via a vertex of degree 3
+    /// Deletion of a single-edge chain having one end free, and the other
+    /// at a junction of degree 3.
     edge_deletion::DeletingHostChain<Deg3, Graph, PP> delete_edge_3;
-    // for chains having the other end connected via a vertex of degree 4
+    /// Deletion of a single-edge chain having one end free, and the other
+    /// at a junction of degree 4.
     edge_deletion::DeletingHostChain<Deg4, Graph, PP> delete_edge_4;
 
+    /** Dissolves the single-edge source chain of \p path: its edge joins
+     * the adjacent chain of the path, and the source vertex stays on the
+     * path, as the junction.
+     */
     void dissolve_single_edge_chain(Path& path);
 
+    /** Shifts each junction along \p path by one edge towards the source,
+     * by moving the end edge of each chain of the path, from the source
+     * side, to the preceding chain (see modifiers::JunctionShifter).
+     */
     void shift_edges_to_target_chain(const Path& path);
 };
 
@@ -341,7 +358,7 @@ FunctorBase(Graph& gr,
     , delete_edge_3 {gr, pp}
     , delete_edge_4 {gr, pp}
 {
-    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor given, while PP is void");
 }
 
 
@@ -565,8 +582,7 @@ shift_edges_to_target_chain(const Path& path)
 }
 
 
-/** on return, \p rit points to the last edge of the current chain in \p path
- */
+// On return, 'rit' points to the last edge of the current chain in 'path'.
 template<typename G,
          typename PP>
     requires pulling::Processor<PP, G> &&

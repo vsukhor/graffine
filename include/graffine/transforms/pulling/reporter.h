@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file reporter.h
- * \brief Contains class logging formatted summary of pulling operation.
+ * \brief Printing of the chains of a pull before and after it.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -34,8 +34,8 @@ limitations under the License.
 
 namespace graffine::transforms::pulling {
 
-/** Class handling printing out formatted summary at different stages of pulling
- * transformation.
+/** Prints the chains of a pull before and after it, when the functors
+ * report verbosely (\c verboseF).
  * \tparam F Functor class for the edge pulling initiated from a vertex of
  *           specific degree.
  */
@@ -44,13 +44,18 @@ struct Reporter
 {
     using Path = pulling::Path<typename F::Compt>;
 
-    const F& functor;
+    const F& functor;  ///< The functor reported on, for its names.
 
+    /// Constructor of the reporter of \p functor.
     constexpr Reporter(const F& functor)
         : functor {functor}
     {}
 
 
+    /** Prints the path and its chains before a pull of \p n steps.
+     * \note Takes the last of the chains of the path, which are listed in
+     * ascending order of id, as the source chain.
+     */
     void before(
         const Path& pp,
         const int n
@@ -83,6 +88,7 @@ struct Reporter
     }
 
 
+    /// Prints the chains of the path after the pull.
     void after(const Path& pp) const noexcept
     {
         const auto chs = pp.chains(pp.pthc);
@@ -96,6 +102,7 @@ struct Reporter
         jot("");
     }
 
+    /// Chain \p w of the component of path \p pp.
     constexpr
     auto cn(
         const ChIdG w,

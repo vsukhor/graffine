@@ -22,8 +22,7 @@ limitations under the License.
 
 /**
  * \file edge_in_component.h
- * \brief Contains implementation of the edge parameters uniquely identifying it
- * as a part of component.
+ * \brief Descriptor of an edge, as recorded by its host component.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -36,20 +35,26 @@ limitations under the License.
 
 namespace graffine::structure::descriptors {
 
-/** Descriptor of an edge.
+/** Descriptor of an edge, as recorded by its host component.
+ * \details A component keeps one descriptor per edge, at the edge's
+ * component-wide index EgIdC, for locating the edge without going through
+ * the chains. The descriptor copies the ids of the edge; check() verifies
+ * that the copies are still up to date.
+ * \tparam Edge Edge type.
  */
 template<typename Edge>
 struct EdgeInComponent
 {
-    ChIdG w {ChIdG::undefined};  ///< Index of the edge hosting chain.
+    ChIdG w {ChIdG::undefined};  ///< Index of the edge's host chain.
     EgIdA a {EgIdA::undefined};  ///< Position inside the host chain.
     EgIdG i {EgIdG::undefined};  ///< Graph-wide index of the edge.
-    EgIdH h {EgIdH::undefined};  ///< Edge hash value.
+    EgIdH h {EgIdH::undefined};  ///< Stable handle of the edge.
 
-    static constexpr EdgeInComponent Undef {};
+    static constexpr EdgeInComponent Undef {};  ///< Undefined descriptor.
 
     constexpr EdgeInComponent() = default;
 
+    /// Constructs the descriptor of edge \p e.
     explicit constexpr EdgeInComponent(const Edge& e)
         : w {e.w}
         , a {e.indw}
@@ -57,11 +62,14 @@ struct EdgeInComponent
         , h {e.id}
     {}
 
+    /// Slot of the vertex preceding the edge along its host chain, i.e.
+    /// between edges a-1 and a. A valid BulkSlot only if a > 0.
     constexpr auto bulk_slot() const noexcept -> BulkSlot
     {
         return BulkSlot{w, a};
     }
 
+    /// Checks that the descriptor differs from \ref Undef.
     constexpr auto is_defined()
     {
         return *this != Undef;
@@ -77,6 +85,12 @@ struct EdgeInComponent
                h == eg.id;
     }
 
+    /** Checks that this descriptor is the one of edge \p eg.
+     * \param eg Edge.
+     * \param ic Host component, for the error message.
+     * \param k Index of the descriptor, for the error message.
+     * \throws invariant_error If a field disagrees with the edge.
+     */
     void check(const Edge& eg,
                const CmpId ic,
                const auto k) const
@@ -94,6 +108,7 @@ struct EdgeInComponent
            "egl[", k, "].h != eg.id in component ", ic, " eg.ind ", eg.ind);
     }
 
+    /// Prints the descriptor, preceded by its index \p j.
     void print(const EgIdC j) const
     {
         jot(j, "     ", w, "  ", a, "  ", i, "  ", h);

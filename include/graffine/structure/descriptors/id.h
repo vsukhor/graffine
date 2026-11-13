@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * \file id.h
- * \brief Contains template struct implementing Id of graph elements.
+ * \brief Typed identifiers of the graph elements.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>.
  */
 
@@ -71,13 +71,13 @@ namespace graffine::structure::descriptors::ids {
 
 /// Kind of the element identified.
 enum class ElementType {
-    END,
-    VERTEX,
-    EDGE,
-    CHAIN,
-    COMPONENT,
-    TRIANGLE,
-    UNDEF
+    END,        ///< Edge or chain end.
+    VERTEX,     ///< Vertex.
+    EDGE,       ///< Edge.
+    CHAIN,      ///< Chain: a linear run of edges with no branches.
+    COMPONENT,  ///< Connected component.
+    TRIANGLE,   ///< Chain triangle: three chains forming a loop, see elements/triangle.h.
+    UNDEF       ///< Not specified.
 };
 
 /// Range over which an identifier is unique; see the namespace description.
@@ -88,26 +88,38 @@ enum class IdScope {
     CHAIN       ///< Position along a chain.
 };
 
-/** Struct template for element ids.
+/** Identifier of a graph element: an index typed by element kind and scope.
+ * \details Ids of different kinds or scopes are distinct types, so they
+ * cannot be mixed up by mistake. An id converts implicitly from its numeric
+ * value; the call operator returns that value, e.g. for indexing a
+ * container: <tt>edges[ind()]</tt>. Arithmetic and comparison operators
+ * act on the value.
+ * \tparam T Kind of the element identified.
+ * \tparam S Range over which the id is unique.
  */
 template<ElementType T,
          IdScope S>
 struct Id
 {
-    using value_type = std::size_t;
+    using value_type = std::size_t;  ///< Type of the numeric value.
 
-    static constexpr ElementType Element = T;
-    static constexpr IdScope Scope = S;
+    static constexpr ElementType Element = T;  ///< Kind of the element identified.
+    static constexpr IdScope Scope = S;        ///< Range of uniqueness.
+    /// Sentinel value of an id not referring to any element.
     static constexpr Id undefined {utils::undefined<value_type>};
 
+    /// Default constructor: the id has value 0 (not \ref undefined).
     constexpr Id() : v {} {}
     // Defaulted to keep Id trivially copyable and nothrow movable, so that
     // elements holding ids are moved rather than copied by std containers.
     constexpr Id(const Id&) = default;
+    /// Implicit conversion from the numeric value \p v.
     constexpr Id(const value_type v) : v{v} {}
 
     constexpr auto operator=(const Id&) -> Id& = default;
+    /// Reference to the numeric value.
     constexpr auto operator()() noexcept -> value_type& { return v; }
+    /// The numeric value.
     constexpr auto operator()() const noexcept -> value_type { return v; }
     constexpr bool operator==(const Id& id) const noexcept { return v == id.v; }
     constexpr bool operator==(const value_type vv) const noexcept { return v == vv; }
@@ -146,37 +158,37 @@ struct Id
         return result;
     }
 
-    // compound assignment (does not need to be a member,
-    // but often is, to modify the private members)
+    /// Adds the value of \p rhs to this id.
     constexpr auto operator+=(const Id& rhs) noexcept -> Id&
     {
         v += rhs.v;
-        return *this; // return the result by reference
+        return *this;
     }
 
-    // compound assignment (does not need to be a member,
-    // but often is, to modify the private members)
+    /// Subtracts the value of \p rhs from this id.
     constexpr auto operator-=(const Id& rhs) noexcept -> Id&
     {
         v -= rhs.v;
-        return *this; // return the result by reference
+        return *this;
     }
 
-    // passing lhs by value helps optimize chained a+b+c
-    // otherwise, both parameters may be const references
+    /// Sum of the values of two ids. Taking \p lhs by value helps
+    /// optimize chained sums a+b+c.
     friend constexpr auto operator+(Id lhs,
                                     const Id& rhs) noexcept
     {
-        lhs += rhs; // reuse compound assignment
-        return lhs; // return the result by value (uses move constructor)
+        lhs += rhs;
+        return lhs;
     }
+    /// Difference of the values of two ids.
     friend constexpr auto operator-(Id lhs,
                                     const Id& rhs) noexcept
     {
-        lhs -= rhs; // reuse compound assignment
-        return lhs; // return the result by value (uses move constructor)
+        lhs -= rhs;
+        return lhs;
     }
 
+    /// Writes the numeric value to \p stream.
     friend auto operator<<(std::ostream& stream,
                            const Id& id) -> std::ostream&
     {
@@ -184,11 +196,13 @@ struct Id
         return stream;
     }
 
+    /// The numeric value as a string.
     auto as_string() const -> std::string
     {
         return std::to_string(v);
     }
 
+    /// Checks that the id is not \ref undefined.
     constexpr bool is_defined() const noexcept
     {
         return v != utils::undefined<value_type>;
@@ -196,21 +210,21 @@ struct Id
 
 private:
 
-    value_type v {};
+    value_type v {};  ///< The numeric value.
 };
 
 
-/// Chain ids relative to the hosting graph.
+/// Chain ids: positions in the graph's chain container.
 using ChIdG = Id<ElementType::CHAIN, IdScope::GRAPH>;
 
-/// Chain ids relative to the hosting component.
+/// Chain ids: positions in the host component's chain container.
 using ChIdC = Id<ElementType::CHAIN, IdScope::COMPONENT>;
 
 /// Edge ids unique over the program run.
 using EgIdH = Id<ElementType::EDGE, IdScope::RUN>;
-/// Edge ids relative to the hosting graph.
+/// Edge ids: positions in the graph's edge container.
 using EgIdG = Id<ElementType::EDGE, IdScope::GRAPH>;
-/// Edge ids relative to the hosting component.
+/// Edge ids: positions in the host component's edge container.
 using EgIdC = Id<ElementType::EDGE, IdScope::COMPONENT>;
 /// Edge positions in the hosting chain, from 0 at chain end A.
 using EgIdA = Id<ElementType::EDGE, IdScope::CHAIN>;
@@ -221,7 +235,8 @@ using VIdH = Id<ElementType::VERTEX, IdScope::RUN>;       ///< Vertex ids: uniqu
 using VIdG = Id<ElementType::VERTEX, IdScope::GRAPH>;
 using VIdC = Id<ElementType::VERTEX, IdScope::COMPONENT>; ///< Vertex ids: component-wide.
 
-using CmpId = Id<ElementType::COMPONENT, IdScope::GRAPH>;  ///< Component ids.
+/// Component ids: positions in the graph's component container.
+using CmpId = Id<ElementType::COMPONENT, IdScope::GRAPH>;
 using TrId  = Id<ElementType::TRIANGLE, IdScope::GRAPH>;   ///< Triangle ids.
 
 static_assert(std::is_trivially_copyable_v<EgIdG> &&
@@ -232,10 +247,12 @@ using ChIdGs = std::vector<ChIdG>;  ///< Container for graph chain ids.
 using ChIdCs = std::vector<ChIdC>;  ///< Container for component chain ids.
 using EgIdGs = std::vector<EgIdG>;  ///< Container for graph edge ids.
 
+/// Fixed-size array of \p N ids of type \p IdT.
 template<typename IdT, std::size_t N>
 using Ids = std::array<IdT, N>;
 
 
+/// Returns the \p N consecutive ids starting at \p initVal.
 template<typename IdT, std::size_t N>
 auto id_sequence(const IdT initVal=IdT{}) noexcept -> Ids<IdT, N>
 {

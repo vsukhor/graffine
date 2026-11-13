@@ -22,8 +22,7 @@ limitations under the License.
 
 /**
  * \file on_2.h
- * \brief Contains specialization of the functor for pulling graph
- * transformation to vertices of degree 2.
+ * \brief Pulling driven by a vertex of degree 2, inside a chain.
  * \author Valerii Sukhorukov <vsukhorukov@yahoo.com>
  */
 
@@ -49,9 +48,11 @@ limitations under the License.
 namespace graffine::transforms::pulling {
 
 
-/** Functor for the edge pulling initiated from a vertex of degree 2.
+/** Pulling driven by a vertex of degree 2, inside a chain.
  * \details The first step uses vertex splits and mergers to turn the driver
- * into a free chain end; the remaining steps then pull it as a leaf.
+ * into a free chain end; the remaining steps then pull it as a leaf. The
+ * path leaves the driver over one of its two edges, the \e driver edge;
+ * the other edge stays at the driver vertex.
  * \tparam G Graph to which the pull operation is applied.
  * \tparam PP Processor of non-topological properties, or void.
  */
@@ -78,9 +79,9 @@ struct On<Deg2, G, PP>
 
     static_assert(is_pullable_degree<D>);
 
-    const std::string d {std::to_string(D)};
-    const std::string shortName {d + "pu"};
-    const std::string fullName  {"Pulling from Vertex Deg "s + d};
+    const std::string d {std::to_string(D)};  ///< Driver degree, as text.
+    const std::string shortName {d + "pu"};   ///< Abbreviated name.
+    const std::string fullName  {"Pulling from Vertex Deg "s + d};  ///< Name in messages.
 
     /** Constructs this functor object based on the Graph instance.
      * \param[in] gr Graph to which the transformation is applied.
@@ -91,7 +92,7 @@ struct On<Deg2, G, PP>
 
     /** Pulls a vertex of degree 2 along \p path by \p steps.
      * \details Corrects the driver of \p path first, if the path has more
-     * than one edge. Unchecked: see Applicable.
+     * than one edge (see correct_driver()). Unchecked: see Applicable.
      * \param[inout] path Path containing the string of edges to get pulled.
      * \param[in] steps Number of steps to pull over.
      * \return Index of the component hosting the path after the pull.
@@ -126,29 +127,24 @@ protected:
     using Base::frame;
     using Base::updateProperties;
 
-    /** Pulls over path length 1 edge.
-     * \details Pulls a vertex of degree 2 over a path of length 1 edge.
-     * The path is expected to be a valid path of length 1 edge over the graph.
-     * The path starts with a driver edge and ends with a source edge.
+    /** Performs the first step of a pull over a path of a single edge,
+     * which is both the driver and the source edge.
      * \param[inout] path Path containing the string of edges to get pulled.
      */
     void pull_1(Path& path);
 
-    /** Pulls over path of length more than 1 edge.
-     * \details Pulls a vertex of degree 2 over a path of length more than 1 edge.
-     * The path is expected to be a valid path over the graph.
-     * The path starts with a driver edge and ends with a source edge.
+    /** Performs the first step of a pull over a path of more than one edge.
      * \param[inout] path Path containing the string of edges to get pulled.
      */
     void pull_N(Path& path);
 
-    /** Checks the validity of the path before pulling.
-     * \param[inout] path Path containing the string of edges to get pulled.
+    /** Asserts, in DEBUG builds, that the path is valid for pulling.
+     * \details Checks that the path leaves the driver vertex and reaches
+     * the source over the expected edge ends, that a source end is free
+     * unless on a cycle, and that the source chain is long enough for
+     * \p steps.
+     * \param[in] path Path containing the string of edges to get pulled.
      * \param[in] steps Number of steps intended for pulling.
-     * \details Checks that the path is valid for pulling, i.e., it starts with
-     * a driver edge and ends with a source edge, and that the source edge is
-     * connected to the driver edge.
-     * \note The path is expected to be a valid path over the graph.
      */
     void check_path(
         const Path& path,
@@ -157,14 +153,18 @@ protected:
 
 private:
 
-    // Auxiliary functors for vertex transformations
-    vertex_split::To<Deg1, Deg1, G, PP>    vertex_split_11;  // degree 2 -> 1 + 1
-    vertex_merger::From<Deg1, Deg1, G, PP> vertex_merge_11;  // degree 1 + 1 -> 2
-    vertex_merger::From<Deg1, Deg2, G, PP> vertex_merge_12;  // degree 1 + 2 -> 3
+    // Inner transformations preparing the driver.
+    vertex_split::To<Deg1, Deg1, G, PP>    vertex_split_11;  ///< Degree 2 -> 1 + 1.
+    vertex_merger::From<Deg1, Deg1, G, PP> vertex_merge_11;  ///< Degree 1 + 1 -> 2.
+    vertex_merger::From<Deg1, Deg2, G, PP> vertex_merge_12;  ///< Degree 1 + 2 -> 3.
 
     /// Pretty-printer of the initial and final configurations.
     Reporter<On<D, G, PP>> report {*this};
 
+    /** Drops the first edge of \p path if the path comes back through the
+     * driver vertex, i.e. if its second edge is the other edge at the
+     * driver: that edge then becomes the driver edge.
+     */
     void correct_driver(Path& path) const;
 
     /** Applicability of a pull driven from a degree 2 vertex of an
@@ -218,7 +218,7 @@ On(Graph& gr,
     , vertex_merge_11 {gr, pp}
     , vertex_merge_12 {gr, pp}
 {
-    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor is NULL");
+    GRAFFINE_ASSERT(!(std::is_void_v<PP> && pp), "Property processor given, while PP is void");
 }
 
 
