@@ -20,5 +20,7 @@ if(GRAFFINE_FUNCTORS_VERBOSE OR GRAFFINE_PRINT_EDGES OR GRAFFINE_PRINT_VERTICES)
                     "GRAFFINE_PRINT_EDGES and GRAFFINE_PRINT_VERTICES to OFF")
 endif()
 
-add_executable(benchmarks transforms.cpp)
+add_executable(benchmarks transforms.cpp graph_factory.cpp)
 target_link_libraries(benchmarks PRIVATE graffine::graffine benchmark::benchmark)
+# For the reference copy of the former GraphFactory, kept with the tests.
+target_include_directories(benchmarks PRIVATE ${PROJECT_SOURCE_DIR}/tests)

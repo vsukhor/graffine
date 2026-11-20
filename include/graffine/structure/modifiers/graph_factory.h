@@ -34,9 +34,12 @@ limitations under the License.
 #include "graffine/utils/errors.h"
 
 #include <algorithm>
+#include <array>
+#include <cstddef>
 #include <list>
 #include <memory>
 #include <source_location>
+#include <unordered_map>
 #include <vector>
 
 /// Large-scale structural modifications of the graph.
@@ -125,32 +128,46 @@ create(
                 nullptr, std::source_location::current(),
                 "Graph Factory: the graph to be filled is not empty");
 
-        auto find_unassigned_edges = [](std::vector<Edge>& g) -> Edge*
+        // The searches below run in amortized O(1), so that the assembly is
+        // linear in the numbers of edges and vertices. Their results are
+        // those of linear scans from the start of the containers.
+
+        // Edges are assigned to chains and never unassigned, so the first
+        // unassigned edge is never before the previously found one.
+        std::size_t nextEdge {};
+        auto find_unassigned_edges = [&nextEdge](std::vector<Edge>& g) -> Edge*
         {
-            for (auto& eg : g)
-                if (!eg.w.is_defined())
-                    return &eg;
+            for (; nextEdge < g.size(); ++nextEdge)
+                if (!g[nextEdge].w.is_defined())
+                    return &g[nextEdge];
 
             return nullptr;
         };
 
-        auto find_unassigned_chains = [](Chains& cn) -> Chain*
+        // Likewise for the chains assigned to components.
+        std::size_t nextChain {};
+        auto find_unassigned_chains = [&nextChain](Chains& cn) -> Chain*
         {
-            for (auto& m : cn)
-                if (!m.idc.is_defined())
-                    return &m;
+            for (; nextChain < cn.size(); ++nextChain)
+                if (!cn[ChIdG {nextChain}].idc.is_defined())
+                    return &cn[ChIdG {nextChain}];
 
             return nullptr;
         };
 
-        auto find_edge_by_id = [](const EgIdH& id,
-                                  std::vector<Edge>& g) -> Edge*
-        {
-            for (auto& eg : g)
-                if (eg.id == id)
-                    return &eg;
+        // Edge handles are unique over the program run, but are not
+        // positions in 'globalEdges'. The index maps each handle to its
+        // first occurrence there, as a scan from the start would find it.
+        std::unordered_map<typename EgIdH::value_type, Edge*> edgeById;
+        edgeById.reserve(globalEdges.size());
+        bool uniqueIds {true};
+        for (auto& eg : globalEdges)
+            uniqueIds &= edgeById.try_emplace(eg.id(), &eg).second;
 
-            return nullptr;
+        auto find_edge_by_id = [&edgeById](const EgIdH& id) -> Edge*
+        {
+            const auto it = edgeById.find(id());
+            return it == edgeById.end() ? nullptr : it->second;
         };
 
         ChIdG w {};
@@ -175,7 +192,7 @@ create(
                             current->descriptor_for_vertex_at(
                                 current->inner_endId(e))
                         ).begin();
-                        auto ng = find_edge_by_id(neigEgDescr.idh, globalEdges);
+                        auto ng = find_edge_by_id(neigEgDescr.idh);
 
                         GRAFFINE_ASSERT(ng, "Edge not found by Id");
 
@@ -194,9 +211,11 @@ create(
             for (EgIdA a {}; const auto z : l)
                 z->indw = a++;
 
-            ll.push_back(l);
+            ll.push_back(std::move(l));
             ++w;
         } while (true);
+
+        edgeById = {};  // release the memory
 
         if (!ll.size()) {
             warn("No edges imported. Produced an empty graph.");
@@ -225,23 +244,52 @@ create(
 
         // Set connections between chains.
 
+        // Chain end slots by the descriptor, (edge handle, inner end), by
+        // which a vertex refers to the end edge of a chain. With unique edge
+        // handles a descriptor matches at most one chain end, so a lookup
+        // gives what a scan over all chains in order does. Otherwise, the
+        // scan is kept.
+        std::unordered_map<typename EgIdH::value_type,
+                           std::array<EndSlot, End::num>> chainEnds;
+        if (uniqueIds) {
+            chainEnds.reserve(2 * cn.size());
+            for (const auto& m : cn)
+                for (const auto e : End::Ids) {
+                    const auto& eg = m.end_edge(e);
+                    chainEnds[eg.id()][eg.inner_endId(e)] = EndSlot{m.idw, e};
+                }
+        }
+
+        auto find_chain_ends = [&](const EdgeInVertex& egds,
+                                   std::vector<EndSlot>& ss)
+        {
+            if (uniqueIds) {
+                const auto it = chainEnds.find(egds.idh());
+                if (it != chainEnds.end() && End::is_valid(egds.e)) {
+                    const auto& s = it->second[egds.e];
+                    if (s.is_defined())
+                        ss.push_back(s);
+                }
+                return;
+            }
+            for (const auto& m : cn) {
+                for (const auto e : End::Ids) {
+
+                    const auto& eg = m.end_edge(e);
+                    if (eg.id == egds.idh &&
+                        eg.inner_endId(e) == egds.e)
+
+                        ss.emplace_back(m.idw, e);
+                }
+            }
+        };
+
         for (const auto& v : globalVertices) {
             const auto d = v->deg();
             if (d > Deg1) {
                 std::vector<EndSlot> ss;
-                for (const auto& egds : v->edges()) {
-
-                    for (const auto& m : cn) {
-                        for (const auto e : End::Ids) {
-
-                            const auto& eg = m.end_edge(e);
-                            if (eg.id == egds.idh &&
-                                eg.inner_endId(e) == egds.e)
-
-                                ss.emplace_back(m.idw, e);
-                        }
-                    }
-                }
+                for (const auto& egds : v->edges())
+                    find_chain_ends(egds, ss);
                 if (ss.size())
                     for (std::size_t i {}; i < d; ++i)
                         for (std::size_t j {i+1}; j < d; ++j) {
@@ -253,6 +301,7 @@ create(
                         }
             }
         }
+        chainEnds = {};  // release the memory
 
         if constexpr (beLoud)
             jot("Graph Factory: chain connections are set");
