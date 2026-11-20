@@ -28,6 +28,7 @@ limitations under the License.
  * quadratically with the input size, that of the current one linearly.
  */
 
+#include "graffine/structure/analyzers/integral_tests.h"
 #include "graffine/structure/elements/chain.h"
 #include "graffine/structure/elements/component.h"
 #include "graffine/structure/elements/edge.h"
@@ -126,6 +127,35 @@ void BM_GraphFactory(benchmark::State& state)
 }
 BENCHMARK(BM_GraphFactory)->RangeMultiplier(4)->Range(2048, 2 << 20)
                           ->Unit(benchmark::kMillisecond)->Complexity();
+
+
+/// Assembly followed by the integral tests, as on a restart of a simulation.
+void BM_GraphFactoryValidate(benchmark::State& state)
+{
+    const auto n = static_cast<std::size_t>(state.range(0));
+    std::size_t numEdges {};
+    for (auto _ : state) {
+        state.PauseTiming();
+        auto in = generate(n);
+        numEdges = in.egs.size();
+        state.ResumeTiming();
+
+        auto gr = el::modifiers::GraphFactory<G> {}.create(std::move(in.vv),
+                                                           std::move(in.egs));
+        const auto res = el::IntegralTests<G, false> {gr}.validate();
+        benchmark::DoNotOptimize(res.has_value());
+
+        state.PauseTiming();
+        {
+            const auto discard = std::move(gr);
+        }
+        state.ResumeTiming();
+    }
+    state.counters["edges"] = static_cast<double>(numEdges);
+    state.SetComplexityN(static_cast<benchmark::IterationCount>(numEdges));
+}
+BENCHMARK(BM_GraphFactoryValidate)->RangeMultiplier(10)->Range(10000, 1000000)
+                                  ->Unit(benchmark::kMillisecond)->Complexity();
 
 
 /// Assembly by the factory of graffine v1.87.0.

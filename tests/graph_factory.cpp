@@ -305,4 +305,89 @@ TEST_F(GraphFactoryTest, EmptyInputGivesEmptyGraph)
 }
 
 
+
+/// Graph assembled by the factory, with several components and chains.
+auto assemble_sample() -> G
+{
+    auto in = generate(777, Params {.numJunctions = 60, .maxLen = 4,
+                                    .numRings = 4, .numLinear = 4,
+                                    .shuffleEdges = true,
+                                    .shuffleVertices = true,
+                                    .swapEnds = true});
+    G gr;
+    Factory {}.create(gr, std::move(in.vv), std::move(in.egs));
+    return gr;
+}
+
+
+TEST_F(GraphFactoryTest, IntegralTestsCatchCorruptedIndexes)
+{
+    if constexpr (verboseT)
+        print_description(
+            "Tests that the integral tests report corrupted edge indexes and "
+            "chain indexes within components of a graph assembled by the "
+            "factory");
+
+    using Tests = structure::IntegralTests<G, false>;
+
+    {
+        const auto gr = assemble_sample();
+        ASSERT_GT(gr.num_chains(), 3);
+        ASSERT_GT(gr.num_compts(), 1);
+        EXPECT_TRUE(Tests {gr}.validate());
+    }
+
+    // two chains with edges
+    auto chains_with_edges = [](const G& gr) {
+        std::vector<ChIdG> w;
+        for (ChIdG i {}; i < gr.num_chains() && w.size() < 2; ++i)
+            if (gr.chain(i).length())
+                w.push_back(i);
+        return w;
+    };
+
+    {  // an edge index repeated in two chains
+        auto gr = assemble_sample();
+        const auto w = chains_with_edges(gr);
+        ASSERT_EQ(w.size(), 2);
+        gr.chains()[w[1]].g[0].ind = gr.chains()[w[0]].g[0].ind;
+        EXPECT_FALSE(Tests {gr}.validate());
+        EXPECT_THROW(Tests {gr}.chain_g(0), invariant_error);
+    }
+    {  // an edge index repeated within one chain
+        auto gr = assemble_sample();
+        ChIdG w {};
+        while (gr.chain(w).length() < 2)
+            ++w;
+        gr.chains()[w].g[1].ind = gr.chains()[w].g[0].ind;
+        EXPECT_FALSE(Tests {gr}.validate());
+        EXPECT_THROW(Tests {gr}.chain_g(0), invariant_error);
+    }
+    {  // an edge index out of range
+        auto gr = assemble_sample();
+        const auto w = chains_with_edges(gr);
+        gr.chains()[w[0]].g[0].ind = EgIdG {gr.num_edges()};
+        EXPECT_FALSE(Tests {gr}.validate());
+        EXPECT_THROW(Tests {gr}.chain_g(0), invariant_error);
+    }
+    {  // a chain index within the component repeated
+        auto gr = assemble_sample();
+        CmpId ic {};
+        while (gr.compt(ic).num_chains() < 2)
+            ++ic;
+        const auto& ww = gr.compt(ic).ww;
+        gr.chains()[ww[1]].idc = gr.chain(ww[0]).idc;
+        EXPECT_FALSE(Tests {gr}.validate());
+        EXPECT_THROW(Tests {gr}.components(0), invariant_error);
+    }
+    {  // a chain index within the component out of range (missing idc)
+        auto gr = assemble_sample();
+        const auto& c = gr.compt(CmpId {});
+        gr.chains()[c.ww.back()].idc = ChIdC {c.num_chains()};
+        EXPECT_FALSE(Tests {gr}.validate());
+        EXPECT_THROW(Tests {gr}.components(0), invariant_error);
+    }
+}
+
+
 }  // namespace graffine::tests::graph_factory

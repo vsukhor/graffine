@@ -220,17 +220,17 @@ components(const itT it) const
                         ", c.ind ", c.ind, " in ng {", ng.w, " ",
                         End::str(ng.e), "} c is wrong: ", cn[ng.w].c);
         }
-        for (std::size_t idc {}; idc < c.num_chains(); ++idc) {
-            bool found {};
+        {
+            // every idc 0 .. num_chains-1 is held by some chain of c
+            std::vector<bool> found(c.num_chains());
             for (const auto& w : c.ww)
-                if (cn[w].idc == idc) {
-                    found = true;
-                    break;
-                }
-            c.ensure(
-                found,
-                "at iter ", it, " idc ", idc, " not found, ind ", c.ind
-            );
+                if (const std::size_t idc = cn[w].idc(); idc < found.size())
+                    found[idc] = true;
+            for (std::size_t idc {}; idc < found.size(); ++idc)
+                c.ensure(
+                    found[idc],
+                    "at iter ", it, " idc ", idc, " not found, ind ", c.ind
+                );
         }
 
         c.ensure(!c.template check<beLoud>(),
@@ -459,18 +459,18 @@ void IntegralTests<G, beLoud>::
 chain_g(const itT it) const
 {
     std::size_t egn {};
+    std::vector<bool> seen(gr.num_edges());  // edge indexes met so far
     for (std::size_t i {}; i < gr.num_chains(); ++i) {
         egn += cn[i].length();
         for (std::size_t r {}; r < cn[i].length(); ++r) {
-            GRAFFINE_ENSURE(cn[i].g[r].ind < gr.num_edges(),
+            const auto& ind = cn[i].g[r].ind;
+            GRAFFINE_ENSURE(ind() < gr.num_edges(),
                 "Error 1: at iteration ", it,
-                " check.chain_g faied at ind ", cn[i].g[r].ind);
-            for (ChIdG i1=i; i1<gr.num_chains(); ++i1)
-                for (std::size_t r1 {}; r1 < cn[i1].length(); ++r1)
-                    GRAFFINE_ENSURE((i == i1 && r == r1) ||
-                                    cn[i].g[r].ind != cn[i1].g[r1].ind,
-                        "Error 4: at iteration ", it,
-                        " check.chain_g faied at ind ", cn[i].g[r].ind);
+                " check.chain_g faied at ind ", ind);
+            GRAFFINE_ENSURE(!seen[ind()],
+                "Error 4: at iteration ", it,
+                " check.chain_g faied at ind ", ind);
+            seen[ind()] = true;
         }
     }
     GRAFFINE_ENSURE(egn == gr.num_edges(),
